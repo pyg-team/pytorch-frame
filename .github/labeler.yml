@@ -1,0 +1,17 @@
+documentation:
+  - docs/**/*
+
+example:
+  - examples/**/*
+
+data:
+  - torch_frame/data/**/*
+
+dataset:
+  - torch_frame/datasets/**/*
+
+nn:
+  - torch_frame/nn/**/*
+
+utils:
+  - torch_frame/utils/**/*
