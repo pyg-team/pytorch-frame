@@ -27,13 +27,13 @@ class Dataset(ABC):
     ):
         for col_name in stypes.keys():
             if col_name not in df:
-                raise ValueError(f"The column '{col_name}' is missing the "
+                raise ValueError(f"The column '{col_name}' is missing in the "
                                  f"data frame")
 
         if target_col is not None:
             if target_col not in df:
-                raise ValueError(f"The column '{col_name}' is missing the "
-                                 f"data frame")
+                raise ValueError(f"The target column '{col_name}' is missing "
+                                 f"in the data frame")
             if target_col not in stypes.keys():
                 raise ValueError(f"The column '{col_name}' is missing in the "
                                  f"semantic type information")
