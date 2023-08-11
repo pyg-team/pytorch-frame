@@ -68,8 +68,6 @@ class Dataset(ABC):
         path = osp.join(root, filename)
 
         if osp.exists(path):
-            if log and 'pytest' not in sys.modules:
-                print(f'Using existing file {filename}', file=sys.stderr)
             return path
 
         if log and 'pytest' not in sys.modules:
@@ -97,6 +95,7 @@ class Dataset(ABC):
 
     @property
     def columns(self) -> List[str]:
+        r"""The input column names of the dataset."""
         columns = list(self.stypes.keys())
         if self.target_col is not None:
             columns.remove(self.target_col)
