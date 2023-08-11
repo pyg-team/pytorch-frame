@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+.DS_Store
+build/
+dist/
+alpha/
+.cache/
+.eggs/
+*.egg-info/
+.ipynb_checkpoints
+.coverage
+.coverage.*
+coverage.xml
+.vscode
+.idea
+.venv
+*.out
