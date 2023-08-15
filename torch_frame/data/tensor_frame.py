@@ -31,9 +31,10 @@ class TensorFrame:
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols != x.size(1):
                 raise ValueError(
-                    f"The length of col_names['{stype_name}'] is "
-                    f"{num_cols}, which does not match the dimensionality "
-                    f"of x_dict['{stype_name}'] (got {x.size(1)})")
+                    f"The expected number of columns for {stype_name} feature "
+                    f"is {num_cols}, which does not align with the column "
+                    f"dimensionality of x_dict['{stype_name}'] (got "
+                    f"{x.size(1)})")
             if x.size(0) != num_rows:
                 raise ValueError(
                     f"The length of elements in x_dict are not aligned Got "
