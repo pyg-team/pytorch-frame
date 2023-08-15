@@ -6,31 +6,38 @@ from torch import Tensor
 
 @dataclass
 class TensorFrame:
-    r"""torch_frame.Preprocessor converts input Dataframe into TensorFrame,
-    which is input into torch_frame.Encoder.
+    r"""TensorFrame holds pytorch tensor for each table column. Table columns
+    are first organized into their semantic types (e.g., categorical,
+    numerical) and then converted into their tensor representation, which is
+    stored as :obj:`x_dict`. For instance, :obj:`x_dict[stype.numerical]`
+    contains concatenated pytorch tensor of all numerical features, where 0th
+    dim is the row and 1st dim represents the column in the original DataFrame.
+
+    :obj:`col_names_dict` stores the column names of :obj:`x_dict`. For
+    instance, :obj:`col_names_dict[stype.numerical][i]` stores the column name
+    of :obj:`x_dict[stype.numerical][:,i]`. It can also hold the target values
+    in :obj:`y`.
     """
-    # stype to 2-dim tensor mapping
     x_dict: Dict[stype, Tensor]
-    # stype to column names mapping
     col_names_dict: Dict[stype, List[str]]
-    # target values.
     y: Optional[Tensor] = None
 
     def __post_init__(self):
         num_rows = self.num_rows
         for stype_name, x in self.x_dict.items():
-            if x.ndim != 2:
+            if x.dim() != 2:
                 raise ValueError(
-                    f"x_dict['{stype_name}'] is not 2-dim tensor.")
+                    f"x_dict['{stype_name}'] is not a 2-dimensional tensor.")
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols != x.size(1):
                 raise ValueError(
                     f"The length of col_names['{stype_name}'] is "
                     f"{num_cols}, which does not match the dimensionality "
-                    f"of x_dict['{stype_name}'] ({x.size(1)})")
+                    f"of x_dict['{stype_name}'] (got {x.size(1)})")
             if x.size(0) != num_rows:
                 raise ValueError(
-                    "The length of elements in x_dict are not aligned.")
+                    f"The length of elements in x_dict are not aligned Got "
+                    f"{x.size(0)} but expected {num_rows}.")
         if self.y is not None:
             if len(self.y) != num_rows:
                 raise ValueError(

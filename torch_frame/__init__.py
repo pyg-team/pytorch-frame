@@ -1,5 +1,5 @@
 from .stype import stype, numerical, categorical, unsupported
-from .data.tensor_frame import TensorFrame
+from .data import TensorFrame
 
 __version__ = '0.1.0'
 
