@@ -44,3 +44,5 @@ class EmbeddingFrame:
     def dim(self) -> int:
         r"""The embedding dimensionality"""
         return self.x.size(2)
+
+    # TODO implement concat utils for list of EmbeddingFrame.
