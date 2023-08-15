@@ -38,5 +38,5 @@ class TensorFrame:
                     f"with the number of rows ({num_rows}).")
 
     @property
-    def num_rows(self):
+    def num_rows(self) -> int:
         return len(next(iter(self.x_dict.values())))
