@@ -33,7 +33,7 @@ class TensorFrame:
                 raise ValueError(
                     f"The expected number of columns for {stype_name} feature "
                     f"is {num_cols}, which does not align with the column "
-                    f"dimensionality of x_dict['{stype_name}'] (got "
+                    f"dimensionality of x_dict[{stype_name}] (got "
                     f"{x.size(1)})")
             if x.size(0) != num_rows:
                 raise ValueError(
@@ -48,5 +48,3 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         return len(next(iter(self.x_dict.values())))
-
-    # TODO implement concat utils for list of TensorFrame.
