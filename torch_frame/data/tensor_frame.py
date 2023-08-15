@@ -6,7 +6,7 @@ from torch import Tensor
 
 @dataclass
 class TensorFrame:
-    r"""torch_frame.Preprocessor converts input Dataframe into TensorFrame,
+    r"""torch_frame.tensor_encoder converts input Dataframe into TensorFrame,
     which is input into torch_frame.Encoder.
     """
     # stype to 2-dim tensor mapping

@@ -45,4 +45,5 @@ class EmbeddingFrame:
         r"""The embedding dimensionality"""
         return self.x.size(2)
 
-    # TODO implement concat utils for list of EmbeddingFrame.
+    # TODO implement concat / column selection utils for list for
+    # EmbeddingFrame.
