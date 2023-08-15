@@ -40,3 +40,5 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         return len(next(iter(self.x_dict.values())))
+
+    # TODO implement concat utils for list of TensorFrame.
