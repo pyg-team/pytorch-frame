@@ -6,12 +6,13 @@ from torch import Tensor
 
 @dataclass
 class TensorFrame:
-    r"""TensorFrame holds pytorch tensor for each table column. Table columns
-    are first organized into their semantic types (e.g., categorical,
-    numerical) and then converted into their tensor representation, which is
-    stored as :obj:`x_dict`. For instance, :obj:`x_dict[stype.numerical]`
-    stores concatenated pytorch tensor of all numerical features, where 0th/1st
-    dim represents the row/column in the original DataFrame, respectively.
+    r"""TensorFrame holds a :pytorch:`PyTorch` tensor for each table column.
+    Table columns are first organized into their semantic types (e.g.,
+    categorical, numerical) and then converted into their tensor
+    representation, which is stored as :obj:`x_dict`. For instance,
+    :obj:`x_dict[stype.numerical]` stores a concatenated :pytorch:`PyTorch`
+    tensor for all numerical features, where 0th/1st dim represents the
+    row/column in the original DataFrame, respectively.
 
     :obj:`col_names_dict` stores column names of :obj:`x_dict`. For example,
     :obj:`col_names_dict[stype.numerical][i]` stores the column name of
@@ -38,7 +39,7 @@ class TensorFrame:
                     f"{x.size(1)})")
             if x.size(0) != num_rows:
                 raise ValueError(
-                    f"The length of elements in x_dict are not aligned Got "
+                    f"The length of elements in x_dict are not aligned, got "
                     f"{x.size(0)} but expected {num_rows}.")
         if self.y is not None:
             if len(self.y) != num_rows:
