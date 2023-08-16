@@ -74,7 +74,8 @@ def test_simple_basecls():
 
     class SimpleDecoder(Decoder):
         def forward(self, x: Tensor) -> Tensor:
-            return torch.mean(x, dim=-1)
+            # Pool along the column axis
+            return torch.mean(x, dim=1)
 
     df = DataFrame({
         'num1': np.random.randn(10),
@@ -105,4 +106,4 @@ def test_simple_basecls():
     x = table_conv2(x)
     assert x.shape == (10, 4, 8)
     x = decoder(x)
-    assert x.shape == (10, 4)
+    assert x.shape == (10, 8)
