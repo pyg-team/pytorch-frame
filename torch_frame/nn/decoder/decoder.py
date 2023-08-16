@@ -10,12 +10,12 @@ class Decoder(Module, ABC):
     tensor into output tensor on which prediction head is applied.
     """
     @abstractmethod
-    def forward(self, x: Tensor, *argv: Any, **kwargs: Any) -> Any:
+    def forward(self, x: Tensor, *args: Any, **kwargs: Any) -> Any:
         r"""Encode TensorFrame into (x, col_names).
         Args:
             x (Tensor): Input column-wise tensor of shape
                 :obj:`[batch_size, num_cols, hidden_channels]`.
-            argv (Any): Extra argument values.
+            args (Any): Extra arguments.
             kwargs (Any): Extra keyward arguments.
         """
         raise NotImplementedError

@@ -11,7 +11,8 @@ from torch_frame import TensorFrame, stype
 from torch_frame.typing import DataFrame
 
 
-def test_scaffold():
+def test_simple_basecls():
+    # Instantiate each base class with a simple class and test e2e pipeline.
     class SimpleTensorEncoder(TensorEncoder):
         def to_tensor(self, df: DataFrame) -> TensorFrame:
             x_list_dict: Dict[stype, List[Tensor]] = defaultdict(lambda: [])
@@ -67,9 +68,9 @@ def test_scaffold():
             self.lin = torch.nn.Linear(in_channels, out_channels)
 
         def forward(self, x: Tensor) -> Tensor:
-            d1, d2, d3 = x.shape
-            x = x.view(-1, d3)
-            return self.lin(x).view(d1, d2, -1)
+            B, C, H = x.shape
+            x = x.view(-1, H)
+            return self.lin(x).view(B, C, -1)
 
     class SimpleDecoder(Decoder):
         def forward(self, x: Tensor) -> Tensor:

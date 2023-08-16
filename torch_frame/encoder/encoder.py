@@ -11,7 +11,7 @@ class TensorEncoder(ABC):
 
     Args:
         col2stype: (Dict[str, stype]): A dictionary that maps column name in
-        DataFrame to its stype.
+            DataFrame to its stype.
     """
     def __init__(
         self,
