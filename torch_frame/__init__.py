@@ -1,4 +1,5 @@
 from .stype import stype, numerical, categorical, unsupported
+from .data import TensorFrame
 
 import torch_frame.utils  # noqa
 import torch_frame.data  # noqa
@@ -12,5 +13,6 @@ __all__ = [
     'numerical',
     'categorical',
     'unsupported',
+    'TensorFrame',
     '__version__',
 ]
