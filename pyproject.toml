@@ -28,6 +28,9 @@ classifiers=[
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies=[
+    "pandas",
+    "numpy",
+    "torch",
 ]
 
 [project.optional-dependencies]
