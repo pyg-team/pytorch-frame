@@ -28,8 +28,8 @@ classifiers=[
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies=[
-    "pandas",
     "numpy",
+    "pandas",
     "torch",
 ]
 
