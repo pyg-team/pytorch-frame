@@ -25,22 +25,15 @@ class Dataset(ABC):
         stypes: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
     ):
-        for col_name in stypes.keys():
-            if col_name not in df:
-                raise ValueError(f"The column '{col_name}' is missing in the "
-                                 f"data frame")
-
-        if target_col is not None:
-            if target_col not in df:
-                raise ValueError(f"The target column '{col_name}' is missing "
-                                 f"in the data frame")
-            if target_col not in stypes.keys():
-                raise ValueError(f"The column '{col_name}' is missing in the "
-                                 f"semantic type information")
-
         self.df = df
         self.stypes = stypes
         self.target_col = target_col
+
+        cols = self.feat_cols + ([] if target_col is None else [target_col])
+        missing_cols = set(cols) - set(df.columns)
+        if len(missing_cols) > 0:
+            raise ValueError(f"The column(s) '{missing_cols}' are missing in "
+                             f"the data frame")
 
     @staticmethod
     def download(
@@ -94,8 +87,8 @@ class Dataset(ABC):
         return len(self.df)
 
     @property
-    def columns(self) -> List[str]:
-        r"""The input column names of the dataset."""
+    def feat_cols(self) -> List[str]:
+        r"""The input feature columns of the dataset."""
         columns = list(self.stypes.keys())
         if self.target_col is not None:
             columns.remove(self.target_col)
