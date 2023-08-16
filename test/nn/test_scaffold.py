@@ -25,6 +25,7 @@ def test_scaffold():
                 else:
                     x_list_dict[stype_name].append(tensor.to(torch.float))
                 col_names_dict[stype_name].append(col_name)
+
             x_dict: Dict[stype, Tensor] = {
                 stype_name: torch.cat(x_list, dim=1)
                 for stype_name, x_list in x_list_dict.items()
