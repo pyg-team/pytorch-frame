@@ -32,8 +32,12 @@ def test_scaffold():
             return TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
 
     class SimpleFeatureEncoder(FeatureEncoder):
-        def __init__(self, out_channels: int, num_numerical: int,
-                     num_categories: List[int] = None):
+        def __init__(
+            self,
+            out_channels: int,
+            num_numerical: int,
+            num_categories: List[int],
+        ):
             super().__init__()
             self.lin_numerical = torch.nn.Linear(num_numerical, out_channels)
             self.emb_categorical = torch.nn.ModuleList([
