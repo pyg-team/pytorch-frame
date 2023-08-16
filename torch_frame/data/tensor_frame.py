@@ -10,13 +10,14 @@ class TensorFrame:
     are first organized into their semantic types (e.g., categorical,
     numerical) and then converted into their tensor representation, which is
     stored as :obj:`x_dict`. For instance, :obj:`x_dict[stype.numerical]`
-    contains concatenated pytorch tensor of all numerical features, where 0th
-    dim is the row and 1st dim represents the column in the original DataFrame.
+    stores concatenated pytorch tensor of all numerical features, where 0th/1st
+    dim represents the row/column in the original DataFrame, respectively.
 
-    :obj:`col_names_dict` stores the column names of :obj:`x_dict`. For
-    instance, :obj:`col_names_dict[stype.numerical][i]` stores the column name
-    of :obj:`x_dict[stype.numerical][:,i]`. It can also hold the target values
-    in :obj:`y`.
+    :obj:`col_names_dict` stores column names of :obj:`x_dict`. For example,
+    :obj:`col_names_dict[stype.numerical][i]` stores the column name of
+    :obj:`x_dict[stype.numerical][:,i]`.
+    
+    Additionally, TensorFrame can store the target values in :obj:`y`.
     """
     x_dict: Dict[stype, Tensor]
     col_names_dict: Dict[stype, List[str]]
