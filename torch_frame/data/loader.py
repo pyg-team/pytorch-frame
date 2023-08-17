@@ -1,0 +1,42 @@
+from typing import Union
+
+import torch
+
+from torch_frame.data import Dataset, TensorFrame
+from torch_frame.typing import IndexSelectType
+
+
+class DataLoader(torch.utils.data.DataLoader):
+    r"""A data loader which creates mini-batches from a
+    :class:`torch_frame.Dataset` or :class:`torch_frame.TensorFrame`.
+
+    Args:
+        dataset (Dataset or TensorFrame): The dataset or tensor frame from
+            which to load the data.
+        *args (optional): Additional arguments of
+            :class:`torch.utils.data.DataLoader`.
+        **kwargs (optional): Additional keyword arguments of
+            :class:`torch.utils.data.DataLoader`.
+    """
+    def __init__(
+        self,
+        dataset: Union[Dataset, TensorFrame],
+        *args,
+        **kwargs,
+    ):
+        kwargs.pop('collate_fn', None)
+
+        if isinstance(dataset, Dataset):
+            self.tensor_frame: TensorFrame = dataset.to_tensor_frame()
+        else:
+            self.tensor_frame: TensorFrame = dataset
+
+        super().__init__(
+            range(dataset.num_rows),
+            *args,
+            collate_fn=self.collate_fn,
+            **kwargs,
+        )
+
+    def collate_fn(self, index: IndexSelectType) -> TensorFrame:
+        return self.tensor_frame[index]

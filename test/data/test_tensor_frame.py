@@ -5,23 +5,9 @@ import torch_frame
 from torch_frame import TensorFrame
 
 
-def get_tensor_frame(num_rows: int) -> TensorFrame:
-    x_dict = {
-        torch_frame.categorical: torch.randint(0, 3, size=(num_rows, 3)),
-        torch_frame.numerical: torch.randn(size=(num_rows, 2)),
-    }
-    col_names_dict = {
-        torch_frame.categorical: ['a', 'b', 'c'],
-        torch_frame.numerical: ['x', 'y'],
-    }
-    y = torch.randn(num_rows)
-
-    return TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
-
-
-def test_tensor_frame_basics():
-    tf = get_tensor_frame(num_rows=10)
-    assert tf.num_rows == 10
+def test_tensor_frame_basics(get_fake_tensor_frame):
+    tf = get_fake_tensor_frame(num_rows=10)
+    assert tf.num_rows == len(tf) == 10
 
     assert str(tf) == ("TensorFrame(\n"
                        "  num_rows=10,\n"
@@ -71,8 +57,8 @@ def test_tensor_frame_error():
     range(2, 6),
     torch.tensor([4, 8]),
 ])
-def test_tensor_frame_index_select(index):
-    tf = get_tensor_frame(num_rows=10)
+def test_tensor_frame_index_select(get_fake_tensor_frame, index):
+    tf = get_fake_tensor_frame(num_rows=10)
 
     out = tf[index]
 

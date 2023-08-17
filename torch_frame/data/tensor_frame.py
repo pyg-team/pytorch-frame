@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from torch import Tensor
 
@@ -53,7 +53,13 @@ class TensorFrame:
 
     @property
     def num_rows(self) -> int:
+        r"""The number of rows in the :class:`TensorFrame`."""
         return len(next(iter(self.x_dict.values())))
+
+    # Python Built-ins ########################################################
+
+    def __len__(self) -> int:
+        return self.num_rows
 
     def __repr__(self) -> str:
         stype_repr = '\n'.join([
@@ -70,11 +76,34 @@ class TensorFrame:
         if isinstance(index, int):
             index = [index]
 
-        out = copy.copy(self)
+        return self._apply(lambda x: x[index])
 
-        out.x_dict = {stype: x[index] for stype, x in out.x_dict.items()}
+    def __copy__(self) -> 'TensorFrame':
+        out = self.__class__.__new__(self.__class__)
+        for key, value in self.__dict__.items():
+            out.__dict__[key] = value
+
+        out.x_dict = copy.copy(out.x_dict)
         out.col_names_dict = copy.copy(out.col_names_dict)
-        if out.y is not None:
-            out.y = out.y[index]
 
+        return out
+
+    # Device Transfer #########################################################
+
+    def to(self, *args, **kwargs):
+        return self._apply(lambda x: x.to(*args, **kwargs))
+
+    def cpu(self, *args, **kwargs):
+        return self._apply(lambda x: x.cpu(*args, **kwargs))
+
+    def cuda(self, *args, **kwargs):
+        return self._apply(lambda x: x.cuda(*args, **kwargs))
+
+    # Helper Functions ########################################################
+
+    def _apply(self, fn: Callable[[Tensor], Tensor]) -> 'TensorFrame':
+        out = copy.copy(self)
+        out.x_dict = {stype: fn(x) for stype, x in out.x_dict.items()}
+        if out.y is not None:
+            out.y = fn(out.y)
         return out
