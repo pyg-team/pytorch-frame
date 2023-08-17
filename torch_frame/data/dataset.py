@@ -1,12 +1,16 @@
-import os
-import os.path as osp
-import ssl
-import sys
-import urllib.request
 from abc import ABC
+from collections import defaultdict
 from typing import Dict, List, Optional
 
+import torch
+from torch import Tensor
+
 import torch_frame
+from torch_frame.data import TensorFrame
+from torch_frame.data.mapper import (
+    CategoricalTensorMapper,
+    NumericalTensorMapper,
+)
 from torch_frame.typing import DataFrame
 
 
@@ -36,10 +40,11 @@ class Dataset(ABC):
                              f"the data frame")
 
     @staticmethod
-    def download(
+    def download_url(
         url: str,
         root: str,
         filename: Optional[str] = None,
+        *,
         log: bool = True,
     ) -> str:
         r"""Downloads the content of :obj:`url` to the specified folder
@@ -53,32 +58,7 @@ class Dataset(ABC):
             log (bool, optional): If :obj:`False`, will not print anything to
                 the console. (default: :obj:`True`)
         """
-        if filename is None:
-            filename = url.rpartition('/')[2]
-            if filename[0] != '?':
-                filename.split('?')[0]
-
-        path = osp.join(root, filename)
-
-        if osp.exists(path):
-            return path
-
-        if log and 'pytest' not in sys.modules:
-            print(f'Downloading {url}', file=sys.stderr)
-
-        os.makedirs(root, exist_ok=True)
-
-        context = ssl._create_unverified_context()
-        data = urllib.request.urlopen(url, context=context)
-
-        with open(path, 'wb') as f:
-            while True:
-                chunk = data.read(10 * 1024 * 1024)
-                if not chunk:
-                    break
-                f.write(chunk)
-
-        return path
+        return torch_frame.data.download_url(url, root, filename, log=log)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}()'
@@ -93,3 +73,45 @@ class Dataset(ABC):
         if self.target_col is not None:
             columns.remove(self.target_col)
         return columns
+
+    def to_tensor_frame(
+        self,
+        device: Optional[torch.device] = None,
+    ) -> TensorFrame:
+        r"""Converts the dataset into a :class:`TensorFrame`."""
+
+        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+        col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
+        y: Optional[Tensor] = None
+
+        for col_name, stype in self.stypes.items():
+
+            if stype == torch_frame.numerical:
+                mapper = NumericalTensorMapper()
+
+            elif stype == torch_frame.categorical:
+                # TODO For now, we simply use the set of unique values to
+                # define the category mapping, but eventually we need a better
+                # way to do this because we want to guarantee a consisting
+                # mapping across different splits.
+                count = self.df[col_name].value_counts()
+                count = count.sort_values(ascending=False)
+                categories = count.index
+                mapper = CategoricalTensorMapper(categories)
+
+            else:
+                raise NotImplementedError(f"Unable to process the semantic "
+                                          f"type '{stype.value}'")
+
+            if col_name == self.target_col:
+                y = mapper.forward(self.df[col_name])
+            else:
+                xs_dict[stype].append(mapper.forward(self.df[col_name]))
+                col_names_dict[stype].append(col_name)
+
+        x_dict = {
+            stype: torch.stack(xs, dim=1)
+            for stype, xs in xs_dict.items()
+        }
+
+        return TensorFrame(x_dict, col_names_dict, y)

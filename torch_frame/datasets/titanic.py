@@ -13,7 +13,7 @@ class Titanic(torch_frame.data.Dataset):
     url = 'https://github.com/datasciencedojo/datasets/raw/master/titanic.csv'
 
     def __init__(self, root: str):
-        path = self.download(self.url, root)
+        path = self.download_url(self.url, root)
         df = pd.read_csv(path, index_col=['PassengerId'])
 
         stypes = {  # TODO Use 'Name', 'Ticket' and 'Cabin'.
