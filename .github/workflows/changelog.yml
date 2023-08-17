@@ -11,6 +11,6 @@ jobs:
 
     steps:
       - name: Enforce changelog entry
-        uses: dangoslen/changelog-enforcer@v3
+        uses: dangoslen/changelog-enforcer@v2
         with:
           skipLabels: 'skip-changelog'
