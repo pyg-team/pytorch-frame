@@ -32,7 +32,7 @@ class DataLoader(torch.utils.data.DataLoader):
             self.tensor_frame: TensorFrame = dataset
 
         super().__init__(
-            range(dataset.num_rows),
+            range(len(dataset)),
             *args,
             collate_fn=self.collate_fn,
             **kwargs,
