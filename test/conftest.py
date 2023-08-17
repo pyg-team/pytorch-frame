@@ -9,7 +9,7 @@ from torch_frame import TensorFrame
 
 @pytest.fixture()
 def get_fake_tensor_frame() -> Callable:
-    def _get_fake_tensor_frame(num_rows: int):
+    def _get_fake_tensor_frame(num_rows: int) -> TensorFrame:
         x_dict = {
             torch_frame.categorical: torch.randint(0, 3, size=(num_rows, 3)),
             torch_frame.numerical: torch.randn(size=(num_rows, 2)),
