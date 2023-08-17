@@ -7,14 +7,14 @@ from torch_frame import TensorFrame
 
 def test_tensor_frame_basics():
     x_dict = {
-        torch_frame.categorical: torch.randint(0, 3, size=(10, 3, 1)),
-        torch_frame.numerical: torch.randn(size=(10, 2, 1)),
+        torch_frame.categorical: torch.randint(0, 3, size=(10, 3)),
+        torch_frame.numerical: torch.randn(size=(10, 2)),
     }
     col_names_dict = {
         torch_frame.categorical: ['a', 'b', 'c'],
         torch_frame.numerical: ['x', 'y'],
     }
-    y = torch.randn(10, 1)
+    y = torch.randn(10)
 
     tf = TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
 
@@ -23,14 +23,14 @@ def test_tensor_frame_basics():
 
 def test_tensor_frame_error():
     x_dict = {
-        torch_frame.categorical: torch.randint(0, 3, size=(10, 3, 1)),
-        torch_frame.numerical: torch.randn(size=(10, 2, 1)),
+        torch_frame.categorical: torch.randint(0, 3, size=(10, 3)),
+        torch_frame.numerical: torch.randn(size=(10, 2)),
     }
     col_names_dict = {
         torch_frame.categorical: ['a', 'b', 'c'],
         torch_frame.numerical: ['x', 'y'],
     }
-    y = torch.randn(10, 1)
+    y = torch.randn(10)
 
     # Wrong number of channels
     x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, ))
