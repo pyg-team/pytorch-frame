@@ -96,8 +96,7 @@ class Dataset(ABC):
                 # mapping across different splits.
                 count = self.df[col_name].value_counts()
                 count = count.sort_values(ascending=False)
-                categories = count.index
-                mapper = CategoricalTensorMapper(categories)
+                mapper = CategoricalTensorMapper(categories=count.index)
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "
