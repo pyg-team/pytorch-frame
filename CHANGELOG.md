@@ -14,4 +14,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Fixed the `changelog-enforcer` ([#8](https://github.com/pyg-team/pytorch-frame/pull/8))
+
 ### Removed
