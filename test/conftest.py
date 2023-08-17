@@ -20,6 +20,10 @@ def get_fake_tensor_frame() -> Callable:
         }
         y = torch.randn(num_rows)
 
-        return TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
+        return TensorFrame(
+            x_dict=x_dict,
+            col_names_dict=col_names_dict,
+            y=y,
+        )
 
     return _get_fake_tensor_frame
