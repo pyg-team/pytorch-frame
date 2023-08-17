@@ -10,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Enforce changelog entry
-        uses: dangoslen/changelog-enforcer@v2
+        uses: dangoslen/changelog-enforcer@v3
         with:
           skipLabels: 'skip-changelog'
