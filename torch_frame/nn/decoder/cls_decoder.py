@@ -8,7 +8,7 @@ class CLSDecoder(Decoder):
     https://arxiv.org/abs/2106.11959
 
     This module simply extracts the first column embeddings (corresponding to
-    the CLS token) of input x output by `torch_frame.nn.conv.FTTransformerConv`
+    the CLS token) of input :obj:`x` output by :obj:`torch_frame.nn.conv.FTTransformerConv` # noqa: E501
     """
     def __init__(self):
         super().__init__()
