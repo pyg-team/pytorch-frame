@@ -73,7 +73,9 @@ class FTTransformerConv(TableConv):
 
         Returns:
             x (Tensor): Output tensor of shape [batch_size, num_cols, channels]
-            x_cls (Tensor): Output tensor of shape [batch_size, channels]
+                corresponding to the input columns.
+            x_cls (Tensor): Output tensor of shape [batch_size, channels],
+                corresponding to the added CLS token column.
         """
         B, _, _ = x.shape
         # [batch_size, num_cols, channels]
