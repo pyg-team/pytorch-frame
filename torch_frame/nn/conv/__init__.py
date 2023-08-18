@@ -1,7 +1,7 @@
 from .table_conv import TableConv
-from .ft_transformer_conv import FTTransformerConv
+from .ft_transformer import FTTransformer
 
 __all__ = classes = [
     'TableConv',
-    'FTTransformerConv',
+    'FTTransformer',
 ]
