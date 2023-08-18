@@ -10,7 +10,7 @@ from torch_frame.typing import IndexSelectType
 
 @dataclass(repr=False)
 class TensorFrame:
-    r"""TensorFrame holds a :pytorch:`PyTorch` tensor for each table column.
+    r"""A tensor frame holds a :pytorch:`PyTorch` tensor for each table column.
     Table columns are first organized into their semantic types (e.g.,
     categorical, numerical) and then converted into their tensor
     representation, which is stored as :obj:`x_dict`. For instance,
