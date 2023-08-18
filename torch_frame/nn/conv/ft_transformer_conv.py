@@ -14,7 +14,7 @@ class FTTransformerConv(TableConv):
     """FT-Transformer model introduced in https://arxiv.org/abs/2106.11959
     This module adds the CLS token column before the first column of input x
     and applies a multi-layer Transformer on the resulting tensor. The first
-    CLS column can be used for read-out (see torch_frame.nn.CLSDecoder).
+    CLS column can be used for read-out (see :obj:`torch_frame.nn.CLSDecoder`).
 
     Args:
         channels (int): Input/output channel dimensionality
