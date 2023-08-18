@@ -23,10 +23,10 @@ class FTTransformerConv(TableConv):
     Args:
         channels (int): Input/output channel dimensionality
         feedforward_channels (int, optional): Hidden channels used by
-            feedforward network of Transformer model. If :obj:`None`, it will
-            be set to :obj:`channels` (default: :obj:`None`)
-        num_layers (int): Number of transformer encoder layers. (default: 4)
-        nhead (int): Number of heads in multi-head attention (default: 4)
+            feedforward network of the Transformer model. If :obj:`None`, it
+            will be set to :obj:`channels` (default: :obj:`None`)
+        num_layers (int): Number of transformer encoder layers. (default: 3)
+        nhead (int): Number of heads in multi-head attention (default: 8)
         dropout (int): The dropout value (default: 0.1)
         activation (str): The activation function (default: :obj:`relu`)
     """
@@ -35,8 +35,8 @@ class FTTransformerConv(TableConv):
         channels: int,
         feedforward_channels: Optional[int] = None,
         # Arguments for Transformer
-        num_layers: int = 4,
-        nhead: int = 4,
+        num_layers: int = 3,
+        nhead: int = 8,
         dropout: float = 0.1,
         activation: str = 'relu',
     ):
