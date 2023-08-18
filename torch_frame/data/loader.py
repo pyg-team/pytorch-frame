@@ -27,7 +27,7 @@ class DataLoader(torch.utils.data.DataLoader):
         kwargs.pop('collate_fn', None)
 
         if isinstance(dataset, Dataset):
-            self.tensor_frame: TensorFrame = dataset.to_tensor_frame()
+            self.tensor_frame: TensorFrame = dataset.tensor_frame
         else:
             self.tensor_frame: TensorFrame = dataset
 
