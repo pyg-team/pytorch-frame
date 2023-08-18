@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `FT-Transformer` model ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
 - Added the `Titanic` dataset ([#3](https://github.com/pyg-team/pytorch-frame/pull/3))
 - Added `Dataset` base class ([#3](https://github.com/pyg-team/pytorch-frame/pull/3))
 - Added `TensorFrame` ([#4](https://github.com/pyg-team/pytorch-frame/pull/4))
