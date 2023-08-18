@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from torch_frame import stype
 from typing import Dict, List, Optional
+
 from torch import Tensor
+
+import torch_frame
 
 
 @dataclass
@@ -17,19 +19,19 @@ class TensorFrame:
     :obj:`col_names_dict` stores column names of :obj:`x_dict`. For example,
     :obj:`col_names_dict[stype.numerical][i]` stores the column name of
     :obj:`x_dict[stype.numerical][:,i]`.
-    
+
     Additionally, TensorFrame can store the target values in :obj:`y`.
     """
-    x_dict: Dict[stype, Tensor]
-    col_names_dict: Dict[stype, List[str]]
+    x_dict: Dict[torch_frame.stype, Tensor]
+    col_names_dict: Dict[torch_frame.stype, List[str]]
     y: Optional[Tensor] = None
 
     def __post_init__(self):
         num_rows = self.num_rows
         for stype_name, x in self.x_dict.items():
-            if x.dim() != 2:
+            if x.dim() < 2:
                 raise ValueError(
-                    f"x_dict['{stype_name}'] is not a 2-dimensional tensor.")
+                    f"x_dict['{stype_name}'] must be at least 2-dimensional")
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols != x.size(1):
                 raise ValueError(
