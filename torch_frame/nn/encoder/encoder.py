@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, List
+from typing import List, Tuple
 
 from torch import Tensor
 from torch.nn import Module
@@ -14,7 +14,7 @@ class FeatureEncoder(Module, ABC):
     learnable parameters and missing value handling.
     """
     @abstractmethod
-    def forward(self, df: TensorFrame) -> Tuple[Tensor, List[str]]:
+    def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
         r"""Encode TensorFrame into (x, col_names).
         Args:
             df (TensorFrame): Input TensorFrame
@@ -26,3 +26,7 @@ class FeatureEncoder(Module, ABC):
                 to be :obj:`num_cols`.
         """
         raise NotImplementedError
+
+    def reset_parameters(self):
+        r"""Resets all learnable parameters of the module."""
+        pass

@@ -46,7 +46,7 @@ intersphinx_mapping = {
 
 def setup(app):
     def rst_jinja_render(app, _, source):
-        rst_context = {'torch_geometric': torch_frame}
+        rst_context = {'torch_frame': torch_frame}
         source[0] = app.builder.templates.render_string(source[0], rst_context)
 
     app.connect('source-read', rst_jinja_render)

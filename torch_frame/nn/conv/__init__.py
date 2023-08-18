@@ -1,5 +1,5 @@
 from .table_conv import TableConv
 
-__all__ = [
+__all__ = classes = [
     'TableConv',
 ]

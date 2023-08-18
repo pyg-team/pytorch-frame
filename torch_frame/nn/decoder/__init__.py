@@ -1,5 +1,5 @@
 from .decoder import Decoder
 
-__all__ = [
+__all__ = classes = [
     'Decoder',
 ]
