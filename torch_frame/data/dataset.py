@@ -102,10 +102,12 @@ class Dataset(ABC):
                 raise NotImplementedError(f"Unable to process the semantic "
                                           f"type '{stype.value}'")
 
+            out = mapper.forward(self.df[col_name], device=device)
+
             if col_name == self.target_col:
-                y = mapper.forward(self.df[col_name])
+                y = out
             else:
-                xs_dict[stype].append(mapper.forward(self.df[col_name]))
+                xs_dict[stype].append(out)
                 col_names_dict[stype].append(col_name)
 
         x_dict = {
