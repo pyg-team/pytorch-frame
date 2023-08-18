@@ -1,5 +1,5 @@
 from .encoder import FeatureEncoder
 
-__all__ = [
+__all__ = classes = [
     'FeatureEncoder',
 ]

@@ -1,11 +1,5 @@
-from .encoder import FeatureEncoder
-from .conv import TableConv, FTTransformerConv
-from .decoder import Decoder, CLSDecoder
+from .encoder import *  # noqa
+from .conv import *  # noqa
+from .decoder import *  # noqa
 
-__all__ = [
-    'FeatureEncoder',
-    'TableConv',
-    'FTTransformerConv',
-    'Decoder',
-    'CLSDecoder',
-]
+__all__ = []
