@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
 - Added `DataLoader` capabilities ([#11](https://github.com/pyg-team/pytorch-frame/pull/11))
 - Added `TensorFrame.index_select` functionality ([#10](https://github.com/pyg-team/pytorch-frame/pull/10))
 - Added `Dataset.to_tensor_frame` functionality ([#9](https://github.com/pyg-team/pytorch-frame/pull/9))
