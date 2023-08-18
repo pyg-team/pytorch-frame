@@ -1,12 +1,14 @@
+import copy
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from torch import Tensor
 
 import torch_frame
+from torch_frame.typing import IndexSelectType
 
 
-@dataclass
+@dataclass(repr=False)
 class TensorFrame:
     r"""TensorFrame holds a :pytorch:`PyTorch` tensor for each table column.
     Table columns are first organized into their semantic types (e.g.,
@@ -52,3 +54,27 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         return len(next(iter(self.x_dict.values())))
+
+    def __repr__(self) -> str:
+        stype_repr = '\n'.join([
+            f'  {stype.value} ({len(col_names)}): {col_names},'
+            for stype, col_names in self.col_names_dict.items()
+        ])
+
+        return (f'{self.__class__.__name__}(\n'
+                f'  num_rows={self.num_rows},\n'
+                f'{stype_repr}\n'
+                f')')
+
+    def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':
+        if isinstance(index, int):
+            index = [index]
+
+        out = copy.copy(self)
+
+        out.x_dict = {stype: x[index] for stype, x in out.x_dict.items()}
+        out.col_names_dict = copy.copy(out.col_names_dict)
+        if out.y is not None:
+            out.y = out.y[index]
+
+        return out
