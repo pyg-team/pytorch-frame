@@ -106,4 +106,5 @@ class TensorFrame:
         out.x_dict = {stype: fn(x) for stype, x in out.x_dict.items()}
         if out.y is not None:
             out.y = fn(out.y)
+
         return out
