@@ -11,9 +11,9 @@ from torch_frame.nn.base import Module
 
 
 class StypeEncoder(Module, ABC):
-    r"""Base class for stype encoder. This module transforms
-    `Tensorframe.x_dict[Stype.xxx]` into 3-dimensional column-wise tensor that
-    is input into :class:`TableConv`.
+    r"""Base class for stype encoder. This module transforms tensor of a
+    specific stype, i.e., `Tensorframe.x_dict[Stype.xxx]` into 3-dimensional
+    column-wise tensor that is input into :class:`TableConv`.
 
     Args:
         out_channels (int): The output dimensionality
