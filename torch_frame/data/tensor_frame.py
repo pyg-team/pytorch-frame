@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Optional
 from torch import Tensor
 
 import torch_frame
-from torch_frame.Stype import all_stype_list
+from torch_frame.stype import all_stype_list
 from torch_frame.typing import IndexSelectType, stype
 
 
