@@ -16,7 +16,7 @@ class StypeEncoder(Module, ABC):
     column-wise tensor that is input into :class:`TableConv`.
 
     Args:
-        out_channels (int): The output dimensionality
+        out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same Stype.
     """
@@ -83,7 +83,7 @@ class EmbeddingEncoder(StypeEncoder):
 class LinearEncoder(StypeEncoder):
     r"""Linear function based encoder for numerical features. It applies linear
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
-    and concatenate the output embeddings. Note that the implementation does
+    and concatenates the output embeddings. Note that the implementation does
     this for all numerical features in a batched manner."""
     stype_supported = {Stype.numerical}
 

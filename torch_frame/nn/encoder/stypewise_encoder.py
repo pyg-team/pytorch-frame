@@ -54,9 +54,9 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                     f"{stype_encoder} does not support encoding {stype}.")
 
             if stype in col_names_dict:
-                col_names = col_names_dict[stype]
                 stats_list = [
-                    self.col_stats[col_name] for col_name in col_names
+                    self.col_stats[col_name]
+                    for col_name in self.col_names_dict[stype]
                 ]
                 # Set lazy attributes
                 stype_encoder.out_channels = out_channels
