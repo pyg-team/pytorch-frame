@@ -43,6 +43,9 @@ class StypeEncoder(Module, ABC):
 
 
 class EmbeddingEncoder(StypeEncoder):
+    r"""Embedding look-up based encoder for categorical features. It applies
+    :obj:`torch.nn.Embedding` for each categorical feature and concatenate the
+    output embeddings."""
     stype_supported = {Stype.categorical}
 
     def __init__(
@@ -62,6 +65,8 @@ class EmbeddingEncoder(StypeEncoder):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].
         """
+        # TODO weihua: Handle Nan
+
         # x: [batch_size, num_cols]
         xs = []
         for i, emb in enumerate(self.embs):
@@ -76,6 +81,10 @@ class EmbeddingEncoder(StypeEncoder):
 
 
 class LinearEncoder(StypeEncoder):
+    r"""Linear function based encoder for numerical features. It applies linear
+    layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
+    and concatenate the output embeddings. Note that the implementation does
+    this for all numerical features in a batched manner."""
     stype_supported = {Stype.numerical}
 
     def __init__(
@@ -99,6 +108,8 @@ class LinearEncoder(StypeEncoder):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].
         """
+        # TODO weihua: Handle Nan
+
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
