@@ -39,7 +39,7 @@ class StypeEncoder(Module, ABC):
 
     @abstractmethod
     def reset_parameters(self):
-        pass
+        raise NotImplementedError
 
 
 class EmbeddingEncoder(StypeEncoder):
@@ -68,7 +68,8 @@ class EmbeddingEncoder(StypeEncoder):
         return x
 
     def reset_parameters(self):
-        pass
+        for emb in self.embs:
+            torch.nn.init.normal_(emb.weight)
 
 
 class LinearEncoder(StypeEncoder):
@@ -102,4 +103,4 @@ class LinearEncoder(StypeEncoder):
         return x
 
     def reset_parameters(self):
-        pass
+        self.lin.reset_parameters()
