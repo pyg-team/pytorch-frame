@@ -59,6 +59,9 @@ class EmbeddingEncoder(StypeEncoder):
             self.embs.append(Embedding(num_categories, self.out_channels))
 
     def forward(self, x: Tensor):
+        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels].
+        """
         # x: [batch_size, num_cols]
         xs = []
         for i, emb in enumerate(self.embs):
@@ -89,18 +92,23 @@ class LinearEncoder(StypeEncoder):
         std = torch.tensor(
             [stats[StatType.STD] + 1e-6 for stats in self.stats_list]) + 1e-6
         self.register_buffer('std', std)
-        self.lin = Linear(len(self.stats_list),
-                          len(self.stats_list) * self.out_channels)
+        num_cols = len(self.stats_list)
+        self.lin = Linear(num_cols, self.out_channels)
 
     def forward(self, x: Tensor):
+        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels].
+        """
         # x: [batch_size, num_cols]
-        batch_size, num_cols = x.shape
         x = (x - self.mean) / self.std
-        # x: [batch_size, num_cols * out_channels]
-        x = self.lin(x)
-        # x: [batch_size, num_cols, out_channels]
-        x = x.view(batch_size, num_cols, self.out_channels)
-        return x
+        # [batch_size, num_cols], [channels, num_cols]
+        # -> [batch_size, num_cols, channels]
+        x_lin = torch.einsum('ij,kj->ijk', x, self.lin.weight)
+        # [batch_size, num_cols], [channels]
+        # -> [batch_size, num_cols, channels]
+        x_bias = torch.einsum('ij,k->ijk', x, self.lin.bias)
+        # [batch_size, num_cols, channels]
+        return x_lin + x_bias
 
     def reset_parameters(self):
         self.lin.reset_parameters()

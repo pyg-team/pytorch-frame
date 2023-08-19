@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import torch
 from torch import Tensor
@@ -27,28 +27,23 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
     Args:
         out_channels (int): Output dimensionality
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats.
+            column name into stats. Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[torch_frame.Stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
             based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            Available as :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict (Dict[stype, StypeEncoder]): A dictionary that maps
             stype into :class:`StypeEncoder` class.
     """
-    # TODO: Set these in the first forward pass of the tensor frame.
-    LAZY_ATTRS = ['col_stats', 'col_names_dict']
-
     def __init__(
         self,
         out_channels: int,
-        col_stats: Optional[Dict[str, Dict[StatType, Any]]] = None,
-        col_names_dict: Optional[Dict[torch_frame.Stype, List[str]]] = None,
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.Stype, List[str]],
         stype_encoder_dict: Dict[Stype,
                                  StypeEncoder] = DEFAULT_STYPE_ENCODER_DICT,
     ):
         super().__init__()
-        # TODO: remove after LAZY_ATTRS is implemented.
-        assert col_stats is not None
-        assert col_names_dict is not None
 
         self.col_stats = col_stats
         self.col_names_dict = col_names_dict
@@ -69,8 +64,6 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                 self.encoder_dict[stype.value] = stype_encoder
 
     def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
-        # TODO: Set LAZY_STATS in the first forward path
-        # TODO: cache col_names.
         col_names = []
         xs = []
         for stype in tf.stype_list:
