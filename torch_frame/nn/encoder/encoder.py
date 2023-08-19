@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple
 
 from torch import Tensor
-from torch.nn import Module
 
 from torch_frame import TensorFrame
+from torch_frame.nn.base import Module
 
 
 class FeatureEncoder(Module, ABC):
@@ -13,6 +13,8 @@ class FeatureEncoder(Module, ABC):
     :obj:`col_names` is the names of the columns. This class can contain
     learnable parameters and missing value handling.
     """
+    LAZY_ATTRS = {}
+
     @abstractmethod
     def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
         r"""Encode TensorFrame into (x, col_names).

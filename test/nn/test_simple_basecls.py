@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame import TensorFrame, stype
+from torch_frame import Stype, TensorFrame
 from torch_frame.nn import Decoder, FeatureEncoder, TableConv
 
 
@@ -39,8 +39,8 @@ def test_simple_basecls():
                 xs.append(emb(tf.x_dict[torch_frame.categorical][:, i]))
 
             x = torch.stack(xs, dim=1)
-            col_names = (tf.col_names_dict[stype.numerical] +
-                         tf.col_names_dict[stype.categorical])
+            col_names = (tf.col_names_dict[Stype.numerical] +
+                         tf.col_names_dict[Stype.categorical])
 
             return x, col_names
 

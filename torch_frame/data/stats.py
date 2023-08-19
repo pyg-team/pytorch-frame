@@ -17,7 +17,7 @@ class StatType(Enum):
     CATEGORY_COUNTS = 'CATEGORY_COUNTS'
 
     @staticmethod
-    def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
+    def stats_for_stype(stype: torch_frame.Stype) -> List['StatType']:
         if stype == torch_frame.numerical:
             return [
                 StatType.MEAN,
@@ -46,7 +46,7 @@ class StatType(Enum):
 
 def compute_col_stats(
     ser: Series,
-    stype: torch_frame.stype,
+    stype: torch_frame.Stype,
 ) -> Dict[StatType, Any]:
 
     with pd.option_context('mode.use_inf_as_na', True):

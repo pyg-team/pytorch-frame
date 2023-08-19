@@ -5,7 +5,8 @@ from typing import Callable, Dict, List, Optional
 from torch import Tensor
 
 import torch_frame
-from torch_frame.typing import IndexSelectType
+from torch_frame.Stype import all_stype_list
+from torch_frame.typing import IndexSelectType, stype
 
 
 @dataclass(repr=False)
@@ -14,18 +15,18 @@ class TensorFrame:
     Table columns are first organized into their semantic types (e.g.,
     categorical, numerical) and then converted into their tensor
     representation, which is stored as :obj:`x_dict`. For instance,
-    :obj:`x_dict[stype.numerical]` stores a concatenated :pytorch:`PyTorch`
+    :obj:`x_dict[Stype.numerical]` stores a concatenated :pytorch:`PyTorch`
     tensor for all numerical features, where 0th/1st dim represents the
     row/column in the original DataFrame, respectively.
 
     :obj:`col_names_dict` stores column names of :obj:`x_dict`. For example,
-    :obj:`col_names_dict[stype.numerical][i]` stores the column name of
-    :obj:`x_dict[stype.numerical][:,i]`.
+    :obj:`col_names_dict[Stype.numerical][i]` stores the column name of
+    :obj:`x_dict[Stype.numerical][:,i]`.
 
     Additionally, TensorFrame can store the target values in :obj:`y`.
     """
-    x_dict: Dict[torch_frame.stype, Tensor]
-    col_names_dict: Dict[torch_frame.stype, List[str]]
+    x_dict: Dict[torch_frame.Stype, Tensor]
+    col_names_dict: Dict[torch_frame.Stype, List[str]]
     y: Optional[Tensor] = None
 
     def __post_init__(self):
@@ -50,6 +51,11 @@ class TensorFrame:
                 raise ValueError(
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
+
+    @property
+    def stype_list(self) -> List[stype]:
+        r"""Returns a canonical ordering of stypes in :obj:`x_dict`"""
+        return list(filter(lambda x: x in self.x_dict, all_stype_list))
 
     @property
     def num_rows(self) -> int:

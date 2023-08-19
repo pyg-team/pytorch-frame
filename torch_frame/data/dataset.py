@@ -20,14 +20,14 @@ class Dataset(ABC):
 
     Args:
         df (DataFrame): The tabular data frame.
-        stypes (Dict[str, torch_frame.stype]): A dictionary that maps each
+        stypes (Dict[str, torch_frame.Stype]): A dictionary that maps each
             column in the data frame to a semantic type.
         target_col (str, optional): The column used as target.
     """
     def __init__(
         self,
         df: DataFrame,
-        stypes: Dict[str, torch_frame.stype],
+        stypes: Dict[str, torch_frame.Stype],
         target_col: Optional[str] = None,
     ):
         self.df = df
@@ -132,8 +132,8 @@ class Dataset(ABC):
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
 
-        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
-        col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
+        xs_dict: Dict[torch_frame.Stype, List[Tensor]] = defaultdict(list)
+        col_names_dict: Dict[torch_frame.Stype, List[str]] = defaultdict(list)
         y: Optional[Tensor] = None
 
         for col_name, stype in self.stypes.items():
