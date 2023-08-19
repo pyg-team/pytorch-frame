@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `StypeWiseFeatureEncoder` ([#16](https://github.com/pyg-team/pytorch-frame/pull/16))
 - Added `FTTransformer` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
 - Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
 - Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
