@@ -5,8 +5,9 @@ from typing import Callable, Dict, List, Optional
 from torch import Tensor
 
 import torch_frame
+from torch_frame import Stype
 from torch_frame.stype import all_stype_list
-from torch_frame.typing import IndexSelectType, stype
+from torch_frame.typing import IndexSelectType
 
 
 @dataclass(repr=False)
@@ -53,7 +54,7 @@ class TensorFrame:
                     f"with the number of rows ({num_rows}).")
 
     @property
-    def stype_list(self) -> List[stype]:
+    def stype_list(self) -> List[Stype]:
         r"""Returns a canonical ordering of stypes in :obj:`x_dict`"""
         return list(filter(lambda x: x in self.x_dict, all_stype_list))
 

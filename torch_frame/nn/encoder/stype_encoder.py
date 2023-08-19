@@ -5,9 +5,9 @@ import torch
 from torch import Tensor
 from torch.nn import Embedding, Linear, ModuleList
 
+from torch_frame import Stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
-from torch_frame.typing import Stype
 
 
 class StypeEncoder(Module, ABC):

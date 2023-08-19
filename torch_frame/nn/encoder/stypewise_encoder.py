@@ -66,7 +66,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                 # Set LAZY_ATTRS
                 stype_encoder.out_channels = out_channels
                 stype_encoder.stats_list = stats_list
-                self.encoder_dict[Stype.value] = stype_encoder
+                self.encoder_dict[stype.value] = stype_encoder
 
     def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
         # TODO: Set LAZY_STATS in the first forward path
@@ -75,7 +75,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         xs = []
         for stype in tf.stype_list:
             x = tf.x_dict[stype]
-            x = self.encoder_dict[Stype.value](x)
+            x = self.encoder_dict[stype.value](x)
             xs.append(x)
             col_names.extend(self.col_names_dict[stype])
         x = torch.cat(xs, dim=1)
