@@ -108,7 +108,8 @@ class LinearEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_bias = torch.einsum('ij,k->ijk', x, self.lin.bias)
         # [batch_size, num_cols, channels]
-        return x_lin + x_bias
+        x = x_lin + x_bias
+        return x
 
     def reset_parameters(self):
         self.lin.reset_parameters()

@@ -58,7 +58,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                 stats_list = [
                     self.col_stats[col_name] for col_name in col_names
                 ]
-                # Set LAZY_ATTRS
+                # Set lazy attributes
                 stype_encoder.out_channels = out_channels
                 stype_encoder.stats_list = stats_list
                 self.encoder_dict[stype.value] = stype_encoder
