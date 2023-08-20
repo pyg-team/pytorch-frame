@@ -17,10 +17,10 @@ from torch_frame.nn.encoder.stype_encoder import (
 
 class StypeWiseFeatureEncoder(FeatureEncoder):
     r"""Feature encoder that transforms each Stype tensor into embeddings and
-    performs the final concatenatenation.
+    performs the final concatenation.
 
     Args:
-        out_channels (int): Output dimensionality
+        out_channels (int): Output dimensionality.
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
             column name into stats. Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[torch_frame.Stype, List[str]]): A dictionary that
@@ -46,7 +46,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         self.col_names_dict = col_names_dict
         self.encoder_dict = ModuleDict()
         for stype, stype_encoder in stype_encoder_dict.items():
-            if stype not in stype_encoder.stype_supported:
+            if stype not in stype_encoder.supported_stype:
                 raise ValueError(
                     f"{stype_encoder} does not support encoding {stype}.")
 

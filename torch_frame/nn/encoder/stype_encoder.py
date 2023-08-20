@@ -20,7 +20,7 @@ class StypeEncoder(Module, ABC):
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same Stype.
     """
-    stype_supported: Set[Stype] = {}
+    supported_stype: Set[Stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list'}
 
     @abstractmethod
@@ -44,9 +44,9 @@ class StypeEncoder(Module, ABC):
 
 class EmbeddingEncoder(StypeEncoder):
     r"""Embedding look-up based encoder for categorical features. It applies
-    :obj:`torch.nn.Embedding` for each categorical feature and concatenate the
-    output embeddings."""
-    stype_supported = {Stype.categorical}
+    :class:`torch.nn.Embedding` for each categorical feature and concatenates
+    the output embeddings."""
+    supported_stype = {Stype.categorical}
 
     def __init__(
         self,
@@ -77,7 +77,7 @@ class EmbeddingEncoder(StypeEncoder):
 
     def reset_parameters(self):
         for emb in self.embs:
-            torch.nn.init.normal_(emb.weight)
+            emb.reset_parameters()
 
 
 class LinearEncoder(StypeEncoder):
@@ -85,7 +85,7 @@ class LinearEncoder(StypeEncoder):
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
     and concatenates the output embeddings. Note that the implementation does
     this for all numerical features in a batched manner."""
-    stype_supported = {Stype.numerical}
+    supported_stype = {Stype.numerical}
 
     def __init__(
         self,
@@ -98,8 +98,8 @@ class LinearEncoder(StypeEncoder):
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
-        std = torch.tensor(
-            [stats[StatType.STD] + 1e-6 for stats in self.stats_list]) + 1e-6
+        std = torch.tensor([stats[StatType.STD]
+                            for stats in self.stats_list]) + 1e-6
         self.register_buffer('std', std)
         num_cols = len(self.stats_list)
         self.lin = Linear(num_cols, self.out_channels)
@@ -115,11 +115,9 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ij,kj->ijk', x, self.lin.weight)
-        # [batch_size, num_cols], [channels]
+        # [batch_size, num_cols, channels] + [channels]
         # -> [batch_size, num_cols, channels]
-        x_bias = torch.einsum('ij,k->ijk', x, self.lin.bias)
-        # [batch_size, num_cols, channels]
-        x = x_lin + x_bias
+        x = x_lin + self.lin.bias
         return x
 
     def reset_parameters(self):
