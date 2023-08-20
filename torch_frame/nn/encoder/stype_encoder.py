@@ -29,9 +29,7 @@ class StypeEncoder(Module, ABC):
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
     ):
-        super().__init__()
-        self.out_channels = out_channels
-        self.stats_list = stats_list
+        super().__init__(out_channels, stats_list)
 
     @abstractmethod
     def forward(self, x: Tensor):
