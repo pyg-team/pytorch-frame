@@ -14,11 +14,6 @@ from torch_frame.nn.encoder.stype_encoder import (
     StypeEncoder,
 )
 
-DEFAULT_STYPE_ENCODER_DICT: Dict[Stype, StypeEncoder] = {
-    Stype.categorical: EmbeddingEncoder(),
-    Stype.numerical: LinearEncoder(),
-}
-
 
 class StypeWiseFeatureEncoder(FeatureEncoder):
     r"""Feature encoder that transforms each Stype tensor into embeddings and
@@ -40,8 +35,10 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         out_channels: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.Stype, List[str]],
-        stype_encoder_dict: Dict[Stype,
-                                 StypeEncoder] = DEFAULT_STYPE_ENCODER_DICT,
+        stype_encoder_dict: Dict[Stype, StypeEncoder] = {
+            Stype.categorical: EmbeddingEncoder(),
+            Stype.numerical: LinearEncoder(),
+        },
     ):
         super().__init__()
 
