@@ -20,7 +20,7 @@ class StypeEncoder(Module, ABC):
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same Stype.
     """
-    supported_stype: Set[Stype] = {}
+    supported_stypes: Set[Stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list'}
 
     @abstractmethod
@@ -46,7 +46,7 @@ class EmbeddingEncoder(StypeEncoder):
     r"""Embedding look-up based encoder for categorical features. It applies
     :class:`torch.nn.Embedding` for each categorical feature and concatenates
     the output embeddings."""
-    supported_stype = {Stype.categorical}
+    supported_stypes = {Stype.categorical}
 
     def __init__(
         self,
@@ -85,7 +85,7 @@ class LinearEncoder(StypeEncoder):
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
     and concatenates the output embeddings. Note that the implementation does
     this for all numerical features in a batched manner."""
-    supported_stype = {Stype.numerical}
+    supported_stypes = {Stype.numerical}
 
     def __init__(
         self,

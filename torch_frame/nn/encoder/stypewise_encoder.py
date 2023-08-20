@@ -39,7 +39,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         self.col_names_dict = col_names_dict
         self.encoder_dict = ModuleDict()
         for stype, stype_encoder in stype_encoder_dict.items():
-            if stype not in stype_encoder.supported_stype:
+            if stype not in stype_encoder.supported_stypes:
                 raise ValueError(
                     f"{stype_encoder} does not support encoding {stype}.")
 
