@@ -4,11 +4,10 @@ import torch_frame
 
 
 class AdultCensusIncome(torch_frame.data.Dataset):
-    r"""The Adult Census Income dataset from the
-    `<https://www.kaggle.com/datasets/uciml/adult-census-income>`_.
-    The Adult Census Income dataset is to predict whether one's
-    income exceeds 50K.
-    """
+    r"""The `Adult Census Income
+    <https://www.kaggle.com/datasets/uciml/adult-census-income>`_
+    dataset. It's extracted from census bureau database and the task
+    is to predict whether a person's income exceeds $50K/yr."""
 
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'  # noqa
 
