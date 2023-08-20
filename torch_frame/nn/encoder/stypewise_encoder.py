@@ -8,11 +8,7 @@ import torch_frame
 from torch_frame import Stype, TensorFrame
 from torch_frame.data.stats import StatType
 from torch_frame.nn.encoder import FeatureEncoder
-from torch_frame.nn.encoder.stype_encoder import (
-    EmbeddingEncoder,
-    LinearEncoder,
-    StypeEncoder,
-)
+from torch_frame.nn.encoder.stype_encoder import StypeEncoder
 
 
 class StypeWiseFeatureEncoder(FeatureEncoder):
@@ -35,10 +31,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         out_channels: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.Stype, List[str]],
-        stype_encoder_dict: Dict[Stype, StypeEncoder] = {
-            Stype.categorical: EmbeddingEncoder(),
-            Stype.numerical: LinearEncoder(),
-        },
+        stype_encoder_dict: Dict[Stype, StypeEncoder],
     ):
         super().__init__()
 
