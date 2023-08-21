@@ -16,7 +16,7 @@ class Titanic(torch_frame.data.Dataset):
         path = self.download_url(self.url, root)
         df = pd.read_csv(path, index_col=['PassengerId'])
 
-        stypes = {  # TODO Use 'Name', 'Ticket' and 'Cabin'.
+        col_to_stype = {  # TODO Use 'Name', 'Ticket' and 'Cabin'.
             'Survived': torch_frame.categorical,
             'Pclass': torch_frame.categorical,
             'Sex': torch_frame.categorical,
@@ -27,4 +27,4 @@ class Titanic(torch_frame.data.Dataset):
             'Embarked': torch_frame.categorical,
         }
 
-        super().__init__(df, stypes, target_col='Survived')
+        super().__init__(df, col_to_stype, target_col='Survived')
