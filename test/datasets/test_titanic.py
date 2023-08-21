@@ -30,10 +30,10 @@ def test_titanic(tmp_path):
 
     col_stats = dataset.col_stats
     assert len(col_stats) == 8
-    assert StatType.CATEGORY_COUNTS in col_stats['Survived']
-    assert StatType.CATEGORY_COUNTS in col_stats['Pclass']
-    assert StatType.CATEGORY_COUNTS in col_stats['Sex']
-    assert StatType.CATEGORY_COUNTS in col_stats['Embarked']
+    assert StatType.COUNT in col_stats['Survived']
+    assert StatType.COUNT in col_stats['Pclass']
+    assert StatType.COUNT in col_stats['Sex']
+    assert StatType.COUNT in col_stats['Embarked']
     assert StatType.MEAN and StatType.STD in col_stats['Age']
     assert StatType.MEAN and StatType.STD in col_stats['SibSp']
     assert StatType.MEAN and StatType.STD in col_stats['Parch']

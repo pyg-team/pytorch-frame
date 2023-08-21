@@ -141,8 +141,8 @@ class Dataset(ABC):
                 mapper = NumericalTensorMapper()
 
             elif stype == torch_frame.categorical:
-                mapper = CategoricalTensorMapper(
-                    self._col_stats[col][StatType.CATEGORY_COUNTS][0])
+                categories = self._col_stats[col][StatType.COUNT][0]
+                mapper = CategoricalTensorMapper(categories)
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "

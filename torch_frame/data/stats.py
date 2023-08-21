@@ -14,7 +14,7 @@ class StatType(Enum):
     STD = 'STD'
 
     # Categorical:
-    CATEGORY_COUNTS = 'CATEGORY_COUNTS'
+    COUNT = 'COUNT'
 
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
@@ -25,7 +25,7 @@ class StatType(Enum):
             ]
         elif stype == torch_frame.categorical:
             return [
-                StatType.CATEGORY_COUNTS,
+                StatType.COUNT,
             ]
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
@@ -37,9 +37,9 @@ class StatType(Enum):
         elif self == StatType.STD:
             return np.std(ser.values).item()
 
-        elif self == StatType.CATEGORY_COUNTS:
-            counts = ser.value_counts(ascending=False)
-            return counts.index.tolist(), counts.values.tolist()
+        elif self == StatType.COUNT:
+            count = ser.value_counts(ascending=False)
+            return count.index.tolist(), count.values.tolist()
 
         raise NotImplementedError(f"Invalid stat type '{self.value}'")
 
@@ -49,7 +49,10 @@ def compute_col_stats(
     stype: torch_frame.stype,
 ) -> Dict[StatType, Any]:
 
-    with pd.option_context('mode.use_inf_as_na', True):
+    if stype == torch_frame.numerical:
+        with pd.option_context('mode.use_inf_as_na', True):
+            ser = ser.dropna()
+    else:
         ser = ser.dropna()
 
     return {
