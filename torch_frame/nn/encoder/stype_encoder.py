@@ -56,7 +56,7 @@ class EmbeddingEncoder(StypeEncoder):
     def init_modules(self):
         self.embs = ModuleList([])
         for stats in self.stats_list:
-            num_categories = len(stats[StatType.CATEGORY_COUNTS][0])
+            num_categories = len(stats[StatType.COUNT][0])
             self.embs.append(Embedding(num_categories, self.out_channels))
 
     def forward(self, x: Tensor):

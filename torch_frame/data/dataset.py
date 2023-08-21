@@ -27,7 +27,7 @@ class Dataset(ABC):
     def __init__(
         self,
         df: DataFrame,
-        col_to_stype: Dict[str, torch_frame.stype],
+        col_to_stype: Dict[str, torch_frame.Stype],
         target_col: Optional[str] = None,
     ):
         self.df = df
@@ -90,54 +90,6 @@ class Dataset(ABC):
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
             self._col_stats[col] = compute_col_stats(self.df[col], stype)
-
-        # 2. Create the `TensorFrame`:
-        self._tensor_frame = self._to_tensor_frame(device)
-
-        # 3. Mark the dataset as materialized:
-        self._is_materialized = True
-
-        return self
-
-    @property
-    def is_materialized(self) -> bool:
-        r"""Whether the dataset is already materialized."""
-        return self._is_materialized
-
-    @property
-    def tensor_frame(self) -> TensorFrame:
-        r"""Returns the :class:`TensorFrame` of the dataset."""
-        if not self.is_materialized:
-            raise RuntimeError(
-                f"Cannot request the `TensorFrame` of '{self}' since its data "
-                f"is not yet materialized. Please call "
-                f"`dataset.materialize(...)` first.")
-
-        return self._tensor_frame
-
-    @property
-    def col_stats(self) -> Dict[str, Dict[StatType, Any]]:
-        r"""Returns column-wise dataset statistics."""
-        if not self.is_materialized:
-            raise RuntimeError(
-                f"Cannot request column-level statistics of '{self}' since "
-                f"its data is not yet materialized. Please call "
-                f"`dataset.materialize(...)` first.")
-
-        return self._col_stats
-
-    # Materialization #########################################################
-
-    def materialize(self, device: Optional[torch.device] = None) -> 'Dataset':
-        r"""Materializes the dataset into a tensor representation. From this
-        point onwards, the dataset should be treated as read-only."""
-        if self.is_materialized:
-            return self
-
-        # 1. Fill column statistics:
-        for col_name, stype in self.stypes.items():
-            self._col_stats[col_name] = compute_col_stats(
-                self.df[col_name], stype)
 
         # 2. Create the `TensorFrame`:
         self._tensor_frame = self._to_tensor_frame(device)

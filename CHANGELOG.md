@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `StypeWiseFeatureEncoder` ([#16](https://github.com/pyg-team/pytorch-frame/pull/16))
 - Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
 - Added `FTTransformer` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
-- Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
 - Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
 - Added `DataLoader` capabilities ([#11](https://github.com/pyg-team/pytorch-frame/pull/11))
 - Added `TensorFrame.index_select` functionality ([#10](https://github.com/pyg-team/pytorch-frame/pull/10))

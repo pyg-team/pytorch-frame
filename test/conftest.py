@@ -49,7 +49,7 @@ def get_fake_dataset() -> Callable:
             df['target'][np.random.randint(0, 2, (num_rows, ),
                                            dtype=bool)] = np.nan
 
-        stypes = {
+        col_to_stype = {
             'a': Stype.numerical,
             'b': Stype.numerical,
             'c': Stype.numerical,
@@ -60,7 +60,7 @@ def get_fake_dataset() -> Callable:
 
         return Dataset(
             df=df,
-            stypes=stypes,
+            col_to_stype=col_to_stype,
             target_col='target',
         )
 
