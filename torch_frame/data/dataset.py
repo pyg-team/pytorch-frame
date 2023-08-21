@@ -20,18 +20,18 @@ class Dataset(ABC):
 
     Args:
         df (DataFrame): The tabular data frame.
-        stypes (Dict[str, torch_frame.stype]): A dictionary that maps each
-            column in the data frame to a semantic type.
+        col_to_stype (Dict[str, torch_frame.stype]): A dictionary that maps
+            each column in the data frame to a semantic type.
         target_col (str, optional): The column used as target.
     """
     def __init__(
         self,
         df: DataFrame,
-        stypes: Dict[str, torch_frame.stype],
+        col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
     ):
         self.df = df
-        self.stypes = stypes
+        self.col_to_stype = col_to_stype
         self.target_col = target_col
 
         cols = self.feat_cols + ([] if target_col is None else [target_col])
@@ -74,10 +74,10 @@ class Dataset(ABC):
     @property
     def feat_cols(self) -> List[str]:
         r"""The input feature columns of the dataset."""
-        columns = list(self.stypes.keys())
+        cols = list(self.col_to_stype.keys())
         if self.target_col is not None:
-            columns.remove(self.target_col)
-        return columns
+            cols.remove(self.target_col)
+        return cols
 
     # Materialization #########################################################
 
@@ -88,9 +88,8 @@ class Dataset(ABC):
             return self
 
         # 1. Fill column statistics:
-        for col_name, stype in self.stypes.items():
-            self._col_stats[col_name] = compute_col_stats(
-                self.df[col_name], stype)
+        for col, stype in self.col_to_stype.items():
+            self._col_stats[col] = compute_col_stats(self.df[col], stype)
 
         # 2. Create the `TensorFrame`:
         self._tensor_frame = self._to_tensor_frame(device)
@@ -136,26 +135,26 @@ class Dataset(ABC):
         col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
         y: Optional[Tensor] = None
 
-        for col_name, stype in self.stypes.items():
+        for col, stype in self.col_to_stype.items():
 
             if stype == torch_frame.numerical:
                 mapper = NumericalTensorMapper()
 
             elif stype == torch_frame.categorical:
                 mapper = CategoricalTensorMapper(
-                    self._col_stats[col_name][StatType.CATEGORY_COUNTS][0])
+                    self._col_stats[col][StatType.CATEGORY_COUNTS][0])
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "
                                           f"type '{stype.value}'")
 
-            out = mapper.forward(self.df[col_name], device=device)
+            out = mapper.forward(self.df[col], device=device)
 
-            if col_name == self.target_col:
+            if col == self.target_col:
                 y = out
             else:
                 xs_dict[stype].append(out)
-                col_names_dict[stype].append(col_name)
+                col_names_dict[stype].append(col)
 
         x_dict = {
             stype: torch.stack(xs, dim=1)
