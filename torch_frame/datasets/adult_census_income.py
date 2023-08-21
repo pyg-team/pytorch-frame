@@ -7,7 +7,7 @@ class AdultCensusIncome(torch_frame.data.Dataset):
     r"""The `Adult Census Income
     <https://www.kaggle.com/datasets/uciml/adult-census-income>`_
     dataset. It's extracted from census bureau database and the task
-    is to predict whether a person's income exceeds $50K/yr."""
+    is to predict whether a person's income exceeds $50K/year."""
 
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'  # noqa
 
@@ -32,7 +32,7 @@ class AdultCensusIncome(torch_frame.data.Dataset):
         ]
         df = pd.read_csv(path, names=names)
 
-        stypes = {
+        col_to_stype = {
             'age': torch_frame.numerical,
             'workclass': torch_frame.categorical,
             'education': torch_frame.categorical,
@@ -48,4 +48,4 @@ class AdultCensusIncome(torch_frame.data.Dataset):
             'income': torch_frame.categorical,
         }
 
-        super().__init__(df, stypes, target_col='income')
+        super().__init__(df, col_to_stype, target_col='income')
