@@ -168,17 +168,16 @@ class Dataset(ABC):
                 mapper = NumericalTensorMapper()
 
             elif stype == torch_frame.categorical:
-                if col == self.target_col:
+                index, value = self._col_stats[col][StatType.COUNT]
+
+                if col == self.target_col and len(index) == 2:
                     # Sort categories lexicographically such that we do not
                     # accidentially swap labels in binary classification tasks.
-                    count = self._col_stats[col][StatType.COUNT]
-                    count = pd.Series(index=count[0], data=count[1])
-                    count = count.sort_index()
-                    self._col_stats[col][StatType.COUNT] = (
-                        count.index.tolist(), count.values.tolist())
+                    ser = pd.Series(index=index, data=value).sort_index()
+                    index, value = ser.index.tolist(), ser.values.tolist()
+                    self._col_stats[col][StatType.COUNT] = (index, value)
 
-                categories = self._col_stats[col][StatType.COUNT][0]
-                mapper = CategoricalTensorMapper(categories)
+                mapper = CategoricalTensorMapper(index)
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "
