@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Optional
 from torch import Tensor
 
 import torch_frame
+from torch_frame import stype
 from torch_frame.typing import IndexSelectType
 
 
@@ -50,6 +51,12 @@ class TensorFrame:
                 raise ValueError(
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
+
+    @property
+    def stypes(self) -> List[stype]:
+        r"""Returns a canonical ordering of stypes in :obj:`x_dict`"""
+        return list(filter(lambda x: x in self.x_dict,
+                           list(torch_frame.stype)))
 
     @property
     def num_rows(self) -> int:
