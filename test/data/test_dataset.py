@@ -24,6 +24,7 @@ def test_index_select():
 
     assert len(dataset[0]) == 1
     assert len(dataset[:5]) == 5
+    assert len(dataset[0.2:0.7]) == 5
     assert len(dataset[[1, 2, 3]]) == 3
     assert len(dataset[torch.tensor([1, 2, 3])]) == 3
     assert len(dataset[torch.tensor(5 * [True] + 5 * [False])]) == 5

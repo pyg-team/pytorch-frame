@@ -1,5 +1,6 @@
 import copy
 import functools
+import math
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -195,7 +196,17 @@ class Dataset(ABC):
     def index_select(self, index: IndexSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`."""
-        index = [index] if isinstance(index, int) else index
+        if isinstance(index, int):
+            index = [index]
+
+        elif isinstance(index, slice):
+            start, stop, step = index.start, index.stop, index.step
+            # Allow floating-point slicing, e.g., dataset[:0.9]
+            if isinstance(start, float):
+                start = math.floor(start * len(self))
+            if isinstance(index.stop, float):
+                stop = math.ceil(stop * len(self))
+            index = slice(start, stop, step)
 
         dataset = copy.copy(self)
 
