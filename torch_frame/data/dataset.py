@@ -1,6 +1,5 @@
 import copy
 import functools
-import math
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -203,9 +202,9 @@ class Dataset(ABC):
             start, stop, step = index.start, index.stop, index.step
             # Allow floating-point slicing, e.g., dataset[:0.9]
             if isinstance(start, float):
-                start = math.floor(start * len(self))
+                start = round(start * len(self))
             if isinstance(stop, float):
-                stop = math.ceil(stop * len(self))
+                stop = round(stop * len(self))
             index = slice(start, stop, step)
 
         dataset = copy.copy(self)
