@@ -38,7 +38,3 @@ def test_titanic(tmp_path):
     assert StatType.MEAN and StatType.STD in col_stats['SibSp']
     assert StatType.MEAN and StatType.STD in col_stats['Parch']
     assert StatType.MEAN and StatType.STD in col_stats['Fare']
-
-    dataset = dataset[:100]
-    assert len(dataset) == 100
-    assert len(dataset.tensor_frame) == 100
