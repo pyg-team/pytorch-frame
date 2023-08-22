@@ -28,10 +28,7 @@ class FakeDataset(torch_frame.data.Dataset):
             'target': np.random.randn(num_rows),
         })
         if with_nan:
-            df['a'][np.random.randint(0, 2, (num_rows, ), dtype=bool)] = np.nan
-            df['x'][np.random.randint(0, 2, (num_rows, ), dtype=bool)] = np.nan
-            df['target'][np.random.randint(0, 2, (num_rows, ),
-                                           dtype=bool)] = np.nan
+            df.iloc[0] = df.iloc[-1] = np.nan
 
         col_to_stype = {
             'a': stype.numerical,
