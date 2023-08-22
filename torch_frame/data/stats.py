@@ -38,7 +38,7 @@ class StatType(Enum):
             return np.std(ser.values).item()
 
         elif self == StatType.COUNT:
-            count = ser.value_counts(ascending=True)
+            count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
 
         raise NotImplementedError(f"Invalid stat type '{self.value}'")
