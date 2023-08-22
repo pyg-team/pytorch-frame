@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added indexing/shuffling and column select functionality in `Dataset` ([#18](https://github.com/pyg-team/pytorch-frame/pull/18))
+- Added the `Adult Census Income` dataset ([#17](https://github.com/pyg-team/pytorch-frame/pull/17))
 - Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
 - Added `FTTransformer` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
 - Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
