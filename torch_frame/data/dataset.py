@@ -204,7 +204,7 @@ class Dataset(ABC):
             # Allow floating-point slicing, e.g., dataset[:0.9]
             if isinstance(start, float):
                 start = math.floor(start * len(self))
-            if isinstance(index.stop, float):
+            if isinstance(stop, float):
                 stop = math.ceil(stop * len(self))
             index = slice(start, stop, step)
 
