@@ -38,7 +38,10 @@ class StatType(Enum):
             return np.std(ser.values).item()
 
         elif self == StatType.COUNT:
-            count = ser.value_counts(ascending=False)
+            count = ser.value_counts()
+            # Ensure that categories are sorted lexicographically such that we
+            # do not accidentially swap labels in binary classification tasks.
+            count = count.sort_index()
             return count.index.tolist(), count.values.tolist()
 
         raise NotImplementedError(f"Invalid stat type '{self.value}'")
