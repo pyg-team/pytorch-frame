@@ -1,5 +1,6 @@
 from torch_frame import stype
 from torch_frame.data.dataset import Dataset
+from torch_frame.datasets import FakeDataset
 from torch_frame.nn.encoder import (
     EmbeddingEncoder,
     LinearEncoder,
@@ -7,8 +8,8 @@ from torch_frame.nn.encoder import (
 )
 
 
-def test_stypewise_feature_encoder(get_fake_dataset):
-    dataset: Dataset = get_fake_dataset(num_rows=10, with_nan=False)
+def test_stypewise_feature_encoder():
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
 
