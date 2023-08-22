@@ -5,6 +5,7 @@ import torch
 
 import torch_frame
 from torch_frame.data import Dataset
+from torch_frame.data.stats import StatType
 
 
 def get_dataset(num_rows: int):  # TODO Use `FakeDataset` once available
@@ -46,3 +47,19 @@ def test_col_select():
 
     with pytest.raises(RuntimeError, match="post materialization"):
         dataset.materialize()[['B']]
+
+
+def test_categorical_target_order():
+    # Ensures that we do not swap labels in binary classification tasks.
+    df = pd.DataFrame({'A': [0, 1, 1], 'B': [0, 1, 1]})
+    col_to_stype = {'A': torch_frame.categorical, 'B': torch_frame.categorical}
+    dataset = Dataset(df, col_to_stype, target_col='B').materialize()
+
+    assert dataset.col_stats['A'][StatType.COUNT] == ([1, 0], [2, 1])
+    assert dataset.col_stats['B'][StatType.COUNT] == ([0, 1], [1, 2])
+
+    assert torch.equal(
+        dataset.tensor_frame.x_dict[torch_frame.categorical],
+        torch.tensor([[1], [0], [0]]),
+    )
+    assert torch.equal(dataset.tensor_frame.y, torch.tensor([0, 1, 1]))

@@ -4,6 +4,7 @@ from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import pandas as pd
 import torch
 from torch import Tensor
 
@@ -167,8 +168,16 @@ class Dataset(ABC):
                 mapper = NumericalTensorMapper()
 
             elif stype == torch_frame.categorical:
-                categories = self._col_stats[col][StatType.COUNT][0]
-                mapper = CategoricalTensorMapper(categories)
+                index, value = self._col_stats[col][StatType.COUNT]
+
+                if col == self.target_col and len(index) == 2:
+                    # Sort categories lexicographically such that we do not
+                    # accidentially swap labels in binary classification tasks.
+                    ser = pd.Series(index=index, data=value).sort_index()
+                    index, value = ser.index.tolist(), ser.values.tolist()
+                    self._col_stats[col][StatType.COUNT] = (index, value)
+
+                mapper = CategoricalTensorMapper(index)
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "
