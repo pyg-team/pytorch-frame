@@ -204,7 +204,17 @@ class Dataset(ABC):
     def index_select(self, index: IndexSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`."""
-        index = [index] if isinstance(index, int) else index
+        if isinstance(index, int):
+            index = [index]
+
+        elif isinstance(index, slice):
+            start, stop, step = index.start, index.stop, index.step
+            # Allow floating-point slicing, e.g., dataset[:0.9]
+            if isinstance(start, float):
+                start = round(start * len(self))
+            if isinstance(stop, float):
+                stop = round(stop * len(self))
+            index = slice(start, stop, step)
 
         dataset = copy.copy(self)
 
