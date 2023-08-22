@@ -114,7 +114,7 @@ class LinearEncoder(StypeEncoder):
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ij,kj->ijk', x, self.weight)
+        x_lin = torch.einsum('ij,jk->ijk', x, self.weight)
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias

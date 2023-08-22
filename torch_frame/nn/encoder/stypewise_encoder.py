@@ -56,7 +56,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
     def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
         col_names = []
         xs = []
-        for stype in tf.stype_list:
+        for stype in tf.stypes:
             x = tf.x_dict[stype]
             x = self.encoder_dict[stype.value](x)
             xs.append(x)
