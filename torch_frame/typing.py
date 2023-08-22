@@ -7,3 +7,4 @@ Series = pd.Series
 DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
+ColumnSelectType = Union[str, List[str]]

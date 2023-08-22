@@ -77,6 +77,7 @@ class TensorFrame:
         return (f'{self.__class__.__name__}(\n'
                 f'  num_rows={self.num_rows},\n'
                 f'{stype_repr}\n'
+                f'  has_target={self.y is not None},\n'
                 f')')
 
     def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':

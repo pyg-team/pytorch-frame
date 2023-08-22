@@ -1,7 +1,10 @@
+import copy
+import functools
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import pandas as pd
 import torch
 from torch import Tensor
 
@@ -12,7 +15,31 @@ from torch_frame.data.mapper import (
     NumericalTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.typing import DataFrame
+from torch_frame.typing import ColumnSelectType, DataFrame, IndexSelectType
+
+
+def requires_pre_materialization(func):
+    @functools.wraps(func)
+    def _requires_pre_materialization(self, *args, **kwargs):
+        if self.is_materialized:
+            raise RuntimeError(
+                f"'{self}' cannot be modified via '{func.__name__}' post "
+                f"materialization")
+        return func(self, *args, **kwargs)
+
+    return _requires_pre_materialization
+
+
+def requires_post_materialization(func):
+    @functools.wraps(func)
+    def _requires_post_materialization(self, *args, **kwargs):
+        if not self.is_materialized:
+            raise RuntimeError(
+                f"'{func.__name__}' requires a materialized dataset. Please "
+                f"call `dataset.materialize(...)` first.")
+        return func(self, *args, **kwargs)
+
+    return _requires_post_materialization
 
 
 class Dataset(ABC):
@@ -71,6 +98,16 @@ class Dataset(ABC):
     def __len__(self) -> int:
         return len(self.df)
 
+    def __getitem__(self, index: IndexSelectType) -> 'Dataset':
+        is_col_select = isinstance(index, str)
+        is_col_select |= (isinstance(index, (list, tuple)) and len(index) > 0
+                          and isinstance(index[0], str))
+
+        if is_col_select:
+            return self.col_select(index)
+
+        return self.index_select(index)
+
     @property
     def feat_cols(self) -> List[str]:
         r"""The input feature columns of the dataset."""
@@ -105,25 +142,15 @@ class Dataset(ABC):
         return self._is_materialized
 
     @property
+    @requires_post_materialization
     def tensor_frame(self) -> TensorFrame:
         r"""Returns the :class:`TensorFrame` of the dataset."""
-        if not self.is_materialized:
-            raise RuntimeError(
-                f"Cannot request the `TensorFrame` of '{self}' since its data "
-                f"is not yet materialized. Please call "
-                f"`dataset.materialize(...)` first.")
-
         return self._tensor_frame
 
     @property
+    @requires_post_materialization
     def col_stats(self) -> Dict[str, Dict[StatType, Any]]:
         r"""Returns column-wise dataset statistics."""
-        if not self.is_materialized:
-            raise RuntimeError(
-                f"Cannot request column-level statistics of '{self}' since "
-                f"its data is not yet materialized. Please call "
-                f"`dataset.materialize(...)` first.")
-
         return self._col_stats
 
     def _to_tensor_frame(
@@ -141,8 +168,16 @@ class Dataset(ABC):
                 mapper = NumericalTensorMapper()
 
             elif stype == torch_frame.categorical:
-                categories = self._col_stats[col][StatType.COUNT][0]
-                mapper = CategoricalTensorMapper(categories)
+                index, value = self._col_stats[col][StatType.COUNT]
+
+                if col == self.target_col and len(index) == 2:
+                    # Sort categories lexicographically such that we do not
+                    # accidentially swap labels in binary classification tasks.
+                    ser = pd.Series(index=index, data=value).sort_index()
+                    index, value = ser.index.tolist(), ser.values.tolist()
+                    self._col_stats[col][StatType.COUNT] = (index, value)
+
+                mapper = CategoricalTensorMapper(index)
 
             else:
                 raise NotImplementedError(f"Unable to process the semantic "
@@ -162,3 +197,54 @@ class Dataset(ABC):
         }
 
         return TensorFrame(x_dict, col_names_dict, y)
+
+    # Indexing ################################################################
+
+    @requires_post_materialization
+    def index_select(self, index: IndexSelectType) -> 'Dataset':
+        r"""Returns a subset of the dataset from specified indices
+        :obj:`index`."""
+        if isinstance(index, int):
+            index = [index]
+
+        elif isinstance(index, slice):
+            start, stop, step = index.start, index.stop, index.step
+            # Allow floating-point slicing, e.g., dataset[:0.9]
+            if isinstance(start, float):
+                start = round(start * len(self))
+            if isinstance(stop, float):
+                stop = round(stop * len(self))
+            index = slice(start, stop, step)
+
+        dataset = copy.copy(self)
+
+        iloc = index.cpu().numpy() if isinstance(index, Tensor) else index
+        dataset.df = self.df.iloc[iloc]
+
+        dataset._tensor_frame = self._tensor_frame[index]
+
+        return dataset
+
+    def shuffle(
+        self, return_perm: bool = False
+    ) -> Union['Dataset', Tuple['Dataset', Tensor]]:
+        r"""Randomly shuffles the rows in the dataset."""
+        perm = torch.randperm(len(self))
+        dataset = self.index_select(perm)
+        return (dataset, perm) if return_perm is True else dataset
+
+    @requires_pre_materialization
+    def col_select(self, cols: ColumnSelectType) -> 'Dataset':
+        r"""Returns a subset of the dataset from specified columns
+        :obj:`cols`."""
+        cols = [cols] if isinstance(cols, str) else cols
+
+        if self.target_col is not None and self.target_col not in cols:
+            cols.append(self.target_col)
+
+        dataset = copy.copy(self)
+
+        dataset.df = self.df[cols]
+        dataset.col_to_stype = {col: self.col_to_stype[col] for col in cols}
+
+        return dataset
