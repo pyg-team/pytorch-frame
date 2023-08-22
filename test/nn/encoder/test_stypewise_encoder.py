@@ -1,4 +1,4 @@
-from torch_frame import Stype
+from torch_frame import stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.nn.encoder import (
     EmbeddingEncoder,
@@ -15,8 +15,8 @@ def test_stypewise_feature_encoder(get_fake_dataset):
     encoder = StypeWiseFeatureEncoder(
         out_channels=8, col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict, stype_encoder_dict={
-            Stype.categorical: EmbeddingEncoder(),
-            Stype.numerical: LinearEncoder(),
+            stype.categorical: EmbeddingEncoder(),
+            stype.numerical: LinearEncoder(),
         })
     x, col_names = encoder(tensor_frame)
     assert x.shape == (10, 5, 8)

@@ -27,7 +27,7 @@ class Dataset(ABC):
     def __init__(
         self,
         df: DataFrame,
-        col_to_stype: Dict[str, torch_frame.Stype],
+        col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
     ):
         self.df = df
@@ -131,8 +131,8 @@ class Dataset(ABC):
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
 
-        xs_dict: Dict[torch_frame.Stype, List[Tensor]] = defaultdict(list)
-        col_names_dict: Dict[torch_frame.Stype, List[str]] = defaultdict(list)
+        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+        col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
         y: Optional[Tensor] = None
 
         for col, stype in self.col_to_stype.items():

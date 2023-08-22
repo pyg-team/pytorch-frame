@@ -1,13 +1,11 @@
 from enum import Enum
 
 
-class Stype(Enum):
+class stype(Enum):
     r"""The semantic type of a column."""
     numerical = 'numerical'
     categorical = 'categorical'
 
 
-numerical = Stype('numerical')
-categorical = Stype('categorical')
-
-all_stype_list = [numerical, categorical]
+numerical = stype('numerical')
+categorical = stype('categorical')

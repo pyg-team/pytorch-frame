@@ -3,24 +3,24 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, Linear, ModuleList
+from torch.nn import Embedding, ModuleList, Parameter
 
-from torch_frame import Stype
+from torch_frame import stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
 
 
 class StypeEncoder(Module, ABC):
     r"""Base class for stype encoder. This module transforms tensor of a
-    specific stype, i.e., `Tensorframe.x_dict[Stype.xxx]` into 3-dimensional
+    specific stype, i.e., `Tensorframe.x_dict[stype.xxx]` into 3-dimensional
     column-wise tensor that is input into :class:`TableConv`.
 
     Args:
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
-            column within the same Stype.
+            column within the same stype.
     """
-    supported_stypes: Set[Stype] = {}
+    supported_stypes: Set[stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list'}
 
     @abstractmethod
@@ -44,7 +44,7 @@ class EmbeddingEncoder(StypeEncoder):
     r"""Embedding look-up based encoder for categorical features. It applies
     :class:`torch.nn.Embedding` for each categorical feature and concatenates
     the output embeddings."""
-    supported_stypes = {Stype.categorical}
+    supported_stypes = {stype.categorical}
 
     def __init__(
         self,
@@ -63,6 +63,7 @@ class EmbeddingEncoder(StypeEncoder):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].
         """
+        # TODO: Make this more efficient.
         # TODO weihua: Handle Nan
 
         # x: [batch_size, num_cols]
@@ -83,7 +84,7 @@ class LinearEncoder(StypeEncoder):
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
     and concatenates the output embeddings. Note that the implementation does
     this for all numerical features in a batched manner."""
-    supported_stypes = {Stype.numerical}
+    supported_stypes = {stype.numerical}
 
     def __init__(
         self,
@@ -100,7 +101,8 @@ class LinearEncoder(StypeEncoder):
                             for stats in self.stats_list]) + 1e-6
         self.register_buffer('std', std)
         num_cols = len(self.stats_list)
-        self.lin = Linear(num_cols, self.out_channels)
+        self.weight = Parameter(torch.empty(num_cols, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -112,11 +114,12 @@ class LinearEncoder(StypeEncoder):
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ij,kj->ijk', x, self.lin.weight)
-        # [batch_size, num_cols, channels] + [channels]
+        x_lin = torch.einsum('ij,kj->ijk', x, self.weight)
+        # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
-        x = x_lin + self.lin.bias
+        x = x_lin + self.bias
         return x
 
     def reset_parameters(self):
-        self.lin.reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.zeros_(self.bias)

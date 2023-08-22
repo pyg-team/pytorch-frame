@@ -5,33 +5,33 @@ from torch import Tensor
 from torch.nn import ModuleDict
 
 import torch_frame
-from torch_frame import Stype, TensorFrame
+from torch_frame import TensorFrame
 from torch_frame.data.stats import StatType
 from torch_frame.nn.encoder import FeatureEncoder
 from torch_frame.nn.encoder.stype_encoder import StypeEncoder
 
 
 class StypeWiseFeatureEncoder(FeatureEncoder):
-    r"""Feature encoder that transforms each Stype tensor into embeddings and
+    r"""Feature encoder that transforms each stype tensor into embeddings and
     performs the final concatenation.
 
     Args:
         out_channels (int): Output dimensionality.
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
             column name into stats. Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[torch_frame.Stype, List[str]]): A dictionary that
+        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
             based on the ordering that appear in :obj:`tensor_frame.x_dict`.
             Available as :obj:`tensor_frame.col_names_dict`.
-        stype_encoder_dict (Dict[stype, StypeEncoder]): A dictionary that maps
-            stype into :class:`StypeEncoder` class.
+        stype_encoder_dict (Dict[torch_frame.stype, StypeEncoder]): A
+            dictionary that maps stype into :class:`StypeEncoder` class.
     """
     def __init__(
         self,
         out_channels: int,
         col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.Stype, List[str]],
-        stype_encoder_dict: Dict[Stype, StypeEncoder],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+        stype_encoder_dict: Dict[torch_frame.stype, StypeEncoder],
     ):
         super().__init__()
 

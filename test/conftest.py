@@ -6,7 +6,7 @@ import pytest
 import torch
 
 import torch_frame
-from torch_frame import Stype, TensorFrame
+from torch_frame import TensorFrame, stype
 from torch_frame.data import Dataset
 
 
@@ -50,12 +50,12 @@ def get_fake_dataset() -> Callable:
                                            dtype=bool)] = np.nan
 
         col_to_stype = {
-            'a': Stype.numerical,
-            'b': Stype.numerical,
-            'c': Stype.numerical,
-            'x': Stype.categorical,
-            'y': Stype.categorical,
-            'target': Stype.numerical,
+            'a': stype.numerical,
+            'b': stype.numerical,
+            'c': stype.numerical,
+            'x': stype.categorical,
+            'y': stype.categorical,
+            'target': stype.numerical,
         }
 
         return Dataset(
