@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `TromptDownstream` ([#24](https://github.com/pyg-team/pytorch-frame/pull/24))
+- Added `TromptDecoder` ([#24](https://github.com/pyg-team/pytorch-frame/pull/24))
 - Added `TromptConv` ([#23](https://github.com/pyg-team/pytorch-frame/pull/23))
 - Added `StypeWiseFeatureEncoder` ([#16](https://github.com/pyg-team/pytorch-frame/pull/16))
 - Added indexing/shuffling and column select functionality in `Dataset` ([#18](https://github.com/pyg-team/pytorch-frame/pull/18), [#19](https://github.com/pyg-team/pytorch-frame/pull/19))

@@ -7,7 +7,7 @@ from torch_frame.nn.conv import TableConv
 
 
 class TromptConv(TableConv):
-    """The Trompt cell introduced in https://arxiv.org/abs/2305.18446
+    r"""The Trompt cell introduced in https://arxiv.org/abs/2305.18446
 
     Args:
         channels (int): Input/output channel dimensionality
