@@ -39,6 +39,7 @@ def test_stype_feature_encoder_with_nan():
     x = encoder(x_cat)
     assert x.shape == (10, 2, 8)
     assert (x[isnan_mask, :] == 0).all()
+    # Make sure original data is not modified
     assert (x_cat[isnan_mask] == -1).all()
 
     stats_list = [
@@ -51,4 +52,5 @@ def test_stype_feature_encoder_with_nan():
     x = encoder(x_num)
     assert x.shape == (10, 3, 8)
     assert (x[isnan_mask, :] == 0).all()
+    # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()
