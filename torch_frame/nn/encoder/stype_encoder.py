@@ -69,7 +69,8 @@ class EmbeddingEncoder(StypeEncoder):
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
-        outputs all-zero embedding for :obj:`NaN` category (specified as -1).
+        outputs non-learnable all-zero embedding for :obj:`NaN` category
+        (specified as -1).
         """
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
@@ -118,10 +119,8 @@ class LinearEncoder(StypeEncoder):
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
-        outputs all-zero embedding for :obj:`NaN` entries.
+        outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
-        # TODO weihua: Handle Nan
-
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
