@@ -1,5 +1,3 @@
-from typing import List
-
 import torch
 from torch import Tensor
 from torch.nn import Module, ModuleList, Parameter
@@ -29,6 +27,7 @@ class Trompt(Module):
     ):
         super().__init__()
         self.in_channels = in_channels
+        self.out_channels = out_channels
         self.num_cols = num_cols
 
         self.x_prompt = Parameter(torch.empty(num_prompts, in_channels))
@@ -46,7 +45,7 @@ class Trompt(Module):
             trompt_conv.reset_parameters()
         self.trompt_downstream.reset_parameters()
 
-    def forward(self, x: Tensor) -> List[Tensor]:
+    def forward(self, x: Tensor) -> Tensor:
         r"""Transforming :obj:`x` into a series of output predictions at each
         layer.
 
@@ -55,8 +54,8 @@ class Trompt(Module):
                 [batch_size, num_cols, in_channels]
 
         Returns:
-            List[Tensor]: List of output predictions at each layer. Each output
-                has the shape [batch_size, out_channels]
+            stacked_out (Tensor): Output predictions stacked across layers. The
+                shape is [batch_size, num_layers, out_channels].
         """
 
         batch_size = len(x)
@@ -68,5 +67,9 @@ class Trompt(Module):
             x_prompt = trompt_conv(x, x_prompt)
             # [batch_size, out_channels]
             out = self.trompt_downstream(x_prompt)
+            # [batch_size, 1, out_channels]
+            out = out.view(batch_size, 1, self.out_channels)
             outs.append(out)
-        return outs
+        # [batch_size, num_layers, out_channels]
+        stacked_out = torch.cat(outs, dim=1)
+        return stacked_out
