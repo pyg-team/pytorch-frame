@@ -59,6 +59,7 @@ class EmbeddingEncoder(StypeEncoder):
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
             self.embs.append(Embedding(num_categories, self.out_channels))
+        self.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -104,6 +105,7 @@ class LinearEncoder(StypeEncoder):
         num_cols = len(self.stats_list)
         self.weight = Parameter(torch.empty(num_cols, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
