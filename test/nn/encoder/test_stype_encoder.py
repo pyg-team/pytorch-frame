@@ -2,7 +2,7 @@ import torch
 from torch_frame import stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
-from torch_frame.nn.encoder import EmbeddingEncoder, LinearEncoder, PiecewiseLinearEncoder
+from torch_frame.nn.encoder import EmbeddingEncoder, LinearEncoder, LinearBucketEncoder
 
 
 def test_stype_feature_encoder():
@@ -25,25 +25,12 @@ def test_stype_feature_encoder():
     x = encoder(tensor_frame.x_dict[stype.numerical])
     assert x.shape == (10, 3, 8)
 
-
-def test_piecewise_linear_encoder():
-    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
-    dataset.materialize()
-    tensor_frame = dataset.tensor_frame
-
-    # Create a stats list that includes the quantiles
-    stats_list = [
-        dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.numerical]
-    ]
-    encoder = PiecewiseLinearEncoder(out_channels=4, stats_list=stats_list)
+    encoder = LinearBucketEncoder(out_channels=8, stats_list=stats_list)
 
     # Apply the encoder to the numerical columns of the tensor frame
     x_numerical = tensor_frame.x_dict[stype.numerical]
     encoded_x = encoder(x_numerical)
 
-    # Expected shape: [batch_size, num_numerical_cols, 4]
+    # Expected shape: [batch_size, num_numerical_cols, 8]
     assert encoded_x.shape == (
-        10, len(tensor_frame.col_names_dict[stype.numerical]), 4)
-    assert torch.equal(torch.max(encoded_x), torch.tensor(1))
-    assert torch.equal(torch.min(encoded_x), torch.tensor(0))
+        10, len(tensor_frame.col_names_dict[stype.numerical]), 8)

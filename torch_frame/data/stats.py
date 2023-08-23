@@ -20,7 +20,11 @@ class StatType(Enum):
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
         if stype == torch_frame.numerical:
-            return [StatType.MEAN, StatType.STD, StatType.QUANTILES]
+            return [
+                StatType.MEAN,
+                StatType.STD,
+                StatType.QUANTILES,
+            ]
         elif stype == torch_frame.categorical:
             return [
                 StatType.COUNT,

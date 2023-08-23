@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
+import torch.nn as nn
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter
 
@@ -125,14 +126,15 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
 
-class PiecewiseLinearEncoder(StypeEncoder):
+class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
-    linear representation.
+    linear representation, followed by a linear transformation. The original encoding is described in https://arxiv.org/abs/2203.05556.
 
     Args:
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
-            - ColStatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max of the column.
+            - StatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max of the column.
+        out_channels (Optional[int]): The number of output channels for the linear layer.
     """
     supported_stypes = {stype.numerical}
 
@@ -142,12 +144,15 @@ class PiecewiseLinearEncoder(StypeEncoder):
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
     ):
         super().__init__(out_channels, stats_list)
-        self.init_modules()
 
     def init_modules(self):
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
         self.interval = self.boundaries[:, 1:] - self.boundaries[:, :-1] + 1e-9
+
+        # Adding a linear layer
+        input_channels = len(self.boundaries[0]) - 1
+        self.linear_layer = nn.Linear(input_channels, self.out_channels)
 
     def forward(self, x: Tensor):
         encoded_values = []
@@ -170,8 +175,10 @@ class PiecewiseLinearEncoder(StypeEncoder):
                                  0) + greater_mask * (1 - one_hot_mask)
             encoded_values.append(encoded_value)
 
-        return torch.stack(encoded_values, dim=1).squeeze()
+        # Apply linear layer to the encoded values
+        encoded_values = torch.stack(encoded_values, dim=1).squeeze()
+        return self.linear_layer(encoded_values)
 
     def reset_parameters(self):
-        # No learnable parameters to reset in this case
-        pass
+        # Reset learnable parameters of the linear layer
+        self.linear_layer.reset_parameters()
