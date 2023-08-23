@@ -35,6 +35,7 @@ class Trompt(Module):
             TromptConv(in_channels, num_cols, num_prompts)
             for _ in range(num_layers)
         ])
+        # Decoder is shared across layers.
         self.trompt_decoder = TromptDecoder(in_channels, out_channels,
                                             num_prompts)
         self.reset_parameters()
