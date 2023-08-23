@@ -13,12 +13,14 @@ class TromptConv(TableConv):
         channels (int): Input/output channel dimensionality
         num_cols (int): Number of columns
         num_prompts (int): Number of prompt columns.
+        num_groups (int): Number of groups in group norm. (default: 2)
     """
     def __init__(
         self,
         channels: int,
         num_cols: int,
         num_prompts: int,
+        num_groups: int = 2,
     ):
         super().__init__()
         self.channels = channels
@@ -29,11 +31,12 @@ class TromptConv(TableConv):
         self.embedding_column = Parameter(torch.empty(num_cols, channels))
         self.embedding_prompt = Parameter(torch.empty(num_prompts, channels))
         # Dense layer for transforming stacked_e_prompt
-        self.lin = Linear(2 * channels, channels, bias=False)
+        self.lin = Linear(2 * channels, channels)
         # Dense layer for expanding x
         self.weight = Parameter(torch.empty(num_prompts))
         # Group norm
-        self.group_norm = GroupNorm(num_groups=2, num_channels=num_prompts)
+        self.group_norm = GroupNorm(num_groups=num_groups,
+                                    num_channels=num_prompts)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -86,7 +89,6 @@ class TromptConv(TableConv):
 
         # Step 4: Expand x ([batch_size, num_cols, channels]) into
         # shape [batch_size, num_prompts, num_cols, channels]
-        # [batch_size, num_prompts, num_cols, channels]
         x = torch.einsum('ijl,k->ikjl', x, self.weight)
         x = F.relu(x)
         x = self.group_norm(x)
