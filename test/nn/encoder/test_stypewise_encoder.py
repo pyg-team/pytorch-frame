@@ -4,6 +4,7 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn.encoder import (
     EmbeddingEncoder,
     LinearEncoder,
+    LinearBucketEncoder,
     StypeWiseFeatureEncoder,
 )
 
@@ -18,6 +19,16 @@ def test_stypewise_feature_encoder():
         col_names_dict=tensor_frame.col_names_dict, stype_encoder_dict={
             stype.categorical: EmbeddingEncoder(),
             stype.numerical: LinearEncoder(),
+        })
+    x, col_names = encoder(tensor_frame)
+    assert x.shape == (10, 5, 8)
+    assert col_names == ['a', 'b', 'c', 'x', 'y']
+
+    encoder = StypeWiseFeatureEncoder(
+        out_channels=8, col_stats=dataset.col_stats,
+        col_names_dict=tensor_frame.col_names_dict, stype_encoder_dict={
+            stype.categorical: EmbeddingEncoder(),
+            stype.numerical: LinearBucketEncoder(),
         })
     x, col_names = encoder(tensor_frame)
     assert x.shape == (10, 5, 8)

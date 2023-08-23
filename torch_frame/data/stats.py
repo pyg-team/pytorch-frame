@@ -12,6 +12,7 @@ class StatType(Enum):
     # Numerical:
     MEAN = 'MEAN'
     STD = 'STD'
+    QUANTILES = 'QUANTILES'
 
     # Categorical:
     COUNT = 'COUNT'
@@ -22,6 +23,7 @@ class StatType(Enum):
             return [
                 StatType.MEAN,
                 StatType.STD,
+                StatType.QUANTILES,
             ]
         elif stype == torch_frame.categorical:
             return [
@@ -36,6 +38,9 @@ class StatType(Enum):
 
         elif self == StatType.STD:
             return np.std(ser.values).item()
+
+        elif self == StatType.QUANTILES:
+            return np.quantile(ser.values, [0, 0.25, 0.5, 0.75, 1]).tolist()
 
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
