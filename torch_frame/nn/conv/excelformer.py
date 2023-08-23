@@ -2,6 +2,7 @@ from typing import Optional, Tuple, cast, Dict
 import torch
 from torch import Tensor
 from torch.nn import (
+    Dropout,
     LayerNorm,
     Parameter,
     TransformerEncoder,
@@ -10,35 +11,102 @@ from torch.nn import (
     Module,
     ModuleDict,
     Linear,
-    MultiheadAttention,
     PReLU
 )
-from torch.nn.init import constant_, xavier_normal_, xavier_uniform_, zeros_
+from torch.nn.init import constant_, xavier_normal_, xavier_uniform_, zeros_, _calculate_correct_fan, calculate_gain
+import math
 
 from torch_frame.nn.conv import TableConv
+
+def attenuated_kaiming_uniform_(tensor, a=math.sqrt(5), scale=1., mode='fan_in', nonlinearity='leaky_relu'):
+    fan = _calculate_correct_fan(tensor, mode)
+    gain = calculate_gain(nonlinearity, a)
+    std = gain * scale / math.sqrt(fan)
+    bound = math.sqrt(3.0) * std  # Calculate uniform bounds from standard deviation
+    with torch.no_grad():
+        return tensor.uniform_(-bound, bound)
 
 def tanglu(x: Tensor) -> Tensor:
     a, b = x.chunk(2, dim=-1)
     return a * torch.tanh(b)
 
-class ExcelFormer(TableConv):
-    def __init__(self, channels, num_layers, num_heads, attention_dropout, prenormalization, ffn_dropout, residual_dropout):
+class MultiHeadAttention(Module):
+    def __init__(self, d, num_heads, dropout):
+        if num_heads > 1:
+            assert d % num_heads == 0
+        super().__init__()
+        self.W_q = Linear(d, d)
+        self.W_k = Linear(d, d)
+        self.W_v = Linear(d, d)
+        self.W_out = Linear(d, d) if num_heads > 1 else None
+        self.num_heads = num_heads
+        self.dropout = Dropout(dropout) if dropout else None
+        for W in [self.W_q, self.W_k, self.W_v]:
+            xavier_normal_(W.weight)
+            zeros_(W.bias)
+        if self.W_out:
+            xavier_normal_(self.W_out.weight)
+            zeros_(self.W_out.bias)
+
+    def _reshape(self, x: Tensor) -> Tensor:
+        B, channels, d = x.shape
+        d_head = d // self.num_heads
+        return (
+            x.reshape(B, channels, self.num_heads, d_head)
+            .transpose(1, 2)
+            .reshape(B * self.num_heads, channels, d_head)
+        )
+    
+    def get_attention_mask(self, input_shape, device):
+        B, _, seq_len = input_shape
+        seq_ids = torch.arange(seq_len, device=device)
+        attention_mask = seq_ids[None, None, :].repeat(bs, seq_len, 1) <= seq_ids[None, :, None]
+        attention_mask = (1.0 - attention_mask.float()) * -1e4
+        return attention_mask
+    
+    def forward(self, x_q: Tensor, x_kv: Tensor) -> Tensor:
+        Q, K, V = self.W_q(x_q), self.W_k(x_kv), self.W_v(x_kv)
+        for tensor in [Q, K, V]:
+            assert tensor.shape[-1] % self.num_heads == 0
+        B = len(Q)
+        d_head_key = K.shape[-1] // self.num_heads
+        Q = self._reshape(Q)
+        K = self._reshape(K)
+        attention_score = Q @ K.transpose(1, 2) / math.sqrt(d_head_key)
+        attension = F.softmax
+
+
+
+class ExcelFormerConv(TableConv):
+    """
+    One layer of DiaM and AiuM
+    """
+    def __init__(self,
+                 channels,
+                 num_layers,
+                 num_heads,
+                 attention_dropout,
+                 ffn_dropout,
+                 residual_dropout,
+                 prenormalization,
+                 kv_compression: Optional[float],
+                 kv_compression_sharing: Optional[str],
+                 init_scale: float = 0.1) -> None:
+        assert (kv_compression is None) ^ (kv_compression_sharing is not None)
+
         super.__init__()
-        self.layers = ModuleList([])
-        for layer_idx in range(num_layers):
-            layer = ModuleDict({
-                # Attenuated Initialization
-                'attention': MultiheadAttention(
-                    channels, num_heads, attention_dropout,
-                ),
-                'linear0': Linear(channels, channels * 2),
-                'norm1': LayerNorm(channels),                
-            })
-            xavier_uniform_(layer['linear0'].weight)
-            zeros_(layer['linear0'].bias)
-            if not prenormalization or layer_idx:
-                layer['norm0'] = LayerNorm(channels)
-            self.layers.append(layer)
+        self.layer = ModuleDict({
+            # Attenuated Initialization
+            'attention': MultiHeadAttention(
+                channels, num_heads, attention_dropout,
+            ),
+            'linear0': Linear(channels, channels * 2),
+            'norm1': LayerNorm(channels),                
+        })
+        xavier_uniform_(self.layer['linear0'].weight)
+        zeros_(layer['linear0'].bias)
+        if not prenormalization or layer_idx:
+            layer['norm0'] = LayerNorm(channels)
         self.activation = tanglu
         self.last_activation = PReLU()
         self.prenormalization = prenormalization
