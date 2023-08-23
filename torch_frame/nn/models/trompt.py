@@ -4,7 +4,7 @@ from torch.nn import Module, ModuleList, Parameter
 from torch.nn.modules.module import Module
 
 from torch_frame.nn.conv import TromptConv
-from torch_frame.nn.decoder import TromptDownstream
+from torch_frame.nn.decoder import TromptDecoder
 
 
 class Trompt(Module):
@@ -35,15 +35,15 @@ class Trompt(Module):
             TromptConv(in_channels, num_cols, num_prompts)
             for _ in range(num_layers)
         ])
-        self.trompt_downstream = TromptDownstream(in_channels, out_channels,
-                                                  num_prompts)
+        self.trompt_decoder = TromptDecoder(in_channels, out_channels,
+                                            num_prompts)
         self.reset_parameters()
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.x_prompt, std=0.1)
         for trompt_conv in self.trompt_convs:
             trompt_conv.reset_parameters()
-        self.trompt_downstream.reset_parameters()
+        self.trompt_decoder.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
         r"""Transforming :obj:`x` into a series of output predictions at each
@@ -66,7 +66,7 @@ class Trompt(Module):
             # [batch_size, num_prompts, in_channels]
             x_prompt = trompt_conv(x, x_prompt)
             # [batch_size, out_channels]
-            out = self.trompt_downstream(x_prompt)
+            out = self.trompt_decoder(x_prompt)
             # [batch_size, 1, out_channels]
             out = out.view(batch_size, 1, self.out_channels)
             outs.append(out)

@@ -1,7 +1,7 @@
 from .decoder import Decoder
-from .trompt_downstream import TromptDownstream
+from .trompt_decoder import TromptDecoder
 
 __all__ = classes = [
     'Decoder',
-    'TromptDownstream',
+    'TromptDecoder',
 ]
