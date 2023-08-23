@@ -1,6 +1,6 @@
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Linear, ReLU, Sequential
+from torch.nn import LayerNorm, Linear, ReLU, Sequential
 
 from torch_frame.nn.decoder import Decoder
 
@@ -26,14 +26,16 @@ class TromptDecoder(Decoder):
         self.mlp = Sequential(
             Linear(in_channels, in_channels),
             ReLU(),
+            LayerNorm(in_channels),
             Linear(in_channels, out_channels),
         )
         self.reset_parameters()
 
     def reset_parameters(self):
         self.lin_attn.reset_parameters()
-        self.mlp[0].reset_parameters()
-        self.mlp[-1].reset_parameters()
+        for m in self.mlp:
+            if not isinstance(m, ReLU):
+                m.reset_parameters()
 
     def forward(self, x: Tensor):
         batch_size = len(x)
