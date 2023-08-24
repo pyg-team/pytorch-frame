@@ -147,8 +147,6 @@ class LinearBucketEncoder(StypeEncoder):
             column within the same stype.
             - StatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max
             of the column.
-        out_channels (Optional[int]): The number of output channels for the
-            linear layer.
     """
     supported_stypes = {stype.numerical}
 
@@ -187,9 +185,9 @@ class LinearBucketEncoder(StypeEncoder):
             # Combine the masks to create encoded_values
             # [batch_size, num_buckets]
             encoded_value = (one_hot_mask * x[:, i:i + 1] - one_hot_mask *
-                             self.boundaries[i, :-1].unsqueeze(0)
-                             ) / self.interval[i].unsqueeze(
-                                 0) + greater_mask * (1 - one_hot_mask)
+                             self.boundaries[i, :-1].unsqueeze(0)) / (
+                                 self.interval[i].unsqueeze(0) + greater_mask *
+                                 (1 - one_hot_mask))
             encoded_values.append(encoded_value)
         # Apply column-wise linear transformation
         encoded_values = torch.stack(encoded_values, dim=1).squeeze()
