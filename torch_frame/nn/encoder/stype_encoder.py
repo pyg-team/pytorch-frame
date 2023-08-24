@@ -58,15 +58,25 @@ class EmbeddingEncoder(StypeEncoder):
         self.embs = ModuleList([])
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
-            self.embs.append(Embedding(num_categories, self.out_channels))
+            # 0-th category is for NaN.
+            self.embs.append(
+                Embedding(
+                    num_categories + 1,
+                    self.out_channels,
+                    padding_idx=0,
+                ))
         self.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
+        outputs non-learnable all-zero embedding for :obj:`NaN` category
+        (specified as -1).
         """
         # TODO: Make this more efficient.
-        # TODO weihua: Handle Nan
+        # Increment the index by one so that NaN index (-1) becomes 0
+        # (padding_idx)
+        x = x + 1
 
         # x: [batch_size, num_cols]
         xs = []
@@ -109,10 +119,9 @@ class LinearEncoder(StypeEncoder):
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
+        outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
-        # TODO weihua: Handle Nan
-
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -121,7 +130,7 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        return x
+        return torch.nan_to_num(x, nan=0)
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.weight, std=0.1)
@@ -130,13 +139,13 @@ class LinearEncoder(StypeEncoder):
 
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
-    linear representation, followed by a linear transformation. The original encoding is described in https://arxiv.org/abs/2203.05556.
+    linear representation, followed by a linear transformation. The original
+    encoding is described in https://arxiv.org/abs/2203.05556.
 
     Args:
+        out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
-            - StatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max of the column.
-        out_channels (Optional[int]): The number of output channels for the linear layer.
     """
     supported_stypes = {stype.numerical}
 
@@ -148,6 +157,7 @@ class LinearBucketEncoder(StypeEncoder):
         super().__init__(out_channels, stats_list)
 
     def init_modules(self):
+        # The min, 25th, 50th, 75th quantile, and max of the column.
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
         self.interval = self.boundaries[:, 1:] - self.boundaries[:, :-1] + 1e-9
