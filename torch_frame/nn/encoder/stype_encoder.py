@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
-import torch.nn as nn
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter
 
@@ -146,6 +145,8 @@ class LinearBucketEncoder(StypeEncoder):
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
+            - StatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max
+            of the column.
     """
     supported_stypes = {stype.numerical}
 
@@ -161,16 +162,18 @@ class LinearBucketEncoder(StypeEncoder):
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
         self.interval = self.boundaries[:, 1:] - self.boundaries[:, :-1] + 1e-9
-
-        # Adding a linear layer
-        input_channels = len(self.boundaries[0]) - 1
-        self.linear_layer = nn.Linear(input_channels, self.out_channels)
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, self.interval.shape[-1], self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
 
     def forward(self, x: Tensor):
         encoded_values = []
         for i in range(x.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
-            bucket_indices = torch.bucketize(x[:, i], self.boundaries[i, 1:-1])
+            xi = x[:, i].contiguous()
+            bucket_indices = torch.bucketize(xi, self.boundaries[i, 1:-1])
 
             # Create a mask for the one-hot encoding based on bucket indices
             one_hot_mask = torch.nn.functional.one_hot(
@@ -181,16 +184,21 @@ class LinearBucketEncoder(StypeEncoder):
             greater_mask = (x[:, i:i + 1] > self.boundaries[i, :-1]).float()
 
             # Combine the masks to create encoded_values
+            # [batch_size, num_buckets]
             encoded_value = (one_hot_mask * x[:, i:i + 1] - one_hot_mask *
-                             self.boundaries[i, :-1].unsqueeze(0)
-                             ) / self.interval[i].unsqueeze(
-                                 0) + greater_mask * (1 - one_hot_mask)
+                             self.boundaries[i, :-1].unsqueeze(0)) / (
+                                 self.interval[i].unsqueeze(0) + greater_mask *
+                                 (1 - one_hot_mask))
             encoded_values.append(encoded_value)
-
-        # Apply linear layer to the encoded values
-        encoded_values = torch.stack(encoded_values, dim=1).squeeze()
-        return self.linear_layer(encoded_values)
+        # Apply column-wise linear transformation
+        out = torch.stack(encoded_values, dim=1)
+        # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
+        # -> [batch_size, num_cols, channels]
+        x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
+        x = x_lin + self.bias
+        return torch.nan_to_num(x, nan=0)
 
     def reset_parameters(self):
-        # Reset learnable parameters of the linear layer
-        self.linear_layer.reset_parameters()
+        # Reset learnable parameters of the linear transformation
+        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.zeros_(self.bias)
