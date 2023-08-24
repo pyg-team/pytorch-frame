@@ -59,7 +59,6 @@ class EmbeddingEncoder(StypeEncoder):
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
             self.embs.append(Embedding(num_categories, self.out_channels))
-        self.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -105,7 +104,6 @@ class LinearEncoder(StypeEncoder):
         num_cols = len(self.stats_list)
         self.weight = Parameter(torch.empty(num_cols, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
-        self.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -151,10 +149,10 @@ class LinearBucketEncoder(StypeEncoder):
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
         self.interval = self.boundaries[:, 1:] - self.boundaries[:, :-1] + 1e-9
-
-        # Adding a linear layer
-        input_channels = len(self.boundaries[0]) - 1
-        self.linear_layer = nn.Linear(input_channels, self.out_channels)
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, self.interval.shape[-1], self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
 
     def forward(self, x: Tensor):
         encoded_values = []
@@ -177,10 +175,13 @@ class LinearBucketEncoder(StypeEncoder):
                                  0) + greater_mask * (1 - one_hot_mask)
             encoded_values.append(encoded_value)
 
-        # Apply linear layer to the encoded values
+        # Apply column-wise linear transformation
         encoded_values = torch.stack(encoded_values, dim=1).squeeze()
-        return self.linear_layer(encoded_values)
+        x_lin = torch.einsum('ijk,jkl->ijl', encoded_values, self.weight)
+        x = x_lin + self.bias
+        return x
 
     def reset_parameters(self):
-        # Reset learnable parameters of the linear layer
-        self.linear_layer.reset_parameters()
+        # Reset learnable parameters of the linear transformation
+        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.zeros_(self.bias)
