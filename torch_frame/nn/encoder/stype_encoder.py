@@ -203,4 +203,3 @@ class LinearBucketEncoder(StypeEncoder):
         # Reset learnable parameters of the linear transformation
         torch.nn.init.normal_(self.weight, std=0.1)
         torch.nn.init.zeros_(self.bias)
-        
