@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `NaN` handling in `StypeEncoder` ([#28](https://github.com/pyg-team/pytorch-frame/pull/28))
+- Added `LinearBucketEncoder` ([#22](https://github.com/pyg-team/pytorch-frame/pull/22))
 - Added `Trompt` ([#25](https://github.com/pyg-team/pytorch-frame/pull/25))
 - Added `TromptDecoder` ([#24](https://github.com/pyg-team/pytorch-frame/pull/24))
 - Added `TromptConv` ([#23](https://github.com/pyg-team/pytorch-frame/pull/23))
