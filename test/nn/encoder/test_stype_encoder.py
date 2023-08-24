@@ -70,3 +70,11 @@ def test_stype_feature_encoder_with_nan():
     assert x_num[isnan_mask].isnan().all()
 
     # TODO check for LinearBucketEncoder.
+    encoder = LinearBucketEncoder(8, stats_list=stats_list)
+    x_num = tensor_frame.x_dict[stype.numerical]
+    isnan_mask = x_num.isnan()
+    x = encoder(x_num)
+    assert x.shape == (10, 3, 8)
+    assert (x[isnan_mask, :] == 0).all()
+    # Make sure original data is not modified
+    assert x_num[isnan_mask].isnan().all()

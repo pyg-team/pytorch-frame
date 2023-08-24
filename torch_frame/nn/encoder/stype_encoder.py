@@ -172,7 +172,8 @@ class LinearBucketEncoder(StypeEncoder):
         encoded_values = []
         for i in range(x.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
-            bucket_indices = torch.bucketize(x[:, i], self.boundaries[i, 1:-1])
+            xi = x[:, i].contiguous()
+            bucket_indices = torch.bucketize(xi, self.boundaries[i, 1:-1])
 
             # Create a mask for the one-hot encoding based on bucket indices
             one_hot_mask = torch.nn.functional.one_hot(
@@ -190,12 +191,12 @@ class LinearBucketEncoder(StypeEncoder):
                                  (1 - one_hot_mask))
             encoded_values.append(encoded_value)
         # Apply column-wise linear transformation
-        encoded_values = torch.stack(encoded_values, dim=1).squeeze()
+        out = torch.stack(encoded_values, dim=1)
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', encoded_values, self.weight)
+        x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        return x
+        return torch.nan_to_num(x, nan=0)
 
     def reset_parameters(self):
         # Reset learnable parameters of the linear transformation
