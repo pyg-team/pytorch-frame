@@ -15,6 +15,7 @@ from torch.nn import (
 )
 from torch.nn.init import constant_, xavier_normal_, xavier_uniform_, zeros_, _calculate_correct_fan, calculate_gain
 import math
+import torch.nn.functional as F
 
 from torch_frame.nn.conv import TableConv
 
@@ -30,7 +31,10 @@ def tanglu(x: Tensor) -> Tensor:
     a, b = x.chunk(2, dim=-1)
     return a * torch.tanh(b)
 
-class MultiHeadAttention(Module):
+class DiaM(Module):
+    '''
+    Directed Inter-feature Attention Module
+    '''
     def __init__(self, d, num_heads, dropout):
         if num_heads > 1:
             assert d % num_heads == 0
@@ -60,21 +64,26 @@ class MultiHeadAttention(Module):
     def get_attention_mask(self, input_shape, device):
         B, _, seq_len = input_shape
         seq_ids = torch.arange(seq_len, device=device)
-        attention_mask = seq_ids[None, None, :].repeat(bs, seq_len, 1) <= seq_ids[None, :, None]
-        attention_mask = (1.0 - attention_mask.float()) * -1e4
+        attention_mask = seq_ids[None, None, :].repeat(B, seq_len, 1) <= seq_ids[None, :, None]
+        attention_mask = (1.0 - attention_mask.float()) * -1e5
         return attention_mask
     
-    def forward(self, x_q: Tensor, x_kv: Tensor) -> Tensor:
-        Q, K, V = self.W_q(x_q), self.W_k(x_kv), self.W_v(x_kv)
+    def forward(self, z: Tensor) -> Tensor:
+        Q, K, V = self.W_q(z), self.W_k(z), self.W_v(z)
         for tensor in [Q, K, V]:
             assert tensor.shape[-1] % self.num_heads == 0
         B = len(Q)
-        d_head_key = K.shape[-1] // self.num_heads
+        d = V.shape[-1] // self.num_heads
         Q = self._reshape(Q)
         K = self._reshape(K)
-        attention_score = Q @ K.transpose(1, 2) / math.sqrt(d_head_key)
-        attension = F.softmax
-
+        attention_score = Q @ K.transpose(1, 2) 
+        masks = self.get_attention_mask(attention_score.shape, attention_score.device)
+        attention = F.softmax((attention_score + masks)/math.sqrt(d), dim=-1)
+        x = attention @ self._reshape(V)
+        x = x.reshape(B, self.num_heads, Q.shape[-1], d)
+        if self.W_out is not None:
+            x = self.W_out(x)
+        return x
 
 
 class ExcelFormerConv(TableConv):
@@ -83,12 +92,12 @@ class ExcelFormerConv(TableConv):
     """
     def __init__(self,
                  channels,
-                 num_layers,
                  num_heads,
                  attention_dropout,
                  ffn_dropout,
                  residual_dropout,
                  prenormalization,
+                 first_layer, 
                  kv_compression: Optional[float],
                  kv_compression_sharing: Optional[str],
                  init_scale: float = 0.1) -> None:
@@ -104,13 +113,11 @@ class ExcelFormerConv(TableConv):
             'norm1': LayerNorm(channels),                
         })
         xavier_uniform_(self.layer['linear0'].weight)
-        zeros_(layer['linear0'].bias)
-        if not prenormalization or layer_idx:
-            layer['norm0'] = LayerNorm(channels)
+        zeros_(self.layer['linear0'].bias)
+        if not prenormalization or not first_layer:
+            self.layer['norm0'] = LayerNorm(channels)
         self.activation = tanglu
-        self.last_activation = PReLU()
         self.prenormalization = prenormalization
-        self.last_normalization = LayerNorm(channels) if prenormalization else None
         self.ffn_dropout = ffn_dropout
         self.residual_dropout = residual_dropout
 
