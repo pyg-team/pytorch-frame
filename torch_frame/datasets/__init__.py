@@ -10,10 +10,9 @@ from .poker_hand import PokerHand
 real_world_datasets = [
     'Titanic',
     'AdultCensusIncome',
-    'FakeDataset',
     'ForestCoverType',
     'Mushroom',
-    "PokerHand",
+    'PokerHand',
 ]
 
 synthetic_datasets = [
