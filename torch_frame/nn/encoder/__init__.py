@@ -1,6 +1,12 @@
 from .encoder import FeatureEncoder
 from .stypewise_encoder import StypeWiseFeatureEncoder
-from .stype_encoder import StypeEncoder, EmbeddingEncoder, LinearEncoder, LinearBucketEncoder
+from .stype_encoder import (
+    StypeEncoder,
+    EmbeddingEncoder,
+    LinearEncoder,
+    LinearBucketEncoder,
+    LinearPeriodicEncoder,
+)
 
 __all__ = classes = [
     'FeatureEncoder',
@@ -9,4 +15,5 @@ __all__ = classes = [
     'EmbeddingEncoder',
     'LinearEncoder',
     'LinearBucketEncoder',
+    'LinearPeriodicEncoder',
 ]
