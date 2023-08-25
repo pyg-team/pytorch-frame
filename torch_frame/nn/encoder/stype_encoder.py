@@ -202,3 +202,49 @@ class LinearBucketEncoder(StypeEncoder):
         # Reset learnable parameters of the linear transformation
         torch.nn.init.normal_(self.weight, std=0.1)
         torch.nn.init.zeros_(self.bias)
+
+
+class PeriodicEncoder(StypeEncoder):
+    r"""A periodic encoder that utilizes sinusoidal functions to transform the
+    input tensor into a 3-dimensional tensor. The encoding is defined using
+    trainable parameters and includes the application of sine and cosine
+    functions. The original encoding is described
+    in https://arxiv.org/abs/2203.05556.
+
+    Args:
+        out_channels (int): The output channel dimensionality
+        n_bins (int): Number of bins for periodic encoding
+    """
+    supported_stypes = {stype.numerical}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        n_bins: Optional[int] = 16,
+    ):
+        self.n_bins = n_bins
+        super().__init__(out_channels, stats_list)
+
+    def init_modules(self):
+        num_cols = len(self.stats_list)
+        self.linear_in = Parameter(torch.empty((num_cols, self.n_bins)))
+        self.linear_out = Parameter(
+            torch.empty((num_cols, self.n_bins * 2, self.out_channels)))
+        self.reset_parameters()
+
+    def forward(self, x: Tensor):
+        v = 2 * torch.pi * self.linear_in[None] * x[..., None]
+
+        # Compute the sine and cosine values and concatenate them
+        x = torch.cat([torch.sin(v), torch.cos(v)], dim=-1)
+
+        # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
+        # -> [batch_size, num_cols, channels]
+        x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
+
+        return x
+
+    def reset_parameters(self):
+        torch.nn.init.normal_(self.linear_in, std=0.1)
+        torch.nn.init.normal_(self.linear_out, std=0.1)
