@@ -5,7 +5,7 @@ from torch_frame.nn.encoder import (
     EmbeddingEncoder,
     LinearBucketEncoder,
     LinearEncoder,
-    PeriodicEncoder,
+    LinearPeriodicEncoder,
 )
 
 
@@ -38,7 +38,8 @@ def test_stype_feature_encoder():
     # Expected shape: [batch_size, num_numerical_cols, 8]
     assert encoded_x.shape == (10, 3, 8)
 
-    encoder = PeriodicEncoder(out_channels=8, stats_list=stats_list, n_bins=6)
+    encoder = LinearPeriodicEncoder(out_channels=8, stats_list=stats_list,
+                                    n_bins=6)
 
     # Apply the encoder to the numerical columns of the tensor frame
     x_numerical = tensor_frame.x_dict[stype.numerical]

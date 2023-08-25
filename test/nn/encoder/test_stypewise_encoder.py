@@ -5,7 +5,7 @@ from torch_frame.nn.encoder import (
     EmbeddingEncoder,
     LinearBucketEncoder,
     LinearEncoder,
-    PeriodicEncoder,
+    LinearPeriodicEncoder,
     StypeWiseFeatureEncoder,
 )
 
@@ -39,7 +39,7 @@ def test_stypewise_feature_encoder():
         out_channels=8, col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict, stype_encoder_dict={
             stype.categorical: EmbeddingEncoder(),
-            stype.numerical: PeriodicEncoder(),
+            stype.numerical: LinearPeriodicEncoder(n_bins=6),
         })
     x, col_names = encoder(tensor_frame)
     assert x.shape == (10, 5, 8)

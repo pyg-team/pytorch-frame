@@ -204,7 +204,7 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
 
-class PeriodicEncoder(StypeEncoder):
+class LinearPeriodicEncoder(StypeEncoder):
     r"""A periodic encoder that utilizes sinusoidal functions to transform the
     input tensor into a 3-dimensional tensor. The encoding is defined using
     trainable parameters and includes the application of sine and cosine
@@ -227,6 +227,12 @@ class PeriodicEncoder(StypeEncoder):
         super().__init__(out_channels, stats_list)
 
     def init_modules(self):
+        mean = torch.tensor(
+            [stats[StatType.MEAN] for stats in self.stats_list])
+        self.register_buffer('mean', mean)
+        std = torch.tensor([stats[StatType.STD]
+                            for stats in self.stats_list]) + 1e-6
+        self.register_buffer('std', std)
         num_cols = len(self.stats_list)
         self.linear_in = Parameter(torch.empty((num_cols, self.n_bins)))
         self.linear_out = Parameter(
@@ -234,6 +240,10 @@ class PeriodicEncoder(StypeEncoder):
         self.reset_parameters()
 
     def forward(self, x: Tensor):
+        x = (x - self.mean) / self.std
+        # Compute the value 'v' by scaling the input 'x' with
+        # 'self.linear_in', and applying a 2π periodic
+        # transformation.
         v = 2 * torch.pi * self.linear_in[None] * x[..., None]
 
         # Compute the sine and cosine values and concatenate them
