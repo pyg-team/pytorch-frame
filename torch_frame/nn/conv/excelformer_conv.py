@@ -31,6 +31,23 @@ def tanglu(x: Tensor) -> Tensor:
     a, b = x.chunk(2, dim=-1)
     return a * torch.tanh(b)
 
+class AiuM(Module):
+    '''
+    Attentive Intra-feature Update Module
+    '''
+    def __init__(self, d, dropout):
+        super().__init__()
+        self.W_1 = Linear(d, d)
+        self.W_2 = Linear(d, d)
+        for W in [self.W_1, self.W_2]:
+            xavier_normal_(W.weight)
+            zeros_(W.bias)
+        self.dropout = Dropout(dropout)
+    
+    def forward(self, x):
+        return self.dropout(tanglu(self.W_1(x)) * (self.W_2(x)))
+
+
 class DiaM(Module):
     '''
     Directed Inter-feature Attention Module
@@ -85,6 +102,20 @@ class DiaM(Module):
             x = self.W_out(x)
         return x
 
+class ExcelFormerPredictionHead(Module):
+    def __init__(self, channels, num_features, target_category_count):
+        super().__init__()
+        self.channels = channels
+        self.C = target_category_count
+        self.W = Linear(num_features, self.C)
+        self.W_d = Linear(channels, 1)
+
+    def forward(self, x):
+        x = x.transpose(1, 2)
+        x = x @ self.W.weight + self.W.bias
+        x = PReLU(x)
+        x = self.W_d(x)
+        return x.squeeze(1)
 
 class ExcelFormerConv(TableConv):
     """
@@ -93,87 +124,41 @@ class ExcelFormerConv(TableConv):
     def __init__(self,
                  channels,
                  num_heads,
-                 attention_dropout,
-                 ffn_dropout,
+                 num_features,
+                 diam_dropout,
+                 aium_dropout,
                  residual_dropout,
-                 prenormalization,
-                 first_layer, 
-                 kv_compression: Optional[float],
-                 kv_compression_sharing: Optional[str],
-                 init_scale: float = 0.1) -> None:
-        assert (kv_compression is None) ^ (kv_compression_sharing is not None)
+                 target_category_count,
+                 ) -> None:
 
         super.__init__()
-        self.layer = ModuleDict({
-            # Attenuated Initialization
-            'attention': MultiHeadAttention(
-                channels, num_heads, attention_dropout,
-            ),
-            'linear0': Linear(channels, channels * 2),
-            'norm1': LayerNorm(channels),                
-        })
-        xavier_uniform_(self.layer['linear0'].weight)
-        zeros_(self.layer['linear0'].bias)
-        if not prenormalization or not first_layer:
-            self.layer['norm0'] = LayerNorm(channels)
-        self.activation = tanglu
-        self.prenormalization = prenormalization
-        self.ffn_dropout = ffn_dropout
+        self.norm_1 = LayerNorm(channels)
+        self.DiaM = DiaM(channels, num_heads, diam_dropout)
+        d_head = channels // num_heads
+        self.norm_2 = LayerNorm(d_head)
+        self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
+        self.prediction_head = ExcelFormerPredictionHead(channels, num_features, target_category_count)
 
-        self.head = Linear(channels, channels)
-        xavier_normal_(self.head.weight)
-        self.last_fc = Linear(channels, 1)
-        xavier_normal_(self.last_fc.weight)
-
-    def _get_kv_compressions(self, layer):
-        return (
-            (self.shared_kv_compression, self.shared_kv_compression)
-            if self.shared_kv_compression is not None
-            else (layer['key_compression'], layer['value_compression'])
-            if 'key_compression' in layer and 'value_compression' in layer
-            else (layer['key_compression'], layer['key_compression'])
-            if 'key_compression' in layer
-            else (None, None)
-        )
-
-    def _start_residual(self, x, layer, norm_idx):
+    def _start_residual(self, x):
         x_residual = x
-        if self.prenormalization:
-            norm_key = f'norm{norm_idx}'
-            if norm_key in layer:
-                x_residual = layer[norm_key](x_residual)
         return x_residual
 
-    def _end_residual(self, x, x_residual, layer, norm_idx):
+    def _end_residual(self, x, x_residual):
         if self.residual_dropout:
             x_residual = F.dropout(x_residual, self.residual_dropout, self.training)
         x = x + x_residual
-        if not self.prenormalization:
-            x = layer[f'norm{norm_idx}'](x)
         return x
     
     def forward(self, x: Tensor):
-        for layer_idx, layer in enumerate(self.layers):
-            layer = cast(Dict[str, Module], layer)
-            x_residual = self._start_residual(x, layer, 0)
-            x_residual = layer['attention'](
-                x_residual,
-                x_residual,
-                *self._get_kv_compressions(layer),
-            )
-            x = self._end_residual(x, x_residual, layer, 0)
-
-            # reglu
-            x_residual = self._start_residual(x, layer, 1)
-            x_residual = layer['linear0'](x_residual)
-            x_residual = self.activation(x_residual)
-            x = self._end_residual(x, x_residual, layer, 1)
-
-        x = self.last_fc(x.transpose(1,2))[:,:,0] # b f d -> b d
-        if self.last_normalization is not None:
-            x = self.last_normalization(x)
-        x = self.last_activation(x) # TODO: before last_fc？
-        x = self.head(x)
-        x = x.squeeze(-1)
+        x = self.norm_1(x)
+        x_residual = self._start_residual(x)
+        x = self.DiaM.forward(x)
+        x = self._end_residual(x, x_residual)
+        x_residual = self._start_residual(x)
+        x = self.norm_2(x)
+        x = self.AiuM.forward(x)
+        x = self._end_residual(x, x_residual)
+        if not self.training:
+            x = self.prediction_head.forward(x)
         return x
