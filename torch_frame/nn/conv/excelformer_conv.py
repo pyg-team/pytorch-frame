@@ -165,11 +165,11 @@ class ExcelFormerConv(TableConv):
     
     def forward(self, x: Tensor):
         x = self.norm_1(x)
-        x_residual = self._start_residual(x)
-        x = self.DiaM.forward(x)
+        x = self._start_residual(x)
+        x_residual = self.DiaM.forward(x)
         x = self._end_residual(x, x_residual)
-        x_residual = self._start_residual(x)
-        x = self.norm_2(x)
-        x = self.AiuM.forward(x)
+        x = self._start_residual(x)
+        x_residual = self.norm_2(x)
+        x_residual = self.AiuM.forward(x)
         x = self._end_residual(x, x_residual)
         return x
