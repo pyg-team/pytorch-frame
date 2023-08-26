@@ -28,8 +28,8 @@ class ExcelFormerPredictionHead(Decoder):
 
     def forward(self, x):
         x = x.transpose(1, 2)
-        x = self.W(x)[:, :, 0]
+        x = self.W(x)
         activition = PReLU()
         x = activition(x)
-        x = self.W_d(x)
-        return x
+        x = self.W_d(x.transpose(1, 2))
+        return x.squeeze(2)

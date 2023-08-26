@@ -107,9 +107,9 @@ class ExcelFormerConv(TableConv):
         self,
         channels: int,
         num_heads: int,
-        diam_dropout: float,
-        aium_dropout: float,
-        residual_dropout: float,
+        diam_dropout: float = 0.1,
+        aium_dropout: float = 0.1,
+        residual_dropout: float = 0.1,
     ) -> None:
 
         super().__init__()
