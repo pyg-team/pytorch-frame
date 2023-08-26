@@ -39,10 +39,12 @@ class AiuM(Module):
         super().__init__()
         self.W_1 = Linear(d, d)
         self.W_2 = Linear(d, d)
+        self.dropout = Dropout(dropout)
+
+    def reset_parameters(self):
         for W in [self.W_1, self.W_2]:
             xavier_normal_(W.weight)
             zeros_(W.bias)
-        self.dropout = Dropout(dropout)
     
     def forward(self, x):
         return self.dropout(tanglu(self.W_1(x)) * (self.W_2(x)))
@@ -62,6 +64,8 @@ class DiaM(Module):
         self.W_out = Linear(d, d) if num_heads > 1 else None
         self.num_heads = num_heads
         self.dropout = Dropout(dropout) if dropout else None
+
+    def reset_parameters(self):
         for W in [self.W_q, self.W_k, self.W_v]:
             xavier_normal_(W.weight)
             zeros_(W.bias)
@@ -110,6 +114,12 @@ class ExcelFormerPredictionHead(Module):
         self.W = Linear(num_features, self.C)
         self.W_d = Linear(channels, 1)
 
+    def reset_parameters(self):
+        xavier_normal_(self.W.weight)
+        zeros_(self.W.bias)
+        xavier_normal_(self.W_d.weight)
+        zeros_(self.W_d.bias)
+
     def forward(self, x):
         x = x.transpose(1, 2)
         x = x @ self.W.weight + self.W.bias
@@ -123,12 +133,12 @@ class ExcelFormerConv(TableConv):
     """
     def __init__(self,
                  channels,
+                 target_category_count,
                  num_heads,
                  num_features,
                  diam_dropout,
                  aium_dropout,
                  residual_dropout,
-                 target_category_count,
                  ) -> None:
 
         super.__init__()
@@ -138,7 +148,10 @@ class ExcelFormerConv(TableConv):
         self.norm_2 = LayerNorm(d_head)
         self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
-        self.prediction_head = ExcelFormerPredictionHead(channels, num_features, target_category_count)
+
+    def reset_parameters(self):
+        self.DiaM.reset_parameters()
+        self.AiuM.reset_parameters()
 
     def _start_residual(self, x):
         x_residual = x
@@ -159,6 +172,4 @@ class ExcelFormerConv(TableConv):
         x = self.norm_2(x)
         x = self.AiuM.forward(x)
         x = self._end_residual(x, x_residual)
-        if not self.training:
-            x = self.prediction_head.forward(x)
         return x
