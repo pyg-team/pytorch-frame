@@ -12,8 +12,6 @@ def test_excelformer():
     num_layers = 6
     x = torch.randn(size=(batch_size, num_cols, in_channels))
     model = ExcelFormer(in_channels=in_channels, out_channels=out_channels,
-                        num_cols=num_cols, num_layers=num_layers,
-                        num_heads=num_heads)
-    model.training = False
+                        num_layers=num_layers, num_heads=num_heads)
     out = model(x)
-    assert out.shape == (batch_size, out_channels)
+    assert out.shape == (batch_size, num_cols, in_channels)

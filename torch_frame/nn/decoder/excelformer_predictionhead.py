@@ -5,7 +5,15 @@ from torch_frame.nn.decoder import Decoder
 
 
 class ExcelFormerPredictionHead(Decoder):
-    def __init__(self, in_channels, out_channels, num_cols):
+    r"""The ExcelFormer Prediction Head introduced in
+        https://arxiv.org/pdf/2301.02819.pdf
+
+    Args:
+        in_channels (int): Input channel dimensionality
+        out_channels (int): Output channel dimensionality
+        num_cols (int): Number of columns.
+    """
+    def __init__(self, in_channels: int, out_channels: int, num_cols: int):
         super().__init__()
         self.channels = in_channels
         self.C = out_channels

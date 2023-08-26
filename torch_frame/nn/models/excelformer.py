@@ -2,7 +2,6 @@ from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
 
 from torch_frame.nn.conv import ExcelFormerConv
-from torch_frame.nn.decoder import ExcelFormerPredictionHead
 
 
 class ExcelFormer(Module):
@@ -20,7 +19,7 @@ class ExcelFormer(Module):
         residual_dropout (float): residual dropout (default: 0.1)
 
     """
-    def __init__(self, in_channels, out_channels, num_cols, num_layers,
+    def __init__(self, in_channels: int, out_channels: int, num_layers,
                  num_heads, diam_dropout=0.1, aium_dropout=0.1,
                  residual_dropout=0.1):
         super().__init__()
@@ -30,18 +29,13 @@ class ExcelFormer(Module):
             ExcelFormerConv(in_channels, num_heads, diam_dropout, aium_dropout,
                             residual_dropout) for _ in range(num_layers)
         ])
-        self.prediction_head = ExcelFormerPredictionHead(
-            in_channels, out_channels, num_cols)
         self.reset_parameters()
 
     def reset_parameters(self):
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
-        self.prediction_head.reset_parameters()
 
     def forward(self, x):
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
-        if not self.training:
-            x = self.prediction_head(x)
         return x

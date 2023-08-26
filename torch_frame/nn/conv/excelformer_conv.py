@@ -93,16 +93,23 @@ class DiaM(Module):
 
 
 class ExcelFormerConv(TableConv):
-    """
-    One layer of DiaM and AiuM
+    r"""The ExcelFormer Layer introduced in
+        https://arxiv.org/pdf/2301.02819.pdf
+
+    Args:
+        channels (int): Input/output channel dimensionality
+        num_heads (int): Number of attention heads
+        diam_dropout (float): diam_dropout (default: 0.1)
+        aium_dropout (float): aium_dropout (default: 0.1)
+        residual_dropout (float): residual dropout (default: 0.1)
     """
     def __init__(
         self,
-        channels,
-        num_heads,
-        diam_dropout=0.1,
-        aium_dropout=0.1,
-        residual_dropout=0.1,
+        channels: int,
+        num_heads: int,
+        diam_dropout: float,
+        aium_dropout: float,
+        residual_dropout: float,
     ) -> None:
 
         super().__init__()
