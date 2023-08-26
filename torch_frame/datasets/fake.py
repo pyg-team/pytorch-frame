@@ -6,13 +6,12 @@ from torch_frame import stype
 
 
 class FakeDataset(torch_frame.data.Dataset):
-    r"""The Titanic dataset from the `Titanic ML competition
-    <https://www.kaggle.com/competitions/titanic>`_.
-    The Titanic dataset is known as the MNIST equivalent for tabular learning.
-    The goal is to predict which passenger survived using passenger data
-    (*i.e.* gender, age, etc)."""
+    r"""A fake regression dataset.
 
-    url = 'https://github.com/datasciencedojo/datasets/raw/master/titanic.csv'
+    Args:
+        num_rows (int): Number of rows.
+        with_nan (bool): Whether include nan in the dataset.
+    """
 
     def __init__(
         self,
