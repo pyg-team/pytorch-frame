@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
@@ -13,11 +14,11 @@ class AiuM(Module):
     '''
     Attentive Intra-feature Update Module
     '''
-    def __init__(self, d, dropout):
+    def __init__(self, d: int, dropout: Optional[float]):
         super().__init__()
         self.W_1 = Linear(d, d)
         self.W_2 = Linear(d, d)
-        self.dropout = Dropout(dropout)
+        self.dropout = Dropout(dropout) if dropout else None
 
     def reset_parameters(self):
         for W in [self.W_1, self.W_2]:
@@ -25,14 +26,17 @@ class AiuM(Module):
             zeros_(W.bias)
 
     def forward(self, x):
-        return self.dropout(F.tanh(self.W_1(x)) * (self.W_2(x)))
+        x = F.tanh(self.W_1(x)) * (self.W_2(x))
+        if self.dropout:
+            x = self.dropout(x)
+        return x
 
 
 class DiaM(Module):
     '''
     Directed Inter-feature Attention Module
     '''
-    def __init__(self, d, num_heads, dropout):
+    def __init__(self, d, num_heads: int, dropout: Optional[float]):
         if num_heads > 1:
             assert d % num_heads == 0
         super().__init__()
@@ -81,6 +85,8 @@ class DiaM(Module):
                                         attention_score.device)
         attention = F.softmax((attention_score + masks) / math.sqrt(d_heads),
                               dim=-1)
+        if self.dropout:
+            attention = self.dropout(attention)
         x = torch.einsum('ijk, ikl->ijl', attention, self._reshape(V))
         x = x.reshape(B, self.num_heads, num_cols,
                       d_heads).transpose(1,
@@ -106,9 +112,9 @@ class ExcelFormerConv(TableConv):
         self,
         channels: int,
         num_heads: int,
-        diam_dropout: float = 0.1,
-        aium_dropout: float = 0.1,
-        residual_dropout: float = 0.1,
+        diam_dropout: Optional[float] = None,
+        aium_dropout: Optional[float] = None,
+        residual_dropout: Optional[float] = None,
     ) -> None:
 
         super().__init__()
@@ -133,7 +139,7 @@ class ExcelFormerConv(TableConv):
         x = x + x_residual
         return x
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)
         x = self._start_residual(x)
         x_residual = self.DiaM(x)
