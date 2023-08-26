@@ -6,6 +6,7 @@ from .fake import FakeDataset
 from .forest_cover_type import ForestCoverType
 from .mushroom import Mushroom
 from .poker_hand import PokerHand
+from .tabular_benchmark import TabularBenchmark
 
 real_world_datasets = [
     'Titanic',
@@ -13,6 +14,7 @@ real_world_datasets = [
     'ForestCoverType',
     'Mushroom',
     'PokerHand',
+    'TabularBenchmark',
 ]
 
 synthetic_datasets = [
