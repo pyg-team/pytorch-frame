@@ -4,32 +4,15 @@ from torch import Tensor
 from torch.nn import (
     Dropout,
     LayerNorm,
-    Parameter,
-    TransformerEncoder,
-    TransformerEncoderLayer,
-    ModuleList,
     Module,
-    ModuleDict,
     Linear,
     PReLU
 )
-from torch.nn.init import constant_, xavier_normal_, xavier_uniform_, zeros_, _calculate_correct_fan, calculate_gain
+from torch.nn.init import xavier_uniform_, zeros_
 import math
 import torch.nn.functional as F
 
 from torch_frame.nn.conv import TableConv
-
-def attenuated_kaiming_uniform_(tensor, a=math.sqrt(5), scale=1., mode='fan_in', nonlinearity='leaky_relu'):
-    fan = _calculate_correct_fan(tensor, mode)
-    gain = calculate_gain(nonlinearity, a)
-    std = gain * scale / math.sqrt(fan)
-    bound = math.sqrt(3.0) * std  # Calculate uniform bounds from standard deviation
-    with torch.no_grad():
-        return tensor.uniform_(-bound, bound)
-
-def tanglu(x: Tensor) -> Tensor:
-    a, b = x.chunk(2, dim=-1)
-    return a * torch.tanh(b)
 
 class AiuM(Module):
     '''
@@ -43,11 +26,11 @@ class AiuM(Module):
 
     def reset_parameters(self):
         for W in [self.W_1, self.W_2]:
-            xavier_normal_(W.weight)
+            xavier_uniform_(W.weight)
             zeros_(W.bias)
     
     def forward(self, x):
-        return self.dropout(tanglu(self.W_1(x)) * (self.W_2(x)))
+        return self.dropout(F.tanh(self.W_1(x)) * (self.W_2(x)))
 
 
 class DiaM(Module):
@@ -67,10 +50,10 @@ class DiaM(Module):
 
     def reset_parameters(self):
         for W in [self.W_q, self.W_k, self.W_v]:
-            xavier_normal_(W.weight)
+            xavier_uniform_(W.weight)
             zeros_(W.bias)
         if self.W_out:
-            xavier_normal_(self.W_out.weight)
+            xavier_uniform_(self.W_out.weight)
             zeros_(self.W_out.bias)
 
     def _reshape(self, x: Tensor) -> Tensor:
@@ -107,17 +90,17 @@ class DiaM(Module):
         return x
 
 class ExcelFormerPredictionHead(Module):
-    def __init__(self, channels, num_features, target_category_count):
+    def __init__(self, in_channels, out_channels, num_features):
         super().__init__()
-        self.channels = channels
-        self.C = target_category_count
+        self.channels = in_channels
+        self.C = out_channels
         self.W = Linear(num_features, self.C)
-        self.W_d = Linear(channels, 1)
+        self.W_d = Linear(self.channels, 1)
 
     def reset_parameters(self):
-        xavier_normal_(self.W.weight)
+        xavier_uniform_(self.W.weight)
         zeros_(self.W.bias)
-        xavier_normal_(self.W_d.weight)
+        xavier_uniform_(self.W_d.weight)
         zeros_(self.W_d.bias)
 
     def forward(self, x):
@@ -133,9 +116,7 @@ class ExcelFormerConv(TableConv):
     """
     def __init__(self,
                  channels,
-                 target_category_count,
                  num_heads,
-                 num_features,
                  diam_dropout,
                  aium_dropout,
                  residual_dropout,
@@ -166,10 +147,10 @@ class ExcelFormerConv(TableConv):
     def forward(self, x: Tensor):
         x = self.norm_1(x)
         x = self._start_residual(x)
-        x_residual = self.DiaM.forward(x)
+        x_residual = self.DiaM(x)
         x = self._end_residual(x, x_residual)
         x = self._start_residual(x)
         x_residual = self.norm_2(x)
-        x_residual = self.AiuM.forward(x)
+        x_residual = self.AiuM(x)
         x = self._end_residual(x, x_residual)
         return x

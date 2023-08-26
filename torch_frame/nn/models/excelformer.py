@@ -1,6 +1,4 @@
-import torch
-from torch import Tensor
-from torch.nn import Module, ModuleList, Parameter
+from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
 
 from torch_frame.nn.conv import ExcelFormerConv, ExcelFormerPredictionHead
@@ -28,9 +26,9 @@ class ExcelFormer(Module):
         self.prediction_head.reset_parameters()
 
     def forward(self, x):
-        batch_size = len(x)
-        outs = []
         # [batch_size, num_features, in_channels]
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
-        return self.prediction_head(x)
+        if not self.training:
+            x = self.prediction_head(x)
+        return x
