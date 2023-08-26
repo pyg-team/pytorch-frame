@@ -1,14 +1,15 @@
-from torch.nn import Module, Linear, PReLU
-from torch.nn.modules.module import Module
+from torch.nn import Linear, PReLU
 from torch.nn.init import xavier_uniform_, zeros_
+
 from torch_frame.nn.decoder import Decoder
 
+
 class ExcelFormerPredictionHead(Decoder):
-    def __init__(self, in_channels, out_channels, num_features):
+    def __init__(self, in_channels, out_channels, num_cols):
         super().__init__()
         self.channels = in_channels
         self.C = out_channels
-        self.W = Linear(num_features, self.C)
+        self.W = Linear(num_cols, self.C)
         self.W_d = Linear(self.channels, 1)
 
     def reset_parameters(self):
@@ -19,7 +20,8 @@ class ExcelFormerPredictionHead(Decoder):
 
     def forward(self, x):
         x = x.transpose(1, 2)
-        x = x @ self.W.weight + self.W.bias
-        x = PReLU(x)
+        x = self.W(x)[:, :, 0]
+        activition = PReLU()
+        x = activition(x)
         x = self.W_d(x)
-        return x.squeeze(1)
+        return x

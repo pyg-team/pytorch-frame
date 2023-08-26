@@ -1,16 +1,15 @@
 import torch
-import sys
 
 from torch_frame.nn import ExcelFormerConv
 
+
 def test_excelformer_conv():
     batch_size = 10
-    channels = 8
+    channels = 16
     num_cols = 15
     num_heads = 8
     # Feature-based embeddings
     x = torch.randn(size=(batch_size, num_cols, channels))
-
-    conv = ExcelFormerConv(channels=8, num_cols=num_cols, num_heads=num_heads)
+    conv = ExcelFormerConv(channels, num_heads=num_heads)
     x_out = conv(x)
     assert x_out.shape == (batch_size, num_cols, channels)
