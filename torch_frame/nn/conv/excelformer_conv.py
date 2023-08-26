@@ -117,9 +117,9 @@ class ExcelFormerConv(TableConv):
     def __init__(self,
                  channels,
                  num_heads,
-                 diam_dropout,
-                 aium_dropout,
-                 residual_dropout,
+                 diam_dropout = 0.1,
+                 aium_dropout = 0.1,
+                 residual_dropout = 0.1,
                  ) -> None:
 
         super.__init__()
