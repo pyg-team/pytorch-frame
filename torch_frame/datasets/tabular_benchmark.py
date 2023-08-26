@@ -9,7 +9,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
     r"""A collection of Tabular benchmark datasets introduced in
     https://arxiv.org/abs/2207.08815."""
 
-    name_to_category = {
+    name_to_task_category = {
         'albert': 'clf_cat',
         'compas-two-years': 'clf_cat',
         'covertype': 'clf_cat',
@@ -48,14 +48,17 @@ class TabularBenchmark(torch_frame.data.Dataset):
     # https://huggingface.co/datasets/inria-soda/tabular-benchmark/tree/main/reg_num
 
     def __init__(self, root: str, name: str):
-        if name not in self.name_to_category:
+        if name not in self.name_to_task_category:
             raise ValueError(
                 f"The given dataset name ('{name}') is not available. It "
-                f"needs to be chosen from {list(self.name_to_category)}")
+                f"needs to be chosen from {list(self.name_to_task_category)}")
         base_url = (self.base_url_large
                     if name in self.large_datasets else self.base_url)
-        url = os.path.join(base_url, self.name_to_category[name],
-                           f'{name}.csv')
+        url = os.path.join(
+            base_url,
+            self.name_to_task_category[name],
+            f'{name}.csv',
+        )
         path = self.download_url(url, root)
         df = pd.read_csv(path)
         # The last column is the target column
