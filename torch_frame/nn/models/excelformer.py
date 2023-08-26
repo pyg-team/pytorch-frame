@@ -1,8 +1,8 @@
 from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
 
-from torch_frame.nn.conv import ExcelFormerConv, ExcelFormerPredictionHead
-
+from torch_frame.nn.conv import ExcelFormerConv
+from torch_frame.nn.decoder import ExcelFormerPredictionHead
 
 class ExcelFormer(Module):
     def __init__(self, in_channels, out_channels, num_layers, num_heads, num_cols, residual_dropout):
