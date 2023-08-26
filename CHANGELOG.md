@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `ExcelFormer` ([#26](https://github.com/pyg-team/pytorch-frame/pull/26))
+- Added the `Mushroom`, `Forest Cover Type`, and `Poker Hand` datasets ([#32](https://github.com/pyg-team/pytorch-frame/pull/32))
+- Added `PeriodicEncoder` ([#31](https://github.com/pyg-team/pytorch-frame/pull/31))
 - Added `NaN` handling in `StypeEncoder` ([#28](https://github.com/pyg-team/pytorch-frame/pull/28))
 - Added `LinearBucketEncoder` ([#22](https://github.com/pyg-team/pytorch-frame/pull/22))
 - Added `Trompt` ([#25](https://github.com/pyg-team/pytorch-frame/pull/25))
