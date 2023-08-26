@@ -6,16 +6,29 @@ from torch_frame.nn.decoder import ExcelFormerPredictionHead
 
 
 class ExcelFormer(Module):
-    def __init__(self, in_channels, out_channels, num_layers, num_heads,
-                 num_cols, residual_dropout):
+    r"""The ExcelFormer model introduced in
+        https://arxiv.org/pdf/2301.02819.pdf
+
+    Args:
+        in_channels (int): Input channel dimensionality
+        out_channels (int): Output channels dimensionality
+        num_cols (int): Number of columns
+        num_layers (int): Number of :class:`ExcelFormerConv` layers.
+        num_heads (int): Number of attention heads used in :class:`DiaM`
+        diam_dropout (float): diam_dropout (default: 0.1)
+        aium_dropout (float): aium_dropout (default: 0.1)
+        residual_dropout (float): residual dropout (default: 0.1)
+
+    """
+    def __init__(self, in_channels, out_channels, num_cols, num_layers,
+                 num_heads, diam_dropout=0.1, aium_dropout=0.1,
+                 residual_dropout=0.1):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.excelformer_convs = ModuleList([
-            ExcelFormerConv(in_channels, num_heads, diam_dropout=0.1,
-                            aium_dropout=0.1,
-                            residual_dropout=residual_dropout)
-            for _ in range(num_layers)
+            ExcelFormerConv(in_channels, num_heads, diam_dropout, aium_dropout,
+                            residual_dropout) for _ in range(num_layers)
         ])
         self.prediction_head = ExcelFormerPredictionHead(
             in_channels, out_channels, num_cols)
@@ -27,7 +40,6 @@ class ExcelFormer(Module):
         self.prediction_head.reset_parameters()
 
     def forward(self, x):
-        # [batch_size, num_features, in_channels]
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
         if not self.training:

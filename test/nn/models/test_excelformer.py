@@ -10,14 +10,10 @@ def test_excelformer():
     num_cols = 5
     num_heads = 2
     num_layers = 6
-    # Feature-based embeddings
     x = torch.randn(size=(batch_size, num_cols, in_channels))
     model = ExcelFormer(in_channels=in_channels, out_channels=out_channels,
                         num_cols=num_cols, num_layers=num_layers,
-                        num_heads=num_heads, residual_dropout=0.1)
+                        num_heads=num_heads)
     model.training = False
     out = model(x)
     assert out.shape == (batch_size, out_channels)
-
-
-test_excelformer()
