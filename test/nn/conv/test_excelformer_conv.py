@@ -13,3 +13,6 @@ def test_excelformer_conv():
     conv = ExcelFormerConv(channels, num_heads=num_heads)
     x_out = conv(x)
     assert x_out.shape == (batch_size, num_cols, channels)
+
+
+test_excelformer_conv()

@@ -15,3 +15,6 @@ def test_excelformer():
                         num_layers=num_layers, num_heads=num_heads)
     out = model(x)
     assert out.shape == (batch_size, num_cols, in_channels)
+
+
+test_excelformer()

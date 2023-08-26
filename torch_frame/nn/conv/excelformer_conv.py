@@ -69,20 +69,19 @@ class DiaM(Module):
         return attention_mask
 
     def forward(self, x: Tensor) -> Tensor:
-        _, num_cols, _ = x.shape
+        B, num_cols, _ = x.shape
         Q, K, V = self.W_q(x), self.W_k(x), self.W_v(x)
         for tensor in [Q, K, V]:
             assert tensor.shape[-1] % self.num_heads == 0
-        B = len(Q)
         d_heads = V.shape[-1] // self.num_heads
         Q = self._reshape(Q)
         K = self._reshape(K)
-        attention_score = Q @ K.transpose(1, 2)
+        attention_score = torch.einsum('ijk, ilk->ijl', Q, K)
         masks = self.get_attention_mask(attention_score.shape,
                                         attention_score.device)
         attention = F.softmax((attention_score + masks) / math.sqrt(d_heads),
                               dim=-1)
-        x = attention @ self._reshape(V)
+        x = torch.einsum('ijk, ikl->ijl', attention, self._reshape(V))
         x = x.reshape(B, self.num_heads, num_cols,
                       d_heads).transpose(1,
                                          2).reshape(B, num_cols,
