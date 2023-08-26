@@ -6,7 +6,7 @@ import torch_frame
 
 
 class TabularBenchmark(torch_frame.data.Dataset):
-    r"""The collection of Tabular Benchmark datasets introduced in
+    r"""A collection of Tabular benchmark datasets introduced in
     https://arxiv.org/abs/2207.08815."""
 
     name_to_category = {
