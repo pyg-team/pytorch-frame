@@ -37,7 +37,7 @@ def attenuated_kaiming_uniform_(tensor: Tensor, scale: float = 0.1,
 
 def attenuated_xavier_uniform_(tensor: Tensor, scale: float = 0.1,
                                gain: float = 1.) -> Tensor:
-    r"""Attenuated_xavier_uniform_
+    r"""Attenuated Xavier Uniform Initialization
 
     Args:
         tensor: an n-dimensional `torch.Tensor`
