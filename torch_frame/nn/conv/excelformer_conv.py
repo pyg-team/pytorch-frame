@@ -13,8 +13,10 @@ from torch_frame.utils.initialization_methods import (
 
 
 def attenuated_initialization(m):
-    attenuated_kaiming_uniform_(m.weight)
-    zeros_(m.bias)
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        attenuated_kaiming_uniform_(m.weight)
+        zeros_(m.bias)
 
 
 class AiuM(Module):
