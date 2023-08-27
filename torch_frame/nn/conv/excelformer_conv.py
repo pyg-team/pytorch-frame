@@ -7,9 +7,7 @@ from torch.nn import Dropout, LayerNorm, Linear, Module
 from torch.nn.init import zeros_
 
 from torch_frame.nn.conv import TableConv
-from torch_frame.utils.initialization_methods import (
-    attenuated_kaiming_uniform_,
-)
+from torch_frame.utils import attenuated_kaiming_uniform_
 
 
 def attenuated_initialization(m):
