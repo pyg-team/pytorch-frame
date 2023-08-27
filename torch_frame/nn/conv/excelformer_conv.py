@@ -4,8 +4,17 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Dropout, LayerNorm, Linear, Module
+from torch.nn.init import zeros_
 
 from torch_frame.nn.conv import TableConv
+from torch_frame.utils.initialization_methods import (
+    attenuated_kaiming_uniform_,
+)
+
+
+def attenuated_initialization(m):
+    attenuated_kaiming_uniform_(m.weight)
+    zeros_(m.bias)
 
 
 class AiuM(Module):
@@ -106,15 +115,12 @@ class ExcelFormerConv(TableConv):
         diam_dropout (float): diam_dropout (default: 0)
         aium_dropout (float): aium_dropout (default: 0)
         residual_dropout (float): residual dropout (default: 0)
+        initialization (str): 'kaiming' or 'xavier' for attenuated
+        kaiming or attenuated xavier initialization
     """
-    def __init__(
-        self,
-        channels: int,
-        num_heads: int,
-        diam_dropout: float = 0,
-        aium_dropout: float = 0,
-        residual_dropout: float = 0,
-    ) -> None:
+    def __init__(self, channels: int, num_heads: int, diam_dropout: float = 0,
+                 aium_dropout: float = 0, residual_dropout: float = 0,
+                 initialization: str = 'kaiming') -> None:
 
         super().__init__()
         self.norm_1 = LayerNorm(channels)
@@ -122,6 +128,9 @@ class ExcelFormerConv(TableConv):
         self.norm_2 = LayerNorm(channels)
         self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
+
+        self.DiaM.apply(attenuated_initialization)
+        self.AiuM.apply(attenuated_initialization)
 
     def reset_parameters(self):
         self.DiaM.reset_parameters()
