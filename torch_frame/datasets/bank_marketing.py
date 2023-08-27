@@ -3,7 +3,7 @@ import pandas as pd
 import torch_frame
 
 
-class AdultCensusIncome(torch_frame.data.Dataset):
+class BankMarketing(torch_frame.data.Dataset):
     r"""The `Bank Marketing
     <https://github.com/LeoGrin/tabular-benchmark>`_
     dataset. It's related with direct marketing campaigns of

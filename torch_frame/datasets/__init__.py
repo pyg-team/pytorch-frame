@@ -6,10 +6,12 @@ from .fake import FakeDataset
 from .forest_cover_type import ForestCoverType
 from .mushroom import Mushroom
 from .poker_hand import PokerHand
+from .bank_marketing import BankMarketing
 
 real_world_datasets = [
     'Titanic',
     'AdultCensusIncome',
+    'BankMarketing',
     'ForestCoverType',
     'Mushroom',
     'PokerHand',
