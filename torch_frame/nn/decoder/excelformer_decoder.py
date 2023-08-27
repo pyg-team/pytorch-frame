@@ -25,6 +25,15 @@ class ExcelFormerDecoder(Decoder):
         self.lin_d.reset_parameters()
 
     def forward(self, x):
+        r"""Transforming :obj:`x` into output predictions.
+
+        Args:
+            x (Tensor): Input column-wise tensor of shape
+                [batch_size, num_cols, in_channels]
+
+        Returns:
+            x (Tensor): [batch_size, out_channels].
+        """
         x = x.transpose(1, 2)
         x = self.lin_f(x)
         x = self.activation(x)
