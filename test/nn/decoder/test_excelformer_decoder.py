@@ -1,6 +1,6 @@
 import torch
 
-from torch_frame.nn import ExcelFormerPredictionHead
+from torch_frame.nn import ExcelFormerDecoder
 
 
 def test_excelformer_predictionhead():
@@ -9,6 +9,6 @@ def test_excelformer_predictionhead():
     in_channels = 8
     out_channels = 3
     x = torch.randn(batch_size, num_cols, in_channels)
-    decoder = ExcelFormerPredictionHead(in_channels, out_channels, num_cols)
+    decoder = ExcelFormerDecoder(in_channels, out_channels, num_cols)
     y = decoder(x)
     assert y.shape == (batch_size, out_channels)

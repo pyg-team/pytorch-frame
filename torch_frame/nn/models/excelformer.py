@@ -1,10 +1,9 @@
-from typing import Optional
-
 from torch import Tensor
 from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
 
 from torch_frame.nn.conv import ExcelFormerConv
+from torch_frame.nn.decoder import ExcelFormerDecoder
 
 
 class ExcelFormer(Module):
@@ -17,15 +16,14 @@ class ExcelFormer(Module):
         num_cols (int): Number of columns
         num_layers (int): Number of :class:`ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
-        diam_dropout (Optional[float]): diam_dropout (default: None)
-        aium_dropout (Optional[float]): aium_dropout (default: None)
-        residual_dropout (Optional[float]): residual dropout (default: None)
+        diam_dropout (float): diam_dropout (default: 0)
+        aium_dropout (float): aium_dropout (default: 0)
+        residual_dropout (float): residual dropout (default: 0)
 
     """
-    def __init__(self, in_channels: int, out_channels: int, num_layers: int,
-                 num_heads: int, diam_dropout: Optional[float] = None,
-                 aium_dropout: Optional[float] = None,
-                 residual_dropout: Optional[float] = None):
+    def __init__(self, in_channels: int, out_channels: int, num_cols: int,
+                 num_layers: int, num_heads: int, diam_dropout: float = 0,
+                 aium_dropout: float = 0, residual_dropout: float = 0):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -33,13 +31,25 @@ class ExcelFormer(Module):
             ExcelFormerConv(in_channels, num_heads, diam_dropout, aium_dropout,
                             residual_dropout) for _ in range(num_layers)
         ])
+        self.excelformer_decoder = ExcelFormerDecoder(in_channels,
+                                                      out_channels, num_cols)
         self.reset_parameters()
 
     def reset_parameters(self):
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
+        self.excelformer_decoder.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
+        r"""Transforming :obj:`x` into output predictions.
+
+        Args:
+            x (Tensor): Input column-wise tensor of shape
+                [batch_size, num_cols, in_channels]
+
+        Returns:
+            x (Tensor): [batch_size, num_cols, out_channels].
+        """
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
         return x
