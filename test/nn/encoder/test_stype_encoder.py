@@ -1,15 +1,14 @@
+import pytest
+
+import torch_frame.nn.encoder as Encoder
 from torch_frame import stype
 from torch_frame.data.dataset import Dataset
+from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
-from torch_frame.nn.encoder import (
-    EmbeddingEncoder,
-    LinearBucketEncoder,
-    LinearEncoder,
-    LinearPeriodicEncoder,
-)
 
 
-def test_stype_feature_encoder():
+@pytest.mark.parametrize('encoder_cls_name', ['EmbeddingEncoder'])
+def test_categorical_feature_encoder(encoder_cls_name: str):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
@@ -17,39 +16,51 @@ def test_stype_feature_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
-    encoder = EmbeddingEncoder(8, stats_list=stats_list)
-    x = encoder(tensor_frame.x_dict[stype.categorical])
-    assert x.shape == (10, 2, 8)
+    encoder = getattr(Encoder, encoder_cls_name)(8, stats_list=stats_list)
+    x_cat = tensor_frame.x_dict[stype.categorical]
+    x = encoder(x_cat)
+    assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
+
+    # Perturb the first column
+    num_categories = len(stats_list[0][StatType.COUNT])
+    x_cat[:, 0] = (x_cat[:, 0] + 1) % num_categories
+    x_perturbed = encoder(x_cat)
+    # Make sure the first column embeddings are changed
+    assert ((x_perturbed[:, 0, :] - x[:, 0, :]).abs().sum(dim=-1) > 0).all()
+    # Make sure other column embeddings are unchanged
+    assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
+
+
+@pytest.mark.parametrize('encoder_cls_name', [
+    'LinearEncoder',
+    'LinearBucketEncoder',
+    'LinearPeriodicEncoder',
+])
+def test_numerical_feature_encoder(encoder_cls_name: str):
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
 
     stats_list = [
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-    encoder = LinearEncoder(8, stats_list=stats_list)
-    x = encoder(tensor_frame.x_dict[stype.numerical])
-    assert x.shape == (10, 3, 8)
+    encoder = getattr(Encoder, encoder_cls_name)(8, stats_list=stats_list)
+    x_num = tensor_frame.x_dict[stype.numerical]
+    x = encoder(x_num)
+    assert x.shape == (x_num.size(0), x_num.size(1), 8)
 
-    encoder = LinearBucketEncoder(out_channels=8, stats_list=stats_list)
-
-    # Apply the encoder to the numerical columns of the tensor frame
-    x_numerical = tensor_frame.x_dict[stype.numerical]
-    encoded_x = encoder(x_numerical)
-
-    # Expected shape: [batch_size, num_numerical_cols, 8]
-    assert encoded_x.shape == (10, 3, 8)
-
-    encoder = LinearPeriodicEncoder(out_channels=8, stats_list=stats_list,
-                                    n_bins=6)
-
-    # Apply the encoder to the numerical columns of the tensor frame
-    x_numerical = tensor_frame.x_dict[stype.numerical]
-    encoded_x = encoder(x_numerical)
-
-    # Expected shape: [batch_size, num_numerical_cols, 8]
-    assert encoded_x.shape == (10, 3, 8)
+    # Perturb the first column
+    x_num[:, 0] = x_num[:, 0] + 10.
+    x_perturbed = encoder(x_num)
+    # Make sure the first column embeddings are changed
+    assert ((x_perturbed[:, 0, :] - x[:, 0, :]).abs().sum(dim=-1) > 0).all()
+    # Make sure other column embeddings are unchanged
+    assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-def test_stype_feature_encoder_with_nan():
+@pytest.mark.parametrize('encoder_cls_name', ['EmbeddingEncoder'])
+def test_categorical_feature_encoder_with_nan(encoder_cls_name: str):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
@@ -57,35 +68,35 @@ def test_stype_feature_encoder_with_nan():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
-    encoder = EmbeddingEncoder(8, stats_list=stats_list)
+
+    encoder = getattr(Encoder, encoder_cls_name)(8, stats_list=stats_list)
     x_cat = tensor_frame.x_dict[stype.categorical]
     isnan_mask = x_cat == -1
     x = encoder(x_cat)
-    assert x.shape == (10, 2, 8)
+    assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
     assert (x[isnan_mask, :] == 0).all()
     # Make sure original data is not modified
-    assert (x_cat[isnan_mask] == -1).all()
+    assert (x[isnan_mask, :] == -1).all()
 
+
+@pytest.mark.parametrize('encoder_cls_name', [
+    'LinearEncoder',
+    'LinearBucketEncoder',
+    'LinearPeriodicEncoder',
+])
+def test_categorical_feature_encoder_with_nan(encoder_cls_name: str):
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
     stats_list = [
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-
-    encoder = LinearEncoder(8, stats_list=stats_list)
+    encoder = getattr(Encoder, encoder_cls_name)(8, stats_list=stats_list)
     x_num = tensor_frame.x_dict[stype.numerical]
     isnan_mask = x_num.isnan()
     x = encoder(x_num)
-    assert x.shape == (10, 3, 8)
-    assert (x[isnan_mask, :] == 0).all()
-    # Make sure original data is not modified
-    assert x_num[isnan_mask].isnan().all()
-
-    # TODO check for LinearBucketEncoder.
-    encoder = LinearBucketEncoder(8, stats_list=stats_list)
-    x_num = tensor_frame.x_dict[stype.numerical]
-    isnan_mask = x_num.isnan()
-    x = encoder(x_num)
-    assert x.shape == (10, 3, 8)
+    assert x.shape == (x_num.size(0), x_num.size(1), 8)
     assert (x[isnan_mask, :] == 0).all()
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()

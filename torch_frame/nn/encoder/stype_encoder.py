@@ -253,7 +253,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
 
-        return x
+        return torch.nan_to_num(x, nan=0)
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.linear_in, std=0.1)
