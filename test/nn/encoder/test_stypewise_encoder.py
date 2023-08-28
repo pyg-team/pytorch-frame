@@ -7,15 +7,17 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn.encoder import StypeWiseFeatureEncoder
 
 
-@pytest.mark.parametrize('encoder_cat_cls_name', ['EmbeddingEncoder'])
-@pytest.mark.parametrize('encoder_num_cls_name', [
-    'LinearEncoder',
-    'LinearBucketEncoder',
-    'LinearPeriodicEncoder',
+@pytest.mark.parametrize('encoder_cat_cls_kwargs', [('EmbeddingEncoder', {})])
+@pytest.mark.parametrize('encoder_num_cls_kwargs', [
+    ('LinearEncoder', {}),
+    ('LinearBucketEncoder', {}),
+    ('LinearPeriodicEncoder', {
+        'n_bins': 4
+    }),
 ])
 def test_stypewise_feature_encoder(
-    encoder_num_cls_name: str,
-    encoder_cat_cls_name: str,
+    encoder_cat_cls_kwargs: str,
+    encoder_num_cls_kwargs: str,
 ):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -26,8 +28,12 @@ def test_stypewise_feature_encoder(
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
         stype_encoder_dict={
-            stype.categorical: getattr(Encoder, encoder_cat_cls_name)(),
-            stype.numerical: getattr(Encoder, encoder_num_cls_name)(),
+            stype.categorical:
+            getattr(Encoder,
+                    encoder_cat_cls_kwargs[0])(**encoder_cat_cls_kwargs[1]),
+            stype.numerical:
+            getattr(Encoder,
+                    encoder_num_cls_kwargs[0])(**encoder_num_cls_kwargs[1]),
         },
     )
     x, col_names = encoder(tensor_frame)
