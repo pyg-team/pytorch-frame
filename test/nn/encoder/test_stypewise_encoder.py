@@ -16,8 +16,8 @@ from torch_frame.nn.encoder import StypeWiseFeatureEncoder
     }),
 ])
 def test_stypewise_feature_encoder(
-    encoder_cat_cls_kwargs: str,
-    encoder_num_cls_kwargs: str,
+    encoder_cat_cls_kwargs,
+    encoder_num_cls_kwargs,
 ):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
