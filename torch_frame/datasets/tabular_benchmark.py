@@ -51,7 +51,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
         if name not in self.name_to_task_category:
             raise ValueError(
                 f"The given dataset name ('{name}') is not available. It "
-                f"needs to be chosen from {list(self.name_to_task_category)}")
+                f"needs to be chosen from {list(self.name_to_task_category.keys())}")
         base_url = (self.base_url_large
                     if name in self.large_datasets else self.base_url)
         url = os.path.join(
