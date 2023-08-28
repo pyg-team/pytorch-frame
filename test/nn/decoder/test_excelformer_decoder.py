@@ -3,7 +3,7 @@ import torch
 from torch_frame.nn import ExcelFormerDecoder
 
 
-def test_excelformer_predictionhead():
+def test_excelformer_decoder():
     batch_size = 10
     num_cols = 18
     in_channels = 8
