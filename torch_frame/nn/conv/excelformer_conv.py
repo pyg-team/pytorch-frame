@@ -61,7 +61,7 @@ class DiaM(Module):
     def reset_parameters(self):
         for lin in [self.lin_q, self.lin_k, self.lin_v]:
             lin.apply(attenuated_initialization)
-        if self.lin_out:
+        if self.lin_out is not None:
             self.lin_out.apply(attenuated_initialization)
 
     def _reshape(self, x: Tensor) -> Tensor:
