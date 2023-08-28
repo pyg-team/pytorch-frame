@@ -23,7 +23,7 @@ class ExcelFormer(Module):
     """
     def __init__(self, in_channels: int, out_channels: int, num_cols: int,
                  num_layers: int, num_heads: int, diam_dropout: float = 0,
-                 aium_dropout: float = 0, residual_dropout: float = 0):
+                 aium_dropout: float = 0, residual_dropout: float = 0, ):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
