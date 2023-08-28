@@ -31,8 +31,8 @@ class AiuM(Module):
         self.dropout = Dropout(dropout)
 
     def reset_parameters(self):
-        self.lin_1.reset_parameters()
-        self.lin_2.reset_parameters()
+        self.lin_1.apply(attenuated_initialization)
+        self.lin_2.apply(attenuated_initialization)
 
     def forward(self, x):
         x = self.dropout(F.tanh(self.lin_1(x)) * (self.lin_2(x)))
@@ -59,11 +59,10 @@ class DiaM(Module):
         self.dropout = Dropout(dropout)
 
     def reset_parameters(self):
-        self.lin_q.reset_parameters()
-        self.lin_k.reset_parameters()
-        self.lin_v.reset_parameters()
+        for lin in [self.lin_q, self.lin_k, self.lin_v]:
+            lin.apply(attenuated_initialization)
         if self.lin_out:
-            self.lin_out.reset_parameters()
+            self.lin_out.apply(attenuated_initialization)
 
     def _reshape(self, x: Tensor) -> Tensor:
         B, num_cols, channels = x.shape
@@ -129,12 +128,11 @@ class ExcelFormerConv(TableConv):
         self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
 
+    def reset_parameters(self):
         self.DiaM.apply(attenuated_initialization)
         self.AiuM.apply(attenuated_initialization)
-
-    def reset_parameters(self):
-        self.DiaM.reset_parameters()
-        self.AiuM.reset_parameters()
+        self.norm_1.apply(attenuated_initialization)
+        self.norm_2.apply(attenuated_initialization)
 
     def _start_residual(self, x):
         x_residual = x
