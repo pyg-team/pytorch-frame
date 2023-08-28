@@ -6,6 +6,7 @@ from .fake import FakeDataset
 from .forest_cover_type import ForestCoverType
 from .mushroom import Mushroom
 from .poker_hand import PokerHand
+from .bank_marketing import BankMarketing
 from .tabular_benchmark import TabularBenchmark
 
 real_world_datasets = [
@@ -14,6 +15,7 @@ real_world_datasets = [
     'ForestCoverType',
     'Mushroom',
     'PokerHand',
+    'BankMarketing',
     'TabularBenchmark',
 ]
 
