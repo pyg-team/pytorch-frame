@@ -16,9 +16,9 @@ class ExcelFormer(Module):
         num_cols (int): Number of columns
         num_layers (int): Number of :class:`ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
-        diam_dropout (float): diam_dropout (default: 0)
-        aium_dropout (float): aium_dropout (default: 0)
-        residual_dropout (float): residual dropout (default: 0)
+        diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
+        aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
+        residual_dropout (float, optional): residual dropout (default: `0.0`)
 
     """
     def __init__(self, in_channels: int, out_channels: int, num_cols: int,
