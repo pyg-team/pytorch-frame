@@ -1,3 +1,4 @@
+import torch
 from torch import Tensor
 from torch.nn import Linear, PReLU
 
@@ -25,7 +26,8 @@ class ExcelFormerDecoder(Decoder):
     def reset_parameters(self):
         self.lin_f.reset_parameters()
         self.lin_d.reset_parameters()
-        self.activation.weight.fill_(1.0)
+        with torch.no_grad():
+            self.activation.weight.fill_(0.25)
 
     def forward(self, x: Tensor) -> Tensor:
         r"""Transforming :obj:`x` into output predictions.
