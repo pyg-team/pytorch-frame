@@ -69,10 +69,10 @@ class DiaM(Module):
     def _reshape(self, x: Tensor) -> Tensor:
         B, num_cols, channels = x.shape
         d_head = channels // self.num_heads
-        return (x.reshape(B, num_cols, self.num_heads,
-                          d_head).transpose(1,
-                                            2).reshape(B * self.num_heads,
-                                                       num_cols, d_head))
+        x = x.reshape(B, num_cols, self.num_heads, d_head)
+        x = x.transpose(1, 2)
+        x = x.reshape(B * self.num_heads, num_cols, d_head)
+        return x
 
     def get_attention_mask(self, input_shape: Tensor.size):
         r""" Generate an attention mask for a given input shape.
