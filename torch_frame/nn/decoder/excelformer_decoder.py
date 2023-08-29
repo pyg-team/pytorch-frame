@@ -20,6 +20,7 @@ class ExcelFormerDecoder(Decoder):
         self.lin_f = Linear(num_cols, self.out_channels)
         self.activation = PReLU()
         self.lin_d = Linear(self.in_channels, 1)
+        self.reset_parameters()
 
     def reset_parameters(self):
         self.lin_f.reset_parameters()

@@ -2,12 +2,7 @@ import math
 
 import torch
 from torch import Tensor
-from torch.nn.init import (
-    _calculate_correct_fan,
-    _calculate_fan_in_and_fan_out,
-    _no_grad_uniform_,
-    calculate_gain,
-)
+from torch.nn.init import _calculate_correct_fan, calculate_gain
 
 
 def attenuated_kaiming_uniform_(tensor: Tensor, scale: float = 0.1,
@@ -26,27 +21,10 @@ def attenuated_kaiming_uniform_(tensor: Tensor, scale: float = 0.1,
         nonlinearity (str) : the non-linear function (nn.functional name),
                     recommended to use only with 'relu' or 'leaky_relu'.
     """
-    fan = _calculate_correct_fan(tensor, mode)
-    gain = calculate_gain(nonlinearity, a)
-    std = gain * scale / math.sqrt(fan)
-    bound = math.sqrt(
-        3.0) * std  # Calculate uniform bounds from standard deviation
     with torch.no_grad():
+        fan = _calculate_correct_fan(tensor, mode)
+        gain = calculate_gain(nonlinearity, a)
+        std = gain * scale / math.sqrt(fan)
+        bound = math.sqrt(
+            3.0) * std  # Calculate uniform bounds from standard deviation
         return tensor.uniform_(-bound, bound)
-
-
-def attenuated_xavier_uniform_(tensor: Tensor, scale: float = 0.1,
-                               gain: float = 1.) -> Tensor:
-    r"""Attenuated Xavier Uniform Initialization
-
-    Args:
-        tensor: an n-dimensional `torch.Tensor`
-        gain: an optional scaling factor
-
-    """
-    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
-    std = gain * scale * math.sqrt(2.0 / float(fan_in + fan_out))
-    a = math.sqrt(
-        3.0) * std  # Calculate uniform bounds from standard deviation
-
-    return _no_grad_uniform_(tensor, -a, a)

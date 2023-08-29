@@ -7,7 +7,8 @@ from torch.nn import Dropout, LayerNorm, Linear, Module
 from torch.nn.init import zeros_
 
 from torch_frame.nn.conv import TableConv
-from torch_frame.utils import attenuated_kaiming_uniform_
+
+from ..utils.init import attenuated_kaiming_uniform_
 
 
 def init_attenuated(linear: Linear):
@@ -130,6 +131,7 @@ class ExcelFormerConv(TableConv):
         self.norm_2 = LayerNorm(channels)
         self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
+        self.reset_parameters()
 
     def reset_parameters(self):
         self.DiaM.reset_parameters()
