@@ -114,10 +114,16 @@ def eval(loader: DataLoader) -> float:
     return float(is_correct_cat.sum()) / len(is_correct_cat)
 
 
+best_val_acc = 0
+best_test_acc = 0
 for epoch in range(args.epochs):
     print(f"=====epoch {epoch}")
     loss = train()
     train_acc = eval(train_loader)
     val_acc = eval(val_loader)
     test_acc = eval(test_loader)
+    if best_val_acc < val_acc:
+        best_val_acc = val_acc
+        best_test_acc = test_acc
     print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
+print(f'Best val acc: {best_val_acc}, Best test acc: {best_test_acc}')
