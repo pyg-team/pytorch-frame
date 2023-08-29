@@ -149,8 +149,6 @@ class ExcelFormerConv(TableConv):
     def reset_parameters(self):
         self.DiaM.reset_parameters()
         self.AiuM.reset_parameters()
-        init_attenuated(self.norm_1)
-        init_attenuated(self.norm_2)
 
     def _start_residual(self, x):
         return x
@@ -164,11 +162,9 @@ class ExcelFormerConv(TableConv):
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)
-        x = self._start_residual(x)
         x_residual = self.DiaM(x)
-        x = self._end_residual(x, x_residual)
-        x = self._start_residual(x)
+        x = F.dropout(x_residual, self.residual_dropout, self.training) + x
         x_residual = self.norm_2(x)
         x_residual = self.AiuM(x)
-        x = self._end_residual(x, x_residual)
+        x = F.dropout(x_residual, self.residual_dropout, self.training) + x
         return x
