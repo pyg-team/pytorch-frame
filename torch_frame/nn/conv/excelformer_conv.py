@@ -57,6 +57,7 @@ class DiaM(Module):
         self.lin_out = Linear(channels, channels) if num_heads > 1 else None
         self.num_heads = num_heads
         self.dropout = Dropout(dropout)
+        self.register_buffer('seq_ids', torch.arange(channels))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -73,8 +74,7 @@ class DiaM(Module):
                                             2).reshape(B * self.num_heads,
                                                        num_cols, d_head))
 
-    def get_attention_mask(self, input_shape: Tensor.size,
-                           device: torch.device):
+    def get_attention_mask(self, input_shape: Tensor.size):
         r""" Generate an attention mask for a given input shape.
 
         The function constructs an attention mask using the sequence ids
@@ -86,16 +86,13 @@ class DiaM(Module):
         Parameters:
         - input_shape (Tensor.size): Shape of the input tensor. Expected
         to be (Batch size, _, Channels).
-        - device (torch.device): The device on which the attention mask
-        tensor should be placed.
 
         Returns:
         - torch.Tensor: The generated attention mask with values 0 or -1e5.
         """
         B, _, channels = input_shape
-        seq_ids = torch.arange(channels, device=device)
-        attention_mask = (seq_ids[None, None, :].repeat(B, channels, 1)
-                          <= seq_ids[None, :, None])
+        attention_mask = (self.seq_ids[None, None, :].repeat(B, channels, 1)
+                          <= self.seq_ids[None, :, None])
         attention_mask = (1.0 - attention_mask.float()) * -1e5
         return attention_mask
 
@@ -106,8 +103,7 @@ class DiaM(Module):
         Q = self._reshape(Q)
         K = self._reshape(K)
         attention_score = torch.einsum('ijk, ilk->ijl', Q, K)
-        masks = self.get_attention_mask(attention_score.shape,
-                                        attention_score.device)
+        masks = self.get_attention_mask(attention_score.shape)
         scaled_attention_score = (attention_score + masks) / math.sqrt(d_heads)
         attention_probs = F.softmax(scaled_attention_score, dim=-1)
         attention = self.dropout(attention_probs)
