@@ -2,6 +2,7 @@ import copy
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
+import torch
 from torch import Tensor
 
 import torch_frame
@@ -69,6 +70,10 @@ class TensorFrame:
         r"""The number of rows in the :class:`TensorFrame`."""
         return len(next(iter(self.x_dict.values())))
 
+    @property
+    def device(self) -> torch.device:
+        return next(iter(self.x_dict.values())).device
+
     # Python Built-ins ########################################################
 
     def __len__(self) -> int:
@@ -85,6 +90,7 @@ class TensorFrame:
                 f'  num_rows={self.num_rows},\n'
                 f'{stype_repr}\n'
                 f'  has_target={self.y is not None},\n'
+                f'  device={self.device},\n'
                 f')')
 
     def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':
