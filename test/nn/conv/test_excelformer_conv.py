@@ -10,6 +10,6 @@ def test_excelformer_conv():
     num_heads = 8
     # Feature-based embeddings
     x = torch.randn(size=(batch_size, num_cols, channels))
-    conv = ExcelFormerConv(channels, num_heads=num_heads)
+    conv = ExcelFormerConv(channels, num_cols, num_heads=num_heads)
     x_out = conv(x)
     assert x_out.shape == (batch_size, num_cols, channels)

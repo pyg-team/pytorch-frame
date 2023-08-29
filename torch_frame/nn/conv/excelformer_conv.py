@@ -44,10 +44,12 @@ class DiaM(Module):
 
     Args:
         channels (int): Input channel dimensionality
+        num_cols (int): Number of columns
         num_heads (int): Number of heads in the attention module
         dropout (float): Percentage of random deactivation in the DiaM module
     """
-    def __init__(self, channels: int, num_heads: int, dropout: float):
+    def __init__(self, channels: int, num_cols: int, num_heads: int,
+                 dropout: float):
         if num_heads > 1:
             assert channels % num_heads == 0
         super().__init__()
@@ -57,7 +59,7 @@ class DiaM(Module):
         self.lin_out = Linear(channels, channels) if num_heads > 1 else None
         self.num_heads = num_heads
         self.dropout = Dropout(dropout)
-        self.register_buffer('seq_ids', torch.arange(channels))
+        self.register_buffer('seq_ids', torch.arange(num_cols))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -78,7 +80,7 @@ class DiaM(Module):
         r""" Generate an attention mask for a given input shape.
 
         The function constructs an attention mask using the sequence ids
-        of the input channels. The mask is created such that the elements
+        of the input columns. The mask is created such that the elements
         in the upper triangle portion (except for the diagonal elements)
         of the attention map are all zeros. The reset of elements' values
         are 1e-5.
@@ -90,8 +92,8 @@ class DiaM(Module):
         Returns:
         - torch.Tensor: The generated attention mask with values 0 or -1e5.
         """
-        B, _, channels = input_shape
-        attention_mask = (self.seq_ids[None, None, :].repeat(B, channels, 1)
+        B, _, num_cols = input_shape
+        attention_mask = (self.seq_ids[None, None, :].repeat(B, num_cols, 1)
                           <= self.seq_ids[None, :, None])
         attention_mask = (1.0 - attention_mask.float()) * -1e5
         return attention_mask
@@ -122,6 +124,7 @@ class ExcelFormerConv(TableConv):
 
     Args:
         channels (int): Input/output channel dimensionality
+        num_cols (int): Number of columns
         num_heads (int): Number of attention heads
         diam_dropout (float): diam_dropout (default: 0)
         aium_dropout (float): aium_dropout (default: 0)
@@ -132,6 +135,7 @@ class ExcelFormerConv(TableConv):
     def __init__(
         self,
         channels: int,
+        num_cols: int,
         num_heads: int,
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
@@ -140,7 +144,7 @@ class ExcelFormerConv(TableConv):
 
         super().__init__()
         self.norm_1 = LayerNorm(channels)
-        self.DiaM = DiaM(channels, num_heads, diam_dropout)
+        self.DiaM = DiaM(channels, num_cols, num_heads, diam_dropout)
         self.norm_2 = LayerNorm(channels)
         self.AiuM = AiuM(channels, aium_dropout)
         self.residual_dropout = residual_dropout
