@@ -108,10 +108,9 @@ class DiaM(Module):
         attention_probs = F.softmax(scaled_attention_score, dim=-1)
         attention = self.dropout(attention_probs)
         x = torch.einsum('ijk, ikl->ijl', attention, self._reshape(V))
-        x = x.reshape(B, self.num_heads, num_cols,
-                      d_heads).transpose(1,
-                                         2).reshape(B, num_cols,
-                                                    self.num_heads * d_heads)
+        x = x.reshape(B, self.num_heads, num_cols, d_heads)
+        x = x.transpose(1, 2)
+        x = x.reshape(B, num_cols, self.num_heads * d_heads)
         if self.lin_out is not None:
             x = self.lin_out(x)
         return x
