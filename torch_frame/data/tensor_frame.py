@@ -61,7 +61,8 @@ class TensorFrame:
     @property
     def num_cols(self) -> int:
         r"""The number of columns in the :class:`TensorFrame`."""
-        return sum(x.size(1) for x in self.x_dict.values())
+        return sum(
+            len(col_names) for col_names in self.col_names_dict.values())
 
     @property
     def num_rows(self) -> int:
