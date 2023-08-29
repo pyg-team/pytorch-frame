@@ -10,6 +10,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
     assert tf.num_rows == len(tf) == 10
 
     assert str(tf) == ("TensorFrame(\n"
+                       "  num_cols=5,\n"
                        "  num_rows=10,\n"
                        "  categorical (3): ['a', 'b', 'c'],\n"
                        "  numerical (2): ['x', 'y'],\n"
