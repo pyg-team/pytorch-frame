@@ -37,11 +37,14 @@ dataset.materialize()
 dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
+train_tensor_frame = train_dataset.tensor_frame.to(device)
+val_tensor_frame = val_dataset.tensor_frame.to(device)
+test_tensor_frame = test_dataset.tensor_frame.to(device)
 # Split ratio following https://arxiv.org/abs/2207.08815
-train_loader = DataLoader(train_dataset, batch_size=args.batch_size,
+train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=1024)
-test_loader = DataLoader(test_dataset, batch_size=1024)
+val_loader = DataLoader(val_tensor_frame, batch_size=1024)
+test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
 num_classes = int(
     max(train_dataset.tensor_frame.y.max(), val_dataset.tensor_frame.y.max(),
