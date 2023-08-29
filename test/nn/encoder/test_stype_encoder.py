@@ -1,13 +1,18 @@
 import pytest
 
-import torch_frame.nn.encoder as Encoder
 from torch_frame import stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
+from torch_frame.nn import (
+    EmbeddingEncoder,
+    LinearEncoder,
+    LinearBucketEncoder,
+    LinearPeriodicEncoder,
+)
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [('EmbeddingEncoder', {})])
+@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
 def test_categorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -16,8 +21,8 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
-    encoder = getattr(Encoder, encoder_cls_kwargs[0])(8, stats_list=stats_list,
-                                                      **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    **encoder_cls_kwargs[1])
     x_cat = tensor_frame.x_dict[stype.categorical]
     x = encoder(x_cat)
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
@@ -33,9 +38,9 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [
-    ('LinearEncoder', {}),
-    ('LinearBucketEncoder', {}),
-    ('LinearPeriodicEncoder', {
+    (LinearEncoder, {}),
+    (LinearBucketEncoder, {}),
+    (LinearPeriodicEncoder, {
         'n_bins': 4
     }),
 ])
@@ -48,8 +53,8 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-    encoder = getattr(Encoder, encoder_cls_kwargs[0])(8, stats_list=stats_list,
-                                                      **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    **encoder_cls_kwargs[1])
     x_num = tensor_frame.x_dict[stype.numerical]
     x = encoder(x_num)
     assert x.shape == (x_num.size(0), x_num.size(1), 8)
@@ -63,7 +68,7 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [('EmbeddingEncoder', {})])
+@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
 def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
@@ -73,8 +78,8 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
 
-    encoder = getattr(Encoder, encoder_cls_kwargs[0])(8, stats_list=stats_list,
-                                                      **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    **encoder_cls_kwargs[1])
     x_cat = tensor_frame.x_dict[stype.categorical]
     isnan_mask = x_cat == -1
     x = encoder(x_cat)
@@ -85,9 +90,9 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [
-    ('LinearEncoder', {}),
-    ('LinearBucketEncoder', {}),
-    ('LinearPeriodicEncoder', {
+    (LinearEncoder, {}),
+    (LinearBucketEncoder, {}),
+    (LinearPeriodicEncoder, {
         'n_bins': 4
     }),
 ])
@@ -99,8 +104,8 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-    encoder = getattr(Encoder, encoder_cls_kwargs[0])(8, stats_list=stats_list,
-                                                      **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    **encoder_cls_kwargs[1])
     x_num = tensor_frame.x_dict[stype.numerical]
     isnan_mask = x_num.isnan()
     x = encoder(x_num)
