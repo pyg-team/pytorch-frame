@@ -200,7 +200,6 @@ class Dataset(ABC):
 
     # Indexing ################################################################
 
-    @requires_post_materialization
     def index_select(self, index: IndexSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`."""
@@ -221,7 +220,8 @@ class Dataset(ABC):
         iloc = index.cpu().numpy() if isinstance(index, Tensor) else index
         dataset.df = self.df.iloc[iloc]
 
-        dataset._tensor_frame = self._tensor_frame[index]
+        if self.is_materialized:
+            dataset._tensor_frame = self._tensor_frame[index]
 
         return dataset
 
