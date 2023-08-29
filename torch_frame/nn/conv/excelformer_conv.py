@@ -73,12 +73,29 @@ class DiaM(Module):
                                             2).reshape(B * self.num_heads,
                                                        num_cols, d_head))
 
-    def get_attention_mask(self, input_shape, device: torch.device):
+    def get_attention_mask(self, input_shape: Tensor.size,
+                           device: torch.device):
+        r""" Generate an attention mask for a given input shape.
+
+        The function constructs an attention mask using the sequence ids
+        of the input channels. The mask is created such that the elements
+        in the upper triangle portion (except for the diagonal elements)
+        of the attention map are all zeros. The reset of elements' values
+        are 1e-5.
+
+        Parameters:
+        - input_shape (Tensor.size): Shape of the input tensor. Expected
+        to be (Batch size, _, Channels).
+        - device (torch.device): The device on which the attention mask
+        tensor should be placed.
+
+        Returns:
+        - torch.Tensor: The generated attention mask with values 0 or -1e5.
+        """
         B, _, channels = input_shape
         seq_ids = torch.arange(channels, device=device)
-        attention_mask = seq_ids[None, None, :].repeat(B, channels,
-                                                       1) <= seq_ids[None, :,
-                                                                     None]
+        attention_mask = (seq_ids[None, None, :].repeat(B, channels, 1)
+                          <= seq_ids[None, :, None])
         attention_mask = (1.0 - attention_mask.float()) * -1e5
         return attention_mask
 
@@ -91,8 +108,9 @@ class DiaM(Module):
         attention_score = torch.einsum('ijk, ilk->ijl', Q, K)
         masks = self.get_attention_mask(attention_score.shape,
                                         attention_score.device)
-        attention = self.dropout(
-            F.softmax((attention_score + masks) / math.sqrt(d_heads), dim=-1))
+        scaled_attention_score = (attention_score + masks) / math.sqrt(d_heads)
+        attention_probs = F.softmax(scaled_attention_score, dim=-1)
+        attention = self.dropout(attention_probs)
         x = torch.einsum('ijk, ikl->ijl', attention, self._reshape(V))
         x = x.reshape(B, self.num_heads, num_cols,
                       d_heads).transpose(1,
@@ -140,8 +158,7 @@ class ExcelFormerConv(TableConv):
         init_attenuated(self.norm_2)
 
     def _start_residual(self, x):
-        x_residual = x
-        return x_residual
+        return x
 
     def _end_residual(self, x, x_residual):
         if self.residual_dropout:
