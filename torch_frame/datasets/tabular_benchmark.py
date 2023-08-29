@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 
 import torch_frame
 
@@ -55,19 +56,32 @@ class TabularBenchmark(torch_frame.data.Dataset):
                 f"{list(self.name_to_task_category.keys())}.")
         base_url = (self.base_url_large
                     if name in self.large_datasets else self.base_url)
+        task_category = self.name_to_task_category[name]
         url = os.path.join(
             base_url,
-            self.name_to_task_category[name],
+            task_category,
             f'{name}.csv',
         )
         path = self.download_url(url, root)
         df = pd.read_csv(path)
         # The last column is the target column
-        target_col = df.columns[-1]
         col_to_stype = {}
-        for col in df.columns:
-            if df[col].dtype == float:
+        target_col = df.columns[-1]
+        if "clf" in task_category:
+            col_to_stype[target_col] = torch_frame.categorical
+        else:
+            col_to_stype[target_col] = torch_frame.numerical
+
+        for col in df.columns[:-1]:
+            if "num" in task_category:
+                # "num" implies all features are numerical.
+                col_to_stype[col] = torch_frame.numerical
+            elif df[col].dtype == float:
                 col_to_stype[col] = torch_frame.numerical
             else:
-                col_to_stype[col] = torch_frame.categorical
+                # Heuristics to decide stype
+                if df[col].nunique() > 10 and is_numeric_dtype(df[col].dtype):
+                    col_to_stype[col] = torch_frame.numerical
+                else:
+                    col_to_stype[col] = torch_frame.categorical
         super().__init__(df, col_to_stype, target_col=target_col)
