@@ -25,7 +25,7 @@ class ExcelFormerDecoder(Decoder):
     def reset_parameters(self):
         self.lin_f.reset_parameters()
         self.lin_d.reset_parameters()
-        self.activation.reset_parameters()
+        self.activation.weight.fill_(1.0)
 
     def forward(self, x: Tensor) -> Tensor:
         r"""Transforming :obj:`x` into output predictions.
