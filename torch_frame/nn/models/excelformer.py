@@ -36,8 +36,9 @@ class ExcelFormer(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.excelformer_convs = ModuleList([
-            ExcelFormerConv(in_channels, num_heads, diam_dropout, aium_dropout,
-                            residual_dropout) for _ in range(num_layers)
+            ExcelFormerConv(in_channels, num_cols, num_heads, diam_dropout,
+                            aium_dropout, residual_dropout)
+            for _ in range(num_layers)
         ])
         self.excelformer_decoder = ExcelFormerDecoder(in_channels,
                                                       out_channels, num_cols)
