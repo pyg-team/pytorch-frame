@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import argparse
 import os.path as osp
 
@@ -19,9 +20,9 @@ parser.add_argument('--dataset', type=str, default='california')
 parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
-parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.01)
-parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--epochs', type=int, default=20)
 args = parser.parse_args()
 
 if torch.cuda.is_available():
@@ -76,10 +77,10 @@ optimizer = torch.optim.Adam(
 def train() -> float:
     encoder.train()
     model.train()
-    optimizer.zero_grad()
+
     loss_accum = 0
 
-    for step, tf in enumerate(train_loader):
+    for step, tf in enumerate(tqdm(train_loader)):
         x, col_names = encoder(tf)
         # [batch_size, num_layers, num_classes]
         out = model(x)
@@ -89,6 +90,7 @@ def train() -> float:
         y = tf.y.repeat_interleave(num_layers)
         # Layer-wise logit loss
         loss = F.cross_entropy(pred, y)
+        optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss.detach().cpu())
         optimizer.step()
@@ -119,6 +121,7 @@ best_test_acc = 0
 for epoch in range(args.epochs):
     print(f"=====epoch {epoch}")
     loss = train()
+    print(f'Train loss {loss}')
     train_acc = eval(train_loader)
     val_acc = eval(val_loader)
     test_acc = eval(test_loader)
