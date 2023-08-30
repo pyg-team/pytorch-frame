@@ -139,15 +139,7 @@ class LinearEncoder(StypeEncoder):
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
     linear representation, followed by a linear transformation. The original
-    encoding is described in https://arxiv.org/abs/2203.05556.
-
-    Args:
-        out_channels (int): The output channel dimensionality
-        stats_list (List[Dict[StatType, Any]]): The list of stats for each
-            column within the same stype.
-            - StatType.QUANTILES: The min, 25th, 50th, 75th quantile, and max
-            of the column.
-    """
+    encoding is described in https://arxiv.org/abs/2203.05556"""
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -212,7 +204,6 @@ class LinearPeriodicEncoder(StypeEncoder):
     in https://arxiv.org/abs/2203.05556.
 
     Args:
-        out_channels (int): The output channel dimensionality
         n_bins (int): Number of bins for periodic encoding
     """
     supported_stypes = {stype.numerical}
@@ -253,7 +244,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
 
-        return x
+        return torch.nan_to_num(x, nan=0)
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.linear_in, std=0.1)
