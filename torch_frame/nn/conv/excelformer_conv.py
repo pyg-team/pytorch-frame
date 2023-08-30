@@ -129,8 +129,6 @@ class ExcelFormerConv(TableConv):
         diam_dropout (float): diam_dropout (default: 0)
         aium_dropout (float): aium_dropout (default: 0)
         residual_dropout (float): residual dropout (default: 0)
-        initialization (str): 'kaiming' or 'xavier' for attenuated
-        kaiming or attenuated xavier initialization
     """
     def __init__(
         self,
