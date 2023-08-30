@@ -22,14 +22,10 @@ class FTTransformer(Module):
         num_layers: int = 3,
     ):
         super().__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.num_cols = num_cols
-        self.num_layers = num_layers
 
         self.backbone = FTTransformerBackbone(channels=in_channels,
                                               num_layers=num_layers)
-        self.head = Sequential(
+        self.decoder = Sequential(
             LayerNorm(in_channels),
             ReLU(),
             Linear(in_channels, out_channels),
@@ -38,7 +34,7 @@ class FTTransformer(Module):
 
     def reset_parameters(self):
         self.backbone.reset_parameters()
-        for m in self.head:
+        for m in self.decoder:
             if not isinstance(m, ReLU):
                 m.reset_parameters()
 
@@ -50,10 +46,9 @@ class FTTransformer(Module):
                 [batch_size, num_cols, in_channels]
 
         Returns:
-            pred (Tensor): Output predictions. The shape is [batch_size,
-            out_channels].
+            out (Tensor): Output. The shape is [batch_size, out_channels].
         """
 
         x, x_cls = self.backbone(x)
-        pred = self.head(x_cls)
-        return pred
+        out = self.decoder(x_cls)
+        return out

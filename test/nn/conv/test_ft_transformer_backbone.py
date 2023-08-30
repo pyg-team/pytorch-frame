@@ -3,7 +3,7 @@ import torch
 from torch_frame.nn import FTTransformerBackbone
 
 
-def test_ft_transformer():
+def test_ft_transformer_backbone():
     x = torch.randn(size=(10, 3, 8))
     conv = FTTransformerBackbone(channels=8, num_layers=3)
     x, x_cls = conv(x)

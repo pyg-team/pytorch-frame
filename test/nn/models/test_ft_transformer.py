@@ -3,7 +3,7 @@ import torch
 from torch_frame.nn import FTTransformer
 
 
-def test_trompt():
+def test_ft_transformer():
     batch_size = 10
     in_channels = 8
     out_channels = 1
