@@ -19,7 +19,6 @@ class ExcelFormer(Module):
         diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout (default: `0.0`)
-
     """
     def __init__(
         self,

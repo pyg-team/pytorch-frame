@@ -85,7 +85,7 @@ class DiaM(Module):
         of the attention map are all zeros. The reset of elements' values
         are 1e-5.
 
-        Parameters:
+        Args:
         - input_shape (Tensor.size): Shape of the input tensor. Expected
         to be (Batch size, _, Channels).
 
