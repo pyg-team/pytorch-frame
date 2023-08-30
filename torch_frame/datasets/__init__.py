@@ -8,6 +8,7 @@ from .mushroom import Mushroom
 from .poker_hand import PokerHand
 from .bank_marketing import BankMarketing
 from .tabular_benchmark import TabularBenchmark
+from .yandex import Yandex
 
 real_world_datasets = [
     'Titanic',
@@ -17,6 +18,7 @@ real_world_datasets = [
     'PokerHand',
     'BankMarketing',
     'TabularBenchmark',
+    'Yandex',
 ]
 
 synthetic_datasets = [
