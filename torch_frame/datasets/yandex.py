@@ -1,6 +1,6 @@
 import os.path as osp
 import zipfile
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,13 +12,14 @@ def load_dataset(path: str) -> Dict[str, np.ndarray]:
     r"""Load a dataset from a ZIP file.
 
     Args:
-        path (str): The file path to the ZIP file containing the dataset.
+        path (str): The file path to the ZIP file containing some .npy files
+            that store the dataset.
 
     Returns:
         dataset (Dict[str, np.ndarray]): A dictionary that maps the name of
-            numpy array  file into the loaded array in the zipped file.
+            .npy file to the loaded numpy array.
     """
-    dataset = {}
+    dataset: Dict[str, np.ndarray] = {}
     with zipfile.ZipFile(path, 'r') as zip_ref:
         for file_name in zip_ref.namelist():
             if file_name.endswith('.npy'):
@@ -47,9 +48,12 @@ def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     for split in ['train', 'val', 'test']:
         categorical_features = dataset.get(f'C_{split}', None)
         numerical_features = dataset.get(f'N_{split}', None)
-        labels = dataset.get(f'y_{split}', None)
+        labels = dataset[f'y_{split}']
+        assert (categorical_features is None) and (numerical_features is None)
 
-        if categorical_features is not None and numerical_features is not None:
+        merged_features: Optional[np.ndarray] = None
+        if (categorical_features is not None) and (numerical_features
+                                                   is not None):
             merged_features = np.concatenate(
                 [categorical_features, numerical_features], axis=1)
             c_col_names = [
@@ -77,12 +81,13 @@ def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
             for name in col_names:
                 col_to_stype[name] = (torch_frame.categorical if feature_type
                                       == 'C' else torch_frame.numerical)
+        assert merged_features is not None
+        df = pd.DataFrame(merged_features, columns=col_names)
+        df['label'] = labels
+        # Stores the split information in "split" column.
+        df['split'] = split
+        dataframes.append(df)
 
-        if merged_features is not None and labels is not None:
-            df = pd.DataFrame(merged_features, columns=col_names)
-            df['label'] = labels
-            df['split'] = split
-            dataframes.append(df)
     df = pd.concat(dataframes, ignore_index=True)
 
     return df, col_to_stype
