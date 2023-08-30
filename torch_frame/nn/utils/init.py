@@ -25,6 +25,6 @@ def attenuated_kaiming_uniform_(tensor: Tensor, scale: float = 0.1,
         fan = _calculate_correct_fan(tensor, mode)
         gain = calculate_gain(nonlinearity, a)
         std = gain * scale / math.sqrt(fan)
-        bound = math.sqrt(
-            3.0) * std  # Calculate uniform bounds from standard deviation
+        # Calculate uniform bounds from standard deviation
+        bound = math.sqrt(3.0) * std
         return tensor.uniform_(-bound, bound)
