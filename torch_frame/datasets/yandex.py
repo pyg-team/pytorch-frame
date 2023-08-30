@@ -29,8 +29,9 @@ def load_dataset(path: str) -> Dict[str, np.ndarray]:
     return dataset
 
 
-def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-    r"""Get DataFrame from the zipped folder.
+def get_df_and_col_to_stype(
+        zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    r"""Get DataFrame and :obj:`col_to_stype` from a ZIP file.
 
     Args:
         zip_file_path (str): The file path of the ZIP file containing
@@ -107,7 +108,7 @@ class Yandex(torch_frame.data.Dataset):
         self.name = name
         path = self.download_url(osp.join(self.base_url, self.name + '.zip'),
                                  root)
-        df, col_to_stype = get_df(path)
+        df, col_to_stype = get_df_and_col_to_stype(path)
         if name in self.regression_datasets:
             col_to_stype['label'] = torch_frame.numerical
         else:
