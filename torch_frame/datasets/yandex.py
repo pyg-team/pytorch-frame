@@ -9,20 +9,16 @@ import torch_frame
 
 
 def load_dataset(path: str) -> Dict[str, Union[np.ndarray, Any]]:
-    """
+    r"""
     Load a dataset from a ZIP file.
 
-    Parameters:
-    -----------
-    path : str
-        The file path to the ZIP file containing the dataset.
+    Args:
+        path (str): The file path to the ZIP file containing the dataset.
 
     Returns:
-    --------
-    Dict[str, Union[np.ndarray, Any]]
-        A dictionary where each key-value pair corresponds to either an array
-        read from a .npy file within the ZIP file. Key is name of the file,
-        e.g., 'train', 'test', etc.
+        dataset (Dict[str, np.ndarray]): A dictionary where each key-value pair
+        corresponds to an array read from a .npy file within the ZIP file. Key
+        represents the split (train, val, or test).
     """
     dataset = {}
     with zipfile.ZipFile(path, 'r') as zip_ref:
@@ -34,33 +30,24 @@ def load_dataset(path: str) -> Dict[str, Union[np.ndarray, Any]]:
     return dataset
 
 
-def load_and_merge_to_df(
-        zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-    """
-    Load and merge datasets from a ZIP file into a DataFrame.
+def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    r"""Get DataFrame from the zipped folder.
 
-    Parameters:
-    - zip_file_path (str): The file path of the ZIP file containing
-      the dataset.
+    Args:
+        zip_file_path (str): The file path of the ZIP file containing
+            the dataset.
 
     Returns:
-    - Tuple[pd.DataFrame, Dict[str, Any]]: A tuple of two elements:
-        1. A merged DataFrame containing the dataset.
-        2. A dictionary mapping column names to their
-            respective data types.
+        df (DataFrame): DataFrame containing train/val/test rows.
+        col_to_stype (Dict[str, torch_frame.stype]). A dictionary mapping
+            column names to their respective semantic types.
 
     """
     dataset = load_dataset(zip_file_path)
     dataframe_list: List[pd.DataFrame] = []
     col_to_stype: Dict[str, Any] = {}
 
-    # Identify the available splits by examining the keys in dataset dictionary
-    available_splits = [
-        split for split in ['train', 'val', 'test', 'trainval']
-        if f'C_{split}' in dataset or f'N_{split}' in dataset
-    ]
-
-    for split in available_splits:
+    for split in ['train', 'val', 'test']:
         categorical_features = dataset.get(f'C_{split}', None)
         numerical_features = dataset.get(f'N_{split}', None)
         labels = dataset.get(f'y_{split}', None)
@@ -99,10 +86,9 @@ def load_and_merge_to_df(
             df['label'] = labels
             df['split'] = split
             dataframe_list.append(df)
+    df = pd.concat(dataframe_list, ignore_index=True)
 
-    merged_df = pd.concat(dataframe_list, ignore_index=True)
-
-    return merged_df, col_to_stype
+    return df, col_to_stype
 
 
 class Yandex(torch_frame.data.Dataset):
@@ -119,7 +105,7 @@ class Yandex(torch_frame.data.Dataset):
         self.name = name
         path = self.download_url(osp.join(self.base_url, self.name + '.zip'),
                                  root)
-        df, col_to_stype = load_and_merge_to_df(path)
+        df, col_to_stype = get_df(path)
         if name in self.regression_datasets:
             col_to_stype['label'] = torch_frame.numerical
         else:
