@@ -80,7 +80,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
                 col_to_stype[col] = torch_frame.numerical
             else:
                 # Heuristics to decide stype
-                if df[col].nunique() > 10 and is_numeric_dtype(df[col].dtype):
+                if is_numeric_dtype(df[col].dtype) and df[col].nunique() > 10:
                     col_to_stype[col] = torch_frame.numerical
                 else:
                     col_to_stype[col] = torch_frame.categorical
