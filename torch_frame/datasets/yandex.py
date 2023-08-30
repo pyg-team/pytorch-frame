@@ -1,6 +1,6 @@
 import os.path as osp
 import zipfile
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import pandas as pd
 import torch_frame
 
 
-def load_dataset(path: str) -> Dict[str, Union[np.ndarray, Any]]:
+def load_dataset(path: str) -> Dict[str, np.ndarray]:
     r"""Load a dataset from a ZIP file.
 
     Args:
