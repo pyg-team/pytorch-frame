@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 from torch_frame import stype
 from torch_frame.data import DataLoader
+from torch_frame.data.stats import StatType
 from torch_frame.datasets import TabularBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
@@ -62,12 +63,7 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
-num_classes = int(
-    max(
-        train_dataset.tensor_frame.y.max(),
-        val_dataset.tensor_frame.y.max(),
-        test_dataset.tensor_frame.y.max(),
-    ) + 1)
+num_classes = len(dataset.col_stats[dataset.target_col][StatType.COUNT][0])
 
 # Initialize encoder and model
 encoder = StypeWiseFeatureEncoder(
