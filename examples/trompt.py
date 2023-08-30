@@ -49,12 +49,14 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 dataset = TabularBenchmark(root=path, name=args.dataset)
 dataset.materialize()
 dataset = dataset.shuffle()
+# Split ratio following https://arxiv.org/abs/2207.08815
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
+
+# Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame.to(device)
 val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
-# Split ratio following https://arxiv.org/abs/2207.08815
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
