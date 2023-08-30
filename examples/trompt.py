@@ -63,8 +63,11 @@ val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
 num_classes = int(
-    max(train_dataset.tensor_frame.y.max(), val_dataset.tensor_frame.y.max(),
-        test_dataset.tensor_frame.y.max()) + 1)
+    max(
+        train_dataset.tensor_frame.y.max(),
+        val_dataset.tensor_frame.y.max(),
+        test_dataset.tensor_frame.y.max(),
+    ) + 1)
 
 # Initialize encoder and model
 encoder = StypeWiseFeatureEncoder(
