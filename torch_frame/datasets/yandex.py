@@ -15,9 +15,8 @@ def load_dataset(path: str) -> Dict[str, np.ndarray]:
         path (str): The file path to the ZIP file containing the dataset.
 
     Returns:
-        dataset (Dict[str, np.ndarray]): A dictionary where each key-value pair
-        corresponds to an array read from a .npy file within the ZIP file. Key
-        represents the split (train, val, or test).
+        dataset (Dict[str, np.ndarray]): A dictionary that maps the name of
+            numpy array  file into the loaded array in the zipped file.
     """
     dataset = {}
     with zipfile.ZipFile(path, 'r') as zip_ref:
