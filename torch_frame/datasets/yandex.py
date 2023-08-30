@@ -39,11 +39,10 @@ def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         df (DataFrame): DataFrame containing train/val/test rows.
         col_to_stype (Dict[str, torch_frame.stype]). A dictionary mapping
             column names to their respective semantic types.
-
     """
     dataset = load_dataset(zip_file_path)
-    dataframe_list: List[pd.DataFrame] = []
-    col_to_stype: Dict[str, Any] = {}
+    dataframes: List[pd.DataFrame] = []
+    col_to_stype: Dict[str, torch_frame.stype] = {}
 
     for split in ['train', 'val', 'test']:
         categorical_features = dataset.get(f'C_{split}', None)
@@ -83,8 +82,8 @@ def get_df(zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
             df = pd.DataFrame(merged_features, columns=col_names)
             df['label'] = labels
             df['split'] = split
-            dataframe_list.append(df)
-    df = pd.concat(dataframe_list, ignore_index=True)
+            dataframes.append(df)
+    df = pd.concat(dataframes, ignore_index=True)
 
     return df, col_to_stype
 
