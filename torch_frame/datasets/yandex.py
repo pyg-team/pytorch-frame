@@ -52,8 +52,8 @@ def get_df_and_col_to_stype(
                     (numerical_features is None))
 
         features: Optional[np.ndarray] = None
-        if (categorical_features is not None) and (numerical_features
-                                                   is not None):
+        if (categorical_features is not None
+                and numerical_features is not None):
             features = np.concatenate(
                 [categorical_features, numerical_features], axis=1)
             c_col_names = [
@@ -93,6 +93,10 @@ def get_df_and_col_to_stype(
 
 
 class Yandex(torch_frame.data.Dataset):
+    r"""The Yandex dataset collections used by https://arxiv.org/abs/2106.11959
+    Originally downloaded from
+    https://github.com/yandex-research/tabular-dl-revisiting-models
+    """
 
     base_url = 'https://data.pyg.org/datasets/tables/revisiting_data/'
     classification_datasets = {
