@@ -15,9 +15,12 @@ def get_dataset(num_rows: int):  # TODO Use `FakeDataset` once available
 
 
 def test_index_select():
-    dataset = get_dataset(num_rows=20)
-    assert len(dataset) == 20
-    dataset = dataset[:10]
+    dataset = get_dataset(num_rows=10)
+    assert len(dataset) == 10
+
+    with pytest.raises(RuntimeError, match="requires a materialized dataset"):
+        dataset = dataset[:5]
+
     dataset = dataset.materialize()
 
     assert len(dataset[0]) == 1
