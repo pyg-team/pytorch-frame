@@ -2,6 +2,7 @@ import copy
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
+import torch
 from torch import Tensor
 
 import torch_frame
@@ -59,9 +60,19 @@ class TensorFrame:
                            list(torch_frame.stype)))
 
     @property
+    def num_cols(self) -> int:
+        r"""The number of columns in the :class:`TensorFrame`."""
+        return sum(
+            len(col_names) for col_names in self.col_names_dict.values())
+
+    @property
     def num_rows(self) -> int:
         r"""The number of rows in the :class:`TensorFrame`."""
         return len(next(iter(self.x_dict.values())))
+
+    @property
+    def device(self) -> torch.device:
+        return next(iter(self.x_dict.values())).device
 
     # Python Built-ins ########################################################
 
@@ -75,9 +86,11 @@ class TensorFrame:
         ])
 
         return (f'{self.__class__.__name__}(\n'
+                f'  num_cols={self.num_cols},\n'
                 f'  num_rows={self.num_rows},\n'
                 f'{stype_repr}\n'
                 f'  has_target={self.y is not None},\n'
+                f'  device={self.device},\n'
                 f')')
 
     def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':
