@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `FTTransformer` ([#40](https://github.com/pyg-team/pytorch-frame/pull/40))
+- Added `ExcelFormer` ([#26](https://github.com/pyg-team/pytorch-frame/pull/26))
 - Added `Yandex` collections ([#37](https://github.com/pyg-team/pytorch-frame/pull/37))
 - Added `TabularBenchmark` collections ([#33](https://github.com/pyg-team/pytorch-frame/pull/33))
 - Added the `Bank Marketing` dataset ([#34](https://github.com/pyg-team/pytorch-frame/pull/34))
@@ -21,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added indexing/shuffling and column select functionality in `Dataset` ([#18](https://github.com/pyg-team/pytorch-frame/pull/18), [#19](https://github.com/pyg-team/pytorch-frame/pull/19))
 - Added the `Adult Census Income` dataset ([#17](https://github.com/pyg-team/pytorch-frame/pull/17))
 - Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
-- Added `FTTransformer` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
+- Added `FTTransformerBackbone` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
 - Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
 - Added `DataLoader` capabilities ([#11](https://github.com/pyg-team/pytorch-frame/pull/11))
 - Added `TensorFrame.index_select` functionality ([#10](https://github.com/pyg-team/pytorch-frame/pull/10))
