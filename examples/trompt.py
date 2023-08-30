@@ -16,11 +16,12 @@ import os.path as osp
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor
+from torch.nn import Module
 from tqdm import tqdm
 
 from torch_frame import stype
-from torch_frame.data import DataLoader
-from torch_frame.data.stats import StatType
+from torch_frame.data import DataLoader, TensorFrame
 from torch_frame.datasets import TabularBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
@@ -51,6 +52,8 @@ dataset = TabularBenchmark(root=path, name=args.dataset)
 dataset.materialize()
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2207.08815
+# 70% is used for training. 30% of the remaining is used for validation.
+# The final reminder is used for testing.
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 # Set up data loaders
@@ -62,63 +65,65 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
-# Initialize encoder and model
-encoder = StypeWiseFeatureEncoder(
-    out_channels=args.channels,
-    col_stats=dataset.col_stats,
-    col_names_dict=dataset.tensor_frame.col_names_dict,
-    stype_encoder_dict={
-        stype.categorical: EmbeddingEncoder(),
-        stype.numerical: LinearEncoder(),
-    },
-).to(device)
 
-num_classes = len(dataset.col_stats[dataset.target_col][StatType.COUNT][0])
+class TromptModel(Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder = StypeWiseFeatureEncoder(
+            out_channels=args.channels,
+            col_stats=dataset.col_stats,
+            col_names_dict=dataset.tensor_frame.col_names_dict,
+            stype_encoder_dict={
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder(),
+            },
+        )
+        self.model = Trompt(
+            in_channels=args.channels,
+            out_channels=dataset.num_classes,
+            num_cols=train_dataset.tensor_frame.num_cols,
+            num_prompts=args.num_prompts,
+            num_layers=args.num_layers,
+        )
 
-model = Trompt(
-    in_channels=args.channels,
-    out_channels=num_classes,
-    num_cols=train_dataset.tensor_frame.num_cols,
-    num_prompts=args.num_prompts,
-    num_layers=args.num_layers,
-).to(device)
+    def forward(self, tf: TensorFrame) -> Tensor:
+        x, _ = self.encoder(tf)
+        # [batch_size, num_layers, num_classes]
+        return self.model(x)
 
-optimizer = torch.optim.Adam(
-    list(encoder.parameters()) + list(model.parameters()), lr=args.lr)
+
+trompt_model = TromptModel().to(device)
+optimizer = torch.optim.Adam(trompt_model.parameters(), lr=args.lr)
 
 
 def train() -> float:
-    encoder.train()
-    model.train()
+    trompt_model.train()
     loss_accum = 0
 
     for step, tf in enumerate(tqdm(train_loader)):
-        x, col_names = encoder(tf)
         # [batch_size, num_layers, num_classes]
-        out = model(x)
+        out = trompt_model(tf)
         num_layers = out.size(1)
         # [batch_size * num_layers, num_classes]
-        pred = out.view(-1, num_classes)
+        pred = out.view(-1, dataset.num_classes)
         y = tf.y.repeat_interleave(num_layers)
         # Layer-wise logit loss
         loss = F.cross_entropy(pred, y)
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss.detach().cpu())
+        loss_accum += float(loss)
         optimizer.step()
     return loss_accum / (step + 1)
 
 
 @torch.no_grad()
 def eval(loader: DataLoader) -> float:
-    encoder.eval()
-    model.eval()
+    trompt_model.eval()
     is_corret = []
 
     for tf in loader:
-        x, col_names = encoder(tf)
         # [batch_size, num_layers, num_classes]
-        out = model(x)
+        out = trompt_model(tf)
         # Mean pooling across layers
         # [batch_size, num_layers, num_classes] -> [batch_size, num_classes]
         pred = out.mean(dim=1)

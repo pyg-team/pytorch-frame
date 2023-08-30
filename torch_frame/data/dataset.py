@@ -116,6 +116,17 @@ class Dataset(ABC):
             cols.remove(self.target_col)
         return cols
 
+    @property
+    @requires_post_materialization
+    def num_classes(self) -> int:
+        if StatType.COUNT not in self.col_stats[self.target_col]:
+            raise ValueError(
+                f"num_classes attribute is only supported when the target "
+                f"column ({self.target_col}) stats contains StatType.COUNT, "
+                f"but only the following target column stats are calculated: "
+                f"{list(self.col_stats[self.target_col].keys())}.")
+        return len(self.col_stats[self.target_col][StatType.COUNT][0])
+
     # Materialization #########################################################
 
     def materialize(self, device: Optional[torch.device] = None) -> 'Dataset':
@@ -200,6 +211,7 @@ class Dataset(ABC):
 
     # Indexing ################################################################
 
+    @requires_post_materialization
     def index_select(self, index: IndexSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`."""
@@ -220,8 +232,7 @@ class Dataset(ABC):
         iloc = index.cpu().numpy() if isinstance(index, Tensor) else index
         dataset.df = self.df.iloc[iloc]
 
-        if self.is_materialized:
-            dataset._tensor_frame = self._tensor_frame[index]
+        dataset._tensor_frame = self._tensor_frame[index]
 
         return dataset
 
