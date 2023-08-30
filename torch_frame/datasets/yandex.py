@@ -9,8 +9,7 @@ import torch_frame
 
 
 def load_dataset(path: str) -> Dict[str, Union[np.ndarray, Any]]:
-    r"""
-    Load a dataset from a ZIP file.
+    r"""Load a dataset from a ZIP file.
 
     Args:
         path (str): The file path to the ZIP file containing the dataset.
