@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `ExcelFormer` ([#26](https://github.com/pyg-team/pytorch-frame/pull/26))
 - Added `Yandex` collections ([#37](https://github.com/pyg-team/pytorch-frame/pull/37))
 - Added `TabularBenchmark` collections ([#33](https://github.com/pyg-team/pytorch-frame/pull/33))
 - Added the `Bank Marketing` dataset ([#34](https://github.com/pyg-team/pytorch-frame/pull/34))
