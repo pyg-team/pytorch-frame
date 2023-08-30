@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `Tompt` example ([#39](https://github.com/pyg-team/pytorch-frame/pull/39))
 - Added `TabularBenchmark` collections ([#33](https://github.com/pyg-team/pytorch-frame/pull/33))
 - Added the `Bank Marketing` dataset ([#34](https://github.com/pyg-team/pytorch-frame/pull/34))
 - Added the `Mushroom`, `Forest Cover Type`, and `Poker Hand` datasets ([#32](https://github.com/pyg-team/pytorch-frame/pull/32))
