@@ -3,6 +3,8 @@ Reported (reproduced) results of FT-Transformer
 https://arxiv.org/pdf/2106.11959.pdf
 
 adult 86.0 (86.0)
+helena 39.8 (34.6)
+jannis 73.2 (70.6)
 """
 import argparse
 import os.path as osp
