@@ -1,14 +1,30 @@
 """
-Expected default accuracy of Trompt based on Tables 9, 10, and 11 of the paper
-https://arxiv.org/abs/2305.18446
+Expected default accuracy of Trompt model based on Tables 9, 10, and 11 of
+the original paper: https://arxiv.org/abs/2305.18446
 
-comass (A2): 78.59
-electricity (A4): 84.50
-eye_movements (A5): 64.25
-california (B5): 89.09
-credit (B7): 75.84
-jannis (B11): 76.89
-pol (B14): 98.49
+electricity (A4)
+- reported: 84.50
+- this script: 82.23
+
+eye_movements (A5)
+- reported: 64.25
+- this script: 58.76
+
+california (B5)
+- reported: 89.09
+- this script: 88.62
+
+credit (B7)
+- reported: 75.84
+- this script: 74.90
+
+jannis (B11)
+- reported: 76.89
+- this script:
+
+pol (B14)
+- reported: 98.49
+- this script:
 """
 
 import argparse
@@ -17,7 +33,7 @@ import os.path as osp
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Module, ReLU
 from tqdm import tqdm
 
 from torch_frame import stype
@@ -36,7 +52,7 @@ parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
-parser.add_argument('--lr', type=float, default=0.002)
+parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=20)
 args = parser.parse_args()
 
@@ -75,7 +91,7 @@ class TromptModel(Module):
             col_names_dict=dataset.tensor_frame.col_names_dict,
             stype_encoder_dict={
                 stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(post_act='relu'),
+                stype.numerical: LinearEncoder(postlin_module=ReLU()),
             },
         )
         self.model = Trompt(

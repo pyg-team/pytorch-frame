@@ -15,7 +15,8 @@ class Trompt(Module):
         out_channels (int): Output channels dimensionality
         num_cols (int): Number of columns
         num_prompts (int): Number of prompt columns.
-        num_layers (int, optional): Number of :class:`TromptConv` layers. (default: :obj:`6`)
+        num_layers (int, optional): Number of :class:`TromptConv` layers.
+            (default: :obj:`6`)
     """
     def __init__(
         self,
