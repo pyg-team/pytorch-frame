@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter
 
@@ -94,14 +95,28 @@ class LinearEncoder(StypeEncoder):
     r"""Linear function based encoder for numerical features. It applies linear
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
     and concatenates the output embeddings. Note that the implementation does
-    this for all numerical features in a batched manner."""
+    this for all numerical features in a batched manner.
+
+    Args:
+        post_act (str, optional): Post-linear activation function
+            (default: :obj:`None`)
+    """
     supported_stypes = {stype.numerical}
 
     def __init__(
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_act: Optional[str] = None,
     ):
+        if post_act is not None:
+            # TODO: Properly support activation via activation resolver
+            if post_act == 'relu':
+                self.post_act = F.relu
+            else:
+                raise ValueError(f'Unsupported activation called {post_act}')
+        else:
+            self.post_act = None
         super().__init__(out_channels, stats_list)
 
     def init_modules(self):
@@ -129,7 +144,10 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        return torch.nan_to_num(x, nan=0)
+        out = torch.nan_to_num(x, nan=0)
+        if self.post_act is not None:
+            out = self.post_act(out)
+        return out
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.weight, std=0.1)

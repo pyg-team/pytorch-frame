@@ -36,7 +36,7 @@ parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
-parser.add_argument('--lr', type=float, default=0.01)
+parser.add_argument('--lr', type=float, default=0.002)
 parser.add_argument('--epochs', type=int, default=20)
 args = parser.parse_args()
 
@@ -75,7 +75,7 @@ class TromptModel(Module):
             col_names_dict=dataset.tensor_frame.col_names_dict,
             stype_encoder_dict={
                 stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(),
+                stype.numerical: LinearEncoder(post_act='relu'),
             },
         )
         self.model = Trompt(
