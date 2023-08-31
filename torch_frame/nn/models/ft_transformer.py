@@ -2,7 +2,7 @@ from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
 from torch.nn.modules.module import Module
 
-from torch_frame.nn.conv import FTTransformerBackbone
+from torch_frame.nn.conv import FTTransformerConvs
 
 
 class FTTransformer(Module):
@@ -23,8 +23,8 @@ class FTTransformer(Module):
     ):
         super().__init__()
 
-        self.backbone = FTTransformerBackbone(channels=in_channels,
-                                              num_layers=num_layers)
+        self.backbone = FTTransformerConvs(channels=in_channels,
+                                           num_layers=num_layers)
         self.decoder = Sequential(
             LayerNorm(in_channels),
             ReLU(),

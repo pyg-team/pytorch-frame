@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added indexing/shuffling and column select functionality in `Dataset` ([#18](https://github.com/pyg-team/pytorch-frame/pull/18), [#19](https://github.com/pyg-team/pytorch-frame/pull/19))
 - Added the `Adult Census Income` dataset ([#17](https://github.com/pyg-team/pytorch-frame/pull/17))
 - Added column-level statistics and dataset materialization ([#15](https://github.com/pyg-team/pytorch-frame/pull/15))
-- Added `FTTransformerBackbone` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
+- Added `FTTransformerConvs` ([#12](https://github.com/pyg-team/pytorch-frame/pull/12))
 - Added documentation ([#13](https://github.com/pyg-team/pytorch-frame/pull/13))
 - Added `DataLoader` capabilities ([#11](https://github.com/pyg-team/pytorch-frame/pull/11))
 - Added `TensorFrame.index_select` functionality ([#10](https://github.com/pyg-team/pytorch-frame/pull/10))

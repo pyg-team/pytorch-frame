@@ -12,7 +12,7 @@ from torch.nn import (
 from torch_frame.nn.conv import TableConv
 
 
-class FTTransformerBackbone(TableConv):
+class FTTransformerConvs(TableConv):
     r"""The FT-Transformer backbone in https://arxiv.org/abs/2106.11959
     This module concatenates a learnable CLS token embedding :obj:`x_cls` to
     the input tensor :obj:`x` and applies a multi-layer Transformer on the
