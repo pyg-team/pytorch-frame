@@ -82,6 +82,10 @@ def get_df_and_col_to_stype(
                                       == 'C' else torch_frame.numerical)
         assert features is not None
         df = pd.DataFrame(features, columns=col_names)
+        # Explicitly set dtype for numerical features
+        if numerical_features is not None:
+            for n_col in n_col_names:
+                df[n_col] = df[n_col].astype('float64')
         df['label'] = labels
         # Stores the split information in "split" column.
         df['split'] = split
