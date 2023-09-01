@@ -9,7 +9,6 @@ jannis 73.2 (71.6)
 import argparse
 import os.path as osp
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -60,8 +59,6 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
-# TODO change this after num_class is a func of dataset
-num_classes = len(np.unique(train_dataset.df['label']))
 
 
 class FTTranformerModel(Module):
@@ -78,7 +75,7 @@ class FTTranformerModel(Module):
         )
         self.model = FTTransformer(
             in_channels=args.channels,
-            out_channels=num_classes,
+            out_channels=dataset.num_classes,
             num_cols=dataset.tensor_frame.num_cols,
             num_layers=args.num_layers,
         )
