@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter
 
@@ -20,6 +19,10 @@ class StypeEncoder(Module, ABC):
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
+        post_module (Module, optional): The posthoc module applied to the
+            output, such as activation function. Must preserve the shape of the
+            output. If :obj:`None`, no module will be applied to the output.
+            (default: :obj:`None`)
     """
     supported_stypes: Set[stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list'}
@@ -29,8 +32,9 @@ class StypeEncoder(Module, ABC):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_module: Optional[Module] = None,
     ):
-        super().__init__(out_channels, stats_list)
+        super().__init__(out_channels, stats_list, post_module)
 
     @abstractmethod
     def forward(self, x: Tensor):
@@ -38,7 +42,18 @@ class StypeEncoder(Module, ABC):
 
     @abstractmethod
     def reset_parameters(self):
-        raise NotImplementedError
+        # Initialize the parameters of `post_module`
+        if self.post_module is not None:
+            if (hasattr(self.post_module, 'reset_parameters')
+                    and callable(self.post_module.reset_parameters)):
+                self.post_module.reset_parameters()
+
+    def post_forward(self, out: Tensor) -> Tensor:
+        if self.post_module is not None:
+            shape_before = out.shape
+            out = self.post_module(out)
+            assert out.shape == shape_before
+        return out
 
 
 class EmbeddingEncoder(StypeEncoder):
@@ -51,8 +66,9 @@ class EmbeddingEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_module: Optional[Module] = None,
     ):
-        super().__init__(out_channels, stats_list)
+        super().__init__(out_channels, stats_list, post_module)
 
     def init_modules(self):
         self.embs = ModuleList([])
@@ -66,6 +82,11 @@ class EmbeddingEncoder(StypeEncoder):
                     padding_idx=0,
                 ))
         self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        for emb in self.embs:
+            emb.reset_parameters()
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -83,12 +104,8 @@ class EmbeddingEncoder(StypeEncoder):
         for i, emb in enumerate(self.embs):
             xs.append(emb(x[:, i]))
         # [batch_size, num_cols, hidden_channels]
-        x = torch.stack(xs, dim=1)
-        return x
-
-    def reset_parameters(self):
-        for emb in self.embs:
-            emb.reset_parameters()
+        out = torch.stack(xs, dim=1)
+        return self.post_forward(out)
 
 
 class LinearEncoder(StypeEncoder):
@@ -107,17 +124,9 @@ class LinearEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
-        post_act: Optional[str] = None,
+        post_module: Optional[Module] = None,
     ):
-        if post_act is not None:
-            # TODO: Properly support activation via activation resolver
-            if post_act == 'relu':
-                self.post_act = F.relu
-            else:
-                raise ValueError(f'Unsupported activation called {post_act}')
-        else:
-            self.post_act = None
-        super().__init__(out_channels, stats_list)
+        super().__init__(out_channels, stats_list, post_module)
 
     def init_modules(self):
         mean = torch.tensor(
@@ -130,6 +139,11 @@ class LinearEncoder(StypeEncoder):
         self.weight = Parameter(torch.empty(num_cols, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
@@ -145,13 +159,7 @@ class LinearEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
         out = torch.nan_to_num(x, nan=0)
-        if self.post_act is not None:
-            out = self.post_act(out)
-        return out
-
-    def reset_parameters(self):
-        torch.nn.init.normal_(self.weight, std=0.1)
-        torch.nn.init.zeros_(self.bias)
+        return self.post_forward(out)
 
 
 class LinearBucketEncoder(StypeEncoder):
@@ -164,8 +172,9 @@ class LinearBucketEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_module: Optional[Module] = None,
     ):
-        super().__init__(out_channels, stats_list)
+        super().__init__(out_channels, stats_list, post_module)
 
     def init_modules(self):
         # The min, 25th, 50th, 75th quantile, and max of the column.
@@ -177,6 +186,12 @@ class LinearBucketEncoder(StypeEncoder):
             torch.empty(num_cols, self.interval.shape[-1], self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        # Reset learnable parameters of the linear transformation
+        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
         encoded_values = []
@@ -206,12 +221,8 @@ class LinearBucketEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        return torch.nan_to_num(x, nan=0)
-
-    def reset_parameters(self):
-        # Reset learnable parameters of the linear transformation
-        torch.nn.init.normal_(self.weight, std=0.1)
-        torch.nn.init.zeros_(self.bias)
+        out = torch.nan_to_num(x, nan=0)
+        return self.post_forward(out)
 
 
 class LinearPeriodicEncoder(StypeEncoder):
@@ -230,10 +241,11 @@ class LinearPeriodicEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_module: Optional[Module] = None,
         n_bins: Optional[int] = 16,
     ):
         self.n_bins = n_bins
-        super().__init__(out_channels, stats_list)
+        super().__init__(out_channels, stats_list, post_module)
 
     def init_modules(self):
         mean = torch.tensor(
@@ -248,6 +260,11 @@ class LinearPeriodicEncoder(StypeEncoder):
             torch.empty((num_cols, self.n_bins * 2, self.out_channels)))
         self.reset_parameters()
 
+    def reset_parameters(self):
+        super().reset_parameters()
+        torch.nn.init.normal_(self.linear_in, std=0.1)
+        torch.nn.init.normal_(self.linear_out, std=0.1)
+
     def forward(self, x: Tensor):
         x = (x - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
@@ -261,9 +278,6 @@ class LinearPeriodicEncoder(StypeEncoder):
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
+        out = torch.nan_to_num(x, nan=0)
 
-        return torch.nan_to_num(x, nan=0)
-
-    def reset_parameters(self):
-        torch.nn.init.normal_(self.linear_in, std=0.1)
-        torch.nn.init.normal_(self.linear_out, std=0.1)
+        return self.post_forward(out)
