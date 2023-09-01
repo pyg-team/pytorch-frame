@@ -6,8 +6,8 @@ electricity (A4): 84.50 (82.10)
 eye_movements (A5): 64.25 (59.57)
 california (B5): 89.09 (88.50)
 credit (B7): 75.84 (76.21)
-jannis (B11): 76.89 ()
-pol (B14): 98.49 ()
+jannis (B11): 76.89 (OOM)
+pol (B14): 98.49 (98.63)
 """
 
 import argparse
