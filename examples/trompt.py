@@ -1,30 +1,13 @@
 """
-Expected default accuracy of Trompt model based on Tables 9, 10, and 11 of
-the original paper: https://arxiv.org/abs/2305.18446
+Reported (reproduced) results of of Trompt model based on Tables 9, 10, and 11
+of the original paper: https://arxiv.org/abs/2305.18446
 
-electricity (A4)
-- reported: 84.50
-- this script: 82.23
-
-eye_movements (A5)
-- reported: 64.25
-- this script: 58.76
-
-california (B5)
-- reported: 89.09
-- this script: 88.62
-
-credit (B7)
-- reported: 75.84
-- this script: 74.90
-
-jannis (B11)
-- reported: 76.89
-- this script:
-
-pol (B14)
-- reported: 98.49
-- this script:
+electricity (A4): 84.50 (82.23)
+eye_movements (A5): 64.25 (58.76)
+california (B5): 89.09 (88.62)
+credit (B7): 75.84 (74.90)
+jannis (B11): 76.89 ()
+pol (B14): 98.49 ()
 """
 
 import argparse
@@ -91,7 +74,7 @@ class TromptModel(Module):
             col_names_dict=dataset.tensor_frame.col_names_dict,
             stype_encoder_dict={
                 stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(postlin_module=ReLU()),
+                stype.numerical: LinearEncoder(post_module=ReLU()),
             },
         )
         self.model = Trompt(
