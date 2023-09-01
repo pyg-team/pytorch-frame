@@ -55,7 +55,11 @@ class StypeEncoder(Module, ABC):
         if self.post_module is not None:
             shape_before = out.shape
             out = self.post_module(out)
-            assert out.shape == shape_before
+            if out.shape != shape_before:
+                raise RuntimeError(
+                    f"post_module must not alter the shape of the tensor, but "
+                    f"it changed the shape from {shape_before} to "
+                    f"{out.shape}.")
         return out
 
 
