@@ -25,11 +25,10 @@ class ExcelFormer(Module):
         num_layers (int): Number of :class:`ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats. Available as :obj:`dataset.col_stats`.
+            column name into stats.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
             based on the ordering that appear in :obj:`tensor_frame.x_dict`.
-            Available as :obj:`tensor_frame.col_names_dict`.
         diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout (default: `0.0`)
