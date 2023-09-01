@@ -5,9 +5,13 @@ from torch import Tensor
 from torch.nn.init import _calculate_correct_fan, calculate_gain
 
 
-def attenuated_kaiming_uniform_(tensor: Tensor, scale: float = 0.1,
-                                a: float = math.sqrt(5), mode: str = 'fan_in',
-                                nonlinearity: str = 'leaky_relu', ):
+def attenuated_kaiming_uniform_(
+    tensor: Tensor,
+    scale: float = 0.1,
+    a: float = math.sqrt(5),
+    mode: str = 'fan_in',
+    nonlinearity: str = 'leaky_relu',
+) -> Tensor:
     r"""Attenuated Kaiming Uniform Initialization
 
     Args:
