@@ -112,12 +112,7 @@ class LinearEncoder(StypeEncoder):
     r"""Linear function based encoder for numerical features. It applies linear
     layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
     and concatenates the output embeddings. Note that the implementation does
-    this for all numerical features in a batched manner.
-
-    Args:
-        post_act (str, optional): Post-linear activation function
-            (default: :obj:`None`)
-    """
+    this for all numerical features in a batched manner."""
     supported_stypes = {stype.numerical}
 
     def __init__(
