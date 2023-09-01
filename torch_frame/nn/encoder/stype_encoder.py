@@ -52,8 +52,8 @@ class StypeEncoder(Module, ABC):
         r"""Initialize the parameters of `post_module`"""
         if self.post_module is not None:
             if isinstance(self.post_module, Sequential):
-                for module in self.post_module:
-                    reset_parameters_soft(module)
+                for m in self.post_module:
+                    reset_parameters_soft(m)
             else:
                 reset_parameters_soft(self.post_module)
 
