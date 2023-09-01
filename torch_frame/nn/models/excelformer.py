@@ -24,6 +24,12 @@ class ExcelFormer(Module):
         num_cols (int): Number of columns
         num_layers (int): Number of :class:`ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
+        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
+            column name into stats. Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
+            maps stype to a list of column names. The column names are sorted
+            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            Available as :obj:`tensor_frame.col_names_dict`.
         diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout (default: `0.0`)
@@ -44,6 +50,9 @@ class ExcelFormer(Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
+        if len(col_names_dict[stype.categorical]) == 0:
+            raise ValueError("ExcelFormer only accepts numerical"
+                             " features.")
         assert len(col_names_dict[stype.categorical]) == 0
         self.excelformer_encoder = StypeWiseFeatureEncoder(
             out_channels=self.in_channels,
@@ -68,11 +77,12 @@ class ExcelFormer(Module):
         self.excelformer_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transforming :obj:`x` into output predictions.
+        r"""Transforming :obj:`TensorFrame` object into
+        output predictions.
 
         Args:
-            tf (TensorFrame): Input column-wise tensor-frame
-            object
+            tf (TensorFrame): Input :obj:TensorFrame column-wise
+            tensor-frame object.
 
         Returns:
             x (Tensor): [batch_size, num_cols, out_channels].
