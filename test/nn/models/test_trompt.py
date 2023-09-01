@@ -7,7 +7,6 @@ def test_trompt():
     batch_size = 10
     channels = 8
     out_channels = 1
-    num_cols = 5
     num_prompts = 2
     num_layers = 6
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
@@ -16,7 +15,6 @@ def test_trompt():
     model = Trompt(
         channels=channels,
         out_channels=out_channels,
-        num_cols=num_cols,
         num_prompts=num_prompts,
         num_layers=num_layers,
         col_stats=dataset.col_stats,

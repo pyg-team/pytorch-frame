@@ -23,7 +23,6 @@ class Trompt(Module):
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_cols (int): Number of columns
         num_prompts (int): Number of prompt columns.
         num_layers (int, optional): Number of :class:`TromptConv` layers.
             (default: :obj:`6`)
@@ -38,7 +37,6 @@ class Trompt(Module):
         self,
         channels: int,
         out_channels: int,
-        num_cols: int,
         num_prompts: int,
         num_layers: int,
         # kwargs for encoder
@@ -48,8 +46,9 @@ class Trompt(Module):
         super().__init__()
         self.channels = channels
         self.out_channels = out_channels
-        self.num_cols = num_cols
         self.num_layers = num_layers
+        num_cols = sum(
+            [len(col_names) for col_names in col_names_dict.values()])
 
         self.x_prompt = Parameter(torch.empty(num_prompts, channels))
         self.encoders = ModuleList()
