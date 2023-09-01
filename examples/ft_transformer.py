@@ -3,8 +3,8 @@ Reported (reproduced) results of FT-Transformer
 https://arxiv.org/pdf/2106.11959.pdf
 
 adult 86.0 (86.0)
-helena 39.8 (34.6)
-jannis 73.2 (70.6)
+helena 39.8 (39.2)
+jannis 73.2 (71.6)
 """
 import argparse
 import os.path as osp
@@ -28,11 +28,11 @@ from torch_frame.nn import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
-parser.add_argument('--channels', type=int, default=128)
+parser.add_argument('--channels', type=int, default=192)
 parser.add_argument('--num_layers', type=int, default=3)
-parser.add_argument('--batch_size', type=int, default=256)
+parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--epochs', type=int, default=200)
 args = parser.parse_args()
 
 if torch.cuda.is_available():
@@ -60,7 +60,7 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
-
+# TODO change this after num_class is a func of dataset
 num_classes = len(np.unique(train_dataset.df['label']))
 
 
@@ -89,7 +89,7 @@ class FTTranformerModel(Module):
 
 
 model = FTTranformerModel().to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
 def train() -> float:
