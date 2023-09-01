@@ -49,7 +49,7 @@ class StypeEncoder(Module, ABC):
 
     @abstractmethod
     def reset_parameters(self):
-        # Initialize the parameters of `post_module`
+        r"""Initialize the parameters of `post_module`"""
         if self.post_module is not None:
             if isinstance(self.post_module, Sequential):
                 for module in self.post_module:
