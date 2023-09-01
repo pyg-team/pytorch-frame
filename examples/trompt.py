@@ -63,6 +63,7 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
+# Set up model and optimizer
 model = Trompt(
     channels=args.channels,
     out_channels=dataset.num_classes,
