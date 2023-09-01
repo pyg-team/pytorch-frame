@@ -50,7 +50,7 @@ class ExcelFormer(Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        if len(col_names_dict[stype.categorical]) == 0:
+        if len(col_names_dict[stype.categorical]) != 0:
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
         assert len(col_names_dict[stype.categorical]) == 0
