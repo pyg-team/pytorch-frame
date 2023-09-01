@@ -4,7 +4,7 @@ of the original paper: https://arxiv.org/abs/2305.18446
 
 electricity (A4): 84.50 (82.23)
 eye_movements (A5): 64.25 (58.76)
-california (B5): 89.09 (88.62)
+california (B5): 89.09 (88.50)
 credit (B7): 75.84 (74.90)
 jannis (B11): 76.89 ()
 pol (B14): 98.49 ()
@@ -12,7 +12,9 @@ pol (B14): 98.49 ()
 
 import argparse
 import os.path as osp
+import random
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -29,12 +31,16 @@ parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
+device = (torch.device('cuda')
+          if torch.cuda.is_available() else torch.device('cpu'))
+
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed_all(args.seed)
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
