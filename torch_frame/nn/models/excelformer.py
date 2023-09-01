@@ -52,7 +52,6 @@ class ExcelFormer(Module):
         if len(col_names_dict[stype.categorical]) != 0:
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
-        assert len(col_names_dict[stype.categorical]) == 0
         self.excelformer_encoder = StypeWiseFeatureEncoder(
             out_channels=self.in_channels,
             col_stats=col_stats,

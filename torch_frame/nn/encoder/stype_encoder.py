@@ -287,10 +287,6 @@ class LinearPeriodicEncoder(StypeEncoder):
         out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
 
-    def reset_parameters(self):
-        torch.nn.init.normal_(self.linear_in, std=0.1)
-        torch.nn.init.normal_(self.linear_out, std=0.1)
-
 
 class ExcelFormerEncoder(StypeEncoder):
     r""" An attention based encoder that transforms input numerical features
