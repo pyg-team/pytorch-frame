@@ -20,9 +20,9 @@ class StypeEncoder(Module, ABC):
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
         post_module (Module, optional): The posthoc module applied to the
-            output, such as activation function. Must preserve the shape of the
-            output. If :obj:`None`, no module will be applied to the output.
-            (default: :obj:`None`)
+            output, such as activation function and normalization. Must
+            preserve the shape of the output. If :obj:`None`, no module will be
+            applied to the output. (default: :obj:`None`)
     """
     supported_stypes: Set[stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list'}
@@ -49,10 +49,17 @@ class StypeEncoder(Module, ABC):
                 self.post_module.reset_parameters()
 
     def post_forward(self, out: Tensor) -> Tensor:
+        r"""Post-forward function applied to :obj:`out` of shape
+        [batch_size, num_cols, channels]. It also returns :obj:`out` of the
+        same shape."""
         if self.post_module is not None:
             shape_before = out.shape
             out = self.post_module(out)
-            assert out.shape == shape_before
+            if out.shape != shape_before:
+                raise RuntimeError(
+                    f"post_module must not alter the shape of the tensor, but "
+                    f"it changed the shape from {shape_before} to "
+                    f"{out.shape}.")
         return out
 
 
@@ -274,5 +281,4 @@ class LinearPeriodicEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
         out = torch.nan_to_num(x, nan=0)
-
         return self.post_forward(out)
