@@ -1,9 +1,17 @@
+from typing import Any, Dict, List
+
 from torch import Tensor
 from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
 
+import torch_frame
+from torch_frame import stype
+from torch_frame.data.stats import StatType
+from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.nn.conv import ExcelFormerConv
 from torch_frame.nn.decoder import ExcelFormerDecoder
+from torch_frame.nn.encoder.stype_encoder import ExcelFormerEncoder
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 
 
 class ExcelFormer(Module):
@@ -27,6 +35,8 @@ class ExcelFormer(Module):
         num_cols: int,
         num_layers: int,
         num_heads: int,
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
@@ -34,6 +44,15 @@ class ExcelFormer(Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
+        assert len(col_names_dict[stype.categorical]) == 0
+        self.excelformer_encoder = StypeWiseFeatureEncoder(
+            out_channels=self.in_channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict={
+                stype.numerical: ExcelFormerEncoder(out_channels)
+            },
+        )
         self.excelformer_convs = ModuleList([
             ExcelFormerConv(in_channels, num_cols, num_heads, diam_dropout,
                             aium_dropout, residual_dropout)
@@ -48,16 +67,17 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, tf: TensorFrame) -> Tensor:
         r"""Transforming :obj:`x` into output predictions.
 
         Args:
-            x (Tensor): Input column-wise tensor of shape
-                [batch_size, num_cols, in_channels]
+            tf (TensorFrame): Input column-wise tensor-frame
+            object
 
         Returns:
             x (Tensor): [batch_size, num_cols, out_channels].
         """
+        x, _ = self.excelformer_encoder(tf)
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
         return x

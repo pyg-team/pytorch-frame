@@ -35,7 +35,7 @@ class AiuM(Module):
         init_attenuated(self.lin_2)
 
     def forward(self, x):
-        x = self.dropout(F.tanh(self.lin_1(x)) * (self.lin_2(x)))
+        x = self.dropout(torch.tanh(self.lin_1(x)) * (self.lin_2(x)))
         return x
 
 
@@ -151,16 +151,6 @@ class ExcelFormerConv(TableConv):
     def reset_parameters(self):
         self.DiaM.reset_parameters()
         self.AiuM.reset_parameters()
-
-    def _start_residual(self, x):
-        return x
-
-    def _end_residual(self, x, x_residual):
-        if self.residual_dropout:
-            x_residual = F.dropout(x_residual, self.residual_dropout,
-                                   self.training)
-        x = x + x_residual
-        return x
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)

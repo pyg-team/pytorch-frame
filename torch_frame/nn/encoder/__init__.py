@@ -6,6 +6,7 @@ from .stype_encoder import (
     LinearEncoder,
     LinearBucketEncoder,
     LinearPeriodicEncoder,
+    ExcelFormerEncoder,
 )
 
 __all__ = classes = [
@@ -16,4 +17,5 @@ __all__ = classes = [
     'LinearEncoder',
     'LinearBucketEncoder',
     'LinearPeriodicEncoder',
+    'ExcelFormerEncoder',
 ]
