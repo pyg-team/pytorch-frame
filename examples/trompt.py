@@ -15,19 +15,11 @@ import os.path as osp
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor
-from torch.nn import Module, ReLU
 from tqdm import tqdm
 
-from torch_frame import stype
-from torch_frame.data import DataLoader, TensorFrame
+from torch_frame.data import DataLoader
 from torch_frame.datasets import TabularBenchmark
-from torch_frame.nn import (
-    EmbeddingEncoder,
-    LinearEncoder,
-    StypeWiseFeatureEncoder,
-    Trompt,
-)
+from torch_frame.nn import Trompt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='california')
@@ -64,44 +56,25 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=1024)
 test_loader = DataLoader(test_tensor_frame, batch_size=1024)
 
+model = Trompt(
+    channels=args.channels,
+    out_channels=dataset.num_classes,
+    num_prompts=args.num_prompts,
+    num_layers=args.num_layers,
+    col_stats=dataset.col_stats,
+    col_names_dict=train_tensor_frame.col_names_dict,
+).to(device)
 
-class TromptModel(Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = StypeWiseFeatureEncoder(
-            out_channels=args.channels,
-            col_stats=dataset.col_stats,
-            col_names_dict=dataset.tensor_frame.col_names_dict,
-            stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(post_module=ReLU()),
-            },
-        )
-        self.model = Trompt(
-            in_channels=args.channels,
-            out_channels=dataset.num_classes,
-            num_cols=train_dataset.tensor_frame.num_cols,
-            num_prompts=args.num_prompts,
-            num_layers=args.num_layers,
-        )
-
-    def forward(self, tf: TensorFrame) -> Tensor:
-        x, _ = self.encoder(tf)
-        # [batch_size, num_layers, num_classes]
-        return self.model(x)
-
-
-trompt_model = TromptModel().to(device)
-optimizer = torch.optim.Adam(trompt_model.parameters(), lr=args.lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 
 def train() -> float:
-    trompt_model.train()
+    model.train()
     loss_accum = 0
 
     for step, tf in enumerate(tqdm(train_loader)):
         # [batch_size, num_layers, num_classes]
-        out = trompt_model(tf)
+        out = model(tf)
         num_layers = out.size(1)
         # [batch_size * num_layers, num_classes]
         pred = out.view(-1, dataset.num_classes)
@@ -117,12 +90,12 @@ def train() -> float:
 
 @torch.no_grad()
 def eval(loader: DataLoader) -> float:
-    trompt_model.eval()
+    model.eval()
     is_corret = []
 
     for tf in loader:
         # [batch_size, num_layers, num_classes]
-        out = trompt_model(tf)
+        out = model(tf)
         # Mean pooling across layers
         # [batch_size, num_layers, num_classes] -> [batch_size, num_classes]
         pred = out.mean(dim=1)
