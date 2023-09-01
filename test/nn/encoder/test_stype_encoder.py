@@ -1,4 +1,5 @@
 import pytest
+from torch.nn import ReLU
 
 from torch_frame import stype
 from torch_frame.data.dataset import Dataset
@@ -6,8 +7,8 @@ from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
     EmbeddingEncoder,
-    LinearEncoder,
     LinearBucketEncoder,
+    LinearEncoder,
     LinearPeriodicEncoder,
 )
 
@@ -39,9 +40,22 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [
     (LinearEncoder, {}),
+    (LinearEncoder, {
+        'post_module': ReLU(),
+    }),
     (LinearBucketEncoder, {}),
+    (LinearBucketEncoder, {
+        'post_module': ReLU()
+    }),
+    (LinearEncoder, {
+        'post_module': ReLU()
+    }),
     (LinearPeriodicEncoder, {
         'n_bins': 4
+    }),
+    (LinearPeriodicEncoder, {
+        'n_bins': 4,
+        'post_module': ReLU(),
     }),
 ])
 def test_numerical_feature_encoder(encoder_cls_kwargs):
@@ -58,6 +72,10 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
     x_num = tensor_frame.x_dict[stype.numerical]
     x = encoder(x_num)
     assert x.shape == (x_num.size(0), x_num.size(1), 8)
+    if 'post_module' in encoder_cls_kwargs[1]:
+        assert encoder.post_module is not None
+    else:
+        assert encoder.post_module is None
 
     # Perturb the first column
     x_num[:, 0] = x_num[:, 0] + 10.
@@ -86,7 +104,7 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
     assert (x[isnan_mask, :] == 0).all()
     # Make sure original data is not modified
-    assert (x[isnan_mask, :] == -1).all()
+    assert (x_cat[isnan_mask] == -1).all()
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [
@@ -96,7 +114,7 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
         'n_bins': 4
     }),
 ])
-def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
+def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
