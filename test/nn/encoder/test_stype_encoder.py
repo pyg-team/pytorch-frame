@@ -54,11 +54,11 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     (LinearPeriodicEncoder, {
         'n_bins': 4
     }),
-    (ExcelFormerEncoder, {
-        'post_module': ReLU(),
-    }),
     (LinearPeriodicEncoder, {
         'n_bins': 4,
+        'post_module': ReLU(),
+    }),
+    (ExcelFormerEncoder, {
         'post_module': ReLU(),
     }),
 ])
