@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 import torch
 from torch import Tensor
-from torch.nn import Module, ModuleList, Parameter, ReLU
+from torch.nn import LayerNorm, Module, ModuleList, Parameter, ReLU, Sequential
 from torch.nn.modules.module import Module
 
 import torch_frame
@@ -60,8 +60,11 @@ class Trompt(Module):
                     col_stats=col_stats,
                     col_names_dict=col_names_dict,
                     stype_encoder_dict={
-                        stype.categorical: EmbeddingEncoder(),
-                        stype.numerical: LinearEncoder(post_module=ReLU()),
+                        stype.categorical:
+                        EmbeddingEncoder(post_module=LayerNorm(channels)),
+                        stype.numerical:
+                        LinearEncoder(post_module=Sequential(
+                            ReLU(), LayerNorm(channels))),
                     },
                 ))
             self.trompt_convs.append(

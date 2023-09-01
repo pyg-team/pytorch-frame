@@ -40,7 +40,6 @@ class TromptConv(TableConv):
         # Layer norms
         self.layer_norm_e_column = LayerNorm(channels)
         self.layer_norm_e_prompt = LayerNorm(channels)
-        self.layer_norm_x = LayerNorm(channels)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -51,7 +50,6 @@ class TromptConv(TableConv):
         self.group_norm.reset_parameters()
         self.layer_norm_e_column.reset_parameters()
         self.layer_norm_e_prompt.reset_parameters()
-        self.layer_norm_x.reset_parameters()
 
     def forward(self, x: Tensor, x_prompt: Tensor) -> Tensor:
         r"""Transforms :obj:`x` and :obj:`x_prompt` into :obj:`x_prompt` for
@@ -98,7 +96,6 @@ class TromptConv(TableConv):
 
         # Step 4: Expand x ([batch_size, num_cols, channels]) into
         # shape [batch_size, num_prompts, num_cols, channels]
-        x = self.layer_norm_x(x)
         z = torch.einsum('ijl,k->ikjl', x, self.weight)
         z = F.relu(z)
         # [batch_size, num_cols, channels] ->
