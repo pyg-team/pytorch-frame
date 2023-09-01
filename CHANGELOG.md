@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `ExcelFormerEncoder` ([#42](https://github.com/pyg-team/pytorch-frame/pull/42))
+- Added `Tompt` example ([#39](https://github.com/pyg-team/pytorch-frame/pull/39))
 - Added `post_module` in `StypeEncoder` ([#43](https://github.com/pyg-team/pytorch-frame/pull/43))
 - Added `FTTransformer` ([#40](https://github.com/pyg-team/pytorch-frame/pull/40))
 - Added `ExcelFormer` ([#26](https://github.com/pyg-team/pytorch-frame/pull/26))
