@@ -16,3 +16,4 @@ coverage.xml
 .venv
 venv/*
 *.out
+data/**

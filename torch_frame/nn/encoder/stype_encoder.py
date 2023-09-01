@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, ModuleList, Parameter
+from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import stype
@@ -12,6 +12,13 @@ from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
 
 from ..utils.init import attenuated_kaiming_uniform_
+
+
+def reset_parameters_soft(module: Module):
+    r"""Call reset_parameters() only when it exists. Skip activation module."""
+    if (hasattr(module, 'reset_parameters')
+            and callable(module.reset_parameters)):
+        module.reset_parameters()
 
 
 class StypeEncoder(Module, ABC):
@@ -46,11 +53,13 @@ class StypeEncoder(Module, ABC):
 
     @abstractmethod
     def reset_parameters(self):
-        # Initialize the parameters of `post_module`
+        r"""Initialize the parameters of `post_module`"""
         if self.post_module is not None:
-            if (hasattr(self.post_module, 'reset_parameters')
-                    and callable(self.post_module.reset_parameters)):
-                self.post_module.reset_parameters()
+            if isinstance(self.post_module, Sequential):
+                for m in self.post_module:
+                    reset_parameters_soft(m)
+            else:
+                reset_parameters_soft(self.post_module)
 
     def post_forward(self, out: Tensor) -> Tensor:
         r"""Post-forward function applied to :obj:`out` of shape
