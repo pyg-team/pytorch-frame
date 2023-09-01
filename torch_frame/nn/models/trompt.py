@@ -81,11 +81,11 @@ class Trompt(Module):
         self.trompt_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transforming :obj:`x` into a series of output predictions at each
-        layer.
+        r"""Transforming :obj:`TensorFrame` object into a series of output
+        predictions at each layer.
 
         Args:
-            tf (TensorFrame): Input TensorFrame
+            tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
             stacked_out (Tensor): Output predictions stacked across layers. The

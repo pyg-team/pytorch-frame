@@ -2,10 +2,10 @@
 Reported (reproduced) results of of Trompt model based on Tables 9, 10, and 11
 of the original paper: https://arxiv.org/abs/2305.18446
 
-electricity (A4): 84.50 (82.23)
-eye_movements (A5): 64.25 (58.76)
+electricity (A4): 84.50 (82.10)
+eye_movements (A5): 64.25 (59.57)
 california (B5): 89.09 (88.50)
-credit (B7): 75.84 (74.90)
+credit (B7): 75.84 (76.21)
 jannis (B11): 76.89 ()
 pol (B14): 98.49 ()
 """
