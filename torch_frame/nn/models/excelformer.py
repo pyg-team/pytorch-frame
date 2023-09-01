@@ -79,8 +79,7 @@ class ExcelFormer(Module):
         output predictions.
 
         Args:
-            tf (TensorFrame): Input :obj:TensorFrame column-wise
-            tensor-frame object.
+            tf (TensorFrame): Input :obj:TensorFrame object.
 
         Returns:
             x (Tensor): [batch_size, num_cols, out_channels].
