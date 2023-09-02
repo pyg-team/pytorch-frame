@@ -1,13 +1,17 @@
+import math
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter, Sequential
+from torch.nn.init import kaiming_uniform_
 
 from torch_frame import stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+
+from ..utils.init import attenuated_kaiming_uniform_
 
 
 def reset_parameters_soft(module: Module):
@@ -291,3 +295,66 @@ class LinearPeriodicEncoder(StypeEncoder):
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
         out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
+
+
+class ExcelFormerEncoder(StypeEncoder):
+    r""" An attention based encoder that transforms input numerical features
+    to a 3-dimentional tensor.
+    Before being fed to the embedding layer, numerical features are normalized
+    and categorical features are transformed into numerical features by the
+    CatBoost Encoder implemented with the Sklearn Python package. The features
+    are then ranked based on mutural information.
+    The original encoding is described in https://arxiv.org/pdf/2301.02819
+
+    Args:
+        out_channels (int): The output channel dimensionality
+        stats_list (List[Dict[StatType, Any]]): The list of stats for each
+            column within the same stype.
+    """
+    supported_stypes = {stype.numerical}
+
+    def __init__(
+        self,
+        out_channels: int,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        post_module: Optional[Module] = None,
+    ):
+        super().__init__(out_channels, stats_list, post_module)
+
+    def init_modules(self):
+        mean = torch.tensor(
+            [stats[StatType.MEAN] for stats in self.stats_list])
+        self.register_buffer('mean', mean)
+        std = torch.tensor([stats[StatType.STD]
+                            for stats in self.stats_list]) + 1e-6
+        self.register_buffer('std', std)
+        num_cols = len(self.stats_list)
+        self.W_1 = Parameter(Tensor(num_cols, self.out_channels))
+        self.W_2 = Parameter(Tensor(num_cols, self.out_channels))
+        self.b_1 = Parameter(Tensor(num_cols, self.out_channels))
+        self.b_2 = Parameter(Tensor(num_cols, self.out_channels))
+        self.reset_parameters()
+
+    def forward(self, x: Tensor) -> Tensor:
+        r"""Transforming :obj:`x` into output embeddings.
+
+        Args:
+            x (Tensor): Input column-wise tensor of shape
+                [batch_size, num_cols]
+
+        Returns:
+            x (TensorFrame): [batch_size, num_cols, out_channels].
+        """
+        x = (x - self.mean) / self.std
+        x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
+        x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
+        x = torch.tanh(x1) * x2
+        out = torch.nan_to_num(x, nan=0)
+        return self.post_forward(out)
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        attenuated_kaiming_uniform_(self.W_1)
+        attenuated_kaiming_uniform_(self.W_2)
+        kaiming_uniform_(self.b_1, a=math.sqrt(5))
+        kaiming_uniform_(self.b_2, a=math.sqrt(5))
