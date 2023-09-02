@@ -6,7 +6,7 @@ electricity (A4): 84.50 (82.10)
 eye_movements (A5): 64.25 (59.57)
 california (B5): 89.09 (88.50)
 credit (B7): 75.84 (76.21)
-jannis (B11): 76.89 (OOM)
+jannis (B11): 76.89 (78.04)
 pol (B14): 98.49 (98.63)
 """
 
@@ -60,8 +60,8 @@ val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
-val_loader = DataLoader(val_tensor_frame, batch_size=1024)
-test_loader = DataLoader(test_tensor_frame, batch_size=1024)
+val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
+test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
 # Set up model and optimizer
 model = Trompt(

@@ -1,7 +1,17 @@
+from typing import Any, Dict, List
+
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
 from torch.nn.modules.module import Module
 
+import torch_frame
+from torch_frame import TensorFrame, stype
+from torch_frame.data.stats import StatType
+from torch_frame.nn import (
+    EmbeddingEncoder,
+    LinearEncoder,
+    StypeWiseFeatureEncoder,
+)
 from torch_frame.nn.conv import FTTransformerConvs
 
 
@@ -9,26 +19,36 @@ class FTTransformer(Module):
     r"""The FT-Transformer model introduced in https://arxiv.org/abs/2106.11959
 
     Args:
-        in_channels (int): Input channel dimensionality
+        channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_cols (int): Number of columns
         num_layers (int): Numner of :class:`TromptConv` layers.  (default: 3)
     """
     def __init__(
         self,
-        in_channels: int,
+        channels: int,
         out_channels: int,
-        num_cols: int,
-        num_layers: int = 3,
+        num_layers: int,
+        # kwargs for encoder
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
 
-        self.backbone = FTTransformerConvs(channels=in_channels,
+        self.encoder = StypeWiseFeatureEncoder(
+            out_channels=channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict={
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder(),
+            },
+        )
+        self.backbone = FTTransformerConvs(channels=channels,
                                            num_layers=num_layers)
         self.decoder = Sequential(
-            LayerNorm(in_channels),
+            LayerNorm(channels),
             ReLU(),
-            Linear(in_channels, out_channels),
+            Linear(channels, out_channels),
         )
         self.reset_parameters()
 
@@ -38,17 +58,16 @@ class FTTransformer(Module):
             if not isinstance(m, ReLU):
                 m.reset_parameters()
 
-    def forward(self, x: Tensor) -> Tensor:
-        r"""Transforming :obj:`x` into a series of output predictions.
+    def forward(self, tf: TensorFrame) -> Tensor:
+        r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (Tensor): Input column-wise tensor of shape
-                [batch_size, num_cols, in_channels]
+            x (Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
             out (Tensor): Output. The shape is [batch_size, out_channels].
         """
-
+        x, _ = self.encoder(tf)
         x, x_cls = self.backbone(x)
         out = self.decoder(x_cls)
         return out
