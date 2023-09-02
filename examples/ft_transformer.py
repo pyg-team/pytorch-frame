@@ -1,15 +1,11 @@
 """
-Reported (reproduced) results of of Trompt model based on Tables 9, 10, and 11
-of the original paper: https://arxiv.org/abs/2305.18446
+Reported (reproduced) results of FT-Transformer
+https://arxiv.org/pdf/2106.11959.pdf
 
-electricity (A4): 84.50 (82.10)
-eye_movements (A5): 64.25 (59.57)
-california (B5): 89.09 (88.50)
-credit (B7): 75.84 (76.21)
-jannis (B11): 76.89 (78.04)
-pol (B14): 98.49 (98.63)
+adult 86.0 (86.0)
+helena 39.8 (39.2)
+jannis 73.2 (71.6)
 """
-
 import argparse
 import os.path as osp
 import random
@@ -20,17 +16,16 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
-from torch_frame.datasets import TabularBenchmark
-from torch_frame.nn import Trompt
+from torch_frame.datasets import Yandex
+from torch_frame.nn import FTTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='california')
-parser.add_argument('--channels', type=int, default=128)
-parser.add_argument('--num_prompts', type=int, default=128)
-parser.add_argument('--num_layers', type=int, default=6)
-parser.add_argument('--batch_size', type=int, default=256)
-parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--dataset', type=str, default='adult')
+parser.add_argument('--channels', type=int, default=192)
+parser.add_argument('--num_layers', type=int, default=3)
+parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -45,14 +40,14 @@ torch.cuda.manual_seed_all(args.seed)
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-dataset = TabularBenchmark(root=path, name=args.dataset)
+dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-dataset = dataset.shuffle()
-# Split ratio following https://arxiv.org/abs/2207.08815
-# 70% is used for training. 30% of the remaining is used for validation.
-# The final reminder is used for testing.
-train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
-    0.7:0.79], dataset[0.79:]
+train_indexes = dataset.df.index[dataset.df['split'] == 'train'].tolist()
+train_dataset = dataset[train_indexes]
+val_indexes = dataset.df.index[dataset.df['split'] == 'val'].tolist()
+val_dataset = dataset[train_indexes]
+test_indexes = dataset.df.index[dataset.df['split'] == 'test'].tolist()
+test_dataset = dataset[test_indexes]
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame.to(device)
@@ -63,17 +58,15 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
-# Set up model and optimizer
-model = Trompt(
+model = FTTransformer(
     channels=args.channels,
     out_channels=dataset.num_classes,
-    num_prompts=args.num_prompts,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
 ).to(device)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
 def train() -> float:
@@ -81,14 +74,8 @@ def train() -> float:
     loss_accum = 0
 
     for step, tf in enumerate(tqdm(train_loader)):
-        # [batch_size, num_layers, num_classes]
-        out = model(tf)
-        num_layers = out.size(1)
-        # [batch_size * num_layers, num_classes]
-        pred = out.view(-1, dataset.num_classes)
-        y = tf.y.repeat_interleave(num_layers)
-        # Layer-wise logit loss
-        loss = F.cross_entropy(pred, y)
+        pred = model(tf)
+        loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss)
@@ -102,11 +89,7 @@ def eval(loader: DataLoader) -> float:
     is_corret = []
 
     for tf in loader:
-        # [batch_size, num_layers, num_classes]
-        out = model(tf)
-        # Mean pooling across layers
-        # [batch_size, num_layers, num_classes] -> [batch_size, num_classes]
-        pred = out.mean(dim=1)
+        pred = model(tf)
         pred_class = pred.argmax(dim=-1)
         is_corret.append((tf.y == pred_class).detach().cpu())
 

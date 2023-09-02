@@ -37,7 +37,7 @@ class FTTransformerConvs(TableConv):
         # Arguments for Transformer
         num_layers: int = 3,
         nhead: int = 8,
-        dropout: float = 0.1,
+        dropout: float = 0.2,
         activation: str = 'relu',
     ):
         super().__init__()
