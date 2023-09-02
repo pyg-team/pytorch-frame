@@ -8,22 +8,16 @@ jannis 73.2 (71.6)
 """
 import argparse
 import os.path as osp
+import random
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import Tensor
-from torch.nn import Module
 from tqdm import tqdm
 
-from torch_frame import stype
-from torch_frame.data import DataLoader, TensorFrame
+from torch_frame.data import DataLoader
 from torch_frame.datasets import Yandex
-from torch_frame.nn import (
-    EmbeddingEncoder,
-    FTTransformer,
-    LinearEncoder,
-    StypeWiseFeatureEncoder,
-)
+from torch_frame.nn import FTTransformer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
@@ -32,12 +26,16 @@ parser.add_argument('--num_layers', type=int, default=3)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
+device = (torch.device('cuda')
+          if torch.cuda.is_available() else torch.device('cpu'))
+
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed_all(args.seed)
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
@@ -57,35 +55,17 @@ val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
-val_loader = DataLoader(val_tensor_frame, batch_size=1024)
-test_loader = DataLoader(test_tensor_frame, batch_size=1024)
+val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
+test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
+model = FTTransformer(
+    channels=args.channels,
+    out_channels=dataset.num_classes,
+    num_layers=args.num_layers,
+    col_stats=dataset.col_stats,
+    col_names_dict=train_tensor_frame.col_names_dict,
+).to(device)
 
-class FTTranformerModel(Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = StypeWiseFeatureEncoder(
-            out_channels=args.channels,
-            col_stats=train_dataset.col_stats,
-            col_names_dict=train_dataset.tensor_frame.col_names_dict,
-            stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(),
-            },
-        )
-        self.model = FTTransformer(
-            in_channels=args.channels,
-            out_channels=dataset.num_classes,
-            num_cols=dataset.tensor_frame.num_cols,
-            num_layers=args.num_layers,
-        )
-
-    def forward(self, tf: TensorFrame) -> Tensor:
-        x, _ = self.encoder(tf)
-        return self.model(x)
-
-
-model = FTTranformerModel().to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
