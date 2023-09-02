@@ -20,6 +20,7 @@ class FakeDataset(torch_frame.data.Dataset):
         with_nan: bool = False,
         stypes: List[stype] = [stype.categorical, stype.numerical],
     ):
+        assert len(stypes) > 0
         df_dict = {
             'target': np.random.randn(num_rows),
         }

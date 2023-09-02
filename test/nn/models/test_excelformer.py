@@ -4,7 +4,7 @@ from torch_frame.nn import ExcelFormer
 from torch_frame.stype import stype
 
 
-def test_excelformer_regression():
+def test_excelformer():
     batch_size = 10
     in_channels = 8
     out_channels = 1
