@@ -7,6 +7,7 @@ from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
     EmbeddingEncoder,
+    ExcelFormerEncoder,
     LinearBucketEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
@@ -55,6 +56,9 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     }),
     (LinearPeriodicEncoder, {
         'n_bins': 4,
+        'post_module': ReLU(),
+    }),
+    (ExcelFormerEncoder, {
         'post_module': ReLU(),
     }),
 ])
@@ -113,6 +117,7 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     (LinearPeriodicEncoder, {
         'n_bins': 4
     }),
+    (ExcelFormerEncoder, {}),
 ])
 def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
