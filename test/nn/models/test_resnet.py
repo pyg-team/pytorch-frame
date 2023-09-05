@@ -3,7 +3,7 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn import ResNet
 
 
-def test_ft_transformer():
+def test_resnet():
     batch_size = 10
     channels = 8
     out_channels = 1

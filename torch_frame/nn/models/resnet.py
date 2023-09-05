@@ -14,15 +14,14 @@ from torch_frame.nn import (
 )
 
 
-class FullyConnectedResidualBlock(Module):
-    r"""
-    A module that implements a fully connected residual block.
+class FCResidualBlock(Module):
+    r"""A module that implements a fully connected residual block.
     Args:
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
     """
     def __init__(self, in_channels: int, out_channels: int):
-        super(FullyConnectedResidualBlock, self).__init__()
+        super(FCResidualBlock, self).__init__()
         self.linear1 = Linear(in_channels, out_channels)
         self.linear2 = Linear(out_channels, out_channels)
         self.relu = ReLU()
@@ -75,8 +74,8 @@ class ResNet(Module):
         )
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
-            FullyConnectedResidualBlock(in_channels if i == 0 else channels,
-                                        channels) for i in range(num_layers)
+            FCResidualBlock(in_channels if i == 0 else channels, channels)
+            for i in range(num_layers)
         ])
 
         self.decoder = Sequential(
