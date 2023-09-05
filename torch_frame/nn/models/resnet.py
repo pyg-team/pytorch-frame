@@ -57,9 +57,7 @@ class ResNet(Module):
                 stype.numerical: LinearEncoder(),
             },
         )
-        num_feats = len(col_stats) - 1 if 'target' in col_stats else len(
-            col_stats)
-        in_channels = channels * num_feats
+        in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
             FullyConnectedResidualBlock(in_channels if i == 0 else channels,
                                         channels) for i in range(num_layers)
