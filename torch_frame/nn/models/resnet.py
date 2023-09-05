@@ -50,6 +50,7 @@ class ResNet(Module):
         num_layers: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
+        encoder_config: Dict[StatType, Module] = None,
     ):
         r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
 
@@ -63,14 +64,17 @@ class ResNet(Module):
         """
         super().__init__()
 
+        if encoder_config is None:
+            encoder_config = {
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder(),
+            }
+
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(),
-            },
+            stype_encoder_dict=encoder_config,
         )
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[

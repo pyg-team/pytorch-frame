@@ -1,6 +1,6 @@
 """
 Reported (reproduced) results of FT-Transformer
-https://arxiv.org/pdf/2106.11959.pdf
+https://arxiv.org/abs/2106.11959
 
 adult 86.0 (86.0)
 helena 39.8 (39.2)
@@ -8,9 +8,9 @@ jannis 73.2 (71.6)
 
 --------
 Reported (reproduced) results of ResNet
-https://arxiv.org/pdf/2106.11959.pdf
+https://arxiv.org/abs/2106.11959
 
-adult 86.0 ()
+ adult 86.0 ()
 helena 39.8 ()
 jannis 73.2 ()
 """
@@ -23,12 +23,25 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
+from torch_frame import stype
 from torch_frame.data import DataLoader
 from torch_frame.datasets import Yandex
-from torch_frame.nn import FTTransformer, ResNet
+from torch_frame.nn import (
+    EmbeddingEncoder,
+    FTTransformer,
+    LinearBucketEncoder,
+    LinearEncoder,
+    LinearPeriodicEncoder,
+    ResNet,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
+parser.add_argument(
+    '--numerical_encoder_type', type=str, default='linear',
+    choices=['linear', 'linearbucket', 'linearperiodic'],
+    help='''The numerical encoder type to use: "linear",
+    "linearbucket" or "linearperiodic".''')
 parser.add_argument('--model_type', type=str, default='fttransformer',
                     choices=['fttransformer', 'resnet'],
                     help='The model type to use: "fttransformer" or "resnet".')
@@ -66,6 +79,21 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
+
+if args.numerical_encoder_type == 'linear':
+    numerical_encoder = LinearEncoder()
+elif args.numerical_encoder_type == 'linearbucket':
+    numerical_encoder = LinearBucketEncoder()
+elif args.numerical_encoder_type == 'linearperiodic':
+    numerical_encoder = LinearPeriodicEncoder()
+else:
+    raise ValueError(
+        f'Unsupported encoder type: {args.numerical_encoder_type}')
+
+encoder_config = {
+    stype.categorical: EmbeddingEncoder(),
+    stype.numerical: numerical_encoder,
+}
 
 if args.model_type == 'fttransformer':
     model = FTTransformer(

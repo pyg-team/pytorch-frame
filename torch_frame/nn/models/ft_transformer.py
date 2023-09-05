@@ -28,20 +28,23 @@ class FTTransformer(Module):
         channels: int,
         out_channels: int,
         num_layers: int,
-        # kwargs for encoder
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
+        encoder_config: Dict[StatType, Module] = None,
     ):
         super().__init__()
+
+        if encoder_config is None:
+            encoder_config = {
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder(),
+            }
 
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(),
-            },
+            stype_encoder_dict=encoder_config,
         )
         self.backbone = FTTransformerConvs(channels=channels,
                                            num_layers=num_layers)
