@@ -15,6 +15,12 @@ from torch_frame.nn import (
 
 
 class FullyConnectedResidualBlock(Module):
+    r"""
+    A module that implements a fully connected residual block.
+    Args:
+        in_channels (int): The number of input channels.
+        out_channels (int): The number of output channels.
+    """
     def __init__(self, in_channels: int, out_channels: int):
         super(FullyConnectedResidualBlock, self).__init__()
         self.linear1 = Linear(in_channels, out_channels)
@@ -46,6 +52,16 @@ class ResNet(Module):
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
+        r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
+
+        Args:
+            channels (int): The number of channels in the backbone layers.
+            out_channels (int): The number of output channels in the decoder.
+            num_layers (int): The number of layers in the backbone.
+            col_stats (Dict): Dictionary containing column statistics.
+            col_names_dict (Dict): Dictionary containing column names
+                categorized by statistical type.
+        """
         super().__init__()
 
         self.encoder = StypeWiseFeatureEncoder(
