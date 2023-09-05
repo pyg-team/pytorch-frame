@@ -10,9 +10,9 @@ jannis 73.2 (71.6)
 Reported (reproduced) results of ResNet
 https://arxiv.org/pdf/2106.11959.pdf
 
-adult 86.0 (86.0)
-helena 39.8 (39.2)
-jannis 73.2 (71.6)
+adult 86.0 ()
+helena 39.8 ()
+jannis 73.2 ()
 """
 import argparse
 import os.path as osp
