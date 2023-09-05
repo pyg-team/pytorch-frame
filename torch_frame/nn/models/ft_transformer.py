@@ -21,7 +21,7 @@ class FTTransformer(Module):
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_layers (int): Numner of :class:`TromptConv` layers.  (default: 3)
+        num_layers (int): Numner of layers.  (default: 3)
     """
     def __init__(
         self,

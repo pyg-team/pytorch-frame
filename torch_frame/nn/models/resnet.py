@@ -1,0 +1,89 @@
+from typing import Any, Dict, List
+
+from torch import Tensor
+from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
+from torch.nn.modules.module import Module
+
+import torch_frame
+from torch_frame import TensorFrame, stype
+from torch_frame.data.stats import StatType
+from torch_frame.nn import (
+    EmbeddingEncoder,
+    LinearEncoder,
+    StypeWiseFeatureEncoder,
+)
+
+
+class FullyConnectedResidualBlock(Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super(FullyConnectedResidualBlock, self).__init__()
+        self.linear1 = Linear(in_channels, out_channels)
+        self.linear2 = Linear(out_channels, out_channels)
+        self.relu = ReLU()
+        if in_channels != out_channels:
+            self.shortcut = Linear(in_channels, out_channels)
+        else:
+            self.shortcut = None
+
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+        out = self.linear1(x)
+        out = self.relu(out)
+        out = self.linear2(out)
+        if self.shortcut is not None:
+            identity = self.shortcut(identity)
+        out += identity
+        out = self.relu(out)
+        return out
+
+
+class ResNet(Module):
+    def __init__(
+        self,
+        channels: int,
+        out_channels: int,
+        num_layers: int,
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+    ):
+        super().__init__()
+
+        self.encoder = StypeWiseFeatureEncoder(
+            out_channels=channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict={
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder(),
+            },
+        )
+        num_feats = len(col_stats) - 1 if 'target' in col_stats else len(
+            col_stats)
+        in_channels = channels * num_feats
+        self.backbone = Sequential(*[
+            FullyConnectedResidualBlock(in_channels if i == 0 else channels,
+                                        channels) for i in range(num_layers)
+        ])
+
+        self.decoder = Sequential(
+            LayerNorm(channels),
+            ReLU(),
+            Linear(channels, out_channels),
+        )
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for m in self.modules():
+            if isinstance(m, Linear):
+                m.reset_parameters()
+
+    def forward(self, tf: TensorFrame) -> Tensor:
+        x, _ = self.encoder(tf)
+
+        # Flattening the encoder output
+        x = x.view(x.size(0), -1)
+
+        x = self.backbone(x)
+        out = self.decoder(x)
+        return out
