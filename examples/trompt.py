@@ -31,7 +31,8 @@ parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--epochs', type=int, default=30)
+parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--patience', type=int, default=5)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -129,6 +130,13 @@ for epoch in range(args.epochs):
     if best_val_acc < val_acc:
         best_val_acc = val_acc
         best_test_acc = test_acc
+        counter = 0
+    else:
+        counter += 1
     print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
+    if counter > args.patience:
+        print(f"Stop training as the validation accuracy did not improve for "
+              f"{args.patience} consecutive epochs")
+        break
 
 print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
