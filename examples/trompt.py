@@ -31,7 +31,7 @@ parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--epochs', type=int, default=30)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 

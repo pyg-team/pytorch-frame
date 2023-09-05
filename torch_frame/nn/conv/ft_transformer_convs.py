@@ -60,7 +60,7 @@ class FTTransformerConvs(TableConv):
         self.reset_parameters()
 
     def reset_parameters(self):
-        torch.nn.init.normal_(self.cls_embedding, std=0.1)
+        torch.nn.init.normal_(self.cls_embedding, std=0.01)
         for p in self.transformer.parameters():
             if p.dim() > 1:
                 torch.nn.init.xavier_uniform_(p)
