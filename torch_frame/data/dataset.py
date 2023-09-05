@@ -268,6 +268,6 @@ class Dataset(ABC):
                              f"Needs to either 'train', 'val', or 'test'.")
         if 'split' not in self.df:
             raise ValueError(
-                f"'get_split_dataset' is not supported in {self}.")
+                f"'get_split_dataset' is not supported for {self}.")
         indices = self.df.index[self.df['split'] == split].tolist()
         return self[indices]
