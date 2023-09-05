@@ -42,12 +42,10 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-train_indexes = dataset.df.index[dataset.df['split'] == 'train'].tolist()
-train_dataset = dataset[train_indexes]
-val_indexes = dataset.df.index[dataset.df['split'] == 'val'].tolist()
-val_dataset = dataset[train_indexes]
-test_indexes = dataset.df.index[dataset.df['split'] == 'test'].tolist()
-test_dataset = dataset[test_indexes]
+
+train_dataset = dataset.get_split_dataset('train')
+val_dataset = dataset.get_split_dataset('val')
+test_dataset = dataset.get_split_dataset('test')
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame.to(device)

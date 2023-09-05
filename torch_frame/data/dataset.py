@@ -259,3 +259,15 @@ class Dataset(ABC):
         dataset.col_to_stype = {col: self.col_to_stype[col] for col in cols}
 
         return dataset
+
+    def get_split_dataset(self, split: str) -> 'Dataset':
+        r"""Get dataset split defined in the 'split' column of :obj:`self.df`.
+        """
+        if split not in ['train', 'val', 'test']:
+            raise ValueError(f"The split named {split} is not available. "
+                             f"Needs to either 'train', 'val', or 'test'.")
+        if 'split' not in self.df:
+            raise ValueError(
+                f"'get_split_dataset' is not supported in {self}.")
+        indices = self.df.index[self.df['split'] == split].tolist()
+        return self[indices]
