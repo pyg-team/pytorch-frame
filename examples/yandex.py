@@ -2,9 +2,17 @@
 Reported (reproduced) results of FT-Transformer
 https://arxiv.org/pdf/2106.11959.pdf
 
-adult 86.0 ()
-helena 39.8 ()
-jannis 73.2 ()
+adult 86.0 (86.0)
+helena 39.8 (39.2)
+jannis 73.2 (71.6)
+
+--------
+Reported (reproduced) results of ResNet
+https://arxiv.org/pdf/2106.11959.pdf
+
+adult 86.0 (86.0)
+helena 39.8 (39.2)
+jannis 73.2 (71.6)
 """
 import argparse
 import os.path as osp
@@ -17,11 +25,14 @@ from tqdm import tqdm
 
 from torch_frame.data import DataLoader
 from torch_frame.datasets import Yandex
-from torch_frame.nn import ResNet
+from torch_frame.nn import FTTransformer, ResNet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
-parser.add_argument('--channels', type=int, default=128)
+parser.add_argument('--model_type', type=str, default='fttransformer',
+                    choices=['fttransformer', 'resnet'],
+                    help='The model type to use: "fttransformer" or "resnet".')
+parser.add_argument('--channels', type=int, default=192)
 parser.add_argument('--num_layers', type=int, default=3)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
@@ -58,13 +69,24 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
-model = ResNet(
-    channels=args.channels,
-    out_channels=dataset.num_classes,
-    num_layers=args.num_layers,
-    col_stats=dataset.col_stats,
-    col_names_dict=train_tensor_frame.col_names_dict,
-).to(device)
+if args.model_type == 'fttransformer':
+    model = FTTransformer(
+        channels=args.channels,
+        out_channels=dataset.num_classes,
+        num_layers=args.num_layers,
+        col_stats=dataset.col_stats,
+        col_names_dict=train_tensor_frame.col_names_dict,
+    ).to(device)
+elif args.model_type == 'resnet':
+    model = ResNet(
+        channels=args.channels,
+        out_channels=dataset.num_classes,
+        num_layers=args.num_layers,
+        col_stats=dataset.col_stats,
+        col_names_dict=train_tensor_frame.col_names_dict,
+    ).to(device)
+else:
+    raise ValueError(f'Unsupported model type: {args.model_type}')
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
