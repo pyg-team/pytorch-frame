@@ -2,8 +2,8 @@
 Reported (reproduced) results of of Trompt model based on Tables 9, 10, and 11
 of the original paper: https://arxiv.org/abs/2305.18446
 
-electricity (A4): 84.50 (82.10)
-eye_movements (A5): 64.25 (59.57)
+electricity (A4): 84.50 (83.93)
+eye_movements (A5): 64.25 (60.51)
 california (B5): 89.09 (88.50)
 credit (B7): 75.84 (76.21)
 jannis (B11): 76.89 (78.04)
@@ -17,6 +17,7 @@ import random
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
@@ -30,7 +31,7 @@ parser.add_argument('--num_prompts', type=int, default=128)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -74,6 +75,7 @@ model = Trompt(
 ).to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 
 def train() -> float:
@@ -93,6 +95,7 @@ def train() -> float:
         loss.backward()
         loss_accum += float(loss)
         optimizer.step()
+    lr_scheduler.step()
     return loss_accum / (step + 1)
 
 
