@@ -261,7 +261,11 @@ class Dataset(ABC):
         return dataset
 
     def get_split_dataset(self, split: str) -> 'Dataset':
-        r"""Get dataset split defined in the 'split' column of :obj:`self.df`.
+        r"""Get splitted dataset defined in the 'split' column of
+        :obj:`self.df`.
+
+        Args:
+            split (str): The split name. Should be 'train', 'val', or 'test'.
         """
         if split not in ['train', 'val', 'test']:
             raise ValueError(f"The split named {split} is not available. "
