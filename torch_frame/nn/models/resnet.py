@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from torch import Tensor
-from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
+from torch.nn import BatchNorm1d, LayerNorm, Linear, Module, ReLU, Sequential
 from torch.nn.modules.module import Module
 
 import torch_frame
@@ -16,15 +16,29 @@ from torch_frame.nn import (
 
 class FCResidualBlock(Module):
     r"""A module that implements a fully connected residual block.
+
     Args:
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
+        normalization (str): The type of normalization to use
+            ('batchnorm', 'layernorm', or None).
     """
-    def __init__(self, in_channels: int, out_channels: int):
+    def __init__(self, in_channels: int, out_channels: int,
+                 normalization: str = None):
         super(FCResidualBlock, self).__init__()
         self.linear1 = Linear(in_channels, out_channels)
         self.linear2 = Linear(out_channels, out_channels)
         self.relu = ReLU()
+
+        if normalization == 'batchnorm':
+            self.norm1 = BatchNorm1d(out_channels)
+            self.norm2 = BatchNorm1d(out_channels)
+        elif normalization == 'layernorm':
+            self.norm1 = LayerNorm(out_channels)
+            self.norm2 = LayerNorm(out_channels)
+        else:
+            self.norm1 = self.norm2 = None
+
         if in_channels != out_channels:
             self.shortcut = Linear(in_channels, out_channels)
         else:
@@ -32,13 +46,22 @@ class FCResidualBlock(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
+
         out = self.linear1(x)
+        if self.norm1:
+            out = self.norm1(out)
         out = self.relu(out)
+
         out = self.linear2(out)
+        if self.norm2:
+            out = self.norm2(out)
+
         if self.shortcut is not None:
             identity = self.shortcut(identity)
+
         out += identity
         out = self.relu(out)
+
         return out
 
 
@@ -51,6 +74,7 @@ class ResNet(Module):
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
         encoder_config: Dict[StatType, Module] = None,
+        normalization: str = 'batchnorm',
     ):
         r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
 
@@ -78,7 +102,8 @@ class ResNet(Module):
         )
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
-            FCResidualBlock(in_channels if i == 0 else channels, channels)
+            FCResidualBlock(in_channels if i == 0 else channels, channels,
+                            normalization=normalization)
             for i in range(num_layers)
         ])
 
