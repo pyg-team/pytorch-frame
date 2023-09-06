@@ -157,7 +157,7 @@ class LinearEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
-        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
@@ -205,7 +205,7 @@ class LinearBucketEncoder(StypeEncoder):
     def reset_parameters(self):
         super().reset_parameters()
         # Reset learnable parameters of the linear transformation
-        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
@@ -277,8 +277,8 @@ class LinearPeriodicEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
-        torch.nn.init.normal_(self.linear_in, std=0.1)
-        torch.nn.init.normal_(self.linear_out, std=0.1)
+        torch.nn.init.normal_(self.linear_in, std=0.01)
+        torch.nn.init.normal_(self.linear_out, std=0.01)
 
     def forward(self, x: Tensor):
         x = (x - self.mean) / self.std

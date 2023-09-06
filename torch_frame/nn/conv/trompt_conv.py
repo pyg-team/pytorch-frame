@@ -43,10 +43,10 @@ class TromptConv(TableConv):
         self.reset_parameters()
 
     def reset_parameters(self):
-        torch.nn.init.normal_(self.embedding_column, std=0.1)
-        torch.nn.init.normal_(self.embedding_prompt, std=0.1)
+        torch.nn.init.normal_(self.embedding_column, std=0.01)
+        torch.nn.init.normal_(self.embedding_prompt, std=0.01)
         self.lin.reset_parameters()
-        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.normal_(self.weight, std=0.01)
         self.group_norm.reset_parameters()
         self.layer_norm_e_column.reset_parameters()
         self.layer_norm_e_prompt.reset_parameters()
