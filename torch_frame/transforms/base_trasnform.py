@@ -1,0 +1,20 @@
+import copy
+from abc import ABC
+
+from torch_frame import TensorFrame
+
+
+class BaseTransform(ABC):
+    r"""An abstract base class for writing transforms.
+
+    Transforms are a general way to modify and customize
+    :class:`TensorFrame`"""
+    def __call__(self, tf: TensorFrame) -> TensorFrame:
+        # Shallow-copy the data so that we prevent in-place data modification.
+        return self.forward(copy.copy(tf))
+
+    def forward(self, tf: TensorFrame) -> TensorFrame:
+        return tf
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}()'
