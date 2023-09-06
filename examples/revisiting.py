@@ -53,6 +53,13 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
+classification_datasets = {
+    'adult', 'aloi', 'covtype', 'helena', 'higgs_small', 'jannis'
+}
+regression_datasets = {'california_housing', 'microsoft', 'yahoo', 'year'}
+
+assert args.dataset in classification_datasets | regression_datasets
+
 device = (torch.device('cuda')
           if torch.cuda.is_available() else torch.device('cpu'))
 
@@ -95,10 +102,17 @@ encoder_config = {
     stype.numerical: numerical_encoder,
 }
 
+if args.dataset in classification_datasets:
+    output_channels = dataset.num_classes
+elif args.dataset in regression_datasets:
+    output_channels = 1
+else:
+    raise ValueError(f'Unsupported dataset: {args.dataset}')
+
 if args.model_type == 'fttransformer':
     model = FTTransformer(
         channels=args.channels,
-        out_channels=dataset.num_classes,
+        out_channels=output_channels,
         num_layers=args.num_layers,
         col_stats=dataset.col_stats,
         col_names_dict=train_tensor_frame.col_names_dict,
@@ -106,7 +120,7 @@ if args.model_type == 'fttransformer':
 elif args.model_type == 'resnet':
     model = ResNet(
         channels=args.channels,
-        out_channels=dataset.num_classes,
+        out_channels=output_channels,
         num_layers=args.num_layers,
         col_stats=dataset.col_stats,
         col_names_dict=train_tensor_frame.col_names_dict,
@@ -123,7 +137,10 @@ def train() -> float:
 
     for step, tf in enumerate(tqdm(train_loader)):
         pred = model(tf)
-        loss = F.cross_entropy(pred, tf.y)
+        if args.dataset in classification_datasets:
+            loss = F.cross_entropy(pred, tf.y)
+        elif args.dataset in regression_datasets:
+            loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss)
@@ -132,31 +149,59 @@ def train() -> float:
 
 
 @torch.no_grad()
-def eval(loader: DataLoader) -> float:
+def eval(loader: DataLoader) -> dict:
     model.eval()
-    is_corret = []
+    total_loss = 0
+    total_count = 0
+    is_correct = []
 
     for tf in loader:
         pred = model(tf)
-        pred_class = pred.argmax(dim=-1)
-        is_corret.append((tf.y == pred_class).detach().cpu())
+        if args.dataset in classification_datasets:
+            pred_class = pred.argmax(dim=-1)
+            is_correct.append((tf.y == pred_class).detach().cpu())
+        elif args.dataset in regression_datasets:
+            total_loss += float(
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
+            total_count += len(tf.y)
+    if args.dataset in classification_datasets:
+        is_correct_cat = torch.cat(is_correct)
+        accuracy = float(is_correct_cat.sum()) / len(is_correct_cat)
+        return {"accuracy": accuracy}
+    else:
+        rmse = (total_loss / total_count)**0.5
+        return {"rmse": rmse}
 
-    is_correct_cat = torch.cat(is_corret)
-    return float(is_correct_cat.sum()) / len(is_correct_cat)
 
+if args.dataset in regression_datasets:
+    best_val_metric = float('inf')
+    best_test_metric = float('inf')
+else:
+    best_val_metric = 0
+    best_test_metric = 0
 
-best_val_acc = 0
-best_test_acc = 0
 for epoch in range(args.epochs):
     print(f"=====epoch {epoch}")
     loss = train()
     print(f'Train loss: {loss}')
-    train_acc = eval(train_loader)
-    val_acc = eval(val_loader)
-    test_acc = eval(test_loader)
-    if best_val_acc < val_acc:
-        best_val_acc = val_acc
-        best_test_acc = test_acc
-    print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
+    train_metrics = eval(train_loader)
+    val_metrics = eval(val_loader)
+    test_metrics = eval(test_loader)
 
-print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
+    if args.dataset in classification_datasets:
+        metric_name = "accuracy"
+        if val_metrics[metric_name] > best_val_metric:
+            best_val_metric = val_metrics[metric_name]
+            best_test_metric = test_metrics[metric_name]
+    else:
+        metric_name = "rmse"
+        if val_metrics[metric_name] < best_val_metric:
+            best_val_metric = val_metrics[metric_name]
+            best_test_metric = test_metrics[metric_name]
+
+    print(f'Train {metric_name}: {train_metrics[metric_name]}, '
+          f'val {metric_name}: {val_metrics[metric_name]}, '
+          f'test {metric_name}: {test_metrics[metric_name]}')
+
+print(f'Best val {metric_name}: {best_val_metric}, '
+      f'best test {metric_name}: {best_test_metric}')
