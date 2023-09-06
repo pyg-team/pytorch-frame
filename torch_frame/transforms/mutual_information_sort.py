@@ -9,9 +9,17 @@ from torch_frame.transforms import BaseTransform
 
 
 class MutualInformationSort(BaseTransform):
-    r"""Base class for transform that transforms the input tensorflow
-    to output tensorflow."""
+    r"""Class that sort the numerical features of a TensorFrame obj based
+        on mutual information.
+    """
     def __init__(self, tf_train: TensorFrame, task_type):
+        r"""Calculate the mutual information score of training data. The
+        input tf_train :TensorFrame: should not contain categorical features.
+
+        Args:
+            tf_train (TensorFrame): TensorFrame containing the training data.
+                :Tensorframe:`[train_size, num_cols]`.
+        """
         if task_type == "classification":
             self.mi_func = mutual_info_classif
         elif task_type == "regression":
@@ -19,7 +27,7 @@ class MutualInformationSort(BaseTransform):
         else:
             raise RuntimeError("task_type can only be classification or "
                                f"regression, but got {task_type}")
-        if tf_train.col_names_dict[stype.categorical]:
+        if stype.categorical in tf_train.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
@@ -29,12 +37,14 @@ class MutualInformationSort(BaseTransform):
         return
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
-        r"""Process column-wise 3-dimensional tensor into another column-wise
-        3-dimensional tensor.
+        r"""Process TensorFrame obj into another TensorFrame obj.
 
         Args:
-            tf (TensorFrame): Input column-wise tensor of shape
-                :Tensorframe:`[batch_size, num_cols, hidden_channels]`.
+            tf (TensorFrame): Input TensorFrame obj
+
+        Returns:
+            tf (TensorFrame): Input TensorFrame obj but with numerical
+            features sorted based on mutual information.
         """
         if tf.col_names_dict[stype.categorical]:
             raise ValueError("The transform can be only used on TensorFrame"
