@@ -8,7 +8,7 @@ from torch_frame import TensorFrame, stype
 from torch_frame.transforms import BaseTransform
 
 
-class SortFeaturesBasedOnMutualInformation(BaseTransform):
+class MutualInformationSort(BaseTransform):
     r"""Base class for transform that transforms the input tensorflow
     to output tensorflow."""
     def __init__(self, tf_train: TensorFrame, task_type):
@@ -24,7 +24,6 @@ class SortFeaturesBasedOnMutualInformation(BaseTransform):
                              " with numerical only features.")
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
         mi_ranks = np.argsort(-mi_scores)
-        print("sorted mi_ranks")
         self.ranks = {
             col_name: rank
             for col_name, rank in sorted(

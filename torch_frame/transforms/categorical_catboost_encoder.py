@@ -5,7 +5,7 @@ from torch_frame import TensorFrame, stype
 from torch_frame.transforms import BaseTransform
 
 
-class CatboostEncoderOnCategoricalFeatures(BaseTransform):
+class CategoricalCatboostEncoder(BaseTransform):
     r"""Base class for transform that transforms the input tensorflow
     to output tensorflow."""
     def __init__(self, tf_train: TensorFrame):
