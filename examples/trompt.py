@@ -131,9 +131,6 @@ for epoch in range(args.epochs):
     if best_val_acc < val_acc:
         best_val_acc = val_acc
         best_test_acc = test_acc
-        counter = 0
-    else:
-        counter += 1
     print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
 
 print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
