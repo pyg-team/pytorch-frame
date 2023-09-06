@@ -19,21 +19,30 @@ class FakeDataset(torch_frame.data.Dataset):
                 feature columns.
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset.
+        task_type (str): classification or regression.
     """
-    def __init__(
-        self,
-        num_rows: int,
-        with_nan: bool = False,
-        stypes: List[stype] = [stype.categorical, stype.numerical],
-        create_split: bool = False,
-    ):
+    def __init__(self, num_rows: int, with_nan: bool = False,
+                 stypes: List[stype] = [stype.categorical, stype.numerical],
+                 create_split: bool = False, task_type: str = "regression"):
         assert len(stypes) > 0
-        df_dict = {
-            'target': np.random.randn(num_rows),
-        }
-        col_to_stype = {
-            'target': stype.numerical,
-        }
+        if task_type == "regression":
+            df_dict = {
+                'target': np.random.randn(num_rows),
+            }
+            col_to_stype = {
+                'target': stype.numerical,
+            }
+        elif task_type == "classification":
+            df_dict = {
+                'target': np.random.randint(0, 3, size=(num_rows, )),
+            }
+            col_to_stype = {
+                'target': stype.categorical,
+            }
+        else:
+            raise ValueError(
+                "task_type can only be regression or classification,"
+                f" got {task_type}")
         if stype.numerical in stypes:
             for col_name in ['a', 'b', 'c']:
                 df_dict[col_name] = np.random.randn(num_rows)

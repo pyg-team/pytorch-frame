@@ -13,9 +13,9 @@ class MutualInformationSort(BaseTransform):
     to output tensorflow."""
     def __init__(self, tf_train: TensorFrame, task_type):
         if task_type == "classification":
-            self.mi_func = mutual_info_regression
-        elif task_type == "regression":
             self.mi_func = mutual_info_classif
+        elif task_type == "regression":
+            self.mi_func = mutual_info_regression
         else:
             raise RuntimeError("task_type can only be classification or "
                                f"regression, but got {task_type}")
@@ -24,12 +24,8 @@ class MutualInformationSort(BaseTransform):
                              " with numerical only features.")
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
         mi_ranks = np.argsort(-mi_scores)
-        self.ranks = {
-            col_name: rank
-            for col_name, rank in sorted(
-                zip(tf_train.col_names_dict[stype.numerical], mi_ranks))
-        }
-
+        num_cols = tf_train.col_names_dict[stype.numerical]
+        self.ranks = {num_cols[mi_ranks[i]]: i for i in range(len(num_cols))}
         return
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
@@ -47,7 +43,9 @@ class MutualInformationSort(BaseTransform):
         col_idx = {name: index for index, name in enumerate(col_names)}
         idx_rank = {col_idx[key]: value for key, value in self.ranks.items()}
         cols = sorted(idx_rank, key=idx_rank.get)
-        tf.x_dict[stype.numerical] = tf.x_dict[:, cols]
+
+        tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:, cols]
+
         tf.col_names_dict[stype.numerical] = sorted(
-            tf.col_names_dict[stype.numerical], key=col_idx.get)
+            tf.col_names_dict[stype.numerical], key=self.ranks.get)
         return tf
