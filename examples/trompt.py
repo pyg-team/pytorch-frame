@@ -1,13 +1,15 @@
 """
-Reported (reproduced) results of of Trompt model based on Tables 9, 10, and 11
-of the original paper: https://arxiv.org/abs/2305.18446
+Reported (reproduced) results of of Trompt model based on Tables 9--20 of the
+original paper: https://arxiv.org/abs/2305.18446
 
-electricity (A4): 84.50 (83.93)
-eye_movements (A5): 64.25 (60.51)
-california (B5): 89.09 (88.50)
-credit (B7): 75.84 (76.21)
-jannis (B11): 76.89 (78.04)
-pol (B14): 98.49 (98.63)
+electricity (A4): 84.50 (84.17)
+eye_movements (A5): 64.25 (63.02)
+MagicTelescope (B2): 86.30 (86.93)
+bank-marketing (B4): 79.36 (80.59)
+california (B5): 89.09 (89.17)
+credit (B7): 75.84 (76.01)
+pol (B14): 98.49 (98.82)
+jannis (mathcal B4): 79.54 (80.29)
 """
 
 import argparse
@@ -32,7 +34,6 @@ parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=50)
-parser.add_argument('--patience', type=int, default=5)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -134,9 +135,5 @@ for epoch in range(args.epochs):
     else:
         counter += 1
     print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
-    if counter > args.patience:
-        print(f"Stop training as the validation accuracy did not improve for "
-              f"{args.patience} consecutive epochs")
-        break
 
 print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
