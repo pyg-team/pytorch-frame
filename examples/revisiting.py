@@ -2,17 +2,17 @@
 Reported (reproduced) results of FT-Transformer
 https://arxiv.org/abs/2106.11959
 
-adult 86.0 (86.0)
-helena 39.8 (39.2)
-jannis 73.2 (71.6)
+adult 85.9 (86.0)
+helena 39.1 (39.2)
+jannis 73.2 (72.2)
 
 --------
 Reported (reproduced) results of ResNet
 https://arxiv.org/abs/2106.11959
 
- adult 86.0 ()
-helena 39.8 ()
-jannis 73.2 ()
+ adult 85.7 (85.4)
+helena 39.6 (39.1)
+jannis 72.8 (72.5)
 """
 import argparse
 import os.path as osp
@@ -45,11 +45,11 @@ parser.add_argument(
 parser.add_argument('--model_type', type=str, default='fttransformer',
                     choices=['fttransformer', 'resnet'],
                     help='The model type to use: "fttransformer" or "resnet".')
-parser.add_argument('--channels', type=int, default=192)
-parser.add_argument('--num_layers', type=int, default=3)
+parser.add_argument('--channels', type=int, default=256)
+parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 

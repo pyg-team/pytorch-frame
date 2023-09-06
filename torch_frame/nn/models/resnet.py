@@ -1,7 +1,15 @@
 from typing import Any, Dict, List
 
 from torch import Tensor
-from torch.nn import BatchNorm1d, LayerNorm, Linear, Module, ReLU, Sequential
+from torch.nn import (
+    BatchNorm1d,
+    Dropout,
+    LayerNorm,
+    Linear,
+    Module,
+    ReLU,
+    Sequential,
+)
 from torch.nn.modules.module import Module
 
 import torch_frame
@@ -22,13 +30,16 @@ class FCResidualBlock(Module):
         out_channels (int): The number of output channels.
         normalization (str): The type of normalization to use
             ('batchnorm', 'layernorm', or None).
+        dropout_prob (float): The dropout probability (default:
+            0.0, i.e., no dropout).
     """
     def __init__(self, in_channels: int, out_channels: int,
-                 normalization: str = None):
+                 normalization: str = None, dropout_prob: float = 0.0):
         super(FCResidualBlock, self).__init__()
         self.linear1 = Linear(in_channels, out_channels)
         self.linear2 = Linear(out_channels, out_channels)
         self.relu = ReLU()
+        self.dropout = Dropout(dropout_prob)
 
         if normalization == 'batchnorm':
             self.norm1 = BatchNorm1d(out_channels)
@@ -51,10 +62,13 @@ class FCResidualBlock(Module):
         if self.norm1:
             out = self.norm1(out)
         out = self.relu(out)
+        out = self.dropout(out)
 
         out = self.linear2(out)
         if self.norm2:
             out = self.norm2(out)
+        out = self.relu(out)
+        out = self.dropout(out)
 
         if self.shortcut is not None:
             identity = self.shortcut(identity)
@@ -74,7 +88,8 @@ class ResNet(Module):
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
         encoder_config: Dict[StatType, Module] = None,
-        normalization: str = 'batchnorm',
+        normalization: str = 'layernorm',
+        dropout_prob: float = 0.2,
     ):
         r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
 
@@ -85,6 +100,12 @@ class ResNet(Module):
             col_stats (Dict): Dictionary containing column statistics.
             col_names_dict (Dict): Dictionary containing column names
                 categorized by statistical type.
+            encoder_config: Dictionary containing encoder type per
+                column statistics.
+            normalization (str): The type of normalization to use
+                ('batchnorm', 'layernorm', or None).
+            dropout_prob (float): The dropout probability (default:
+                0.2).
         """
         super().__init__()
 
@@ -103,7 +124,8 @@ class ResNet(Module):
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
             FCResidualBlock(in_channels if i == 0 else channels, channels,
-                            normalization=normalization)
+                            normalization=normalization,
+                            dropout_prob=dropout_prob)
             for i in range(num_layers)
         ])
 
