@@ -108,6 +108,7 @@ if args.model_type == 'fttransformer':
         num_layers=args.num_layers,
         col_stats=dataset.col_stats,
         col_names_dict=train_tensor_frame.col_names_dict,
+        stype_encoder_dict=stype_encoder_dict,
     ).to(device)
 elif args.model_type == 'resnet':
     model = ResNet(
