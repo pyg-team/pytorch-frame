@@ -29,7 +29,7 @@ class MutualInformationSort(FittableBaseTransform):
                 "classification,  multiclass classification or regression "
                 f"task, but got {task_type}.")
 
-    def fit(self, tf_train: TensorFrame):
+    def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
                 "MutualInformationSort cannot be used when target column"
@@ -51,13 +51,10 @@ class MutualInformationSort(FittableBaseTransform):
         for col, rank in self.ranks.items():
             self.reordered_col_names[rank] = col
 
-    def forward(self, tf: TensorFrame) -> TensorFrame:
+    def _forward(self, tf: TensorFrame) -> TensorFrame:
         if tf.col_names_dict[stype.categorical]:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
-        if self.ranks is None:
-            raise RuntimeError("The transform has not been fitted yet, "
-                               "please fit the transform on train data.")
 
         tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:,
                                                                 self.mi_ranks]

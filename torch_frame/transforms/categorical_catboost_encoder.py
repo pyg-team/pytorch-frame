@@ -13,7 +13,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
     def __init__(self):
         return
 
-    def fit(self, tf_train: TensorFrame):
+    def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
                 "CategoricalCatBoostEncoder cannot be used when target column"
@@ -31,14 +31,11 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical] + tf_train.col_names_dict[stype.categorical]
 
-    def forward(self, tf: TensorFrame) -> TensorFrame:
+    def _forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical not in tf.col_names_dict:
             print("The input TensorFrame does not contain any categorical "
                   "columns. The original TensorFrame will be returned.")
             return tf
-        if self.encoder is None:
-            raise RuntimeError("The transform has not been fitted yet, "
-                               "please fit the transform on train data.")
         # Converts the categorical columns of a :obj:`TensorFrame` into
         # :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
         # tensor so we need to convert the TensorFrame obj to DataFrame first.
