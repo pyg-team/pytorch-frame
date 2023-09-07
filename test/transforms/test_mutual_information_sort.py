@@ -55,8 +55,9 @@ def test_mutual_information_sort_regression():
                      torch.tensor(dataset.df['c'].values,
                                   dtype=torch.float32)).all())
 
-    # make sure the shapes are unchanged
+    # make sure the column names are unchanged
     assert (set(out.col_names_dict[stype.numerical]) == set(
         tensor_frame.col_names_dict[stype.numerical]))
+    # make sure the tensor shapes are unchanged
     assert (out.x_dict[stype.numerical].size() == tensor_frame.x_dict[
         stype.numerical].size())
