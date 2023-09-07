@@ -8,6 +8,8 @@ from torch import Tensor
 class TaskType(Enum):
     REGRESSION = 'regression'
     MULTICLASS_CLASSIFICATION = 'multiclass_classification'
+    BINARY_CLASSIFICATION = 'binary_classification'
+    MULTILABEL_CLASSIFICATION = 'multilable_classification'
 
 
 Series = pd.Series
