@@ -46,15 +46,15 @@ def test_mutual_information_sort_regression():
 
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
-    transform = MutualInformationSort(train_dataset.tensor_frame,
-                                      TaskType.REGRESSION)
+    transform = MutualInformationSort(TaskType.REGRESSION)
+    transform.fit(train_dataset.tensor_frame)
     out = transform(tensor_frame)
 
     # column c ranks the first
     assert (out.col_names_dict[stype.numerical][0] == 'c')
     assert (torch.allclose(
         out.x_dict[stype.numerical][:, 0],
-        torch.tensor(dataset.df['c'].values, dtype=torch.float32)).all())
+        torch.tensor(dataset.df['c'].values, dtype=torch.float32)))
 
     # make sure the column names are unchanged
     assert (set(out.col_names_dict[stype.numerical]) == set(

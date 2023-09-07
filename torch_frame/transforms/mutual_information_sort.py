@@ -40,13 +40,13 @@ class MutualInformationSort(FittableBaseTransform):
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
-        mi_ranks = np.argsort(-mi_scores)
-        num_cols = tf_train.col_names_dict[stype.numerical]
-        self.ranks = {num_cols[mi_ranks[i]]: i for i in range(len(num_cols))}
+        self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]
-        col_idx = {name: index for index, name in enumerate(col_names)}
-        idx_rank = {col_idx[key]: value for key, value in self.ranks.items()}
-        self.cols = sorted(idx_rank, key=idx_rank.get)
+        self.ranks = {
+            col_names[self.mi_ranks[i]]: i
+            for i in range(len(col_names))
+        }
+
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical].copy()
 
@@ -70,7 +70,8 @@ class MutualInformationSort(FittableBaseTransform):
             raise RuntimeError("The transform has not been fitted yet, "
                                "please fit the transform on train data.")
 
-        tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:, self.cols]
+        tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:,
+                                                                self.mi_ranks]
 
         tf.col_names_dict[stype.numerical] = self.reordered_col_names
 
