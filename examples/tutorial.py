@@ -138,25 +138,25 @@ class MeanDecoder(Decoder):
 
 # Custom model
 class TabularNN(Module):
-    r"""The overall tabular NN model that takes in TensorFrame as input and
+    r"""The overall tabular NN model that takes in `TensorFrame` as input and
     outputs row embeddings. It is a combination of
-    (1) Feature encoder (self.encoder): Mapping TensorFrame into 3-dimensional
-        :obj:`x` of shape [batch_size, num_cols, channels]
-    (2) Table covolutions (self.convs): Iteratively transforming the
+    (1) Feature encoder (`self.encoder`): Mapping `TensorFrame` into
+        3-dimensional :obj:`x` of shape [batch_size, num_cols, channels]
+    (2) Table covolutions (`self.convs`): Iteratively transforming the
         3-dimensional :obj:`x`
-    (3) Decoder (self.decoder): Maps the transformed 3-dimensional x into
-        2-dimensional :obj:`out` of shape [batch_size, out_channels].
+    (3) Decoder (`self.decoder`): Maps the transformed 3-dimensional :obj:`x`
+        into 2-dimensional :obj:`out` of shape [batch_size, out_channels].
         Each element of :obj:`out` represents the row embedding of the original
-        TensorFrame.
+        `TensorFrame`.
 
     Args:
         channels (int): Input/hidden channel dimensionality.
         out_channels (int): Output channel dimensionality.
         num_layers (int): Number of table covolution layers
-        col_stats (Dict[str, Dict[StatType, Any]]): Mapping from column name to
-            column statistics. Easily obtained via :obj:`dataset.col_stats`
+        col_stats (Dict[str, Dict[StatType, Any]]): Mapping from a column name
+            to column statistics. Easily obtained via :obj:`dataset.col_stats`
         col_names_dict (Dict[torch_frame.stype, List[str]]): Mapping from stype
-            to a list of column names in the order stored in TensorFrame.
+            to a list of column names in the order stored in `TensorFrame`.
             Easily obtained via :obj:`tensor_frame.col_names_dict`
     """
     def __init__(
@@ -186,7 +186,7 @@ class TabularNN(Module):
         # stype feature encoder to each stype (specified via
         # `stype_encoder_dict`) to get embeddings of columns for each stype.
         # The tensors of different stypes are then concatenated along the
-        # column axis. In other words, it transforms TensorFrame into
+        # column axis. In other words, it transforms `TensorFrame` into
         # 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
