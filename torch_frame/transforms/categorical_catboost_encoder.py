@@ -1,3 +1,5 @@
+from typing import DataFrame
+
 import pandas as pd
 import torch
 from category_encoders import CatBoostEncoder
@@ -19,7 +21,7 @@ class CategoricalCatboostEncoder(BaseTransform):
         df = self._categorical_tf_to_df(tf_train)
         self.encoder.fit(df, tf_train.y)
 
-    def _categorical_tf_to_df(self, tf: TensorFrame) -> pd.DataFrame:
+    def _categorical_tf_to_df(self, tf: TensorFrame) -> DataFrame:
         r"""Converts the categorical columns of a :obj:`TensorFrame` into
         :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
         tensor so we need to convert the TensorFrame obj to DataFrame first.
@@ -28,8 +30,8 @@ class CategoricalCatboostEncoder(BaseTransform):
             tf (TensorFrame): Input :obj:`TensorFrame`.
 
         Returns:
-            df (pd.DataFrame): :obj:`pd.DataFrame` containing only the
-            categorical columns of the input :obj:`TensorFrame`.
+            df (pd.DataFrame): :obj:DataFrame containing only the
+                categorical columns of the input :obj:`TensorFrame`.
         """
         df = pd.DataFrame(data=tf.x_dict[stype.categorical],
                           columns=tf.col_names_dict[stype.categorical])

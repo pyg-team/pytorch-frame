@@ -60,6 +60,3 @@ def test_mutual_information_sort_regression():
         tensor_frame.col_names_dict[stype.numerical]))
     assert (out.x_dict[stype.numerical].size() == tensor_frame.x_dict[
         stype.numerical].size())
-
-
-test_mutual_information_sort_regression()

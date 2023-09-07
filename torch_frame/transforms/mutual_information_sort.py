@@ -4,7 +4,7 @@ from sklearn.feature_selection import (
     mutual_info_regression,
 )
 
-from torch_frame import TensorFrame, stype
+from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.transforms import BaseTransform
 
 
@@ -14,16 +14,15 @@ class MutualInformationSort(BaseTransform):
 
         Args:
             tf_train (TensorFrame): Input :obj:`TensorFrame` containing the
-            training data.
+                training data.
+            task_type (TaskType): TaskType.REGRESSION or
+                TaskType.CLASSIFICATION
     """
-    def __init__(self, tf_train: TensorFrame, task_type):
+    def __init__(self, tf_train: TensorFrame, task_type: TaskType):
         if task_type == "classification":
             self.mi_func = mutual_info_classif
         elif task_type == "regression":
             self.mi_func = mutual_info_regression
-        else:
-            raise RuntimeError("task_type can only be classification or "
-                               f"regression, but got {task_type}")
         if stype.categorical in tf_train.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")

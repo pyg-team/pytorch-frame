@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added several transforms ([#52](https://github.com/pyg-team/pytorch-frame/pull/52))
+- Added `CategoricalCatBoostEncoder` and `MutualInformationSort` transforms needed by ExcelFromer ([#52](https://github.com/pyg-team/pytorch-frame/pull/52))
 - Added `ExcelFormerEncoder` ([#42](https://github.com/pyg-team/pytorch-frame/pull/42))
 - Make `FTTransformer` take tensor_frame as input ([#45](https://github.com/pyg-team/pytorch-frame/pull/45))
 - Added `Tompt` example ([#39](https://github.com/pyg-team/pytorch-frame/pull/39))

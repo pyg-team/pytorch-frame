@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 import torch_frame
-from torch_frame import stype
+from torch_frame import TaskType, stype
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -16,33 +16,24 @@ class FakeDataset(torch_frame.data.Dataset):
         stypes (List[stype]): List of stype columns to include
                 in the dataset. Particularly useful, when you want to
                 create a dataset with only numerical or categorical
-                feature columns.
+                feature columns. (default: [stype.categorical,
+                stype.numerical])
         create_split (bool): Whether to create a train, val and test
-                split for the fake dataset.
-        task_type (str): classification or regression.
+                split for the fake dataset. (default: False)
+        task_type (TaskType): Task type (default: :obj:TaskType.REGRESSION)
+
     """
     def __init__(self, num_rows: int, with_nan: bool = False,
                  stypes: List[stype] = [stype.categorical, stype.numerical],
-                 create_split: bool = False, task_type: str = "regression"):
+                 create_split: bool = False,
+                 task_type: TaskType = TaskType.REGRESSION):
         assert len(stypes) > 0
-        if task_type == "regression":
-            df_dict = {
-                'target': np.random.randn(num_rows),
-            }
-            col_to_stype = {
-                'target': stype.numerical,
-            }
-        elif task_type == "classification":
-            df_dict = {
-                'target': np.random.randint(0, 3, size=(num_rows, )),
-            }
-            col_to_stype = {
-                'target': stype.categorical,
-            }
-        else:
-            raise ValueError(
-                "task_type can only be regression or classification,"
-                f" got {task_type}")
+        if task_type == TaskType.REGRESSION:
+            df_dict = {'target': np.random.randn(num_rows)}
+            col_to_stype = {'target': stype.numerical}
+        elif task_type == TaskType.CLASSIFICATION:
+            df_dict = {'target': np.random.randint(0, 3, size=(num_rows, ))}
+            col_to_stype = {'target': stype.categorical}
         if stype.numerical in stypes:
             for col_name in ['a', 'b', 'c']:
                 df_dict[col_name] = np.random.randn(num_rows)
