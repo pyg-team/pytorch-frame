@@ -31,9 +31,17 @@ class FakeDataset(torch_frame.data.Dataset):
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
-        elif task_type == TaskType.MULTICLS_CLASSIFICATION:
+        elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
             df_dict = {'target': np.random.randint(0, 3, size=(num_rows, ))}
             col_to_stype = {'target': stype.categorical}
+        elif task_type == TaskType.BINARY_CLASSIFICATION:
+            df_dict = {'target': np.random.randint(0, 2, size=(num_rows, ))}
+            col_to_stype = {'target': stype.categorical}
+        else:
+            raise ValueError(
+                "FakeDataset only support binary classification, "
+                "multiclass classification or regression type, but"
+                f" got {task_type}")
         if stype.numerical in stypes:
             for col_name in ['a', 'b', 'c']:
                 df_dict[col_name] = np.random.randn(num_rows)
