@@ -178,7 +178,7 @@ class TabularNN(Module):
             EmbeddingEncoder(),
             # Use bucket-based encoder for numerical features introduced in
             # https://arxiv.org/abs/2203.05556
-            # Apply post-hoc layer normalization
+            # Apply post-hoc layer normalization (after linear bucket encoder)
             stype.numerical:
             LinearBucketEncoder(post_module=LayerNorm(channels)),
         }
