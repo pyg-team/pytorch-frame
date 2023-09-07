@@ -51,7 +51,9 @@ torch.cuda.manual_seed_all(args.seed)
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
-# Materialize the dataset, i.e., get tensor frame as its attribute.
+# Materialize the dataset, which transforms DataFrame into TensorFrame.
+# TensorFrame stores DataFrame features as Pytorch tensors organized by their
+# stype (semantic type), e.g., categorical, numerical.
 dataset.materialize()
 
 # Get pre-defined split
@@ -59,23 +61,11 @@ train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
 
-# Set up tensor frames (DataFrame compatible to Pytorch)
-# TensorFrame(
-#   num_cols=14,
-#   num_rows=26048,
-#   categorical (8): ['C_feature_0', 'C_feature_1', 'C_feature_2',
-#      'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6',
-#      'C_feature_7'],
-#   numerical (6): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3',
-#                   'N_feature_4', 'N_feature_5'],
-#   has_target=True,
-#   device=cpu,
-# )
 train_tensor_frame = train_dataset.tensor_frame.to(device)
 val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
 
-# Set up data loaders for tensor frames
+# Set up data loaders for TensorFrame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -148,16 +138,16 @@ class MeanDecoder(Decoder):
 
 # Custom model
 class TabularNN(Module):
-    r"""The overall tabular NN model that takes in tensor frame as input and
+    r"""The overall tabular NN model that takes in TensorFrame as input and
     outputs row embeddings. It is a combination of
-    (1) Feature encoder (self.encoder): Mapping tensor frame into 3-dimensional
+    (1) Feature encoder (self.encoder): Mapping TensorFrame into 3-dimensional
         :obj:`x` of shape [batch_size, num_cols, channels]
     (2) Table covolutions (self.convs): Iteratively transforming the
         3-dimensional :obj:`x`
     (3) Decoder (self.decoder): Maps the transformed 3-dimensional x into
         2-dimensional :obj:`out` of shape [batch_size, out_channels].
         Each element of :obj:`out` represents the row embedding of the original
-        tensor frame.
+        TensorFrame.
 
     Args:
         channels (int): Input/hidden channel dimensionality.
@@ -166,7 +156,7 @@ class TabularNN(Module):
         col_stats (Dict[str, Dict[StatType, Any]]): Mapping from column name to
             column statistics. Easily obtained via :obj:`dataset.col_stats`
         col_names_dict (Dict[torch_frame.stype, List[str]]): Mapping from stype
-            to a list of column names in the order stored in the tensor frame.
+            to a list of column names in the order stored in TensorFrame.
             Easily obtained via :obj:`tensor_frame.col_names_dict`
     """
     def __init__(
@@ -174,38 +164,42 @@ class TabularNN(Module):
         channels: int,
         out_channels: int,
         num_layers: int,
-        # kwargs for encoder
+        # kwargs for feature encoder
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
-        # Set up feature encoder that maps tensor frame into 3-dimensional x
+        # Use existing stype feature encoder for each stype.
+        # The custom feature encoder can be implemented by inheriting
+        # torch_frame.nn.StypeEncoder
+        stype_encoder_dict = {
+            # Use torch.nn.Embedding-based encoder for categorical features.
+            stype.categorical:
+            EmbeddingEncoder(),
+            # Use bucket-based encoder for numerical features introduced in
+            # https://arxiv.org/abs/2203.05556
+            # Apply post-hoc layer normalization
+            stype.numerical:
+            LinearBucketEncoder(post_module=LayerNorm(channels)),
+        }
+        # StypeWiseFeatureEncoder will apply stype feature encoder to each
+        # stype (specified via `stype_encoder_dict`) to get Pytorch tensors.
+        # Those tensors are then concatenated along the column axis.
+        # In other words, it transforms TensorFrame into 3-dimensional tensor
+        # `x` of shape [batch_size, num_cols, channels].
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            # Specify already-imlemented feature encoder for each stype.
-            # The custom feature encoder can be implemented by inheriting
-            # torch_frame.nn.StypeEncoder
-            stype_encoder_dict={
-                # Use nn.Embedding-based encoder for categorical features.
-                stype.categorical:
-                EmbeddingEncoder(),
-                # Use bucket-based encoder for numerical features introduced in
-                # https://arxiv.org/abs/2203.05556
-                # Apply post-hoc layer normalization
-                stype.numerical:
-                LinearBucketEncoder(post_module=LayerNorm(channels)),
-            },
+            stype_encoder_dict=stype_encoder_dict,
         )
-
         # Set up table convolutions that iteratively transforms 3-dimensional
-        # x into another x
+        # `x` into another `x`
         self.convs = ModuleList()
         for _ in range(num_layers):
             self.convs.append(SelfAttentionConv(channels))
 
-        # Set up decoder that transforms 3-dimensional x into 2-dimensional
+        # Set up decoder that transforms 3-dimensional `x` into 2-dimensional
         # output tensor
         self.decoder = MeanDecoder(channels, out_channels)
 
