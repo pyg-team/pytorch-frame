@@ -14,6 +14,11 @@ class FittableBaseTransform(BaseTransform):
         return self.forward(copy.copy(tf))
 
     def fit(self, tf: TensorFrame) -> TensorFrame:
+        r"""Fit the transform with train data.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
+        """
         return tf
 
     def forward(self, tf: TensorFrame) -> TensorFrame:

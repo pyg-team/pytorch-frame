@@ -13,8 +13,6 @@ class MutualInformationSort(FittableBaseTransform):
         on mutual information.
 
     Args:
-        tf_train (TensorFrame): Input :obj:`TensorFrame` containing the
-            training data.
         task_type (TaskType): The task type.
     """
     def __init__(self, task_type: TaskType):
@@ -54,15 +52,6 @@ class MutualInformationSort(FittableBaseTransform):
             self.reordered_col_names[rank] = col
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
-        r"""Process TensorFrame obj into another TensorFrame obj.
-
-        Args:
-            tf (TensorFrame): Input :obj:`TensorFrame`.
-
-        Returns:
-            tf (TensorFrame): Input :obj:`TensorFrame` with numerical
-                features sorted based on mutual information.
-        """
         if tf.col_names_dict[stype.categorical]:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")

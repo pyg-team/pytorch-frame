@@ -9,8 +9,6 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
     r"""Encode the categorical features of :class:`TensorFrame` using
         CatBoostEncoder.
 
-        Args:
-            tf_train (TensorFrame): TensorFrame containing the training data.
     """
     def __init__(self):
         return
@@ -30,6 +28,8 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         df = DataFrame(data=tf_train.x_dict[stype.categorical].cpu(),
                        columns=tf_train.col_names_dict[stype.categorical])
         self.encoder.fit(df, tf_train.y.cpu())
+        self.reordered_col_names = tf_train.col_names_dict[
+            stype.numerical] + tf_train.col_names_dict[stype.categorical]
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical not in tf.col_names_dict:
@@ -53,8 +53,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         else:
             tf.x_dict[stype.numerical] = torch.cat(
                 (tf.x_dict[stype.numerical], transformed_tensor), dim=1)
-        tf.col_names_dict[stype.numerical] = tf.col_names_dict[
-            stype.numerical] + tf.col_names_dict[stype.categorical]
+        tf.col_names_dict[stype.numerical] = self.reordered_col_names.copy()
 
         # delete the categorical features
         del tf.col_names_dict[stype.categorical]

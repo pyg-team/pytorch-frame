@@ -14,6 +14,12 @@ class BaseTransform(ABC):
         return self.forward(copy.copy(tf))
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
+        r"""Process TensorFrame obj into another TensorFrame obj.
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame`.
+        Returns:
+            tf (TensorFrame): Input :obj:`TensorFrame` after transform.
+        """
         return tf
 
     def __repr__(self) -> str:

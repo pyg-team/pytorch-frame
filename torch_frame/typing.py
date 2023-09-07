@@ -9,7 +9,7 @@ class TaskType(Enum):
     REGRESSION = 'regression'
     MULTICLASS_CLASSIFICATION = 'multiclass_classification'
     BINARY_CLASSIFICATION = 'binary_classification'
-    MULTILABEL_CLASSIFICATION = 'multilable_classification'
+    MULTILABEL_CLASSIFICATION = 'multilabel_classification'
 
 
 Series = pd.Series
