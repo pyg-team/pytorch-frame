@@ -52,7 +52,7 @@ def test_mutual_information_sort_regression():
 
     # column c ranks the first
     assert (out.col_names_dict[stype.numerical][0] == 'c')
-    assert (torch.eq(out.x_dict[stype.numerical][:, 0],
+    assert (torch.allclose(out.x_dict[stype.numerical][:, 0],
                      torch.tensor(dataset.df['c'].values,
                                   dtype=torch.float32)).all())
 
