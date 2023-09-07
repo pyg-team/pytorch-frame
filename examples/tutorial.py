@@ -51,9 +51,9 @@ torch.cuda.manual_seed_all(args.seed)
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
-# Materialize the dataset, which transforms DataFrame into TensorFrame.
-# TensorFrame stores DataFrame features as Pytorch tensors organized by their
-# stype (semantic type), e.g., categorical, numerical.
+# Materialize the dataset, which obtains `TensorFrame` from `DataFrame`.
+# `TensorFrame` stores `DataFrame` features as Pytorch tensors organized by
+# their stype (semantic type), e.g., categorical, numerical.
 dataset.materialize()
 
 # Get pre-defined split
@@ -107,7 +107,7 @@ class SelfAttentionConv(TableConv):
         # Attention weights between all pairs of columns.
         # Shape: [batch_size, num_cols, num_cols]
         attn = F.softmax(prod, dim=-1)
-        # Mix x_value based on the attention weights
+        # Mix `x_value` based on the attention weights
         # Shape: [batch_size, num_cols, num_channels]
         out = attn.bmm(x_value)
         return out
@@ -169,7 +169,7 @@ class TabularNN(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
-        # Use existing stype feature encoder for each stype.
+        # Specify what feature encoder to use for each stype.
         # The custom feature encoder can be implemented by inheriting
         # torch_frame.nn.StypeEncoder
         stype_encoder_dict = {
@@ -182,11 +182,12 @@ class TabularNN(Module):
             stype.numerical:
             LinearBucketEncoder(post_module=LayerNorm(channels)),
         }
-        # StypeWiseFeatureEncoder will apply stype feature encoder to each
-        # stype (specified via `stype_encoder_dict`) to get Pytorch tensors.
-        # Those tensors are then concatenated along the column axis.
-        # In other words, it transforms TensorFrame into 3-dimensional tensor
-        # `x` of shape [batch_size, num_cols, channels].
+        # `StypeWiseFeatureEncoder` will take `TensorFrame` as input and apply
+        # stype feature encoder to each stype (specified via
+        # `stype_encoder_dict`) to get embeddings of columns for each stype.
+        # The tensors of different stypes are then concatenated along the
+        # column axis. In other words, it transforms TensorFrame into
+        # 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
