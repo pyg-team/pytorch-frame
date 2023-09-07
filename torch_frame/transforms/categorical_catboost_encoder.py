@@ -28,16 +28,6 @@ class CategoricalCatBoostEncoder(BaseTransform):
         self.encoder.fit(df, tf_train.y)
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
-        r"""Process TensorFrame obj into another TensorFrame obj.
-
-        Args:
-            tf (TensorFrame): Input :obj:`TensorFrame`.
-
-        Returns:
-            tf (TensorFrame): Input :obj:`TensorFrame` but with all
-                the categorical columns converted to numerical
-                columns using CatBoostEncoder.
-        """
         if stype.categorical not in tf.col_names_dict:
             return tf
         # Converts the categorical columns of a :obj:`TensorFrame` into
