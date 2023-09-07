@@ -43,6 +43,15 @@ class MutualInformationSort(FittableBaseTransform):
         mi_ranks = np.argsort(-mi_scores)
         num_cols = tf_train.col_names_dict[stype.numerical]
         self.ranks = {num_cols[mi_ranks[i]]: i for i in range(len(num_cols))}
+        col_names = tf_train.col_names_dict[stype.numerical]
+        col_idx = {name: index for index, name in enumerate(col_names)}
+        idx_rank = {col_idx[key]: value for key, value in self.ranks.items()}
+        self.cols = sorted(idx_rank, key=idx_rank.get)
+        self.reordered_col_names = tf_train.col_names_dict[
+            stype.numerical].copy()
+
+        for col, rank in self.ranks.items():
+            self.reordered_col_names[rank] = col
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         r"""Process TensorFrame obj into another TensorFrame obj.
@@ -52,7 +61,7 @@ class MutualInformationSort(FittableBaseTransform):
 
         Returns:
             tf (TensorFrame): Input :obj:`TensorFrame` with numerical
-            features sorted based on mutual information.
+                features sorted based on mutual information.
         """
         if tf.col_names_dict[stype.categorical]:
             raise ValueError("The transform can be only used on TensorFrame"
@@ -60,14 +69,9 @@ class MutualInformationSort(FittableBaseTransform):
         if self.ranks is None:
             raise RuntimeError("The transform has not been fitted yet, "
                                "please fit the transform on train data.")
-        col_names = tf.col_names_dict[stype.numerical]
-        col_idx = {name: index for index, name in enumerate(col_names)}
-        idx_rank = {col_idx[key]: value for key, value in self.ranks.items()}
-        cols = sorted(idx_rank, key=idx_rank.get)
 
-        tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:, cols]
+        tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:, self.cols]
 
-        for col, rank in self.ranks.items():
-            tf.col_names_dict[stype.numerical][rank] = col
+        tf.col_names_dict[stype.numerical] = self.reordered_col_names
 
         return tf
