@@ -55,6 +55,7 @@ class MutualInformationSort(BaseTransform):
 
         tf.x_dict[stype.numerical] = tf.x_dict[stype.numerical][:, cols]
 
-        tf.col_names_dict[stype.numerical] = sorted(
-            tf.col_names_dict[stype.numerical], key=self.ranks.get)
+        for col, rank in self.ranks.items():
+            tf.col_names_dict[stype.numerical][rank] = col
+
         return tf
