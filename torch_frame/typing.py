@@ -7,7 +7,7 @@ from torch import Tensor
 
 class TaskType(Enum):
     REGRESSION = 'regression'
-    MULTICLS_CLASSIFICATION = 'multicls_classification'
+    MULTICLASS_CLASSIFICATION = 'multiclass_classification'
 
 
 Series = pd.Series
