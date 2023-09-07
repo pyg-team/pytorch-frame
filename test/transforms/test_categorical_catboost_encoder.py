@@ -60,4 +60,4 @@ def test_categorical_catboost_encoder():
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_num_cols])
     assert (dataset.tensor_frame.col_names_dict[stype.categorical] ==
-            out.col_names_dict[stype.categorical][total_num_cols:])
+            out.col_names_dict[stype.numerical][total_num_cols:])
