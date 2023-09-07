@@ -80,6 +80,7 @@ class SelfAttentionConv(TableConv):
     def __init__(self, channels: int):
         super().__init__()
         self.channels = channels
+        # Linear functions for modeling key/query/value in self-attention.
         self.lin_k = Linear(channels, channels)
         self.lin_q = Linear(channels, channels)
         self.lin_v = Linear(channels, channels)
@@ -89,6 +90,10 @@ class SelfAttentionConv(TableConv):
 
         Args:
             x (Tensor): Input tensor of shape [batch_size, num_cols, channels]
+
+        Returns:
+            out (Tensor): Output tensor of shape
+                [batch_size, num_cols, channels]
         """
         # [batch_size, num_cols, channels]
         x_key = self.lin_k(x)
