@@ -13,7 +13,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Linear, Module, ModuleList
+from torch.nn import LayerNorm, Linear, Module, ModuleList
 from tqdm import tqdm
 
 import torch_frame
@@ -24,7 +24,7 @@ from torch_frame.datasets import Yandex
 from torch_frame.nn import (
     Decoder,
     EmbeddingEncoder,
-    LinearEncoder,
+    LinearBucketEncoder,
     StypeWiseFeatureEncoder,
     TableConv,
 )
@@ -59,10 +59,23 @@ train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
 
-# Set up data loaders
+# Set up tensor frames (DataFrame compatible to Pytorch)
+# TensorFrame(
+#   num_cols=14,
+#   num_rows=26048,
+#   categorical (8): ['C_feature_0', 'C_feature_1', 'C_feature_2',
+#      'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6',
+#      'C_feature_7'],
+#   numerical (6): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3',
+#                   'N_feature_4', 'N_feature_5'],
+#   has_target=True,
+#   device=cpu,
+# )
 train_tensor_frame = train_dataset.tensor_frame.to(device)
 val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
+
+# Set up data loaders for tensor frames
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -112,8 +125,9 @@ class SelfAttentionConv(TableConv):
 
 # Custom decoder
 class MeanDecoder(Decoder):
-    r"""Simple decoder that mean-pools over the column embeddings to get
-    embeddings for each row.
+    r"""Simple decoder that mean-pools over the embeddings of all columns and
+    apply a linear transformation to map the pooled embeddings to desired
+    dimensionality.
 
     Args:
         in_channels (int): Input channel dimensionality
@@ -121,13 +135,13 @@ class MeanDecoder(Decoder):
     """
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
+        # Linear function to map pooled embeddings into desired dimensionality
         self.lin = torch.nn.Linear(in_channels, out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
         # Mean pooling over the column dimension
         # [batch_size, num_cols, in_channels] -> [batch_size, in_channels]
         out = torch.mean(x, dim=1)
-        # Linear transformation into out_channels
         # [batch_size, out_channels]
         return self.lin(out)
 
@@ -170,10 +184,18 @@ class TabularNN(Module):
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            # Specify encoder for each stype
+            # Specify already-imlemented feature encoder for each stype.
+            # The custom feature encoder can be implemented by inheriting
+            # torch_frame.nn.StypeEncoder
             stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: LinearEncoder(),
+                # Use nn.Embedding-based encoder for categorical features.
+                stype.categorical:
+                EmbeddingEncoder(),
+                # Use bucket-based encoder for numerical features introduced in
+                # https://arxiv.org/abs/2203.05556
+                # Apply post-hoc layer normalization
+                stype.numerical:
+                LinearBucketEncoder(post_module=LayerNorm(channels)),
             },
         )
         # Set up table convolutions that iteratively transforms 3-dimensional
