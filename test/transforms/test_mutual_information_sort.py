@@ -9,7 +9,7 @@ from torch_frame.transforms import MutualInformationSort
 def test_mutual_information_sort_classification():
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical], create_split=True,
-                                   task_type=TaskType.MULTICLS_CLASSIFICATION)
+                                   task_type=TaskType.MULTICLASS_CLASSIFICATION)
     # modify the FakeDataset so column c would have highest mutual information
     # score
     dataset.df['c'] = dataset.df['target'].astype(float)
