@@ -84,7 +84,7 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
 # Custom table convolution
 class SelfAttentionConv(TableConv):
-    r"""Simple self-attention-based table covolution to modle interaction
+    r"""Simple self-attention-based table covolution to model interaction
     between different columns.
 
     Args:
@@ -118,8 +118,8 @@ class SelfAttentionConv(TableConv):
         # Shape: [batch_size, num_cols, num_cols]
         attn = F.softmax(prod, dim=-1)
         # Mix x_value based on the attention weights
+        # Shape: [batch_size, num_cols, num_channels]
         out = attn.bmm(x_value)
-        # [batch_size, num_cols, num_channels]
         return out
 
 
@@ -198,6 +198,7 @@ class TabularNN(Module):
                 LinearBucketEncoder(post_module=LayerNorm(channels)),
             },
         )
+
         # Set up table convolutions that iteratively transforms 3-dimensional
         # x into another x
         self.convs = ModuleList()
