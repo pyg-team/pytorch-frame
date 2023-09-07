@@ -16,6 +16,7 @@ class MutualInformationSort(FittableBaseTransform):
         task_type (TaskType): The task type.
     """
     def __init__(self, task_type: TaskType):
+        super().__init__(task_type)
         if task_type in [
                 TaskType.MULTICLASS_CLASSIFICATION,
                 TaskType.BINARY_CLASSIFICATION
@@ -40,15 +41,12 @@ class MutualInformationSort(FittableBaseTransform):
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]
-        self.ranks = {
-            col_names[self.mi_ranks[i]]: i
-            for i in range(len(col_names))
-        }
+        ranks = {col_names[self.mi_ranks[i]]: i for i in range(len(col_names))}
 
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical].copy()
 
-        for col, rank in self.ranks.items():
+        for col, rank in ranks.items():
             self.reordered_col_names[rank] = col
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:

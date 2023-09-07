@@ -1,7 +1,7 @@
 import copy
 from abc import abstractmethod
 
-from torch_frame import TaskType, TensorFrame
+from torch_frame import TensorFrame
 from torch_frame.transforms import BaseTransform
 
 
@@ -10,8 +10,7 @@ class FittableBaseTransform(BaseTransform):
 
     Fittable transforms must be fitted on train data before transform.
     """
-    def __init__(self, task_type: TaskType, *args, **kwargs):
-        self.task_type = task_type
+    def __init__(self):
         self._is_fitted: bool = False
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:

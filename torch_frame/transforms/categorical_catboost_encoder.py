@@ -10,9 +10,6 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         CatBoostEncoder.
 
     """
-    def __init__(self):
-        return
-
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
