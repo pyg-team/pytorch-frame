@@ -40,7 +40,6 @@ def test_categorical_catboost_encoder():
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     total_num_cols = len(dataset.tensor_frame.col_names_dict[stype.numerical])
-    num_feats = dataset.tensor_frame.x_dict[stype.numerical]
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = CategoricalCatboostEncoder(train_dataset.tensor_frame)
@@ -54,5 +53,7 @@ def test_categorical_catboost_encoder():
     assert (len(out.col_names_dict[stype.numerical]) == total_cols)
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(num_feats,
+    assert (torch.eq(dataset.tensor_frame.x_dict[stype.numerical],
                      out.x_dict[stype.numerical][:, :total_num_cols]).all())
+    assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
+            out.col_names_dict[stype.numerical][:, :total_num_cols])
