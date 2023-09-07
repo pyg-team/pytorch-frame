@@ -16,7 +16,7 @@ class MutualInformationSort(FittableBaseTransform):
         task_type (TaskType): The task type.
     """
     def __init__(self, task_type: TaskType):
-        super().__init__(task_type)
+        super().__init__()
         if task_type in [
                 TaskType.MULTICLASS_CLASSIFICATION,
                 TaskType.BINARY_CLASSIFICATION
