@@ -1,6 +1,7 @@
 import copy
 
-from torch_frame import BaseTransform, TensorFrame
+from torch_frame import TensorFrame
+from torch_frame.transforms import BaseTransform
 
 
 class FittableBaseTransform(BaseTransform):
