@@ -54,13 +54,6 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-classification_datasets = {
-    'adult', 'aloi', 'covtype', 'helena', 'higgs_small', 'jannis'
-}
-regression_datasets = {'california_housing', 'microsoft', 'yahoo', 'year'}
-
-assert args.dataset in classification_datasets | regression_datasets
-
 device = (torch.device('cuda')
           if torch.cuda.is_available() else torch.device('cpu'))
 
@@ -103,12 +96,10 @@ encoder_config = {
     stype.numerical: numerical_encoder,
 }
 
-if args.dataset in classification_datasets:
+if args.dataset in dataset.classification_datasets:
     output_channels = dataset.num_classes
-elif args.dataset in regression_datasets:
-    output_channels = 1
 else:
-    raise ValueError(f'Unsupported dataset: {args.dataset}')
+    output_channels = 1
 
 if args.model_type == 'fttransformer':
     model = FTTransformer(
@@ -138,9 +129,9 @@ def train() -> float:
 
     for step, tf in enumerate(tqdm(train_loader)):
         pred = model(tf)
-        if args.dataset in classification_datasets:
+        if args.dataset in dataset.classification_datasets:
             loss = F.cross_entropy(pred, tf.y)
-        elif args.dataset in regression_datasets:
+        elif args.dataset in dataset.regression_datasets:
             loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
@@ -158,14 +149,14 @@ def eval(loader: DataLoader) -> dict:
 
     for tf in loader:
         pred = model(tf)
-        if args.dataset in classification_datasets:
+        if args.dataset in dataset.classification_datasets:
             pred_class = pred.argmax(dim=-1)
             is_correct.append((tf.y == pred_class).detach().cpu())
-        elif args.dataset in regression_datasets:
+        elif args.dataset in dataset.regression_datasets:
             total_loss += float(
                 F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
             total_count += len(tf.y)
-    if args.dataset in classification_datasets:
+    if args.dataset in dataset.classification_datasets:
         is_correct_cat = torch.cat(is_correct)
         accuracy = float(is_correct_cat.sum()) / len(is_correct_cat)
         return {"accuracy": accuracy}
@@ -174,7 +165,7 @@ def eval(loader: DataLoader) -> dict:
         return {"rmse": rmse}
 
 
-if args.dataset in regression_datasets:
+if args.dataset in dataset.regression_datasets:
     best_val_metric = float('inf')
     best_test_metric = float('inf')
 else:
@@ -189,7 +180,7 @@ for epoch in range(args.epochs):
     val_metrics = eval(val_loader)
     test_metrics = eval(test_loader)
 
-    if args.dataset in classification_datasets:
+    if args.dataset in dataset.classification_datasets:
         metric_name = "accuracy"
         if val_metrics[metric_name] > best_val_metric:
             best_val_metric = val_metrics[metric_name]
