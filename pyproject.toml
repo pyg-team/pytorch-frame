@@ -31,7 +31,7 @@ dependencies=[
     "numpy",
     "pandas",
     "torch",
-    "scikit-learn",
+    "category_encoders",
 ]
 
 [project.optional-dependencies]
