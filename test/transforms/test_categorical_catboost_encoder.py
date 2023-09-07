@@ -19,7 +19,8 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
 
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
-    transform = CategoricalCatBoostEncoder(train_dataset.tensor_frame)
+    transform = CategoricalCatBoostEncoder()
+    transform.fit(train_dataset.tensor_frame)
     out = transform(tensor_frame)
 
     # assert that there are no categorical features

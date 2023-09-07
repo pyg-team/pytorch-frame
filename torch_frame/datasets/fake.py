@@ -54,6 +54,10 @@ class FakeDataset(torch_frame.data.Dataset):
         if with_nan:
             df.iloc[0] = df.iloc[-1] = np.nan
         if create_split:
+            # TODO: Instead of having a split column name with train, val and
+            # test, we will implement `random_split` and `split_by_col`
+            # function in the Dataset class. We will modify the following lines
+            # when the functions are introduced.
             if num_rows < 3:
                 raise ValueError("Dataframe needs at least 3 rows to include"
                                  " each of train, val and test split.")
