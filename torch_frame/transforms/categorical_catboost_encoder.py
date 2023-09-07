@@ -6,7 +6,7 @@ from torch_frame import DataFrame, TensorFrame, stype
 from torch_frame.transforms import BaseTransform
 
 
-class CategoricalCatboostEncoder(BaseTransform):
+class CategoricalCatBoostEncoder(BaseTransform):
     r"""Encode the categorical features of :obj:`TensorFrame` using
         CatBoostEncoder.
 
@@ -16,7 +16,7 @@ class CategoricalCatboostEncoder(BaseTransform):
     def __init__(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
-                "CatBoostEncoder cannot be used when target column"
+                "CategoricalCatBoostEncoder cannot be used when target column"
                 " is None.")
         self.encoder = CatBoostEncoder(
             cols=tf_train.col_names_dict[stype.categorical])

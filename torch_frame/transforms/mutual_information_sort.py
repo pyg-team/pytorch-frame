@@ -21,7 +21,7 @@ class MutualInformationSort(BaseTransform):
     def __init__(self, tf_train: TensorFrame, task_type: TaskType):
         if tf_train.y is None:
             raise RuntimeError(
-                "CatBoostEncoder cannot be used when target column"
+                "MutualInformationSort cannot be used when target column"
                 " is None.")
         if task_type == "classification":
             self.mi_func = mutual_info_classif
