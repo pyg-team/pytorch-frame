@@ -184,10 +184,10 @@ class TabularNN(Module):
         }
         # `StypeWiseFeatureEncoder` will take `TensorFrame` as input and apply
         # stype-specific feature encoder (specified via `stype_encoder_dict`)
-        # to Pytorch tensor of each stype  to get embeddings of columns for
-        # each stype. The embeddings of different stypes are then concatenated
-        # along the column axis. In all, it transforms `TensorFrame` into
-        # 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
+        # to Pytorch tensor of each stype to get embeddings for each stype. The
+        # embeddings of different stypes are then concatenated along the column
+        # axis. In all, it transforms `TensorFrame` into 3-dimensional tensor
+        # `x` of shape [batch_size, num_cols, channels].
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
