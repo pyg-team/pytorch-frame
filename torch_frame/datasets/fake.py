@@ -19,8 +19,8 @@ class FakeDataset(torch_frame.data.Dataset):
                 feature columns. (default: [stype.categorical,
                 stype.numerical])
         create_split (bool): Whether to create a train, val and test
-                split for the fake dataset. (default: False)
-        task_type (TaskType): Task type (default: :obj:TaskType.REGRESSION)
+                split for the fake dataset. (default: :obj:`False`)
+        task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
 
     """
     def __init__(self, num_rows: int, with_nan: bool = False,
