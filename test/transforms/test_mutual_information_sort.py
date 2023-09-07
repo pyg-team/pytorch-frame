@@ -1,6 +1,6 @@
 import torch
 
-from torch_frame import TensorFrame, stype
+from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.data import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.transforms import MutualInformationSort
@@ -9,7 +9,7 @@ from torch_frame.transforms import MutualInformationSort
 def test_mutual_information_sort_classification():
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical], create_split=True,
-                                   task_type="classification")
+                                   task_type=TaskType.MULTICLS_CLASSIFICATION)
     # modify the FakeDataset so column c would have highest mutual information
     # score
     dataset.df['c'] = dataset.df['target'].astype(float)
@@ -19,7 +19,7 @@ def test_mutual_information_sort_classification():
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = MutualInformationSort(train_dataset.tensor_frame,
-                                      "classification")
+                                      TaskType.MULTICLS_CLASSIFICATION)
     out = transform(tensor_frame)
 
     # column c ranks the first
@@ -38,7 +38,7 @@ def test_mutual_information_sort_classification():
 def test_mutual_information_sort_regression():
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical], create_split=True,
-                                   task_type="regression")
+                                   task_type=TaskType.REGRESSION)
     # modify the FakeDataset so column c would have highest mutual information
     # score
     dataset.df['c'] = dataset.df['target'].astype(float)
@@ -46,7 +46,8 @@ def test_mutual_information_sort_regression():
 
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
-    transform = MutualInformationSort(train_dataset.tensor_frame, "regression")
+    transform = MutualInformationSort(train_dataset.tensor_frame,
+                                      TaskType.REGRESSION)
     out = transform(tensor_frame)
 
     # column c ranks the first

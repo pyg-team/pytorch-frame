@@ -23,9 +23,9 @@ class MutualInformationSort(BaseTransform):
             raise RuntimeError(
                 "MutualInformationSort cannot be used when target column"
                 " is None.")
-        if task_type == "classification":
+        if task_type == TaskType.MULTICLS_CLASSIFICATION:
             self.mi_func = mutual_info_classif
-        elif task_type == "regression":
+        elif task_type == TaskType.REGRESSION:
             self.mi_func = mutual_info_regression
         if stype.categorical in tf_train.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"

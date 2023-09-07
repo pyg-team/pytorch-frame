@@ -31,7 +31,7 @@ class FakeDataset(torch_frame.data.Dataset):
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
-        elif task_type == TaskType.CLASSIFICATION:
+        elif task_type == TaskType.MULTICLS_CLASSIFICATION:
             df_dict = {'target': np.random.randint(0, 3, size=(num_rows, ))}
             col_to_stype = {'target': stype.categorical}
         if stype.numerical in stypes:
