@@ -48,8 +48,8 @@ class FittableBaseTransform(BaseTransform):
 
     @abstractmethod
     def _fit(self, tf: TensorFrame):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _forward(self, tf: TensorFrame) -> TensorFrame:
-        pass
+        raise NotImplementedError
