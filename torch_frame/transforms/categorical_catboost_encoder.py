@@ -7,34 +7,29 @@ from torch_frame.transforms import BaseTransform
 
 
 class CategoricalCatboostEncoder(BaseTransform):
-    r"""Class that use CatBoostEncoder to encode at the categorical features
-        of a TensorFrame."""
-    def __init__(self, tf_train: TensorFrame):
-        r"""Fits the CatBoostEncoder with training data.
+    r"""Encode the categorical features of :obj:`TensorFrame` using
+        CatBoostEncoder.
 
         Args:
             tf_train (TensorFrame): TensorFrame containing the training data.
-                :Tensorframe:`[train_size, num_cols]`.
-        """
+    """
+    def __init__(self, tf_train: TensorFrame):
         self.encoder = CatBoostEncoder(
             cols=tf_train.col_names_dict[stype.categorical])
         df = self._categorical_tf_to_df(tf_train)
         self.encoder.fit(df, tf_train.y)
-        return
 
     def _categorical_tf_to_df(self, tf: TensorFrame) -> pd.DataFrame:
-        r"""Converts the categorical columns of a TensorFrame obj into a
-        pandas DataFrame. CatBoostEncoder does not take in numpy array or
+        r"""Converts the categorical columns of a :obj:`TensorFrame` into
+        :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
         tensor so we need to convert the TensorFrame obj to DataFrame first.
 
         Args:
-            tf (TensorFrame):  TensorFrame obj to be converted to pandas
-                DataFrame object.
-                :Tensorframe:`[train_size, num_cols]`.
+            tf (TensorFrame): Input :obj:`TensorFrame`.
 
         Returns:
-            df (pd.DataFrame): Pandas DataFrame containing only the categorical
-            columns of the TensorFrame obj.
+            df (pd.DataFrame): :obj:`pd.DataFrame` containing only the
+            categorical columns of the input :obj:`TensorFrame`.
         """
         df = pd.DataFrame(data=tf.x_dict[stype.categorical],
                           columns=tf.col_names_dict[stype.categorical])
@@ -44,10 +39,10 @@ class CategoricalCatboostEncoder(BaseTransform):
         r"""Process TensorFrame obj into another TensorFrame obj.
 
         Args:
-            tf (TensorFrame): Input TensorFrame obj
+            tf (TensorFrame): Input :obj:`TensorFrame`.
 
         Returns:
-            tf (TensorFrame): Input TensorFrame obj but with all
+            tf (TensorFrame): Input :obj:`TensorFrame` but with all
                 the categorical columns converted to numerical
                 columns using CatBoostEncoder.
         """

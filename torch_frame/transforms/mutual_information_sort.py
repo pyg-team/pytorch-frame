@@ -9,17 +9,14 @@ from torch_frame.transforms import BaseTransform
 
 
 class MutualInformationSort(BaseTransform):
-    r"""Class that sort the numerical features of a TensorFrame obj based
+    r"""Sorts the numerical features of input :obj:`TensorFrame` based
         on mutual information.
-    """
-    def __init__(self, tf_train: TensorFrame, task_type):
-        r"""Calculate the mutual information score of training data. The
-        input tf_train :TensorFrame: should not contain categorical features.
 
         Args:
-            tf_train (TensorFrame): TensorFrame containing the training data.
-                :Tensorframe:`[train_size, num_cols]`.
-        """
+            tf_train (TensorFrame): Input :obj:`TensorFrame` containing the
+            training data.
+    """
+    def __init__(self, tf_train: TensorFrame, task_type):
         if task_type == "classification":
             self.mi_func = mutual_info_classif
         elif task_type == "regression":
@@ -34,16 +31,15 @@ class MutualInformationSort(BaseTransform):
         mi_ranks = np.argsort(-mi_scores)
         num_cols = tf_train.col_names_dict[stype.numerical]
         self.ranks = {num_cols[mi_ranks[i]]: i for i in range(len(num_cols))}
-        return
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         r"""Process TensorFrame obj into another TensorFrame obj.
 
         Args:
-            tf (TensorFrame): Input TensorFrame obj
+            tf (TensorFrame): Input :obj:`TensorFrame`.
 
         Returns:
-            tf (TensorFrame): Input TensorFrame obj but with numerical
+            tf (TensorFrame): Input :obj:`TensorFrame` with numerical
             features sorted based on mutual information.
         """
         if tf.col_names_dict[stype.categorical]:

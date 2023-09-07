@@ -54,5 +54,5 @@ def test_categorical_catboost_encoder():
     assert (len(out.col_names_dict[stype.numerical]) == total_cols)
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(
-        num_feats.out.x_dict[stype.numerical][:, :total_num_cols]).all())
+    assert (torch.eq(num_feats,
+                     out.x_dict[stype.numerical][:, :total_num_cols]).all())
