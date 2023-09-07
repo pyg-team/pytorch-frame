@@ -5,14 +5,15 @@ https://arxiv.org/abs/2106.11959
 adult 85.9 (86.0)
 helena 39.1 (39.2)
 jannis 73.2 (72.2)
-
+california_housing 0.459 (0.537)
 --------
 Reported (reproduced) results of ResNet
 https://arxiv.org/abs/2106.11959
 
- adult 85.7 (85.4)
+adult 85.7 (85.4)
 helena 39.6 (39.1)
 jannis 72.8 (72.5)
+california_housing 0.486 (0.523)
 """
 import argparse
 import os.path as osp
