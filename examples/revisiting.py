@@ -91,7 +91,7 @@ else:
     raise ValueError(
         f'Unsupported encoder type: {args.numerical_encoder_type}')
 
-encoder_config = {
+stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: numerical_encoder,
 }

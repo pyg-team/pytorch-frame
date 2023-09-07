@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
@@ -10,6 +10,7 @@ from torch_frame.data.stats import StatType
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearEncoder,
+    StypeEncoder,
     StypeWiseFeatureEncoder,
 )
 from torch_frame.nn.conv import FTTransformerConvs
@@ -22,6 +23,11 @@ class FTTransformer(Module):
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.  (default: 3)
+        col_stats (Dict): Dictionary containing column statistics
+        col_names_dict (Dict): Dictionary containing column names
+            categorized by statistical type
+        stype_encoder_dict (Dict): Dictionary containing encoder type per
+            column statistics
     """
     def __init__(
         self,
@@ -30,12 +36,13 @@ class FTTransformer(Module):
         num_layers: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
-        encoder_config: Dict[StatType, Module] = None,
+        stype_encoder_dict: Optional[Dict[torch_frame.stype,
+                                          StypeEncoder]] = None,
     ):
         super().__init__()
 
-        if encoder_config is None:
-            encoder_config = {
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
                 stype.categorical: EmbeddingEncoder(),
                 stype.numerical: LinearEncoder(),
             }
@@ -44,7 +51,7 @@ class FTTransformer(Module):
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict=encoder_config,
+            stype_encoder_dict=stype_encoder_dict,
         )
         self.backbone = FTTransformerConvs(channels=channels,
                                            num_layers=num_layers)

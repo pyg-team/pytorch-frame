@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from torch import Tensor
 from torch.nn import (
@@ -18,6 +18,7 @@ from torch_frame.data.stats import StatType
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearEncoder,
+    StypeEncoder,
     StypeWiseFeatureEncoder,
 )
 
@@ -87,7 +88,8 @@ class ResNet(Module):
         num_layers: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
-        encoder_config: Dict[StatType, Module] = None,
+        stype_encoder_dict: Optional[Dict[torch_frame.stype,
+                                          StypeEncoder]] = None,
         normalization: str = 'layernorm',
         dropout_prob: float = 0.2,
     ):
@@ -100,7 +102,7 @@ class ResNet(Module):
             col_stats (Dict): Dictionary containing column statistics.
             col_names_dict (Dict): Dictionary containing column names
                 categorized by statistical type.
-            encoder_config: Dictionary containing encoder type per
+            stype_encoder_dict (Dict): Dictionary containing encoder type per
                 column statistics.
             normalization (str): The type of normalization to use
                 ('batchnorm', 'layernorm', or None).
@@ -109,8 +111,8 @@ class ResNet(Module):
         """
         super().__init__()
 
-        if encoder_config is None:
-            encoder_config = {
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
                 stype.categorical: EmbeddingEncoder(),
                 stype.numerical: LinearEncoder(),
             }
@@ -119,7 +121,7 @@ class ResNet(Module):
             out_channels=channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict=encoder_config,
+            stype_encoder_dict=stype_encoder_dict,
         )
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
