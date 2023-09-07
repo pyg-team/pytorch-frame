@@ -7,7 +7,7 @@ from torch_frame.transforms import BaseTransform
 
 
 class CategoricalCatBoostEncoder(BaseTransform):
-    r"""Encode the categorical features of :obj:`TensorFrame` using
+    r"""Encode the categorical features of :class:`TensorFrame` using
         CatBoostEncoder.
 
         Args:
