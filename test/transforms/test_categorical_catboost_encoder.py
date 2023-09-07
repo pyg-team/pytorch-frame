@@ -56,4 +56,4 @@ def test_categorical_catboost_encoder():
     assert (torch.eq(dataset.tensor_frame.x_dict[stype.numerical],
                      out.x_dict[stype.numerical][:, :total_num_cols]).all())
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
-            out.col_names_dict[stype.numerical][:, :total_num_cols])
+            out.col_names_dict[stype.numerical][:total_num_cols])
