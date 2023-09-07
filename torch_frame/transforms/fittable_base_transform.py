@@ -8,7 +8,7 @@ from torch_frame.transforms import BaseTransform
 class FittableBaseTransform(BaseTransform):
     r"""An abstract base class for writing fittable transforms.
 
-    Fittable transforms must be fitted on train data before transform.
+    Fittable transforms must be fitted on training data before transform.
     """
     def __init__(self):
         self._is_fitted: bool = False
@@ -29,8 +29,8 @@ class FittableBaseTransform(BaseTransform):
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
         """
         if self._is_fitted:
-            raise ValueError(f"'{self.__class__.__name__}' is already fitted. "
-                             f"Call `reset_parameters()` before fitting again")
+            raise ValueError(
+                f"'{self.__class__.__name__}' is already fitted. ")
         self._fit(tf)
         self._is_fitted = True
 
@@ -38,7 +38,7 @@ class FittableBaseTransform(BaseTransform):
         if not self._is_fitted:
             raise ValueError(f"'{self.__class__.__name__}' is not yet fitted ."
                              f"Please run `fit()` first before attempting to "
-                             f"calibrate model outputs.")
+                             f"transform the TensorFrame.")
 
         return self._forward(tf)
 
