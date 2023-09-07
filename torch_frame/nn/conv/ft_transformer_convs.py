@@ -12,8 +12,8 @@ from torch.nn import (
 from torch_frame.nn.conv import TableConv
 
 
-class FTTransformer(TableConv):
-    r"""The FT-Transformer model introduced in https://arxiv.org/abs/2106.11959
+class FTTransformerConvs(TableConv):
+    r"""The FT-Transformer backbone in https://arxiv.org/abs/2106.11959
     This module concatenates a learnable CLS token embedding :obj:`x_cls` to
     the input tensor :obj:`x` and applies a multi-layer Transformer on the
     concatenated tensor. After the Transformer layer, the output tensor is
@@ -37,7 +37,7 @@ class FTTransformer(TableConv):
         # Arguments for Transformer
         num_layers: int = 3,
         nhead: int = 8,
-        dropout: float = 0.1,
+        dropout: float = 0.2,
         activation: str = 'relu',
     ):
         super().__init__()
@@ -60,7 +60,7 @@ class FTTransformer(TableConv):
         self.reset_parameters()
 
     def reset_parameters(self):
-        torch.nn.init.normal_(self.cls_embedding, std=0.1)
+        torch.nn.init.normal_(self.cls_embedding, std=0.01)
         for p in self.transformer.parameters():
             if p.dim() > 1:
                 torch.nn.init.xavier_uniform_(p)

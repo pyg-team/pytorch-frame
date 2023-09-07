@@ -1,7 +1,9 @@
 from .trompt import Trompt
-from .tabnet import TabNetEncoder
+from .ft_transformer import FTTransformer
+from .excelformer import ExcelFormer
 
 __all__ = classes = [
     'Trompt',
-    'TabNetEncoder',
+    'FTTransformer',
+    'ExcelFormer',
 ]
