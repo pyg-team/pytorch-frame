@@ -12,11 +12,11 @@ class MutualInformationSort(BaseTransform):
     r"""Sorts the numerical features of input :obj:`TensorFrame` based
         on mutual information.
 
-        Args:
-            tf_train (TensorFrame): Input :obj:`TensorFrame` containing the
-                training data.
-            task_type (TaskType): TaskType.REGRESSION or
-                TaskType.CLASSIFICATION
+    Args:
+        tf_train (TensorFrame): Input :obj:`TensorFrame` containing the
+            training data.
+        task_type (TaskType): TaskType.REGRESSION or
+            TaskType.CLASSIFICATION
     """
     def __init__(self, tf_train: TensorFrame, task_type: TaskType):
         if tf_train.y is None:
