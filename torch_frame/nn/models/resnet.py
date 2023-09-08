@@ -100,11 +100,14 @@ class ResNet(Module):
             channels (int): The number of channels in the backbone layers.
             out_channels (int): The number of output channels in the decoder.
             num_layers (int): The number of layers in the backbone.
-            col_stats (Dict): Dictionary containing column statistics.
-            col_names_dict (Dict): Dictionary containing column names
-                categorized by statistical type.
-            stype_encoder_dict (Dict): Dictionary containing encoder type per
-                column statistics.
+            col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
+                column statistics
+            col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
+                containing column names categorized by statistical type
+            stype_encoder_dict (Optional[Dict[torch_frame.stype,StypeEncoder]):
+                Dictionary containing encoder type per column statistics
+                (default: :obj:None, will call EmbeddingEncoder() for
+                categorial feature and LinearEncoder() for numerical feature)
             normalization (str): The type of normalization to use
                 ('batchnorm', 'layernorm', or None).
             dropout_prob (float): The dropout probability (default:

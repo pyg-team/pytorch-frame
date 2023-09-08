@@ -23,11 +23,14 @@ class FTTransformer(Module):
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.  (default: 3)
-        col_stats (Dict): Dictionary containing column statistics
-        col_names_dict (Dict): Dictionary containing column names
-            categorized by statistical type
-        stype_encoder_dict (Dict): Dictionary containing encoder type per
+        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
+        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
+            containing column names categorized by statistical type
+        stype_encoder_dict (Optional[Dict[torch_frame.stype,StypeEncoder]) :
+            Dictionary containing encoder type per column statistics (default:
+            :obj:None, will call EmbeddingEncoder() for categorial feature and
+            LinearEncoder() for numerical feature)
     """
     def __init__(
         self,
