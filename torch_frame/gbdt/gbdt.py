@@ -3,7 +3,7 @@ class GradientBoostingDecisionTree():
         pass
 
     def fittune(self):
-        pass
+        raise NotImplementedError
 
     def predict(self):
-        pass
+        raise NotImplementedError
