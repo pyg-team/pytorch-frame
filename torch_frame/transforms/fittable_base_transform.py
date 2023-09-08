@@ -28,14 +28,11 @@ class FittableBaseTransform(BaseTransform):
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
         """
-        if self._is_fitted:
-            raise ValueError(
-                f"'{self.__class__.__name__}' is already fitted. ")
         self._fit(tf)
         self._is_fitted = True
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
-        if not self._is_fitted:
+        if not self.is_fitted:
             raise ValueError(f"'{self.__class__.__name__}' is not yet fitted ."
                              f"Please run `fit()` first before attempting to "
                              f"transform the TensorFrame.")
