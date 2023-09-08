@@ -35,7 +35,8 @@ class FCResidualBlock(Module):
             0.0, i.e., no dropout).
     """
     def __init__(self, in_channels: int, out_channels: int,
-                 normalization: str = None, dropout_prob: float = 0.0):
+                 normalization: Optional[str] = None,
+                 dropout_prob: float = 0.0):
         super(FCResidualBlock, self).__init__()
         self.linear1 = Linear(in_channels, out_channels)
         self.linear2 = Linear(out_channels, out_channels)
