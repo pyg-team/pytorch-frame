@@ -6,7 +6,7 @@ from torch import Tensor
 from torch.nn import BatchNorm1d, Linear
 
 
-class TabNetEncoder(torch.nn.Module):
+class TabNet(torch.nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -18,7 +18,7 @@ class TabNetEncoder(torch.nn.Module):
         num_dependent_glu_layers: int = 2,
         epsilon: float = 1e-15,
     ):
-        super(TabNetEncoder, self).__init__()
+        super(TabNet, self).__init__()
         self.in_channels = in_channels
         self.split_feature_channels = split_feature_channels
         self.split_attention_channels = split_attention_channels
