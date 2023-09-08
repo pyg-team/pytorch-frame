@@ -167,11 +167,11 @@ def eval(loader: DataLoader) -> dict:
 
 
 if is_classification:
-    best_val_metric = float('inf')
-    best_test_metric = float('inf')
-else:
     best_val_metric = 0
     best_test_metric = 0
+else:
+    best_val_metric = float('inf')
+    best_test_metric = float('inf')
 
 for epoch in range(args.epochs):
     print(f"=====epoch {epoch}")
