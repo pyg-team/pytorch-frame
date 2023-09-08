@@ -2,7 +2,7 @@
 Reported (reproduced) results of FT-Transformer
 https://arxiv.org/abs/2106.11959
 
-adult 85.9 (86.0)
+adult 85.9 (85.5)
 helena 39.1 (39.2)
 jannis 73.2 (72.2)
 california_housing 0.459 (0.537)
