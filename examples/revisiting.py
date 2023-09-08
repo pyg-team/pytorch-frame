@@ -18,6 +18,7 @@ california_housing 0.486 (0.523)
 import argparse
 import os.path as osp
 import random
+from typing import Dict
 
 import numpy as np
 import torch
@@ -38,14 +39,10 @@ from torch_frame.nn import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
-parser.add_argument(
-    '--numerical_encoder_type', type=str, default='linear',
-    choices=['linear', 'linearbucket', 'linearperiodic'],
-    help='''The numerical encoder type to use: "linear",
-    "linearbucket" or "linearperiodic".''')
+parser.add_argument('--numerical_encoder_type', type=str, default='linear',
+                    choices=['linear', 'linearbucket', 'linearperiodic'])
 parser.add_argument('--model_type', type=str, default='fttransformer',
-                    choices=['fttransformer', 'resnet'],
-                    help='The model type to use: "fttransformer" or "resnet".')
+                    choices=['fttransformer', 'resnet'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
@@ -142,27 +139,25 @@ def train() -> float:
 
 
 @torch.no_grad()
-def eval(loader: DataLoader) -> dict:
+def eval(loader: DataLoader) -> Dict[str, float]:
     model.eval()
-    total_loss = 0
+    accum = 0
     total_count = 0
-    is_correct = []
 
     for tf in loader:
         pred = model(tf)
         if is_classification:
             pred_class = pred.argmax(dim=-1)
-            is_correct.append((tf.y == pred_class).detach().cpu())
+            accum += float((tf.y == pred_class).sum())
         else:
-            total_loss += float(
+            accum += float(
                 F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
-            total_count += len(tf.y)
+        total_count += len(tf.y)
     if is_classification:
-        is_correct_cat = torch.cat(is_correct)
-        accuracy = float(is_correct_cat.sum()) / len(is_correct_cat)
+        accuracy = accum / total_count
         return {"accuracy": accuracy}
     else:
-        rmse = (total_loss / total_count)**0.5
+        rmse = (accum / total_count)**0.5
         return {"rmse": rmse}
 
 
