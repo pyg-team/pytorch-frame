@@ -56,7 +56,6 @@ args = parser.parse_args()
 
 device = (torch.device('cuda')
           if torch.cuda.is_available() else torch.device('cpu'))
-
 random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
@@ -67,6 +66,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
+is_classification = args.dataset in dataset.classification_datasets
 
 train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
@@ -96,7 +96,7 @@ stype_encoder_dict = {
     stype.numerical: numerical_encoder,
 }
 
-if args.dataset in dataset.classification_datasets:
+if is_classification:
     output_channels = dataset.num_classes
 else:
     output_channels = 1
@@ -130,9 +130,9 @@ def train() -> float:
 
     for step, tf in enumerate(tqdm(train_loader)):
         pred = model(tf)
-        if args.dataset in dataset.classification_datasets:
+        if is_classification:
             loss = F.cross_entropy(pred, tf.y)
-        elif args.dataset in dataset.regression_datasets:
+        else:
             loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
@@ -150,14 +150,14 @@ def eval(loader: DataLoader) -> dict:
 
     for tf in loader:
         pred = model(tf)
-        if args.dataset in dataset.classification_datasets:
+        if is_classification:
             pred_class = pred.argmax(dim=-1)
             is_correct.append((tf.y == pred_class).detach().cpu())
-        elif args.dataset in dataset.regression_datasets:
+        else:
             total_loss += float(
                 F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
             total_count += len(tf.y)
-    if args.dataset in dataset.classification_datasets:
+    if is_classification:
         is_correct_cat = torch.cat(is_correct)
         accuracy = float(is_correct_cat.sum()) / len(is_correct_cat)
         return {"accuracy": accuracy}
@@ -166,7 +166,7 @@ def eval(loader: DataLoader) -> dict:
         return {"rmse": rmse}
 
 
-if args.dataset in dataset.regression_datasets:
+if is_classification:
     best_val_metric = float('inf')
     best_test_metric = float('inf')
 else:
@@ -181,7 +181,7 @@ for epoch in range(args.epochs):
     val_metrics = eval(val_loader)
     test_metrics = eval(test_loader)
 
-    if args.dataset in dataset.classification_datasets:
+    if is_classification:
         metric_name = "accuracy"
         if val_metrics[metric_name] > best_val_metric:
             best_val_metric = val_metrics[metric_name]
