@@ -1,6 +1,7 @@
 from .gbdt import GradientBoostingDecisionTree
-from .models import *  # noqa
+from .extensively_tuned_xgboost import ExtensivelyTunedXGBoost
 
-__all__ = [
-    'GBDT',
+__all__ = classes = [
+    'GradientBoostingDecisionTree',
+    'ExtensivelyTunedXGBoost',
 ]
