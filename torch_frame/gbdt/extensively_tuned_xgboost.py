@@ -8,14 +8,14 @@ from torch_frame.gbdt import GradientBoostingDecisionTrees
 
 
 class ExtensivelyTunedXGBoost(GradientBoostingDecisionTrees):
-    def objective(self, trial: optuna.trial.Trial, tf_train: TensorFrame,
-                  tf_val: TensorFrame):
+    def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
+                  dvalid: xgboost.DMatrix):
         r""" Objective function to be maximized.
 
         Args:
             trial (Trial): Optuna trial
-            tf_train (TensorFrame): Train data
-            tf_val (TensorFrame): Validation data
+            dtrain (xgboost.DMatrix): Train data
+            dvalid (xgboost.DMatrix): Validation data
 
         Returns:
             score (float): Best objective value. Negative root
@@ -53,38 +53,33 @@ class ExtensivelyTunedXGBoost(GradientBoostingDecisionTrees):
         }
         pruning_callback = optuna.integration.XGBoostPruningCallback(
             trial, f"validation-{self.eval_metric}")
-        train_x = self._tensor_frame_to_numpy(tf_train)
-        train_y = tf_train.y.cpu().numpy()
-        val_x = self._tensor_frame_to_numpy(tf_val)
-        val_y = tf_val.y.cpu().numpy()
-        dtrain = xgboost.DMatrix(train_x, label=train_y)
-        dvalid = xgboost.DMatrix(val_x, label=val_y)
         if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            self.params["num_class"] = len(np.unique(train_y))
+            self.params["num_class"] = len(np.unique(dtrain.get_label()))
         boost = xgboost.train(self.params, dtrain, num_boost_round=4096,
                               early_stopping_rounds=50, verbose_eval=False,
                               evals=[(dvalid, 'validation')],
                               callbacks=[pruning_callback])
         preds = boost.predict(dvalid)
         if self.task_type == TaskType.REGRESSION:
-            score = -mean_squared_error(val_y, preds, squared=False)
+            score = -mean_squared_error(dvalid.get_label(), preds,
+                                        squared=False)
         else:
-            score = accuracy_score(val_y, preds)
+            score = accuracy_score(dvalid.get_label(), preds)
         return score
 
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
                   num_trials: int):
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: self.objective(trial, tf_train, tf_val),
-                       num_trials)
-        self.params.update(study.best_params)
-
         train_x = self._tensor_frame_to_numpy(tf_train)
         train_y = tf_train.y.cpu().numpy()
         val_x = self._tensor_frame_to_numpy(tf_val)
         val_y = tf_val.y.cpu().numpy()
         dvalid = xgboost.DMatrix(val_x, label=val_y)
         dtrain = xgboost.DMatrix(train_x, label=train_y)
+        study.optimize(lambda trial: self.objective(trial, dtrain, dvalid),
+                       num_trials)
+        self.params.update(study.best_params)
+
         self.model = xgboost.train(self.params, dtrain, evals=[
             (dvalid, 'validation')
         ], num_boost_round=20, early_stopping_rounds=50)
