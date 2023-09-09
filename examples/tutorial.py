@@ -244,15 +244,16 @@ def train() -> float:
 @torch.no_grad()
 def eval(loader: DataLoader) -> float:
     model.eval()
-    is_corret = []
+    accum = 0
+    total_count = 0
 
     for tf in loader:
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
-        is_corret.append((tf.y == pred_class).detach().cpu())
+        accum += float((tf.y == pred_class).sum())
+        total_count += len(tf.y)
 
-    is_correct_cat = torch.cat(is_corret)
-    return float(is_correct_cat.sum()) / len(is_correct_cat)
+    return accum / total_count
 
 
 best_val_acc = 0
