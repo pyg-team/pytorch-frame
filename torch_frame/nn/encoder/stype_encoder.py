@@ -209,6 +209,14 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
+        device = x.device  # Infer the device from input tensor 'x'
+
+        # Move all tensors to the device where 'x' is
+        self.boundaries = self.boundaries.to(device)
+        self.interval = self.interval.to(device)
+        self.weight = self.weight.to(device)
+        self.bias = self.bias.to(device)
+
         encoded_values = []
         for i in range(x.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
