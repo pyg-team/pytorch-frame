@@ -76,7 +76,6 @@ class GradientBoostingDecisionTrees():
             tf_val (TensorFrame): The validation data.
             num_trials (int): Number of trials to perform hyper-
                 parameter search.
-
         """
         self._fit_tune(tf_train, tf_val, num_trials=num_trials)
         self._is_fitted = True
