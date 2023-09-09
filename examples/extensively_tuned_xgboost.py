@@ -15,7 +15,7 @@ import torch
 
 from torch_frame import TaskType
 from torch_frame.datasets import TabularBenchmark
-from torch_frame.gbdt import ExtensivelyTunedXGBoost
+from torch_frame.gbdt import XGBoost
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='california')
@@ -42,7 +42,7 @@ dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
-XGB = ExtensivelyTunedXGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
+XGB = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
 XGB.fit_tune(tf_train=train_dataset.tensor_frame,
              tf_val=val_dataset.tensor_frame, num_trials=100)
 test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)

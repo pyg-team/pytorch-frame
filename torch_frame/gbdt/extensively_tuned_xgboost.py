@@ -7,7 +7,7 @@ from torch_frame import TaskType, TensorFrame
 from torch_frame.gbdt import GradientBoostingDecisionTrees
 
 
-class ExtensivelyTunedXGBoost(GradientBoostingDecisionTrees):
+class XGBoost(GradientBoostingDecisionTrees):
     def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
                   dvalid: xgboost.DMatrix):
         r""" Objective function to be maximized.
