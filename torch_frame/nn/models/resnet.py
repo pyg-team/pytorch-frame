@@ -24,22 +24,27 @@ from torch_frame.nn import (
 
 
 class FCResidualBlock(Module):
-    r"""A module that implements a fully connected residual block.
+    r"""Fully connected residual block.
 
     Args:
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
-        normalization (str): The type of normalization to use
-            ('batchnorm', 'layernorm', or None).
-        dropout_prob (float): The dropout probability (default:
-            0.0, i.e., no dropout).
+        normalization (str, optional): The type of normalization to use.
+            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
+            (default: :obj:`layernorm`)
+        dropout_prob (float): The dropout probability (default: `0.0`, i.e.,
+            no dropout).
     """
-    def __init__(self, in_channels: int, out_channels: int,
-                 normalization: Optional[str] = 'layernorm',
-                 dropout_prob: float = 0.0):
-        super(FCResidualBlock, self).__init__()
-        self.linear1 = Linear(in_channels, out_channels)
-        self.linear2 = Linear(out_channels, out_channels)
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        normalization: Optional[str] = 'layernorm',
+        dropout_prob: float = 0.0,
+    ):
+        super().__init__()
+        self.lin1 = Linear(in_channels, out_channels)
+        self.lin2 = Linear(out_channels, out_channels)
         self.relu = ReLU()
         self.dropout = Dropout(dropout_prob)
 
@@ -57,31 +62,56 @@ class FCResidualBlock(Module):
         else:
             self.shortcut = None
 
-    def forward(self, x: Tensor) -> Tensor:
-        identity = x
+    def reset_parameters(self):
+        self.lin1.reset_parameters()
+        self.lin2.reset_parameters()
+        if self.norm1 is not None:
+            self.norm1.reset_parameters()
+        if self.norm2 is not None:
+            self.norm2.reset_parameters()
+        if self.shortcut is not None:
+            self.shortcut.reset_parameters()
 
-        out = self.linear1(x)
-        if self.norm1:
-            out = self.norm1(out)
+    def forward(self, x: Tensor) -> Tensor:
+        out = self.lin1(x)
+        out = self.norm1(out) if self.norm1 else out
         out = self.relu(out)
         out = self.dropout(out)
 
-        out = self.linear2(out)
-        if self.norm2:
-            out = self.norm2(out)
+        out = self.lin2(out)
+        out = self.norm2(out) if self.norm2 else out
         out = self.relu(out)
         out = self.dropout(out)
 
         if self.shortcut is not None:
-            identity = self.shortcut(identity)
+            x = self.shortcut(x)
 
-        out += identity
+        out += x
         out = self.relu(out)
 
         return out
 
 
 class ResNet(Module):
+    r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
+
+    Args:
+        channels (int): The number of channels in the backbone layers.
+        out_channels (int): The number of output channels in the decoder.
+        num_layers (int): The number of layers in the backbone.
+        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
+            column statistics
+        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
+            containing column names categorized by statistical type
+        stype_encoder_dict (Optional[Dict[torch_frame.stype, StypeEncoder]):
+            Dictionary containing encoder type per column statistics
+            (default: :obj:`None`, :obj:`EmbeddingEncoder()` for categorial
+            feature and :obj:`LinearEncoder()` for numerical feature)
+        normalization (str, optional): The type of normalization to use.
+            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
+            (default: :obj:`layernorm`)
+        dropout_prob (float): The dropout probability (default: `0.2`).
+    """
     def __init__(
         self,
         channels: int,
@@ -91,28 +121,9 @@ class ResNet(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
         stype_encoder_dict: Optional[Dict[torch_frame.stype,
                                           StypeEncoder]] = None,
-        normalization: str = 'layernorm',
+        normalization: Optional[str] = 'layernorm',
         dropout_prob: float = 0.2,
     ):
-        r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
-
-        Args:
-            channels (int): The number of channels in the backbone layers.
-            out_channels (int): The number of output channels in the decoder.
-            num_layers (int): The number of layers in the backbone.
-            col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
-                column statistics
-            col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
-                containing column names categorized by statistical type
-            stype_encoder_dict (Optional[Dict[torch_frame.stype,StypeEncoder]):
-                Dictionary containing encoder type per column statistics
-                (default: :obj:None, will call EmbeddingEncoder() for
-                categorial feature and LinearEncoder() for numerical feature)
-            normalization (str): The type of normalization to use
-                ('batchnorm', 'layernorm', or None).
-            dropout_prob (float): The dropout probability (default:
-                0.2).
-        """
         super().__init__()
 
         if stype_encoder_dict is None:
@@ -144,9 +155,11 @@ class ResNet(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        for m in self.modules():
-            if isinstance(m, Linear):
-                m.reset_parameters()
+        self.encoder.reset_parameters()
+        for block in self.backbone:
+            block.reset_parameters()
+        self.decoder[0].reset_parameters()
+        self.decoder[-1].reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
         x, _ = self.encoder(tf)
