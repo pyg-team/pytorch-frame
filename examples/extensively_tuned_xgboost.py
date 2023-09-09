@@ -1,3 +1,11 @@
+"""
+Reported (reproduced) results of Extensively Tuned XGBoost
+electricity (A4): 85.22
+eye_movements (A5): 60.51
+MagicTelescope (B2): 86.50
+bank-marketing (B4): 80.41
+jannis (mathcal B4): 77.81
+"""
 import argparse
 import os.path as osp
 import random
@@ -5,16 +13,12 @@ import random
 import numpy as np
 import torch
 
-from torch_frame.datasets import Yandex
+from torch_frame import TaskType
+from torch_frame.datasets import TabularBenchmark
 from torch_frame.gbdt import ExtensivelyTunedXGBoost
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='jannis')
-parser.add_argument('--channels', type=int, default=192)
-parser.add_argument('--num_layers', type=int, default=3)
-parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--dataset', type=str, default='california')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -29,14 +33,18 @@ torch.cuda.manual_seed_all(args.seed)
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-dataset = Yandex(root=path, name=args.dataset)
+dataset = TabularBenchmark(root=path, name=args.dataset)
 dataset.materialize()
+dataset = dataset.shuffle()
+# Split ratio following https://arxiv.org/abs/2207.08815
+# 70% is used for training. 30% of the remaining is used for validation.
+# The final reminder is used for testing.
+train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
+    0.7:0.79], dataset[0.79:]
 
-train_dataset = dataset.get_split_dataset('train')
-val_dataset = dataset.get_split_dataset('val')
-test_dataset = dataset.get_split_dataset('test')
-XGB = ExtensivelyTunedXGBoost()
+XGB = ExtensivelyTunedXGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
 XGB.fit_tune(tf_train=train_dataset.tensor_frame,
-             tf_val=val_dataset.tensor_frame, num_trials=500)
-test_acc = XGB.predict(tf_test=test_dataset.tensor_frame)
+             tf_val=val_dataset.tensor_frame, num_trials=100)
+test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)
+
 print(f'Test acc: {test_acc}')

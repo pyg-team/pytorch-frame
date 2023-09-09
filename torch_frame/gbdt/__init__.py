@@ -1,7 +1,7 @@
-from .gbdt import GradientBoostingDecisionTree
+from .gbdt import GradientBoostingDecisionTrees
 from .extensively_tuned_xgboost import ExtensivelyTunedXGBoost
 
 __all__ = classes = [
-    'GradientBoostingDecisionTree',
+    'GradientBoostingDecisionTrees',
     'ExtensivelyTunedXGBoost',
 ]

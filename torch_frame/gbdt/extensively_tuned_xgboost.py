@@ -1,37 +1,36 @@
 import numpy as np
 import optuna
-import sklearn.metrics
-import torch
 import xgboost
+from sklearn.metrics import accuracy_score, mean_squared_error
 
-from torch_frame import TensorFrame, stype
-from torch_frame.gbdt import GradientBoostingDecisionTree
-
-
-def accuracy_score(predicted_labels: np.ndarray, dtrain: xgboost.DMatrix):
-    y = dtrain.get_label()
-    return "acc", float(np.mean(y == predicted_labels))
+from torch_frame import TaskType, TensorFrame
+from torch_frame.gbdt import GradientBoostingDecisionTrees
 
 
-class ExtensivelyTunedXGBoost(GradientBoostingDecisionTree):
-    def __init__(self, task_type='multiclass_classification'):
-        if task_type == 'multiclass_classification':
-            self.obj = "multi:softmax"
-            self.eval_metric = "mlogloss"
-        self.param = {"objective": self.obj, "eval_metric": self.eval_metric}
+class ExtensivelyTunedXGBoost(GradientBoostingDecisionTrees):
+    def objective(self, trial: optuna.trial.Trial, tf_train: TensorFrame,
+                  tf_val: TensorFrame):
+        r""" Objective function to be maximized.
 
-    def objective(self, trial):
-        params = {
-            "booster":
-            "gbtree",
-            "num_class":
-            4,
+        Args:
+            trial (Trial): Optuna trial
+            tf_train (TensorFrame): Train data
+            tf_val (TensorFrame): Validation data
+
+        Returns:
+            score (float): Best objective value. Negative root
+                mean squared error for regression task and negative
+                root mean squared error for classification task.
+        """
+        self.params = {
             "objective":
             self.obj,
             "eval_metric":
             self.eval_metric,
+            "booster":
+            "gbtree",
             "max_depth":
-            trial.suggest_int("max_depth", 3, 10),
+            trial.suggest_int("max_depth", 3, 11),
             "min_child_weight":
             trial.suggest_float("min_child_weight", 1e-8, 1e5, log=True),
             "subsample":
@@ -50,64 +49,53 @@ class ExtensivelyTunedXGBoost(GradientBoostingDecisionTree):
             (0.0 if not trial.suggest_categorical('use_alpha', [True, False])
              else trial.suggest_float('alpha', 1e-8, 1e2, log=True)),
             "eta":
-            trial.suggest_float('learning_rate', 1e-5, 1.0, log=True)
+            trial.suggest_float('learning_rate', 1e-6, 1.0, log=True)
         }
         pruning_callback = optuna.integration.XGBoostPruningCallback(
             trial, f"validation-{self.eval_metric}")
-
-        train_x = self._tensor_frame_to_numpy(self.tf_train)
-        train_y = self.tf_train.y.cpu().numpy()
-        val_x = self._tensor_frame_to_numpy(self.tf_val)
-        val_y = self.tf_val.y.cpu().numpy()
+        train_x = self._tensor_frame_to_numpy(tf_train)
+        train_y = tf_train.y.cpu().numpy()
+        val_x = self._tensor_frame_to_numpy(tf_val)
+        val_y = tf_val.y.cpu().numpy()
         dtrain = xgboost.DMatrix(train_x, label=train_y)
         dvalid = xgboost.DMatrix(val_x, label=val_y)
-        bst = xgboost.train(params, dtrain, evals=[(dvalid, 'validation')],
-                            callbacks=[pruning_callback], num_boost_round=4096,
-                            early_stopping_rounds=50)
-        preds = bst.predict(dvalid)
-        pred_labels = np.rint(preds)
-        accuracy = sklearn.metrics.accuracy_score(val_y, pred_labels)
-        return accuracy
-
-    def _tensor_frame_to_numpy(self, tf: TensorFrame):
-        if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            return torch.cat(
-                (tf.x_dict[stype.numerical], tf.x_dict[stype.categorical]),
-                dim=1).cpu().numpy()
-        elif stype.categorical in tf.x_dict:
-            return tf.x_dict[stype.categorical].cpu().numpy()
-        elif stype.numerical in tf.x_dict:
-            return tf.x_dict[stype.numerical].cpu().numpy()
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            self.params["num_class"] = len(np.unique(train_y))
+        boost = xgboost.train(self.params, dtrain, num_boost_round=4096,
+                              early_stopping_rounds=50, verbose_eval=False,
+                              evals=[(dvalid, 'validation')],
+                              callbacks=[pruning_callback])
+        preds = boost.predict(dvalid)
+        if self.task_type == TaskType.REGRESSION:
+            score = -mean_squared_error(val_y, preds, squared=False)
         else:
-            raise ValueError("The input TensorFrame is empty.")
+            score = accuracy_score(val_y, preds)
+        return score
 
-    def fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-                 num_trials: int):
-        self.tf_train = tf_train
-        self.tf_val = tf_val
-        self.num_class = torch.unique(tf_train.y).size(0)
+    def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
+                  num_trials: int):
         study = optuna.create_study(direction="maximize")
-        study.optimize(self.objective, num_trials)
-        param = {
-            "objective": self.obj,
-            "eval_metric": self.eval_metric,
-        }
-        param.update(study.best_params)
-        train_x = self._tensor_frame_to_numpy(self.tf_train)
-        train_y = self.tf_train.y.cpu().numpy()
-        val_x = self._tensor_frame_to_numpy(self.tf_val)
-        val_y = self.tf_val.y.cpu().numpy()
+        study.optimize(lambda trial: self.objective(trial, tf_train, tf_val),
+                       num_trials)
+        self.params.update(study.best_params)
+
+        train_x = self._tensor_frame_to_numpy(tf_train)
+        train_y = tf_train.y.cpu().numpy()
+        val_x = self._tensor_frame_to_numpy(tf_val)
+        val_y = tf_val.y.cpu().numpy()
         dvalid = xgboost.DMatrix(val_x, label=val_y)
         dtrain = xgboost.DMatrix(train_x, label=train_y)
-        self.model = xgboost.train(param, dtrain, evals=[
+        self.model = xgboost.train(self.params, dtrain, evals=[
             (dvalid, 'validation')
-        ], num_boost_round=4096, early_stopping_rounds=50)
+        ], num_boost_round=20, early_stopping_rounds=50)
 
-    def predict(self, tf_test: TensorFrame):
+    def _eval(self, tf_test: TensorFrame):
         test_x = self._tensor_frame_to_numpy(tf_test)
         test_y = tf_test.y.cpu().numpy()
         dtest = xgboost.DMatrix(test_x, label=test_y)
         preds = self.model.predict(dtest)
-        pred_labels = np.rint(preds)
-        accuracy = sklearn.metrics.accuracy_score(test_y, pred_labels)
-        return accuracy
+        if self.task_type == TaskType.REGRESSION:
+            metric_score = -mean_squared_error(test_y, preds, squared=False)
+        else:
+            metric_score = accuracy_score(test_y, preds)
+        return metric_score
