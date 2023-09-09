@@ -25,7 +25,7 @@ class GradientBoostingDecisionTrees():
             self.eval_metric = 'auc'
         else:
             raise ValueError(
-                f"ExtensivelyTunedXGBoost not supported for {task_type}")
+                f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
 
     def _tensor_frame_to_numpy(self, tf: TensorFrame) -> np.ndarray:
@@ -48,7 +48,7 @@ class GradientBoostingDecisionTrees():
         elif stype.numerical in tf.x_dict:
             out = tf.x_dict[stype.numerical].cpu().numpy()
         else:
-            raise ValueError("The input TensorFrame is empty.")
+            raise ValueError("The input TensorFrame object is empty.")
         return out
 
     @abstractmethod
