@@ -73,24 +73,20 @@ class FCResidualBlock(Module):
             self.shortcut.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
-        identity = x
-
         out = self.lin1(x)
-        if self.norm1:
-            out = self.norm1(out)
+        out = self.norm1(out) if self.norm1 else out
         out = self.relu(out)
         out = self.dropout(out)
 
         out = self.lin2(out)
-        if self.norm2:
-            out = self.norm2(out)
+        out = self.norm2(out) if self.norm2 else out
         out = self.relu(out)
         out = self.dropout(out)
 
         if self.shortcut is not None:
-            identity = self.shortcut(identity)
+            x = self.shortcut(x)
 
-        out += identity
+        out += x
         out = self.relu(out)
 
         return out
