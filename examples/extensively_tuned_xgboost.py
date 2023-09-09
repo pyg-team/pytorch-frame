@@ -1,5 +1,5 @@
 """
-Reported (reproduced) results of Extensively Tuned XGBoost
+Reported results of Extensively Tuned XGBoost on TabularBenchmark
 electricity (A4): 85.22
 eye_movements (A5): 60.51
 MagicTelescope (B2): 86.50
