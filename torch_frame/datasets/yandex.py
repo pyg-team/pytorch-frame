@@ -119,13 +119,8 @@ class Yandex(torch_frame.data.Dataset):
         df, col_to_stype = get_df_and_col_to_stype(path)
         if name in self.regression_datasets:
             col_to_stype['label'] = torch_frame.numerical
-            self.task_type = TaskType.REGRESSION
         else:
             col_to_stype['label'] = torch_frame.categorical
-            if self.num_classes > 2:
-                self.task_type = TaskType.MULTICLASS_CLASSIFICATION
-            else:
-                self.task_type = TaskType.BINARY_CLASSIFICATION
 
         super().__init__(df, col_to_stype, target_col='label')
 
@@ -135,6 +130,11 @@ class Yandex(torch_frame.data.Dataset):
         Returns:
             task_type (TaskType): The task type of the current dataset.
         """
+        if self.name in self.regression_datasets:
+            self.task_type = TaskType.REGRESSION
+        else:
+            if self.num_classes > 2:
+                self.task_type = TaskType.MULTICLASS_CLASSIFICATION
+            else:
+                self.task_type = TaskType.BINARY_CLASSIFICATION
         return self.task_type
-        super().__init__(df, col_to_stype, target_col='label',
-                         split_col='split')
