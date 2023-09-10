@@ -9,14 +9,18 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame import TaskType
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.typing import ColumnSelectType, DataFrame, IndexSelectType
+from torch_frame.typing import (
+    ColumnSelectType,
+    DataFrame,
+    IndexSelectType,
+    TaskType,
+)
 
 
 def requires_pre_materialization(func):

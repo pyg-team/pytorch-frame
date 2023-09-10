@@ -19,7 +19,7 @@ from torch_frame.datasets import TabularBenchmark
 from torch_frame.gbdt import XGBoost
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='california')
+parser.add_argument('--dataset', type=str, default='electricity')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
