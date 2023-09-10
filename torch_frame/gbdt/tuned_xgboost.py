@@ -103,9 +103,11 @@ class XGBoost(GradientBoostingDecisionTrees):
                                          ), num_trials)
         self.params.update(study.best_params)
 
-        self.model = xgboost.train(self.params, dtrain, evals=[
-            (dvalid, 'validation')
-        ], num_boost_round=20, early_stopping_rounds=50)
+        self.model = xgboost.train(self.params, dtrain,
+                                   num_boost_round=num_boost_round,
+                                   early_stopping_rounds=50,
+                                   verbose_eval=False,
+                                   evals=[(dvalid, 'validation')])
 
     def _eval(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
         test_y = tf_test.y.cpu().numpy()
