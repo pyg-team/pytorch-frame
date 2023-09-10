@@ -36,9 +36,9 @@ class GradientBoostingDecisionTrees():
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            out (Tensor): Output :obj:`Tensor` by concatenating tensor
+            out (Tensor): Output :obj:`Tensor` by concatenating tensors
                 of numerical and categorical features of the input
-                :obj:`TensorFrame` object.
+                :obj:`TensorFrame`.
         """
 
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:

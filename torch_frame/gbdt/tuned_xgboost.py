@@ -26,9 +26,8 @@ class XGBoost(GradientBoostingDecisionTrees):
             num_boost_round (int): Number of boosting round.
 
         Returns:
-            score (float): Best objective value. Negative root
-                mean squared error for regression task and negative
-                root mean squared error for classification task.
+            score (float): Best objective value. Mean squared error for
+                regression task and accuracy for classification task.
         """
         self.params = {
             "objective":
