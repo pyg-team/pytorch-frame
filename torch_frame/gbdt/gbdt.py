@@ -111,15 +111,16 @@ class GradientBoostingDecisionTrees():
             metric (float): The metric on test data, mean squared error
                 for regression task and accuracy for classification task.
         """
-        if isinstance(target, TensorFrame):
-            test_y = target.y
-        else:
-            test_y = target
-        if self.task_type == TaskType.REGRESSION:
-            metric = nn.MSELoss()
-            metric_score = metric(pred, test_y)
-        else:
-            total_correct = (test_y == pred).sum().item()
-            test_size = len(test_y)
-            metric_score = total_correct / test_size
-        return metric_score
+        with torch.no_grad():
+            if isinstance(target, TensorFrame):
+                test_y = target.y
+            else:
+                test_y = target
+            if self.task_type == TaskType.REGRESSION:
+                metric = nn.MSELoss()
+                metric_score = metric(pred, test_y)
+            else:
+                total_correct = (test_y == pred).sum().item()
+                test_size = len(test_y)
+                metric_score = total_correct / test_size
+            return metric_score
