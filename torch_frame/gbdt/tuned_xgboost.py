@@ -2,7 +2,6 @@ import numpy as np
 import optuna
 import torch
 import xgboost
-from sklearn.metrics import accuracy_score, mean_squared_error
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame
@@ -81,11 +80,8 @@ class XGBoost(GradientBoostingDecisionTrees):
                               early_stopping_rounds=50, verbose_eval=False,
                               evals=[(dvalid, 'validation')],
                               callbacks=[pruning_callback])
-        preds = boost.predict(dvalid)
-        if self.task_type == TaskType.REGRESSION:
-            score = mean_squared_error(dvalid.get_label(), preds)
-        else:
-            score = accuracy_score(dvalid.get_label(), preds)
+        pred = boost.predict(dvalid)
+        score = self.compute_metric(dvalid.get_label(), pred)
         return score
 
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
@@ -95,9 +91,9 @@ class XGBoost(GradientBoostingDecisionTrees):
         else:
             study = optuna.create_study(direction="maximize")
         train_x = self._tensor_frame_to_numpy(tf_train)
-        train_y = tf_train.y.cpu().numpy()
+        train_y = tf_train.y
         val_x = self._tensor_frame_to_numpy(tf_val)
-        val_y = tf_val.y.cpu().numpy()
+        val_y = tf_val.y
         dvalid = xgboost.DMatrix(val_x, label=val_y)
         dtrain = xgboost.DMatrix(train_x, label=train_y)
         study.optimize(
@@ -110,15 +106,6 @@ class XGBoost(GradientBoostingDecisionTrees):
                                    early_stopping_rounds=50,
                                    verbose_eval=False,
                                    evals=[(dvalid, 'validation')])
-
-    def compute_metric(self, tf_test: TensorFrame, preds: Tensor) -> float:
-        test_y = tf_test.y.cpu().numpy()
-        preds = preds.cpu().numpy()
-        if self.task_type == TaskType.REGRESSION:
-            metric_score = mean_squared_error(test_y, preds)
-        else:
-            metric_score = accuracy_score(test_y, preds)
-        return metric_score
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         test_x = self._tensor_frame_to_numpy(tf_test)

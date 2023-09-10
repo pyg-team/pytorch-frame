@@ -4,11 +4,11 @@ from torch_frame.datasets.fake import FakeDataset
 from torch_frame.gbdt import XGBoost
 
 
-def test_excelformer():
+def test_xgboost():
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical, stype.categorical],
                                    create_split=True,
-                                   task_type=TaskType.REGRESSION)
+                                   task_type=TaskType.BINARY_CLASSIFICATION)
     dataset.materialize()
     train_dataset = dataset.get_split_dataset('train')
     val_dataset = dataset.get_split_dataset('val')
@@ -19,3 +19,6 @@ def test_excelformer():
                  num_boost_round=2)
     test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)
     assert (test_acc >= 0 and test_acc <= 1)
+
+
+test_xgboost()

@@ -33,7 +33,6 @@ dependencies=[
     "torch",
     "xgboost",
     "optuna>=3.0.0",
-    "scikit-learn",
 ]
 
 [project.optional-dependencies]

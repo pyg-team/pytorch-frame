@@ -1,7 +1,9 @@
 from abc import abstractmethod
+from typing import Union
 
 import numpy as np
 import torch
+import torch.nn as nn
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame, stype
@@ -53,10 +55,6 @@ class GradientBoostingDecisionTrees():
         return out
 
     @abstractmethod
-    def compute_metric(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
-        raise NotImplementedError
-
-    @abstractmethod
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
                   num_trials: int) -> None:
         raise NotImplementedError
@@ -90,9 +88,8 @@ class GradientBoostingDecisionTrees():
         r""" Evaluate the trained model on the given test data.
 
         Returns:
-            metric (float): The metric on test data, negative root
-                mean squared error for regression task and accuracy
-                for binary classification task.
+            metric (float): The metric on test data, mean squared error
+                for regression task and accuracy for classification task.
         """
         preds = self.predict(tf_test)
         return self.compute_metric(tf_test, preds)
@@ -104,3 +101,25 @@ class GradientBoostingDecisionTrees():
                 "Please run `fit_tune()` first before attempting "
                 "to predict.")
         return self._predict(tf_test)
+
+    def compute_metric(self, target: Union[TensorFrame, Tensor],
+                       pred: Tensor) -> float:
+        r""" Computes evaluation metric given test labels
+            :obj:`Union[TensorFrame, Tensor]` and pred :obj:`Tensor`.
+
+        Returns:
+            metric (float): The metric on test data, mean squared error
+                for regression task and accuracy for classification task.
+        """
+        if isinstance(target, TensorFrame):
+            test_y = target.y.cpu().numpy()
+        else:
+            test_y = target
+        if self.task_type == TaskType.REGRESSION:
+            metric = nn.MSELoss()
+            metric_score = metric(pred, test_y)
+        else:
+            total_correct = (test_y == pred).sum().item()
+            test_size = test_y.size(0)
+            metric_score = total_correct / test_size
+        return metric_score
