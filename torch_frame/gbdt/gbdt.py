@@ -74,8 +74,8 @@ class GradientBoostingDecisionTrees():
             num_trials.
 
         Args:
-            tf_train (TensorFrame): The train data.
-            tf_val (TensorFrame): The validation data.
+            tf_train (TensorFrame): The train data in :obt:`TensorFrame`.
+            tf_val (TensorFrame): The validation data in :obj:`TensorFrame`.
             num_trials (int): Number of trials to perform hyper-
                 parameter search.
         """
