@@ -136,3 +136,5 @@ class Yandex(torch_frame.data.Dataset):
             task_type (TaskType): The task type of the current dataset.
         """
         return self.task_type
+        super().__init__(df, col_to_stype, target_col='label',
+                         split_col='split')
