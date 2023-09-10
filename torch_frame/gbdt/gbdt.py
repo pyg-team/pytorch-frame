@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -31,13 +30,13 @@ class GradientBoostingDecisionTrees():
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
 
-    def _tensor_frame_to_numpy(self, tf: TensorFrame) -> np.ndarray:
-        r""" Convert :obj:`TensorFrame` into numpy array
+    def _tensor_frame_to_tensor(self, tf: TensorFrame) -> Tensor:
+        r""" Convert :obj:`TensorFrame` into :obj:`Tensor`
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            out (np.ndarry): Output numpy array by concatenating tensor
+            out (Tensor): Output :obj:`Tensor` by concatenating tensor
                 of numerical and categorical features of the input
                 :obj:`TensorFrame` object.
         """
@@ -45,11 +44,11 @@ class GradientBoostingDecisionTrees():
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
             out = torch.cat(
                 (tf.x_dict[stype.numerical], tf.x_dict[stype.categorical]),
-                dim=1).cpu().numpy()
+                dim=1)
         elif stype.categorical in tf.x_dict:
-            out = tf.x_dict[stype.categorical].cpu().numpy()
+            out = tf.x_dict[stype.categorical]
         elif stype.numerical in tf.x_dict:
-            out = tf.x_dict[stype.numerical].cpu().numpy()
+            out = tf.x_dict[stype.numerical]
         else:
             raise ValueError("The input TensorFrame object is empty.")
         return out

@@ -90,9 +90,9 @@ class XGBoost(GradientBoostingDecisionTrees):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        train_x = self._tensor_frame_to_numpy(tf_train)
+        train_x = self._tensor_frame_to_tensor(tf_train)
         train_y = tf_train.y
-        val_x = self._tensor_frame_to_numpy(tf_val)
+        val_x = self._tensor_frame_to_tensor(tf_val)
         val_y = tf_val.y
         dvalid = xgboost.DMatrix(val_x, label=val_y)
         dtrain = xgboost.DMatrix(train_x, label=train_y)
@@ -108,7 +108,7 @@ class XGBoost(GradientBoostingDecisionTrees):
                                    evals=[(dvalid, 'validation')])
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
-        test_x = self._tensor_frame_to_numpy(tf_test)
+        test_x = self._tensor_frame_to_tensor(tf_test)
         test_y = tf_test.y.cpu().numpy()
         dtest = xgboost.DMatrix(test_x, label=test_y)
         preds = self.model.predict(dtest)
