@@ -286,12 +286,12 @@ class Dataset(ABC):
         Args:
             split (str): The split name. Should be 'train', 'val', or 'test'.
         """
-        if split not in ['train', 'val', 'test']:
-            raise ValueError(f"The split named {split} is not available. "
-                             f"Needs to either 'train', 'val', or 'test'.")
         if self.split_col is None:
             raise ValueError(
                 f"'get_split_dataset' is not supported for {self} "
                 "since 'split_col' is not specified.")
+        if split not in ['train', 'val', 'test']:
+            raise ValueError(f"The split named {split} is not available. "
+                             f"Needs to either 'train', 'val', or 'test'.")
         indices = self.df.index[self.df[self.split_col] == split].tolist()
         return self[indices]
