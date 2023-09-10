@@ -94,6 +94,12 @@ class GradientBoostingDecisionTrees():
         return self.compute_metric(tf_test, preds)
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
+        r""" Predicts the label/result of the test data on the fitted model.
+
+        Returns:
+            pred (Tensor): The prediction output :obj:`Tensor` on the fitted
+                model.
+        """
         if not self.is_fitted:
             raise RuntimeError(
                 f"{self.__class__.__name__}' is not yet fitted."

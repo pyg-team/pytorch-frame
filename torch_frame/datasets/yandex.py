@@ -122,7 +122,8 @@ class Yandex(torch_frame.data.Dataset):
         else:
             col_to_stype['label'] = torch_frame.categorical
 
-        super().__init__(df, col_to_stype, target_col='label')
+        super().__init__(df, col_to_stype, target_col='label',
+                         split_col='split')
 
     @property
     def task_type(self) -> TaskType:
