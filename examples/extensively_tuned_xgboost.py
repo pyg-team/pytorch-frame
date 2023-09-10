@@ -4,6 +4,7 @@ electricity (A4): 85.22
 eye_movements (A5): 60.51
 MagicTelescope (B2): 86.50
 bank-marketing (B4): 80.41
+california (B5): 89.66
 jannis (mathcal B4): 77.81
 """
 import argparse

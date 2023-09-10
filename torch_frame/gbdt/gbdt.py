@@ -52,12 +52,17 @@ class GradientBoostingDecisionTrees():
         return out
 
     @abstractmethod
-    def _eval(self, tf_test: TensorFrame):
+    def _eval(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
         raise NotImplementedError
 
     @abstractmethod
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-                  num_trials: int):
+                  num_trials: int) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _predict(self, tf_train: TensorFrame,
+                 tf_val: TensorFrame) -> np.ndarray:
         raise NotImplementedError
 
     @property
@@ -66,10 +71,10 @@ class GradientBoostingDecisionTrees():
         return self._is_fitted
 
     def fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-                 num_trials: int):
-        r""" Fit and tune the GBDT model with train and evaluation
-        data using optuna. The number of trials is specified by
-        num_trials.
+                 num_trials: int, *args, **kwargs):
+        r""" Fit the model by performing hyperparameter tuning using Optuna.
+            The number of trials is specified by
+            num_trials.
 
         Args:
             tf_train (TensorFrame): The train data.
@@ -77,11 +82,12 @@ class GradientBoostingDecisionTrees():
             num_trials (int): Number of trials to perform hyper-
                 parameter search.
         """
-        self._fit_tune(tf_train, tf_val, num_trials=num_trials)
+        self._fit_tune(tf_train, tf_val, num_trials=num_trials, *args,
+                       **kwargs)
         self._is_fitted = True
 
     def eval(self, tf_test: TensorFrame) -> float:
-        r""" Evaluation on the test set
+        r""" Evaluate the trained model on the given test data.
 
         Returns:
             metric (float): The metric on test data, negative root
@@ -93,5 +99,13 @@ class GradientBoostingDecisionTrees():
                 f"{self.__class__.__name__}' is not yet fitted."
                 "Please run `fit_tune()` first before attempting "
                 "to evaluate.")
+        preds = self.predict(tf_test)
+        return self._eval(tf_test, preds)
 
-        return self._eval(tf_test)
+    def predict(self, tf_test: TensorFrame) -> np.ndarray:
+        if not self.is_fitted:
+            raise RuntimeError(
+                f"{self.__class__.__name__}' is not yet fitted."
+                "Please run `fit_tune()` first before attempting "
+                "to evaluate.")
+        return self._predict(tf_test)

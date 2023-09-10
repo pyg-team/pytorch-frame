@@ -122,7 +122,7 @@ class Yandex(torch_frame.data.Dataset):
             self.task_type = TaskType.REGRESSION
         else:
             col_to_stype['label'] = torch_frame.categorical
-            if df['label'].nunique() > 2:
+            if self.num_classes > 2:
                 self.task_type = TaskType.MULTICLASS_CLASSIFICATION
             else:
                 self.task_type = TaskType.BINARY_CLASSIFICATION
