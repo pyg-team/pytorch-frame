@@ -65,4 +65,5 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = 'val'
             split[2] = 'test'
             df['split'] = split
-        super().__init__(df, col_to_stype, target_col='target')
+        super().__init__(df, col_to_stype, target_col='target',
+                         split_col='split')

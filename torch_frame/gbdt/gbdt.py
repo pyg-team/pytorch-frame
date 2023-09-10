@@ -112,7 +112,7 @@ class GradientBoostingDecisionTrees():
                 for regression task and accuracy for classification task.
         """
         if isinstance(target, TensorFrame):
-            test_y = target.y.cpu().numpy()
+            test_y = target.y
         else:
             test_y = target
         if self.task_type == TaskType.REGRESSION:
@@ -120,6 +120,6 @@ class GradientBoostingDecisionTrees():
             metric_score = metric(pred, test_y)
         else:
             total_correct = (test_y == pred).sum().item()
-            test_size = test_y.size(0)
+            test_size = len(test_y)
             metric_score = total_correct / test_size
         return metric_score

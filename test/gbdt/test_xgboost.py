@@ -19,6 +19,3 @@ def test_xgboost():
                  num_boost_round=2)
     test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)
     assert (test_acc >= 0 and test_acc <= 1)
-
-
-test_xgboost()
