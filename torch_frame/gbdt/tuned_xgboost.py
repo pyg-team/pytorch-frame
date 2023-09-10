@@ -1,7 +1,9 @@
 import numpy as np
 import optuna
+import torch
 import xgboost
 from sklearn.metrics import accuracy_score, mean_squared_error
+from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame
 from torch_frame.gbdt import GradientBoostingDecisionTrees
@@ -109,17 +111,18 @@ class XGBoost(GradientBoostingDecisionTrees):
                                    verbose_eval=False,
                                    evals=[(dvalid, 'validation')])
 
-    def _eval(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
+    def _eval(self, tf_test: TensorFrame, preds: Tensor) -> float:
         test_y = tf_test.y.cpu().numpy()
+        preds = preds.cpu().numpy()
         if self.task_type == TaskType.REGRESSION:
             metric_score = mean_squared_error(test_y, preds)
         else:
             metric_score = accuracy_score(test_y, preds)
         return metric_score
 
-    def _predict(self, tf_test: TensorFrame) -> np.ndarray:
+    def _predict(self, tf_test: TensorFrame) -> Tensor:
         test_x = self._tensor_frame_to_numpy(tf_test)
         test_y = tf_test.y.cpu().numpy()
         dtest = xgboost.DMatrix(test_x, label=test_y)
         preds = self.model.predict(dtest)
-        return preds
+        return torch.from_numpy(preds)

@@ -9,6 +9,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
+from torch_frame import TaskType
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
@@ -115,6 +116,10 @@ class Dataset(ABC):
         if self.target_col is not None:
             cols.remove(self.target_col)
         return cols
+
+    @property
+    def task_type(self) -> TaskType:
+        raise NotImplementedError
 
     @property
     @requires_post_materialization

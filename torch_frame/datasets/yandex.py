@@ -129,7 +129,8 @@ class Yandex(torch_frame.data.Dataset):
 
         super().__init__(df, col_to_stype, target_col='label')
 
-    def get_task_type(self) -> TaskType.REGRESSION:
+    @property
+    def task_type(self) -> TaskType:
         r"""
         Returns:
             task_type (TaskType): The task type of the current dataset.

@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import numpy as np
 import torch
+from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame, stype
 
@@ -61,8 +62,7 @@ class GradientBoostingDecisionTrees():
         raise NotImplementedError
 
     @abstractmethod
-    def _predict(self, tf_train: TensorFrame,
-                 tf_val: TensorFrame) -> np.ndarray:
+    def _predict(self, tf_train: TensorFrame) -> Tensor:
         raise NotImplementedError
 
     @property
@@ -94,18 +94,13 @@ class GradientBoostingDecisionTrees():
                 mean squared error for regression task and accuracy
                 for binary classification task.
         """
-        if not self.is_fitted:
-            raise RuntimeError(
-                f"{self.__class__.__name__}' is not yet fitted."
-                "Please run `fit_tune()` first before attempting "
-                "to evaluate.")
         preds = self.predict(tf_test)
         return self._eval(tf_test, preds)
 
-    def predict(self, tf_test: TensorFrame) -> np.ndarray:
+    def predict(self, tf_test: TensorFrame) -> Tensor:
         if not self.is_fitted:
             raise RuntimeError(
                 f"{self.__class__.__name__}' is not yet fitted."
                 "Please run `fit_tune()` first before attempting "
-                "to evaluate.")
+                "to predict.")
         return self._predict(tf_test)
