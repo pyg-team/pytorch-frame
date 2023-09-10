@@ -111,7 +111,7 @@ class XGBoost(GradientBoostingDecisionTrees):
                                    verbose_eval=False,
                                    evals=[(dvalid, 'validation')])
 
-    def _eval(self, tf_test: TensorFrame, preds: Tensor) -> float:
+    def compute_metric(self, tf_test: TensorFrame, preds: Tensor) -> float:
         test_y = tf_test.y.cpu().numpy()
         preds = preds.cpu().numpy()
         if self.task_type == TaskType.REGRESSION:

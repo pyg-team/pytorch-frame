@@ -53,7 +53,7 @@ class GradientBoostingDecisionTrees():
         return out
 
     @abstractmethod
-    def _eval(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
+    def compute_metric(self, tf_test: TensorFrame, preds: np.ndarray) -> float:
         raise NotImplementedError
 
     @abstractmethod
@@ -95,7 +95,7 @@ class GradientBoostingDecisionTrees():
                 for binary classification task.
         """
         preds = self.predict(tf_test)
-        return self._eval(tf_test, preds)
+        return self.compute_metric(tf_test, preds)
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
         if not self.is_fitted:
