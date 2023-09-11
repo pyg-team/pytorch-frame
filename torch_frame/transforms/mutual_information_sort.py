@@ -34,7 +34,7 @@ class MutualInformationSort(FittableBaseTransform):
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
-                "MutualInformationSort cannot be used when target column"
+                "'{self.__class__.__name__}' cannot be used when target column"
                 " is None.")
         if stype.categorical in tf_train.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"

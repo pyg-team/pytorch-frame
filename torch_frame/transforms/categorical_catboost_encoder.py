@@ -13,7 +13,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
-                "CategoricalCatBoostEncoder cannot be used when target column"
+                "'{self.__class__.__name__}' cannot be used when target column"
                 " is None.")
         if stype.categorical not in tf_train.col_names_dict:
             print("The input TensorFrame does not contain any categorical "

@@ -39,9 +39,6 @@ class FittableBaseTransform(BaseTransform):
 
         return self._forward(tf)
 
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}()'
-
     @abstractmethod
     def _fit(self, tf: TensorFrame):
         raise NotImplementedError
