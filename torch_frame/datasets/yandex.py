@@ -131,10 +131,10 @@ class Yandex(torch_frame.data.Dataset):
             task_type (TaskType): The task type of the current dataset.
         """
         if self.name in self.regression_datasets:
-            self.task_type = TaskType.REGRESSION
+            task_type = TaskType.REGRESSION
         else:
             if self.num_classes > 2:
-                self.task_type = TaskType.MULTICLASS_CLASSIFICATION
+                task_type = TaskType.MULTICLASS_CLASSIFICATION
             else:
-                self.task_type = TaskType.BINARY_CLASSIFICATION
-        return self.task_type
+                task_type = TaskType.BINARY_CLASSIFICATION
+        return task_type

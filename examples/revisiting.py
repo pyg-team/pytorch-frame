@@ -25,7 +25,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from torch_frame import TaskType, stype
+from torch_frame import stype
 from torch_frame.data import DataLoader
 from torch_frame.datasets import Yandex
 from torch_frame.nn import (
@@ -63,8 +63,8 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-is_classification = (dataset.task_type == TaskType.BINARY_CLASSIFICATION or
-                     dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION)
+print("classification ", dataset.task_type.is_classification)
+is_classification = dataset.task_type.is_classification
 
 train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')

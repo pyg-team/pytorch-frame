@@ -1,10 +1,12 @@
 """
 Reported results of Extensively Tuned XGBoost on TabularBenchmark
-electricity (A4): 85.22
+electricity (A4): 91.09
 eye_movements (A5): 64.21
 MagicTelescope (B2): 86.50
 bank-marketing (B4): 80.41
-california (B5): 89.66
+california (B5): 89.71
+credit (B7): 77.4
+pol (B14): 97.5
 jannis (mathcal B4): 77.81
 """
 import argparse
@@ -44,8 +46,8 @@ train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
 XGB = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
-XGB.fit_tune(tf_train=train_dataset.tensor_frame,
-             tf_val=val_dataset.tensor_frame, num_trials=100)
-test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)
+XGB.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
+         num_trials=100)
+test_acc = XGB(tf_test=test_dataset.tensor_frame)
 
 print(f'Test acc: {test_acc}')

@@ -23,6 +23,8 @@ def test_xgboost(task_type):
              tf_val=val_dataset.tensor_frame, num_trials=2, num_boost_round=2)
     score = XGB(tf_test=test_dataset.tensor_frame)
     if task_type == TaskType.REGRESSION:
+        # score is mean squared error
         assert (score >= 0)
     else:
+        # score is accuracy
         assert (0 <= score <= 1)
