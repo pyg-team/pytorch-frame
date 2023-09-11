@@ -27,7 +27,7 @@ class MutualInformationSort(FittableBaseTransform):
             self.mi_func = mutual_info_regression
         else:
             raise ValueError(
-                "MutualInformationSort can be only used on binary "
+                f"'{self.__class__.__name__}' can be only used on binary "
                 "classification,  multiclass classification or regression "
                 f"task, but got {task_type}.")
 
