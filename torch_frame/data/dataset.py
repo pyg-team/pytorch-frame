@@ -15,7 +15,12 @@ from torch_frame.data.mapper import (
     NumericalTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.typing import ColumnSelectType, DataFrame, IndexSelectType
+from torch_frame.typing import (
+    ColumnSelectType,
+    DataFrame,
+    IndexSelectType,
+    TaskType,
+)
 
 
 def requires_pre_materialization(func):
@@ -135,6 +140,10 @@ class Dataset(ABC):
         if self.target_col is not None:
             cols.remove(self.target_col)
         return cols
+
+    @property
+    def task_type(self) -> TaskType:
+        raise NotImplementedError
 
     @property
     @requires_post_materialization
