@@ -75,9 +75,9 @@ lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 def train(epoch: int) -> float:
     model.train()
-    loss_accum = 0
+    loss_accum = total_count = 0
 
-    for step, tf in enumerate(tqdm(train_loader, desc=f'Epoch: {epoch}')):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         # [batch_size, num_layers, num_classes]
         out = model(tf)
         num_layers = out.size(1)
@@ -89,16 +89,16 @@ def train(epoch: int) -> float:
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss)
+        total_count += len(tf.y)
         optimizer.step()
     lr_scheduler.step()
-    return loss_accum / (step + 1)
+    return loss_accum / total_count
 
 
 @torch.no_grad()
 def test(loader: DataLoader) -> float:
     model.eval()
-    accum = 0
-    total_count = 0
+    accum = total_count = 0
 
     for tf in loader:
         out = model(tf)  # [batch_size, num_layers, num_classes]

@@ -222,23 +222,23 @@ optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 def train(epoch: int) -> float:
     model.train()
-    loss_accum = 0
+    loss_accum = total_count = 0
 
-    for step, tf in enumerate(tqdm(train_loader, desc=f'Epoch: {epoch}')):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss)
+        total_count += len(tf.y)
         optimizer.step()
-    return loss_accum / (step + 1)
+    return loss_accum / total_count
 
 
 @torch.no_grad()
 def test(loader: DataLoader) -> float:
     model.eval()
-    accum = 0
-    total_count = 0
+    accum = total_count = 0
 
     for tf in loader:
         pred = model(tf)
