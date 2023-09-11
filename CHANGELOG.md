@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `CategoricalCatBoostEncoder` and `MutualInformationSort` transforms needed by ExcelFromer ([#52](https://github.com/pyg-team/pytorch-frame/pull/52))
 - Added tutorial example script ([#54](https://github.com/pyg-team/pytorch-frame/pull/54))
 - Added `ResNet` ([#48](https://github.com/pyg-team/pytorch-frame/pull/48))
 - Added `ExcelFormerEncoder` ([#42](https://github.com/pyg-team/pytorch-frame/pull/42))
