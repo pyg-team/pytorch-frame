@@ -92,7 +92,7 @@ class GBDT:
         self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
         self._is_fitted = True
 
-    def eval(self, tf_test: TensorFrame) -> float:
+    def __call__(self, tf_test: TensorFrame) -> float:
         r""" Evaluate the trained model on the given test data.
 
         Returns:

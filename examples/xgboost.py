@@ -5,6 +5,8 @@ eye_movements (A5): 64.21
 MagicTelescope (B2): 86.50
 bank-marketing (B4): 80.41
 california (B5): 89.66
+credit (B7): 77.4
+pol (B14): 97.5
 jannis (mathcal B4): 77.81
 """
 import argparse
@@ -46,6 +48,6 @@ train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
 XGB = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
 XGB.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
          num_trials=100)
-test_acc = XGB.eval(tf_test=test_dataset.tensor_frame)
+test_acc = XGB(tf_test=test_dataset.tensor_frame)
 
 print(f'Test acc: {test_acc}')

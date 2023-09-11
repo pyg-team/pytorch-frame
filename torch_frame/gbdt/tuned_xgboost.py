@@ -84,8 +84,8 @@ class XGBoost(GBDT):
                                     torch.from_numpy(pred))
         return score
 
-    def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-                  num_trials: int, num_boost_round: int = 2000):
+    def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
+              num_trials: int, num_boost_round: int = 2000):
         if self.task_type == TaskType.REGRESSION:
             study = optuna.create_study(direction="minimize")
         else:
