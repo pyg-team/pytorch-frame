@@ -63,7 +63,6 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-print("classification ", dataset.task_type.is_classification)
 is_classification = dataset.task_type.is_classification
 
 train_dataset = dataset.get_split_dataset('train')

@@ -31,7 +31,6 @@ device = (torch.device('cuda')
 random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-torch.cuda.manual_seed_all(args.seed)
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
@@ -45,9 +44,9 @@ dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
-XGB = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
-XGB.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
+xgb = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
+xgb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
          num_trials=100)
-test_acc = XGB(tf_test=test_dataset.tensor_frame)
+test_acc = xgb(tf_test=test_dataset.tensor_frame)
 
 print(f'Test acc: {test_acc}')
