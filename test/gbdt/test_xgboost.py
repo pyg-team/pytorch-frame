@@ -36,3 +36,6 @@ def test_xgboost_regression():
                  num_boost_round=2)
     mse = XGB.eval(tf_test=test_dataset.tensor_frame)
     assert (mse >= 0)
+
+
+test_xgboost_regression()

@@ -5,10 +5,10 @@ import xgboost
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame
-from torch_frame.gbdt import GradientBoostingDecisionTrees
+from torch_frame.gbdt import GBDT
 
 
-class XGBoost(GradientBoostingDecisionTrees):
+class XGBoost(GBDT):
     r"""An XGBoost model implementation with hyper-parameter tuning using
         Optuna.
 
@@ -80,7 +80,8 @@ class XGBoost(GradientBoostingDecisionTrees):
                               evals=[(dvalid, 'validation')],
                               callbacks=[pruning_callback])
         pred = boost.predict(dvalid)
-        score = self.compute_metric(dvalid.get_label(), pred)
+        score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
+                                    torch.from_numpy(pred))
         return score
 
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
@@ -89,12 +90,15 @@ class XGBoost(GradientBoostingDecisionTrees):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        train_x = self._tensor_frame_to_tensor(tf_train)
+        train_x, train_ft = self._tensor_frame_to_tensor(tf_train)
         train_y = tf_train.y
-        val_x = self._tensor_frame_to_tensor(tf_val)
+        val_x, val_ft = self._tensor_frame_to_tensor(tf_val)
         val_y = tf_val.y
-        dvalid = xgboost.DMatrix(val_x, label=val_y)
-        dtrain = xgboost.DMatrix(train_x, label=train_y)
+        dtrain = xgboost.DMatrix(train_x, label=train_y,
+                                 feature_types=train_ft,
+                                 enable_categorical=True)
+        dvalid = xgboost.DMatrix(val_x, label=val_y, feature_types=val_ft,
+                                 enable_categorical=True)
         study.optimize(
             lambda trial: self.objective(trial, dtrain, dvalid, num_boost_round
                                          ), num_trials)
@@ -107,8 +111,9 @@ class XGBoost(GradientBoostingDecisionTrees):
                                    evals=[(dvalid, 'validation')])
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
-        test_x = self._tensor_frame_to_tensor(tf_test)
-        test_y = tf_test.y.cpu().numpy()
-        dtest = xgboost.DMatrix(test_x, label=test_y)
+        test_x, test_ft = self._tensor_frame_to_tensor(tf_test)
+        test_y = tf_test.y
+        dtest = xgboost.DMatrix(test_x, label=test_y, feature_types=test_ft,
+                                enable_categorical=True)
         preds = self.model.predict(dtest)
         return torch.from_numpy(preds)

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Union
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -8,8 +8,9 @@ from torch import Tensor
 from torch_frame import TaskType, TensorFrame, stype
 
 
-class GradientBoostingDecisionTrees():
-    r""" Base class for GBDT models used as strong baseline.
+class GBDT():
+    r""" Base class for GBDT(Gradient Boosting Decision Trees)
+        models used as strong baseline.
 
         Args:
             task_type (TaskType): The task type.
@@ -30,7 +31,7 @@ class GradientBoostingDecisionTrees():
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
 
-    def _tensor_frame_to_tensor(self, tf: TensorFrame) -> Tensor:
+    def _tensor_frame_to_tensor(self, tf: TensorFrame) -> (Tensor, List[str]):
         r""" Convert :obj:`TensorFrame` into :obj:`Tensor`
 
         Args:
@@ -39,19 +40,28 @@ class GradientBoostingDecisionTrees():
             out (Tensor): Output :obj:`Tensor` by concatenating tensors
                 of numerical and categorical features of the input
                 :obj:`TensorFrame`.
+            feature_types (List[str]): List of feature types: "q" for numerical
+                features and "c" for categorical features. The abbreviation
+                aligns with xgboost tutorial.
+                <https://github.com/dmlc/xgboost/blob/master/doc/
+                tutorials/categorical.rst#using-native-interface>
         """
-
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
             out = torch.cat(
                 (tf.x_dict[stype.numerical], tf.x_dict[stype.categorical]),
                 dim=1)
+            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
+                "c"
+            ] * len(tf.col_names_dict[stype.categorical])
         elif stype.categorical in tf.x_dict:
             out = tf.x_dict[stype.categorical]
+            feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
         elif stype.numerical in tf.x_dict:
             out = tf.x_dict[stype.numerical]
+            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return out
+        return tuple([out, feature_types])
 
     @abstractmethod
     def _fit_tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
