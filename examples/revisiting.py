@@ -116,9 +116,9 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 def train(epoch: int) -> float:
     model.train()
-    loss_accum = 0
+    loss_accum = total_count = 0
 
-    for step, tf in enumerate(tqdm(train_loader, desc=f'Epoch: {epoch}')):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         pred = model(tf)
         if is_classification:
             loss = F.cross_entropy(pred, tf.y)
@@ -126,16 +126,16 @@ def train(epoch: int) -> float:
             loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss)
+        loss_accum += float(loss) * len(tf.y)
+        total_count += len(tf.y)
         optimizer.step()
-    return loss_accum / (step + 1)
+    return loss_accum / total_count
 
 
 @torch.no_grad()
 def test(loader: DataLoader) -> float:
     model.eval()
-    accum = 0
-    total_count = 0
+    accum = total_count = 0
 
     for tf in loader:
         pred = model(tf)
