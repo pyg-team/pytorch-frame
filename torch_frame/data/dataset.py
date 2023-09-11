@@ -143,6 +143,7 @@ class Dataset(ABC):
 
     @property
     def task_type(self) -> TaskType:
+        r"""The task type of the dataset."""
         raise NotImplementedError
 
     @property
