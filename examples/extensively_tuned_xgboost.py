@@ -1,7 +1,7 @@
 """
 Reported results of Extensively Tuned XGBoost on TabularBenchmark
 electricity (A4): 85.22
-eye_movements (A5): 60.51
+eye_movements (A5): 64.21
 MagicTelescope (B2): 86.50
 bank-marketing (B4): 80.41
 california (B5): 89.66
