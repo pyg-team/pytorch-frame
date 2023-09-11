@@ -68,6 +68,3 @@ class FakeDataset(torch_frame.data.Dataset):
             df['split'] = split
         super().__init__(df, col_to_stype, target_col='target',
                          split_col='split' if create_split else None)
-
-    def task_type(self) -> TaskType:
-        return self.task_type

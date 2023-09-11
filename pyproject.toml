@@ -33,6 +33,7 @@ dependencies=[
     "torch",
     "xgboost",
     "optuna>=3.0.0",
+    "category_encoders",
 ]
 
 [project.optional-dependencies]
