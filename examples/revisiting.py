@@ -126,7 +126,7 @@ def train(epoch: int) -> float:
             loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss)
+        loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
         optimizer.step()
     return loss_accum / total_count

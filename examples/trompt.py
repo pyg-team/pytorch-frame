@@ -88,7 +88,7 @@ def train(epoch: int) -> float:
         loss = F.cross_entropy(pred, y)
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss)
+        loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
         optimizer.step()
     lr_scheduler.step()
