@@ -10,6 +10,10 @@ california (B5): 89.09 (89.17)
 credit (B7): 75.84 (76.01)
 pol (B14): 98.49 (98.82)
 jannis (mathcal B4): 79.54 (80.29)
+
+Reported results of Trompt model on Yandex dataset
+helena : 37.90
+jannis : 72.98
 """
 
 import argparse
