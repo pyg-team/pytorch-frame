@@ -157,7 +157,7 @@ class LinearEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
-        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
@@ -205,10 +205,18 @@ class LinearBucketEncoder(StypeEncoder):
     def reset_parameters(self):
         super().reset_parameters()
         # Reset learnable parameters of the linear transformation
-        torch.nn.init.normal_(self.weight, std=0.1)
+        torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
+        device = x.device  # Infer the device from input tensor 'x'
+
+        # Move all tensors to the device where 'x' is
+        self.boundaries = self.boundaries.to(device)
+        self.interval = self.interval.to(device)
+        self.weight = self.weight.to(device)
+        self.bias = self.bias.to(device)
+
         encoded_values = []
         for i in range(x.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
@@ -277,8 +285,8 @@ class LinearPeriodicEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
-        torch.nn.init.normal_(self.linear_in, std=0.1)
-        torch.nn.init.normal_(self.linear_out, std=0.1)
+        torch.nn.init.normal_(self.linear_in, std=0.01)
+        torch.nn.init.normal_(self.linear_out, std=0.01)
 
     def forward(self, x: Tensor):
         x = (x - self.mean) / self.std
