@@ -6,10 +6,8 @@ learning models in a modular way.
 import argparse
 import math
 import os.path as osp
-import random
 from typing import Any, Dict, List
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -39,13 +37,8 @@ parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-device = (torch.device('cuda')
-          if torch.cuda.is_available() else torch.device('cpu'))
-
-random.seed(args.seed)
-np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-torch.cuda.manual_seed_all(args.seed)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Prepare dataset
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
@@ -227,11 +220,11 @@ model = TabularNN(
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
 
-def train() -> float:
+def train(epoch: int) -> float:
     model.train()
     loss_accum = 0
 
-    for step, tf in enumerate(tqdm(train_loader)):
+    for step, tf in enumerate(tqdm(train_loader, desc=f'Epoch: {epoch}')):
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
@@ -242,7 +235,7 @@ def train() -> float:
 
 
 @torch.no_grad()
-def eval(loader: DataLoader) -> float:
+def test(loader: DataLoader) -> float:
     model.eval()
     accum = 0
     total_count = 0
@@ -258,16 +251,15 @@ def eval(loader: DataLoader) -> float:
 
 best_val_acc = 0
 best_test_acc = 0
-for epoch in range(args.epochs):
-    print(f"=====epoch {epoch}")
-    loss = train()
-    print(f'Train loss: {loss}')
-    train_acc = eval(train_loader)
-    val_acc = eval(val_loader)
-    test_acc = eval(test_loader)
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_acc = test(train_loader)
+    val_acc = test(val_loader)
+    test_acc = test(test_loader)
     if best_val_acc < val_acc:
         best_val_acc = val_acc
         best_test_acc = test_acc
-    print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
+    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
+          f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
 
-print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
+print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
