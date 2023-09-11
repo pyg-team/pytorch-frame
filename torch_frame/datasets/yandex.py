@@ -120,4 +120,5 @@ class Yandex(torch_frame.data.Dataset):
             col_to_stype['label'] = torch_frame.numerical
         else:
             col_to_stype['label'] = torch_frame.categorical
-        super().__init__(df, col_to_stype, target_col='label')
+        super().__init__(df, col_to_stype, target_col='label',
+                         split_col='split')

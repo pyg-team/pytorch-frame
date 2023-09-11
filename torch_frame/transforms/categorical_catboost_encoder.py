@@ -15,6 +15,10 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
             raise RuntimeError(
                 "CategoricalCatBoostEncoder cannot be used when target column"
                 " is None.")
+        if stype.categorical not in tf_train.col_names_dict:
+            print("The input TensorFrame does not contain any categorical "
+                  "columns. No fitting will be performed.")
+            return
         # TODO: Implement the CatBoostEncoder with Pytorch rather than relying
         # on external library.
         self.encoder = CatBoostEncoder(

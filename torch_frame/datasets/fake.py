@@ -5,6 +5,7 @@ import pandas as pd
 
 import torch_frame
 from torch_frame import TaskType, stype
+from torch_frame.typing import TaskType
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -65,4 +66,8 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = 'val'
             split[2] = 'test'
             df['split'] = split
-        super().__init__(df, col_to_stype, target_col='target')
+        super().__init__(df, col_to_stype, target_col='target',
+                         split_col='split' if create_split else None)
+
+    def task_type(self) -> TaskType:
+        return self.task_type
