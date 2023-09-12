@@ -65,7 +65,7 @@ class GBDT:
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return tuple([test_x, test_y, feature_types])
+        return test_x, test_y, feature_types
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
