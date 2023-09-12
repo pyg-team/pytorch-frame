@@ -1,13 +1,14 @@
 """
-Reported results of Extensively Tuned XGBoost on TabularBenchmark
-electricity (A4): 91.09
-eye_movements (A5): 64.21
-MagicTelescope (B2): 86.50
-bank-marketing (B4): 80.41
-california (B5): 89.71
-credit (B7): 77.4
-pol (B14): 97.5
-jannis (mathcal B4): 77.81
+Reported (reproduced) results of Tuned XGBoost on TabularBenchmark of
+the Trompt paper: https://arxiv.org/abs/2305.18446
+electricity (A4): 87.86 (91.09)
+eye_movements (A5): 64.77 (64.21)
+MagicTelescope (B2): 85.31 (86.50)
+bank-marketing (B4): 79.81 (80.41)
+california (B5): 90.30 (89.71)
+credit (B7): 75.91 (77.4)
+pol (B14): 98.35 (97.5)
+jannis (mathcal B4): 78.28 (77.81)
 """
 import argparse
 import os.path as osp
@@ -21,7 +22,7 @@ from torch_frame.datasets import TabularBenchmark
 from torch_frame.gbdt import XGBoost
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='electricity')
+parser.add_argument('--dataset', type=str, default='california')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
