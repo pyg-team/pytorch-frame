@@ -121,12 +121,11 @@ class GBDT:
                 for regression task and accuracy for classification task.
         """
         with torch.no_grad():
-            test_y = target
             if self.task_type == TaskType.REGRESSION:
                 metric = nn.MSELoss()
-                metric_score = metric(pred, test_y)
+                metric_score = metric(pred, target)
             else:
-                total_correct = (test_y == pred).sum().item()
-                test_size = len(test_y)
+                total_correct = (target == pred).sum().item()
+                test_size = len(target)
                 metric_score = total_correct / test_size
             return metric_score
