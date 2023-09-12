@@ -31,7 +31,8 @@ class GBDT:
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
 
-    def _tensor_frame_to_tensor(self, tf: TensorFrame) -> (Tensor, List[str]):
+    def _to_xgboost_input(self,
+                          tf: TensorFrame) -> (Tensor, Tensor, List[str]):
         r""" Convert :obj:`TensorFrame` into :obj:`Tensor`
 
         Args:
@@ -46,26 +47,27 @@ class GBDT:
                 <https://github.com/dmlc/xgboost/blob/master/doc/
                 tutorials/categorical.rst#using-native-interface>
         """
+        test_y = tf.y
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            out = torch.cat(
+            test_x = torch.cat(
                 (tf.x_dict[stype.numerical], tf.x_dict[stype.categorical]),
                 dim=1)
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
                 "c"
             ] * len(tf.col_names_dict[stype.categorical])
         elif stype.categorical in tf.x_dict:
-            out = tf.x_dict[stype.categorical]
+            test_x = tf.x_dict[stype.categorical]
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
         elif stype.numerical in tf.x_dict:
-            out = tf.x_dict[stype.numerical]
+            test_x = tf.x_dict[stype.numerical]
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return tuple([out, feature_types])
+        return tuple([test_x, test_y, feature_types])
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-              num_trials: int) -> None:
+              num_trials: int, *args, **kwargs) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -92,16 +94,6 @@ class GBDT:
         self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
         self._is_fitted = True
 
-    def __call__(self, tf_test: TensorFrame) -> float:
-        r""" Evaluate the trained model on the given test data.
-
-        Returns:
-            metric (float): The metric on test data, mean squared error
-                for regression task and accuracy for classification task.
-        """
-        preds = self.predict(tf_test)
-        return self.compute_metric(tf_test, preds)
-
     def predict(self, tf_test: TensorFrame) -> Tensor:
         r""" Predicts the label/result of the test data on the fitted model.
 
@@ -110,15 +102,18 @@ class GBDT:
                 model.
         """
         if not self.is_fitted:
-            raise RuntimeError(f"{self.__class__.__name__}' is not yet fitted."
-                               "Please run `tune()` first before attempting "
-                               "to predict.")
+            raise RuntimeError(
+                f"{self.__class__.__name__}' is not yet fitted. "
+                "Please run `tune()` first before attempting "
+                "to predict.")
         return self._predict(tf_test)
 
     def compute_metric(self, target: Union[TensorFrame, Tensor],
                        pred: Tensor) -> float:
-        r""" Computes evaluation metric given test labels
-            :obj:`Union[TensorFrame, Tensor]` and pred :obj:`Tensor`.
+        r""" Computes evaluation metric given test target labels
+                :obj:`Union[TensorFrame, Tensor]` and pred :obj:`Tensor`.
+                target can be a :obj:`Tensor` or :obj:`TensorFrame`; pred
+                is the prediction output from calling predict() function.
 
         Returns:
             metric (float): The metric on test data, mean squared error

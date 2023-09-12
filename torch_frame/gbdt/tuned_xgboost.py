@@ -92,10 +92,8 @@ class XGBoost(GBDT):
             study = optuna.create_study(direction="maximize")
         tf_train = tf_train.cpu()
         tf_val = tf_val.cpu()
-        train_x, train_ft = self._tensor_frame_to_tensor(tf_train)
-        train_y = tf_train.y
-        val_x, val_ft = self._tensor_frame_to_tensor(tf_val)
-        val_y = tf_val.y
+        train_x, train_y, train_ft = self._to_xgboost_input(tf_train)
+        val_x, val_y, val_ft = self._to_xgboost_input(tf_val)
         dtrain = xgboost.DMatrix(train_x, label=train_y,
                                  feature_types=train_ft,
                                  enable_categorical=True)
@@ -113,10 +111,11 @@ class XGBoost(GBDT):
                                    evals=[(dvalid, 'validation')])
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
+        device = (torch.device('cuda')
+                  if torch.cuda.is_available() else torch.device('cpu'))
         tf_test = tf_test.cpu()
-        test_x, test_ft = self._tensor_frame_to_tensor(tf_test)
-        test_y = tf_test.y
+        test_x, test_y, test_ft = self._to_xgboost_input(tf_test)
         dtest = xgboost.DMatrix(test_x, label=test_y, feature_types=test_ft,
                                 enable_categorical=True)
-        preds = self.model.predict(dtest)
-        return torch.from_numpy(preds)
+        pred = self.model.predict(dtest)
+        return torch.from_numpy(pred).to(device)
