@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -32,7 +32,7 @@ class GBDT:
         self._is_fitted: bool = False
 
     def _to_xgboost_input(self,
-                          tf: TensorFrame) -> (Tensor, Tensor, List[str]):
+                          tf: TensorFrame) -> Tuple[Tensor, Tensor, List[str]]:
         r""" Convert :obj:`TensorFrame` into XGBoost-compatible input
             (test_x, test_y, feat_types).
 
