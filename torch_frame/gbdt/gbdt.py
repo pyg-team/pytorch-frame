@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -110,12 +110,11 @@ class GBDT:
                 "to predict.")
         return self._predict(tf_test)
 
-    def compute_metric(self, target: Union[TensorFrame, Tensor],
-                       pred: Tensor) -> float:
+    def compute_metric(self, target: Tensor, pred: Tensor) -> float:
         r""" Computes evaluation metric given test target labels
-                :obj:`Union[TensorFrame, Tensor]` and pred :obj:`Tensor`.
-                target can be a :obj:`Tensor` or :obj:`TensorFrame`; pred
-                is the prediction output from calling predict() function.
+                :obj:`Tensor` and pred :obj:`Tensor`. Target contains
+                the target values or labels; pred contains the prediction
+                output from calling predict() function.
 
         Returns:
             metric (float): The metric on test data, mean squared error

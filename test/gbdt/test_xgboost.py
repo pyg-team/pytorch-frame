@@ -22,7 +22,7 @@ def test_xgboost(task_type):
     xgb.tune(tf_train=train_dataset.tensor_frame,
              tf_val=val_dataset.tensor_frame, num_trials=2, num_boost_round=2)
     pred = xgb.predict(tf_test=test_dataset.tensor_frame)
-    score = xgb.compute_metric(test_dataset.tensor_frame, pred)
+    score = xgb.compute_metric(test_dataset.tensor_frame.y, pred)
     if task_type == TaskType.REGRESSION:
         # score is mean squared error
         assert (score >= 0)
