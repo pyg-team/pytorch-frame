@@ -11,6 +11,15 @@ class TaskType(Enum):
     BINARY_CLASSIFICATION = 'binary_classification'
     MULTILABEL_CLASSIFICATION = 'multilabel_classification'
 
+    @property
+    def is_classification(self):
+        return self in (TaskType.BINARY_CLASSIFICATION,
+                        TaskType.MULTICLASS_CLASSIFICATION)
+
+    @property
+    def is_regression(self):
+        return self == TaskType.REGRESSION
+
 
 Series = pd.Series
 DataFrame = pd.DataFrame
