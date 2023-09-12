@@ -32,7 +32,7 @@ dependencies=[
     "pandas",
     "torch",
     "category_encoders",
-    "xgboost^1.7.0",
+    "xgboost>=1.7.0, <2.0.0",
     "optuna>=3.0.0",
 ]
 

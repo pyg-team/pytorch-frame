@@ -47,7 +47,7 @@ train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
 
 xgb = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
 xgb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
-         num_trials=100)
+         num_trials=10)
 pred = xgb.predict(tf_test=test_dataset.tensor_frame)
 score = xgb.compute_metric(test_dataset.tensor_frame, pred)
 print(f'Test acc: {score}')
