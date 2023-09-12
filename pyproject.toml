@@ -32,9 +32,7 @@ dependencies=[
     "pandas",
     "torch",
     "category_encoders",
-    # xgboost 2.0.0 was recently released. However, optuna has some bugs with xgboost 2.0.0.
-    # So we set the acceptable xgboost versions to be between 1.7.0 and 2.0.0(exclusive).
-    "xgboost=^1.7.0",
+    "xgboost^1.7.0",
     "optuna>=3.0.0",
 ]
 
