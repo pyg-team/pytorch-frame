@@ -7,8 +7,8 @@ MagicTelescope (B2): 85.31 (86.50)
 bank-marketing (B4): 79.81 (80.41)
 california (B5): 90.30 (89.71)
 credit (B7): 75.91 (77.4)
-pol (B14): 98.35 (97.5)
-jannis (mathcal B4): 78.28 (77.81)
+pol (B14): 98.35 (98.25)
+jannis (mathcal B4): 78.28 (78.27)
 """
 import argparse
 import os.path as osp

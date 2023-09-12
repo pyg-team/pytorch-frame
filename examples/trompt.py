@@ -12,7 +12,7 @@ pol (B14): 98.49 (98.82)
 jannis (mathcal B4): 79.54 (80.29)
 
 Reported results of Trompt model on Yandex dataset
-helena : 37.90
+helena : 38.36
 jannis : 72.98
 """
 
