@@ -10,13 +10,15 @@ california (B5): 89.09 (89.17)
 credit (B7): 75.84 (76.01)
 pol (B14): 98.49 (98.82)
 jannis (mathcal B4): 79.54 (80.29)
+
+Reported results of Trompt model on Yandex dataset
+helena : 37.90
+jannis : 72.98
 """
 
 import argparse
 import os.path as osp
-import random
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
@@ -37,13 +39,8 @@ parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-device = (torch.device('cuda')
-          if torch.cuda.is_available() else torch.device('cpu'))
-
-random.seed(args.seed)
-np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-torch.cuda.manual_seed_all(args.seed)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
@@ -80,11 +77,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 
-def train() -> float:
+def train(epoch: int) -> float:
     model.train()
-    loss_accum = 0
+    loss_accum = total_count = 0
 
-    for step, tf in enumerate(tqdm(train_loader)):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         # [batch_size, num_layers, num_classes]
         out = model(tf)
         num_layers = out.size(1)
@@ -95,24 +92,22 @@ def train() -> float:
         loss = F.cross_entropy(pred, y)
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss)
+        loss_accum += float(loss) * len(tf.y)
+        total_count += len(tf.y)
         optimizer.step()
     lr_scheduler.step()
-    return loss_accum / (step + 1)
+    return loss_accum / total_count
 
 
 @torch.no_grad()
-def eval(loader: DataLoader) -> float:
+def test(loader: DataLoader) -> float:
     model.eval()
-    accum = 0
-    total_count = 0
+    accum = total_count = 0
 
     for tf in loader:
-        # [batch_size, num_layers, num_classes]
-        out = model(tf)
-        # Mean pooling across layers
-        # [batch_size, num_layers, num_classes] -> [batch_size, num_classes]
-        pred = out.mean(dim=1)
+        out = model(tf)  # [batch_size, num_layers, num_classes]
+        # Mean pooling across layers:
+        pred = out.mean(dim=1)  # [batch_size, num_classes]
         pred_class = pred.argmax(dim=-1)
         accum += float((tf.y == pred_class).sum())
         total_count += len(tf.y)
@@ -122,16 +117,15 @@ def eval(loader: DataLoader) -> float:
 
 best_val_acc = 0
 best_test_acc = 0
-for epoch in range(args.epochs):
-    print(f"=====epoch {epoch}")
-    loss = train()
-    print(f'Train loss: {loss}')
-    train_acc = eval(train_loader)
-    val_acc = eval(val_loader)
-    test_acc = eval(test_loader)
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_acc = test(train_loader)
+    val_acc = test(val_loader)
+    test_acc = test(test_loader)
     if best_val_acc < val_acc:
         best_val_acc = val_acc
         best_test_acc = test_acc
-    print(f'Train acc: {train_acc}, val acc: {val_acc}, test acc: {test_acc}')
+    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
+          f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
 
-print(f'Best val acc: {best_val_acc}, best test acc: {best_test_acc}')
+print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
