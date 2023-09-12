@@ -29,6 +29,3 @@ def test_xgboost(task_type):
     else:
         # score is accuracy
         assert (0 <= score <= 1)
-
-
-test_xgboost(TaskType.BINARY_CLASSIFICATION)
