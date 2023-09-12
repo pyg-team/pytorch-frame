@@ -111,8 +111,7 @@ class XGBoost(GBDT):
                                    evals=[(dvalid, 'validation')])
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
-        device = (torch.device('cuda')
-                  if torch.cuda.is_available() else torch.device('cpu'))
+        device = tf_test.device
         tf_test = tf_test.cpu()
         test_x, test_y, test_ft = self._to_xgboost_input(tf_test)
         dtest = xgboost.DMatrix(test_x, label=test_y, feature_types=test_ft,
