@@ -33,14 +33,16 @@ class GBDT:
 
     def _to_xgboost_input(self,
                           tf: TensorFrame) -> (Tensor, Tensor, List[str]):
-        r""" Convert :obj:`TensorFrame` into :obj:`Tensor`
+        r""" Convert :obj:`TensorFrame` into XGBoost-compatible input
+            (test_x, test_y, feat_types).
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            out (Tensor): Output :obj:`Tensor` by concatenating tensors
+            test_x (Tensor): Output :obj:`Tensor` by concatenating tensors
                 of numerical and categorical features of the input
                 :obj:`TensorFrame`.
+            test_y (Tensor): Prediction target :obj:`Tensor`.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation
                 aligns with xgboost tutorial.

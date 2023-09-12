@@ -35,13 +35,11 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
-baseline=[
-    "xgboost>=1.7.0",
-    "optuna>=3.0.0",
-]
 test=[
     "pytest",
     "pytest-cov",
+    "xgboost>=1.7.0",
+    "optuna>=3.0.0",
 ]
 dev=[
     "torch_frame[test]",
