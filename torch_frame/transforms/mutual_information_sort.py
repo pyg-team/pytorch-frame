@@ -27,18 +27,19 @@ class MutualInformationSort(FittableBaseTransform):
             self.mi_func = mutual_info_regression
         else:
             raise ValueError(
-                f"'{self.__class__.__name__}' can be only used on binary "
+                "MutualInformationSort can be only used on binary "
                 "classification,  multiclass classification or regression "
                 f"task, but got {task_type}.")
 
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
-                "'{self.__class__.__name__}' cannot be used when target column"
+                "MutualInformationSort cannot be used when target column"
                 " is None.")
         if stype.categorical in tf_train.col_names_dict:
-            raise ValueError("The transform can be only used on TensorFrame"
-                             " with numerical only features.")
+            raise ValueError(
+                "MutualInformationSort can be only used on TensorFrame"
+                " with numerical only features.")
         mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]

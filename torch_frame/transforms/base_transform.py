@@ -1,20 +1,28 @@
 import copy
-from abc import ABC, abstractmethod
+from abc import ABC
+from typing import Union
+
+from torch import Tensor
+from torch.nn import Module
 
 from torch_frame import TensorFrame
 
 
-class BaseTransform(ABC):
+class BaseTransform(ABC, Module):
     r"""An abstract base class for writing transforms.
 
     Transforms are a general way to modify and customize
     :class:`TensorFrame`"""
-    def __call__(self, tf: TensorFrame) -> TensorFrame:
+    def __call__(self, tf: Union[TensorFrame,
+                                 Tensor]) -> Union[TensorFrame, Tensor]:
         # Shallow-copy the data so that we prevent in-place data modification.
-        return self.forward(copy.copy(tf))
+        if isinstance(tf, TensorFrame):
+            return self.forward(copy.copy(tf))
+        else:
+            return self.forward(tf)
 
-    @abstractmethod
-    def forward(self, tf: TensorFrame) -> TensorFrame:
+    def forward(self, tf: Union[TensorFrame,
+                                Tensor]) -> Union[TensorFrame, Tensor]:
         r"""Process TensorFrame obj into another TensorFrame obj.
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame`.

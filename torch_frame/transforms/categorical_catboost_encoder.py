@@ -1,5 +1,3 @@
-import logging
-
 import torch
 from category_encoders import CatBoostEncoder
 
@@ -15,12 +13,11 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:
             raise RuntimeError(
-                "'{self.__class__.__name__}' cannot be used when target column"
+                "CategoricalCatBoostEncoder cannot be used when target column"
                 " is None.")
         if stype.categorical not in tf_train.col_names_dict:
-            logging.info(
-                "The input TensorFrame does not contain any categorical "
-                "columns. No fitting will be performed.")
+            print("The input TensorFrame does not contain any categorical "
+                  "columns. No fitting will be performed.")
             return
         # TODO: Implement the CatBoostEncoder with Pytorch rather than relying
         # on external library.
@@ -37,9 +34,8 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical not in tf.col_names_dict:
-            logging.info(
-                "The input TensorFrame does not contain any categorical "
-                "columns. The original TensorFrame will be returned.")
+            print("The input TensorFrame does not contain any categorical "
+                  "columns. The original TensorFrame will be returned.")
             return tf
         # Converts the categorical columns of a :obj:`TensorFrame` into
         # :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
