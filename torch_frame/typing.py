@@ -21,6 +21,24 @@ class TaskType(Enum):
         return self == TaskType.REGRESSION
 
 
+class ImputingStrategy(Enum):
+    MEAN = 'mean'
+    MEDIAN = 'median'
+    MOST_FREQUENT = 'most_frequent'
+    ZEROS = 'zeros'
+
+    @property
+    def is_categorical_strategy(self):
+        return self in [ImputingStrategy.MOST_FREQUENT, ImputingStrategy.ZEROS]
+
+    @property
+    def is_numerical_strategy(self):
+        return self in [
+            ImputingStrategy.MEAN, ImputingStrategy.MEDIAN,
+            ImputingStrategy.ZEROS
+        ]
+
+
 Series = pd.Series
 DataFrame = pd.DataFrame
 

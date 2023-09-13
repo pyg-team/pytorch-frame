@@ -51,7 +51,7 @@ class MutualInformationSort(FittableBaseTransform):
             self.reordered_col_names[rank] = col
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
-        if tf.col_names_dict[stype.categorical]:
+        if stype.categorical in tf.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
 
