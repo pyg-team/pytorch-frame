@@ -16,6 +16,8 @@ class MutualInformationSort(FittableBaseTransform):
 
     Args:
         task_type (TaskType): The task type.
+        na_strategy (NAStrategy): Strategy used for imputing NaN values
+            in numerical features.
     """
     def __init__(self, task_type: TaskType,
                  na_strategy: NAStrategy = NAStrategy.MEAN):
@@ -39,13 +41,11 @@ class MutualInformationSort(FittableBaseTransform):
         self.na_strategy = na_strategy
 
     def _replace_nans(self, x: Tensor):
-        r"""Replace NaNs based on Imputing Strategy.
+        r"""Replace NaNs based on NAStrategy.
 
         Args:
             x (Tensor): Input :obj:`Tensor` whose NaN values are to be
                 replaced.
-            strategy (ImputingStrategy): Strategy used for imputing NaN values
-                in numerical features.
         Returns:
             x (Tensor): Output :obj:`Tensor` with NaN values replaced.
         """
