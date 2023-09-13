@@ -10,7 +10,6 @@ from torch_frame.transforms import FittableBaseTransform
 class CategoricalCatBoostEncoder(FittableBaseTransform):
     r"""Encode the categorical features of :class:`TensorFrame` using
         CatBoostEncoder.
-
     """
     def _fit(self, tf_train: TensorFrame):
         if tf_train.y is None:

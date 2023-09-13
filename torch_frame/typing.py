@@ -21,6 +21,21 @@ class TaskType(Enum):
         return self == TaskType.REGRESSION
 
 
+class NAStrategy(Enum):
+    r"""Strategy for dealing with NaN values in numerical columns."""
+    MEAN = 'mean'
+    MOST_FREQUENT = 'most_frequent'
+    ZEROS = 'zeros'
+
+    @property
+    def is_categorical_strategy(self):
+        return self in [NAStrategy.MOST_FREQUENT, NAStrategy.ZEROS]
+
+    @property
+    def is_numerical_strategy(self):
+        return self in [NAStrategy.MEAN, NAStrategy.ZEROS]
+
+
 Series = pd.Series
 DataFrame = pd.DataFrame
 
