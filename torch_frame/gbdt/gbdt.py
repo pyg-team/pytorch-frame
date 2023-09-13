@@ -55,9 +55,9 @@ class GBDT:
                 parameter search.
         """
         if tf_train.y is None:
-            raise RuntimeError("tf_train.y must be Tensor, but None given.")
+            raise RuntimeError("tf_train.y must be a Tensor, but None given.")
         if tf_val.y is None:
-            raise RuntimeError("tf_val.y must be Tensor, but None given.")
+            raise RuntimeError("tf_val.y must be a Tensor, but None given.")
         self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
         self._is_fitted = True
 
