@@ -61,9 +61,8 @@ class XGBoost(GBDT):
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
             x_cat = neg_to_nan(tf.x_dict[stype.categorical])
             test_x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
-            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
-                "c"
-            ] * len(tf.col_names_dict[stype.categorical])
+            feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
+                             ["c"] * len(tf.col_names_dict[stype.categorical]))
         elif stype.categorical in tf.x_dict:
             test_x = neg_to_nan(tf.x_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
