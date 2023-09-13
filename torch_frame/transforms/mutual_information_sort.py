@@ -39,7 +39,8 @@ class MutualInformationSort(FittableBaseTransform):
         if stype.categorical in tf_train.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
-        mi_scores = self.mi_func(tf_train.x_dict[stype.numerical], tf_train.y)
+        mi_scores = self.mi_func(tf_train.x_dict[stype.numerical].cpu(),
+                                 tf_train.y.cpu())
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]
         ranks = {col_names[self.mi_ranks[i]]: i for i in range(len(col_names))}
@@ -51,7 +52,7 @@ class MutualInformationSort(FittableBaseTransform):
             self.reordered_col_names[rank] = col
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
-        if tf.col_names_dict[stype.categorical]:
+        if stype.categorical in tf.col_names_dict:
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
 
