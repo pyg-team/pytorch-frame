@@ -60,8 +60,6 @@ class MissingValuesImputer(FittableBaseTransform):
                         "because column "
                         f"{tf_train.col_names_dict[col_type][col]}'s"
                         " data is invalid.")
-                elif num_nans == 0:
-                    continue
                 valid_data = column_data[~nan_mask]
                 if strategy == ImputingStrategy.MOST_FREQUENT:
                     unique_values, counts = valid_data.unique(
