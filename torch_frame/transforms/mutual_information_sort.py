@@ -33,7 +33,9 @@ class MutualInformationSort(FittableBaseTransform):
                 f"'{self.__class__.__name__}' can be only used on binary "
                 "classification,  multiclass classification or regression "
                 f"task, but got {task_type}.")
-
+        if not na_strategy.is_numerical_strategy:
+            raise RuntimeError(
+                f"Cannot use {na_strategy} for numerical features.")
         self.na_strategy = na_strategy
 
     def _replace_nans(self, x: Tensor):
