@@ -130,17 +130,17 @@ class GBDT:
         return self._predict(tf_test)
 
     @torch.no_grad()
-    def compute_metric(self, target: Tensor, pred: Tensor) -> Tensor:
+    def compute_metric(self, target: Tensor, pred: Tensor) -> float:
         r"""Computes evaluation metric given test target labels :obj:`Tensor`
         and pred :obj:`Tensor`. Target contains the target values or labels;
         pred contains the prediction output from calling `predict()` function.
 
         Returns:
-            metric (Tensor): The metric on test data, root mean squared error
+            metric (float): The metric on test data, root mean squared error
                 for regression task and accuracy for classification task.
         """
         if self.task_type == TaskType.REGRESSION:
-            metric_score = (pred - target).square().mean().sqrt()
+            metric_score = (pred - target).square().mean().sqrt().item()
         else:
             total_correct = (target == pred).sum().item()
             test_size = len(target)
