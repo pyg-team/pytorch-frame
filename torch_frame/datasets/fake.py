@@ -45,15 +45,20 @@ class FakeDataset(torch_frame.data.Dataset):
                 f" got {task_type}")
         if stype.numerical in stypes:
             for col_name in ['a', 'b', 'c']:
-                df_dict[col_name] = np.random.randn(num_rows)
+                arr = np.random.randn(num_rows)
+                if with_nan:
+                    arr[0::2] = np.nan
+                df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.numerical
         if stype.categorical in stypes:
             for col_name in ['x', 'y']:
-                df_dict[col_name] = np.random.randint(0, 3, size=(num_rows, ))
+                arr = np.random.randint(0, 3, size=(num_rows, ))
+                if with_nan:
+                    arr = arr.astype(np.float32)
+                    arr[1::2] = np.nan
+                df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
         df = pd.DataFrame(df_dict)
-        if with_nan:
-            df.iloc[0] = df.iloc[-1] = np.nan
         if create_split:
             # TODO: Instead of having a split column name with train, val and
             # test, we will implement `random_split` and `split_by_col`

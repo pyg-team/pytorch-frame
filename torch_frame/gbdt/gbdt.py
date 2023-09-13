@@ -1,19 +1,38 @@
+import copy
 from abc import abstractmethod
 from typing import List, Tuple
 
+import numpy as np
 import torch
-import torch.nn as nn
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame, stype
 
 
-class GBDT:
-    r"""Base class for GBDT (Gradient Boosting Decision Trees)
-            models used as strong baseline.
+def x_cat_neg_to_nan(x_cat: Tensor) -> Tensor:
+    r"""Convert -1 category back to NaN that can be handled by GBDT.
 
-        Args:
-            task_type (TaskType): The task type.
+    Args:
+        x_cat (Tensor): Input categorical feature, where `-1` represents `NaN`.
+
+    Returns:
+        x_cat (Tensor): Output categorical feature, where `-1` is replaced with
+            `NaN`
+    """
+
+    is_neg = x_cat == -1
+    if is_neg.any():
+        x_cat = copy.copy(x_cat).to(torch.float32)
+        x_cat[is_neg] = torch.nan
+    return x_cat
+
+
+class GBDT:
+    r"""Base class for GBDT (Gradient Boosting Decision Trees) models used as
+    strong baseline.
+
+    Args:
+        task_type (TaskType): The task type.
     """
     def __init__(self, task_type: TaskType):
         self.task_type = task_type
@@ -31,41 +50,42 @@ class GBDT:
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
 
-    def _to_xgboost_input(self,
-                          tf: TensorFrame) -> Tuple[Tensor, Tensor, List[str]]:
-        r""" Convert :obj:`TensorFrame` into XGBoost-compatible input
-            (test_x, test_y, feat_types).
+    def _to_xgboost_input(
+            self, tf: TensorFrame) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+        r"""Convert :obj:`TensorFrame` into GBDT-compatible input format:
+        :obj:`(test_x, test_y, feat_types)`.
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            test_x (Tensor): Output :obj:`Tensor` by concatenating tensors
-                of numerical and categorical features of the input
-                :obj:`TensorFrame`.
-            test_y (Tensor): Prediction target :obj:`Tensor`.
+            test_x (numpy.ndarray): Output :obj:`numpy.ndarray` by
+                concatenating tensors of numerical and categorical features of
+                the input :obj:`TensorFrame`.
+            test_y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation
                 aligns with xgboost tutorial.
                 <https://github.com/dmlc/xgboost/blob/master/doc/
                 tutorials/categorical.rst#using-native-interface>
         """
+        tf = tf.cpu()
         test_y = tf.y
+        assert test_y is not None
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            test_x = torch.cat(
-                (tf.x_dict[stype.numerical], tf.x_dict[stype.categorical]),
-                dim=1)
+            x_cat = x_cat_neg_to_nan(tf.x_dict[stype.categorical])
+            test_x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
                 "c"
             ] * len(tf.col_names_dict[stype.categorical])
         elif stype.categorical in tf.x_dict:
-            test_x = tf.x_dict[stype.categorical]
+            test_x = x_cat_neg_to_nan(tf.x_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
         elif stype.numerical in tf.x_dict:
             test_x = tf.x_dict[stype.numerical]
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return test_x, test_y, feature_types
+        return test_x.numpy(), test_y.numpy(), feature_types
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
@@ -83,9 +103,8 @@ class GBDT:
 
     def tune(self, tf_train: TensorFrame, tf_val: TensorFrame, num_trials: int,
              *args, **kwargs):
-        r""" Fit the model by performing hyperparameter tuning using Optuna.
-            The number of trials is specified by
-            num_trials.
+        r"""Fit the model by performing hyperparameter tuning using Optuna. The
+        number of trials is specified by num_trials.
 
         Args:
             tf_train (TensorFrame): The train data in :obt:`TensorFrame`.
@@ -97,7 +116,7 @@ class GBDT:
         self._is_fitted = True
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
-        r""" Predicts the label/result of the test data on the fitted model.
+        r"""Predicts the label/result of the test data on the fitted model.
 
         Returns:
             pred (Tensor): The prediction output :obj:`Tensor` on the fitted
@@ -110,22 +129,20 @@ class GBDT:
                 "to predict.")
         return self._predict(tf_test)
 
-    def compute_metric(self, target: Tensor, pred: Tensor) -> float:
-        r""" Computes evaluation metric given test target labels
-                :obj:`Tensor` and pred :obj:`Tensor`. Target contains
-                the target values or labels; pred contains the prediction
-                output from calling predict() function.
+    @torch.no_grad()
+    def compute_metric(self, target: Tensor, pred: Tensor) -> Tensor:
+        r"""Computes evaluation metric given test target labels :obj:`Tensor`
+        and pred :obj:`Tensor`. Target contains the target values or labels;
+        pred contains the prediction output from calling `predict()` function.
 
         Returns:
-            metric (float): The metric on test data, mean squared error
+            metric (Tensor): The metric on test data, root mean squared error
                 for regression task and accuracy for classification task.
         """
-        with torch.no_grad():
-            if self.task_type == TaskType.REGRESSION:
-                metric = nn.MSELoss()
-                metric_score = metric(pred, target)
-            else:
-                total_correct = (target == pred).sum().item()
-                test_size = len(target)
-                metric_score = total_correct / test_size
-            return metric_score
+        if self.task_type == TaskType.REGRESSION:
+            metric_score = (pred - target).square().mean().sqrt()
+        else:
+            total_correct = (target == pred).sum().item()
+            test_size = len(target)
+            metric_score = total_correct / test_size
+        return metric_score

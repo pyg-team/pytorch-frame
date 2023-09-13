@@ -20,13 +20,13 @@ class XGBoost(GBDT):
         r""" Objective function to be optimized.
 
         Args:
-            trial (Trial): Optuna trial.
+            trial (optuna.trial.Trial): Optuna trial object.
             dtrain (xgboost.DMatrix): Train data.
             dvalid (xgboost.DMatrix): Validation data.
             num_boost_round (int): Number of boosting round.
 
         Returns:
-            score (float): Best objective value. Mean squared error for
+            score (float): Best objective value. Root mean squared error for
                 regression task and accuracy for classification task.
         """
         self.params = {
@@ -90,8 +90,6 @@ class XGBoost(GBDT):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        tf_train = tf_train.cpu()
-        tf_val = tf_val.cpu()
         train_x, train_y, train_ft = self._to_xgboost_input(tf_train)
         val_x, val_y, val_ft = self._to_xgboost_input(tf_val)
         dtrain = xgboost.DMatrix(train_x, label=train_y,
@@ -112,7 +110,6 @@ class XGBoost(GBDT):
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
-        tf_test = tf_test.cpu()
         test_x, test_y, test_ft = self._to_xgboost_input(tf_test)
         dtest = xgboost.DMatrix(test_x, label=test_y, feature_types=test_ft,
                                 enable_categorical=True)

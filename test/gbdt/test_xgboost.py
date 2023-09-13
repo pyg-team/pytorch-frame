@@ -11,7 +11,7 @@ from torch_frame.gbdt import XGBoost
     TaskType.MULTICLASS_CLASSIFICATION
 ])
 def test_xgboost(task_type):
-    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    create_split=True, task_type=task_type)
     dataset.materialize()
@@ -24,7 +24,7 @@ def test_xgboost(task_type):
     pred = xgb.predict(tf_test=test_dataset.tensor_frame)
     score = xgb.compute_metric(test_dataset.tensor_frame.y, pred)
     if task_type == TaskType.REGRESSION:
-        # score is mean squared error
+        # score is root mean squared error
         assert (score >= 0)
     else:
         # score is accuracy
