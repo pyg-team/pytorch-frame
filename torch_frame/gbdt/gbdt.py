@@ -54,11 +54,15 @@ class GBDT:
             num_trials (int): Number of trials to perform hyper-
                 parameter search.
         """
+        if tf_train.y is None:
+            raise RuntimeError("tf_train.y must be Tensor, but None given.")
+        if tf_val.y is None:
+            raise RuntimeError("tf_val.y must be Tensor, but None given.")
         self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
         self._is_fitted = True
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
-        r"""Predicts the label/result of the test data on the fitted model.
+        r"""Predict the labels/values of the test data on the fitted model.
 
         Returns:
             pred (Tensor): The prediction output :obj:`Tensor` on the fitted
@@ -73,7 +77,7 @@ class GBDT:
 
     @torch.no_grad()
     def compute_metric(self, target: Tensor, pred: Tensor) -> float:
-        r"""Computes evaluation metric given test target labels :obj:`Tensor`
+        r"""Compute evaluation metric given test target labels :obj:`Tensor`
         and pred :obj:`Tensor`. Target contains the target values or labels;
         pred contains the prediction output from calling `predict()` function.
 
