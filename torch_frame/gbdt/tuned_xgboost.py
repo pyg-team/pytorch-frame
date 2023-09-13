@@ -1,11 +1,31 @@
+import copy
+from typing import List, Tuple
+
 import numpy as np
 import optuna
 import torch
 import xgboost
 from torch import Tensor
 
-from torch_frame import TaskType, TensorFrame
+from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
+
+
+def neg_to_nan(x: Tensor) -> Tensor:
+    r"""Convert -1 category back to NaN that can be handled by GBDT.
+
+    Args:
+        x (Tensor): Input categ. feature, where `-1` represents `NaN`.
+
+    Returns:
+        x (Tensor): Output categ. feature, where `-1` is replaced with `NaN`
+    """
+
+    is_neg = x == -1
+    if is_neg.any():
+        x = copy.copy(x).to(torch.float32)
+        x[is_neg] = torch.nan
+    return x
 
 
 class XGBoost(GBDT):
@@ -15,6 +35,45 @@ class XGBoost(GBDT):
     This implementation extends GradientBoostingDecisionTrees and aims to find
     optimal hyperparameters by optimizing the given objective function.
     """
+    def _to_xgboost_input(
+        self,
+        tf: TensorFrame,
+    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+        r"""Convert :obj:`TensorFrame` into XGBoost-compatible input format:
+        :obj:`(test_x, test_y, feat_types)`.
+
+        Args:
+            tf (Tensor Frame): Input :obj:TensorFrame object.
+        Returns:
+            test_x (numpy.ndarray): Output :obj:`numpy.ndarray` by
+                concatenating tensors of numerical and categorical features of
+                the input :obj:`TensorFrame`.
+            test_y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            feature_types (List[str]): List of feature types: "q" for numerical
+                features and "c" for categorical features. The abbreviation
+                aligns with xgboost tutorial.
+                <https://github.com/dmlc/xgboost/blob/master/doc/
+                tutorials/categorical.rst#using-native-interface>
+        """
+        tf = tf.cpu()
+        test_y = tf.y
+        assert test_y is not None
+        if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
+            x_cat = neg_to_nan(tf.x_dict[stype.categorical])
+            test_x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
+            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
+                "c"
+            ] * len(tf.col_names_dict[stype.categorical])
+        elif stype.categorical in tf.x_dict:
+            test_x = neg_to_nan(tf.x_dict[stype.categorical])
+            feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
+        elif stype.numerical in tf.x_dict:
+            test_x = tf.x_dict[stype.numerical]
+            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
+        else:
+            raise ValueError("The input TensorFrame object is empty.")
+        return test_x.numpy(), test_y.numpy(), feature_types
+
     def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
                   dvalid: xgboost.DMatrix, num_boost_round: int) -> float:
         r""" Objective function to be optimized.
