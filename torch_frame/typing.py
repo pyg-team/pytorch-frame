@@ -21,19 +21,10 @@ class TaskType(Enum):
         return self == TaskType.REGRESSION
 
 
-class ImputingStrategy(Enum):
+class NAStrategy(Enum):
+    r"""Strategy for dealing with NaN values in numerical columns."""
     MEAN = 'mean'
-    MEDIAN = 'median'
-    MOST_FREQUENT = 'most_frequent'
     ZEROS = 'zeros'
-
-    @property
-    def is_categorical_strategy(self):
-        return self in [ImputingStrategy.MOST_FREQUENT, ImputingStrategy.ZEROS]
-
-    @property
-    def is_numerical_strategy(self):
-        return self in [ImputingStrategy.MEAN, ImputingStrategy.ZEROS]
 
 
 Series = pd.Series
