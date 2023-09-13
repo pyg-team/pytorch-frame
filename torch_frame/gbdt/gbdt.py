@@ -9,22 +9,21 @@ from torch import Tensor
 from torch_frame import TaskType, TensorFrame, stype
 
 
-def x_cat_neg_to_nan(x_cat: Tensor) -> Tensor:
+def neg_to_nan(x: Tensor) -> Tensor:
     r"""Convert -1 category back to NaN that can be handled by GBDT.
 
     Args:
-        x_cat (Tensor): Input categorical feature, where `-1` represents `NaN`.
+        x (Tensor): Input categ. feature, where `-1` represents `NaN`.
 
     Returns:
-        x_cat (Tensor): Output categorical feature, where `-1` is replaced with
-            `NaN`
+        x (Tensor): Output categ. feature, where `-1` is replaced with `NaN`
     """
 
-    is_neg = x_cat == -1
+    is_neg = x == -1
     if is_neg.any():
-        x_cat = copy.copy(x_cat).to(torch.float32)
-        x_cat[is_neg] = torch.nan
-    return x_cat
+        x = copy.copy(x).to(torch.float32)
+        x[is_neg] = torch.nan
+    return x
 
 
 class GBDT:
@@ -72,13 +71,13 @@ class GBDT:
         test_y = tf.y
         assert test_y is not None
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            x_cat = x_cat_neg_to_nan(tf.x_dict[stype.categorical])
+            x_cat = neg_to_nan(tf.x_dict[stype.categorical])
             test_x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical]) + [
                 "c"
             ] * len(tf.col_names_dict[stype.categorical])
         elif stype.categorical in tf.x_dict:
-            test_x = x_cat_neg_to_nan(tf.x_dict[stype.categorical])
+            test_x = neg_to_nan(tf.x_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
         elif stype.numerical in tf.x_dict:
             test_x = tf.x_dict[stype.numerical]
