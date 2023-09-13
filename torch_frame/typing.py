@@ -33,10 +33,7 @@ class ImputingStrategy(Enum):
 
     @property
     def is_numerical_strategy(self):
-        return self in [
-            ImputingStrategy.MEAN, ImputingStrategy.MEDIAN,
-            ImputingStrategy.ZEROS
-        ]
+        return self in [ImputingStrategy.MEAN, ImputingStrategy.ZEROS]
 
 
 Series = pd.Series
