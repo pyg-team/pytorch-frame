@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch.nn import ReLU
 
-from torch_frame import NAStrategy, TaskType, stype
+from torch_frame import NAStrategy, stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -13,74 +13,6 @@ from torch_frame.nn import (
     LinearEncoder,
     LinearPeriodicEncoder,
 )
-
-
-@pytest.mark.parametrize('encoder_cls_kwargs', [
-    (LinearEncoder, {}),
-    (LinearEncoder, {
-        'na_strategy': NAStrategy.MEAN
-    }),
-])
-def test_numerical_stype_encoder_with_nans(encoder_cls_kwargs):
-    dataset: Dataset = FakeDataset(
-        num_rows=10, with_nan=True, stypes=[stype.numerical],
-        create_split=True, task_type=TaskType.MULTICLASS_CLASSIFICATION)
-    dataset.materialize()
-
-    tensor_frame = dataset.tensor_frame
-
-    stats_list = [
-        dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.numerical]
-    ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    **encoder_cls_kwargs[1])
-    x_num = tensor_frame.x_dict[stype.numerical]
-    nan_mask = torch.isnan(x_num)
-    strategy = encoder_cls_kwargs[1]
-    out = encoder._replace_nans(x_num)
-
-    # the output tensor does not contain any nans
-    assert (not torch.isnan(out).any())
-
-    # the output tensor are all 0's if strategy is NAStrategy.ZEROS
-    if strategy == NAStrategy.ZEROS:
-        assert torch.all(x_num[nan_mask] == 0.).item()
-
-
-@pytest.mark.parametrize('encoder_cls_kwargs', [
-    (EmbeddingEncoder, {
-        'na_strategy': NAStrategy.MOST_FREQUENT
-    }),
-    (EmbeddingEncoder, {
-        'na_strategy': NAStrategy.ZEROS
-    }),
-])
-def test_numerical_stype_encoder_with_nans(encoder_cls_kwargs):
-    dataset: Dataset = FakeDataset(
-        num_rows=10, with_nan=True, stypes=[stype.categorical],
-        create_split=True, task_type=TaskType.MULTICLASS_CLASSIFICATION)
-    dataset.materialize()
-
-    tensor_frame = dataset.tensor_frame
-
-    stats_list = [
-        dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.categorical]
-    ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    **encoder_cls_kwargs[1])
-    x_num = tensor_frame.x_dict[stype.categorical]
-    nan_mask = torch.isnan(x_num)
-    strategy = encoder_cls_kwargs[1]
-    out = encoder._replace_nans(x_num)
-
-    # the output tensor does not contain any nans
-    assert (not torch.isnan(out).any())
-
-    # the output tensor are all 0's if strategy is NAStrategy.ZEROS
-    if strategy == NAStrategy.ZEROS:
-        assert torch.all(x_num[nan_mask] == 0.).item()
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -180,7 +112,8 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     (LinearEncoder, {}),
     (LinearBucketEncoder, {}),
     (LinearPeriodicEncoder, {
-        'n_bins': 4
+        'n_bins': 4,
+        'na_strategy': NAStrategy.MEAN,
     }),
     (ExcelFormerEncoder, {}),
 ])
@@ -198,6 +131,7 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     isnan_mask = x_num.isnan()
     x = encoder(x_num)
     assert x.shape == (x_num.size(0), x_num.size(1), 8)
-    assert (x[isnan_mask, :] == 0).all()
+    # Make sure there's no NaNs in data
+    assert (not torch.isnan(x).any().item())
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()

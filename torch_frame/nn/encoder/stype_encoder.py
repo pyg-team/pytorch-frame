@@ -43,6 +43,17 @@ class StypeEncoder(Module, ABC):
                  stats_list: Optional[List[Dict[StatType, Any]]] = None,
                  post_module: Optional[Module] = None,
                  na_strategy: Optional[NAStrategy] = None):
+        if na_strategy is not None:
+            if (stype.numerical in type(self).supported_stypes
+                    and not na_strategy.is_numerical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on numerical columns.")
+            if (stype.categorical in type(self).supported_stypes
+                    and not na_strategy.is_categorical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on categorical"
+                    " columns.")
+
         super().__init__(out_channels, stats_list, post_module, na_strategy)
 
     @abstractmethod
@@ -73,7 +84,7 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
-    def _replace_nans(self, x: Tensor) -> Tensor:
+    def na_forward(self, x: Tensor) -> Tensor:
         r"""Replace NaN values in an :obj:`Tensor` given na_strategy.
 
         Args:
@@ -87,14 +98,6 @@ class StypeEncoder(Module, ABC):
         x = x.clone()
         col_type = stype.numerical if torch.is_floating_point(
             x) else stype.categorical
-        if (col_type == stype.numerical
-                and not self.na_strategy.is_numerical_strategy):
-            raise ValueError(
-                f"{self.na_strategy} cannot be used on numerical columns.")
-        if (col_type == stype.categorical
-                and not self.na_strategy.is_categorical_strategy):
-            raise ValueError(
-                f"{self.na_strategy} cannot be used on categorical columns.")
 
         for col in range(x.size(1)):
             column_data = x[:, col]
@@ -105,9 +108,7 @@ class StypeEncoder(Module, ABC):
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
-                valid_data = column_data[~nan_mask]
-                unique_values, counts = valid_data.unique(return_counts=True)
-                fill_value = unique_values[counts.argmax()]
+                fill_value = torch.tensor(0)
             elif self.na_strategy == NAStrategy.MEAN:
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
@@ -158,6 +159,7 @@ class EmbeddingEncoder(StypeEncoder):
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
+        x = super().na_forward(x)
         x = x + 1
 
         # x: [batch_size, num_cols]
@@ -207,6 +209,7 @@ class LinearEncoder(StypeEncoder):
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
+        x = super().na_forward(x)
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -215,7 +218,7 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        out = self._replace_nans(x)
+        out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
 
 
@@ -252,6 +255,7 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
+        x = super().na_forward(x)
         device = x.device  # Infer the device from input tensor 'x'
 
         # Move all tensors to the device where 'x' is
@@ -287,7 +291,7 @@ class LinearBucketEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        out = self._replace_nans(x)
+        out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
 
 
@@ -333,6 +337,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
     def forward(self, x: Tensor):
+        x = super().na_forward(x)
         x = (x - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -345,7 +350,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
-        out = self._replace_nans(x)
+        out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
 
 
@@ -398,11 +403,12 @@ class ExcelFormerEncoder(StypeEncoder):
         Returns:
             x (TensorFrame): [batch_size, num_cols, out_channels].
         """
+        x = super().na_forward(x)
         x = (x - self.mean) / self.std
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
         x = torch.tanh(x1) * x2
-        out = self._replace_nans(x)
+        out = torch.nan_to_num(x, nan=0)
         return self.post_forward(out)
 
     def reset_parameters(self):
