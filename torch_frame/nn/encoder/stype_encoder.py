@@ -74,6 +74,8 @@ class StypeEncoder(Module, ABC):
         return out
 
     def _replace_nan(self, x: Tensor) -> Tensor:
+        if self.na_strategy is None:
+            return x
         x = x.clone()
         col_type = stype.numerical if torch.is_floating_point(
             x) else stype.categorical
@@ -93,15 +95,13 @@ class StypeEncoder(Module, ABC):
             else:
                 nan_mask = (column_data == -1)
             if not nan_mask.any():
-                raise ValueError(
-                    f"Imputing value {self.na_strategy} cannot be "
-                    "computed because column data contains only NaNs.")
+                continue
             valid_data = column_data[~nan_mask]
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 unique_values, counts = valid_data.unique(return_counts=True)
                 fill_value = unique_values[counts.argmax()]
             elif self.na_strategy == NAStrategy.MEAN:
-                fill_value = valid_data.mean()
+                fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
                 fill_value = torch.tensor(0)
             column_data[nan_mask] = fill_value
@@ -119,7 +119,7 @@ class EmbeddingEncoder(StypeEncoder):
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
         post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = NAStrategy.MOST_FREQUENT,
+        na_strategy: Optional[NAStrategy] = None,
     ):
         super().__init__(out_channels, stats_list, post_module, na_strategy)
 
@@ -207,7 +207,7 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        out = torch.nan_to_num(x, nan=0)
+        out = self._replace_nan(x)
         return self.post_forward(out)
 
 
@@ -279,7 +279,7 @@ class LinearBucketEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        out = torch.nan_to_num(x, nan=0)
+        out = self._replace_nan(x)
         return self.post_forward(out)
 
 
@@ -337,7 +337,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
-        out = torch.nan_to_num(x, nan=0)
+        out = self._replace_nan(x)
         return self.post_forward(out)
 
 
@@ -394,7 +394,7 @@ class ExcelFormerEncoder(StypeEncoder):
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
         x = torch.tanh(x1) * x2
-        out = torch.nan_to_num(x, nan=0)
+        out = self._replace_nan(x)
         return self.post_forward(out)
 
     def reset_parameters(self):
