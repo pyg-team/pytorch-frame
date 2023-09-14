@@ -86,13 +86,14 @@ class StypeEncoder(Module, ABC):
         return out
 
     def na_forward(self, x: Tensor) -> Tensor:
-        r"""Replace NaN values in an :obj:`Tensor` given na_strategy.
+        r"""Replace NaN values in a x :obj:`Tensor` given na_strategy.
 
         Args:
             x (Tensor): Input :obj:`Tensor`.
 
         Returns:
-            x (Tensor): Output :obj:`Tensor` with NaNs replaced.
+            x (Tensor): Output :obj:`Tensor` with NaNs replaced given
+                na_strategy.
         """
         if self.na_strategy is None:
             return x
@@ -159,9 +160,6 @@ class EmbeddingEncoder(StypeEncoder):
         outputs non-learnable all-zero embedding for :obj:`NaN` category
         (specified as -1).
         """
-        # TODO: Make this more efficient.
-        # Increment the index by one so that NaN index (-1) becomes 0
-        # (padding_idx)
         x = self.na_forward(x)
         x = x + 1
 

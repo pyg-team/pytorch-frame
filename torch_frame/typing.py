@@ -29,7 +29,7 @@ class NAStrategy(Enum):
 
     @property
     def is_categorical_strategy(self):
-        return self in [NAStrategy.MOST_FREQUENT, NAStrategy.ZEROS]
+        return self == NAStrategy.MOST_FREQUENT
 
     @property
     def is_numerical_strategy(self):

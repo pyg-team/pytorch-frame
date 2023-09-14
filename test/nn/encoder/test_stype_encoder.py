@@ -110,7 +110,7 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     isnan_mask = x_cat == -1
     x = encoder(x_cat)
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
-    # Make sure there's no NaNs in data
+    # Make sure there's no NaNs in x
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert (x_cat[isnan_mask] == -1).all()
@@ -139,7 +139,7 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     isnan_mask = x_num.isnan()
     x = encoder(x_num)
     assert x.shape == (x_num.size(0), x_num.size(1), 8)
-    # Make sure there's no NaNs in data
+    # Make sure there's no NaNs in x
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()
