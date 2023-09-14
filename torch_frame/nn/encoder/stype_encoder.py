@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 import torch
 from torch import Tensor
@@ -35,26 +35,27 @@ class StypeEncoder(Module, ABC):
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
     """
-    supported_stypes: Set[stype] = {}
-    LAZY_ATTRS = {'out_channels', 'stats_list'}
+    LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
 
-    @abstractmethod
     def __init__(self, out_channels: Optional[int] = None,
                  stats_list: Optional[List[Dict[StatType, Any]]] = None,
+                 stype: Optional[stype] = None,
                  post_module: Optional[Module] = None,
                  na_strategy: Optional[NAStrategy] = None):
-        if na_strategy is not None:
-            if (stype.numerical in type(self).supported_stypes
-                    and not na_strategy.is_numerical_strategy):
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        if self.na_strategy is not None:
+            if (self.stype == stype.numerical
+                    and not self.na_strategy.is_numerical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on numerical columns.")
-            if (stype.categorical in type(self).supported_stypes
-                    and not na_strategy.is_categorical_strategy):
+            if (self.stype == stype.categorical
+                    and not self.na_strategy.is_categorical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
                     " columns.")
-
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
 
     @abstractmethod
     def forward(self, x: Tensor):
@@ -96,8 +97,7 @@ class StypeEncoder(Module, ABC):
         if self.na_strategy is None:
             return x
         x = x.clone()
-        col_type = stype.numerical if torch.is_floating_point(
-            x) else stype.categorical
+        col_type = self.stype
 
         for col in range(x.size(1)):
             column_data = x[:, col]
@@ -108,11 +108,11 @@ class StypeEncoder(Module, ABC):
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
-                fill_value = torch.tensor(0)
+                fill_value = 0
             elif self.na_strategy == NAStrategy.MEAN:
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
-                fill_value = torch.tensor(0)
+                fill_value = 0
             column_data[nan_mask] = fill_value
         return x
 
@@ -127,12 +127,15 @@ class EmbeddingEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         self.embs = ModuleList([])
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
@@ -159,7 +162,7 @@ class EmbeddingEncoder(StypeEncoder):
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
-        x = super().na_forward(x)
+        x = self.na_forward(x)
         x = x + 1
 
         # x: [batch_size, num_cols]
@@ -182,12 +185,15 @@ class LinearEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = NAStrategy.ZEROS,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -209,7 +215,7 @@ class LinearEncoder(StypeEncoder):
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
-        x = super().na_forward(x)
+        x = self.na_forward(x)
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -232,12 +238,15 @@ class LinearBucketEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = NAStrategy.ZEROS,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         # The min, 25th, 50th, 75th quantile, and max of the column.
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
@@ -255,7 +264,7 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
-        x = super().na_forward(x)
+        x = self.na_forward(x)
         device = x.device  # Infer the device from input tensor 'x'
 
         # Move all tensors to the device where 'x' is
@@ -311,14 +320,17 @@ class LinearPeriodicEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = NAStrategy.ZEROS,
+        na_strategy: Optional[NAStrategy] = None,
         n_bins: Optional[int] = 16,
     ):
         self.n_bins = n_bins
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -337,7 +349,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
     def forward(self, x: Tensor):
-        x = super().na_forward(x)
+        x = self.na_forward(x)
         x = (x - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -374,12 +386,15 @@ class ExcelFormerEncoder(StypeEncoder):
         self,
         out_channels: int,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = NAStrategy.ZEROS,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module, na_strategy)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -403,7 +418,7 @@ class ExcelFormerEncoder(StypeEncoder):
         Returns:
             x (TensorFrame): [batch_size, num_cols, out_channels].
         """
-        x = super().na_forward(x)
+        x = self.na_forward(x)
         x = (x - self.mean) / self.std
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]

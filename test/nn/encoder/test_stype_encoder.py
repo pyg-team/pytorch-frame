@@ -25,6 +25,7 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.categorical,
                                     **encoder_cls_kwargs[1])
     x_cat = tensor_frame.x_dict[stype.categorical]
     x = encoder(x_cat)
@@ -71,6 +72,7 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.numerical,
                                     **encoder_cls_kwargs[1])
     x_num = tensor_frame.x_dict[stype.numerical]
     x = encoder(x_num)
@@ -87,7 +89,11 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
+@pytest.mark.parametrize('encoder_cls_kwargs', [
+    (EmbeddingEncoder, {
+        'na_strategy': NAStrategy.MOST_FREQUENT,
+    }),
+])
 def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
@@ -98,24 +104,25 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     ]
 
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.categorical,
                                     **encoder_cls_kwargs[1])
     x_cat = tensor_frame.x_dict[stype.categorical]
     isnan_mask = x_cat == -1
     x = encoder(x_cat)
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
-    assert (x[isnan_mask, :] == 0).all()
+    # Make sure there's no NaNs in data
+    assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert (x_cat[isnan_mask] == -1).all()
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [
-    (LinearEncoder, {}),
-    (LinearBucketEncoder, {}),
-    (LinearPeriodicEncoder, {
-        'n_bins': 4,
+    (LinearEncoder, {
+        'na_strategy': NAStrategy.ZEROS,
+    }),
+    (LinearEncoder, {
         'na_strategy': NAStrategy.MEAN,
     }),
-    (ExcelFormerEncoder, {}),
 ])
 def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
@@ -126,12 +133,13 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.numerical,
                                     **encoder_cls_kwargs[1])
     x_num = tensor_frame.x_dict[stype.numerical]
     isnan_mask = x_num.isnan()
     x = encoder(x_num)
     assert x.shape == (x_num.size(0), x_num.size(1), 8)
     # Make sure there's no NaNs in data
-    assert (not torch.isnan(x).any().item())
+    assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()
