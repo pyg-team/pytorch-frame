@@ -38,7 +38,7 @@ def test_numerical_stype_encoder_with_nans(encoder_cls_kwargs):
     x_num = tensor_frame.x_dict[stype.numerical]
     nan_mask = torch.isnan(x_num)
     strategy = encoder_cls_kwargs[1]
-    out = encoder._replace_nan(x_num)
+    out = encoder._replace_nans(x_num)
 
     # the output tensor does not contain any nans
     assert (not torch.isnan(out).any())
@@ -73,7 +73,7 @@ def test_numerical_stype_encoder_with_nans(encoder_cls_kwargs):
     x_num = tensor_frame.x_dict[stype.categorical]
     nan_mask = torch.isnan(x_num)
     strategy = encoder_cls_kwargs[1]
-    out = encoder._replace_nan(x_num)
+    out = encoder._replace_nans(x_num)
 
     # the output tensor does not contain any nans
     assert (not torch.isnan(out).any())
@@ -201,9 +201,3 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (x[isnan_mask, :] == 0).all()
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()
-
-
-test_numerical_stype_encoder_with_nans(
-    [EmbeddingEncoder, {
-        'na_strategy': NAStrategy.MOST_FREQUENT
-    }])

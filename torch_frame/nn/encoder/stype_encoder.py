@@ -73,7 +73,15 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
-    def _replace_nan(self, x: Tensor) -> Tensor:
+    def _replace_nans(self, x: Tensor) -> Tensor:
+        r"""Replace NaN values in an :obj:`Tensor` given na_strategy.
+
+        Args:
+            x (Tensor): Input :obj:`Tensor`.
+
+        Returns:
+            x (Tensor): Output :obj:`Tensor` with NaNs replaced.
+        """
         if self.na_strategy is None:
             return x
         x = x.clone()
@@ -96,8 +104,8 @@ class StypeEncoder(Module, ABC):
                 nan_mask = (column_data == -1)
             if not nan_mask.any():
                 continue
-            valid_data = column_data[~nan_mask]
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
+                valid_data = column_data[~nan_mask]
                 unique_values, counts = valid_data.unique(return_counts=True)
                 fill_value = unique_values[counts.argmax()]
             elif self.na_strategy == NAStrategy.MEAN:
@@ -207,7 +215,7 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        out = self._replace_nan(x)
+        out = self._replace_nans(x)
         return self.post_forward(out)
 
 
@@ -279,7 +287,7 @@ class LinearBucketEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        out = self._replace_nan(x)
+        out = self._replace_nans(x)
         return self.post_forward(out)
 
 
@@ -337,7 +345,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
-        out = self._replace_nan(x)
+        out = self._replace_nans(x)
         return self.post_forward(out)
 
 
@@ -394,7 +402,7 @@ class ExcelFormerEncoder(StypeEncoder):
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
         x = torch.tanh(x1) * x2
-        out = self._replace_nan(x)
+        out = self._replace_nans(x)
         return self.post_forward(out)
 
     def reset_parameters(self):
