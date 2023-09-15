@@ -63,10 +63,6 @@ class StypeEncoder(Module, ABC):
                     " columns.")
 
     @abstractmethod
-    def forward(self, x: Tensor):
-        raise NotImplementedError
-
-    @abstractmethod
     def reset_parameters(self):
         r"""Initialize the parameters of `post_module`"""
         if self.post_module is not None:
@@ -75,6 +71,21 @@ class StypeEncoder(Module, ABC):
                     reset_parameters_soft(m)
             else:
                 reset_parameters_soft(self.post_module)
+
+    def forward(self, x: Tensor):
+        # NaN handling of the input Tensor
+        x = self.na_forward(x)
+        # Main encoding into column embeddings
+        x = self.encode_forward(x)
+        # Handle NaN in case na_strategy is None
+        x = torch.nan_to_num(x, nan=0)
+        # Post-forward (e.g., normalization, activation)
+        return self.post_forward(x)
+
+    @abstractmethod
+    def encode_forward(self, x: Tensor) -> Tensor:
+        r"""The main encode forward function."""
+        raise NotImplementedError
 
     def post_forward(self, out: Tensor) -> Tensor:
         r"""Post-forward function applied to :obj:`out` of shape
@@ -160,7 +171,7 @@ class EmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def forward(self, x: Tensor):
+    def encode_forward(self, x: Tensor) -> Tensor:
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
         outputs non-learnable all-zero embedding for :obj:`NaN` category
@@ -169,16 +180,14 @@ class EmbeddingEncoder(StypeEncoder):
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
-        x = self.na_forward(x)
         x = x + 1
-
         # x: [batch_size, num_cols]
         xs = []
         for i, emb in enumerate(self.embs):
             xs.append(emb(x[:, i]))
         # [batch_size, num_cols, hidden_channels]
         out = torch.stack(xs, dim=1)
-        return self.post_forward(out)
+        return out
 
 
 class LinearEncoder(StypeEncoder):
@@ -217,12 +226,11 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def forward(self, x: Tensor):
+    def encode_forward(self, x: Tensor) -> Tensor:
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
-        x = self.na_forward(x)
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -231,8 +239,7 @@ class LinearEncoder(StypeEncoder):
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        out = torch.nan_to_num(x, nan=0)
-        return self.post_forward(out)
+        return x
 
 
 class LinearBucketEncoder(StypeEncoder):
@@ -256,8 +263,10 @@ class LinearBucketEncoder(StypeEncoder):
         super().init_modules()
         # The min, 25th, 50th, 75th quantile, and max of the column.
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
-        self.boundaries = torch.tensor(quantiles)
-        self.interval = self.boundaries[:, 1:] - self.boundaries[:, :-1] + 1e-9
+        boundaries = torch.tensor(quantiles)
+        self.register_buffer('boundaries', boundaries)
+        self.register_buffer('interval',
+                             boundaries[:, 1:] - boundaries[:, :-1] + 1e-8)
         num_cols = len(self.stats_list)
         self.weight = Parameter(
             torch.empty(num_cols, self.interval.shape[-1], self.out_channels))
@@ -270,16 +279,7 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def forward(self, x: Tensor):
-        x = self.na_forward(x)
-        device = x.device  # Infer the device from input tensor 'x'
-
-        # Move all tensors to the device where 'x' is
-        self.boundaries = self.boundaries.to(device)
-        self.interval = self.interval.to(device)
-        self.weight = self.weight.to(device)
-        self.bias = self.bias.to(device)
-
+    def encode_forward(self, x: Tensor) -> Tensor:
         encoded_values = []
         for i in range(x.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
@@ -307,8 +307,7 @@ class LinearBucketEncoder(StypeEncoder):
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
         x = x_lin + self.bias
-        out = torch.nan_to_num(x, nan=0)
-        return self.post_forward(out)
+        return x
 
 
 class LinearPeriodicEncoder(StypeEncoder):
@@ -355,8 +354,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_in, std=0.01)
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
-    def forward(self, x: Tensor):
-        x = self.na_forward(x)
+    def encode_forward(self, x: Tensor) -> Tensor:
         x = (x - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -369,8 +367,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
         x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
-        out = torch.nan_to_num(x, nan=0)
-        return self.post_forward(out)
+        return x
 
 
 class ExcelFormerEncoder(StypeEncoder):
@@ -415,7 +412,7 @@ class ExcelFormerEncoder(StypeEncoder):
         self.b_2 = Parameter(Tensor(num_cols, self.out_channels))
         self.reset_parameters()
 
-    def forward(self, x: Tensor) -> Tensor:
+    def encode_forward(self, x: Tensor) -> Tensor:
         r"""Transforming :obj:`x` into output embeddings.
 
         Args:
@@ -425,13 +422,11 @@ class ExcelFormerEncoder(StypeEncoder):
         Returns:
             x (TensorFrame): [batch_size, num_cols, out_channels].
         """
-        x = self.na_forward(x)
         x = (x - self.mean) / self.std
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
         x = torch.tanh(x1) * x2
-        out = torch.nan_to_num(x, nan=0)
-        return self.post_forward(out)
+        return x
 
     def reset_parameters(self):
         super().reset_parameters()
