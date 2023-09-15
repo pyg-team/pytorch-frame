@@ -173,7 +173,7 @@ for epoch in range(1, args.epochs + 1):
     if is_classification and val_metric > best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
-    elif val_metric < best_val_metric:
+    elif not is_classification and val_metric < best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
 
