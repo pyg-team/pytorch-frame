@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Optional
 
 import torch
 from torch import Tensor
@@ -12,8 +13,11 @@ class GBDT:
 
     Args:
         task_type (TaskType): The task type.
+        num_classes (int, optional): If the task is multiclass classification,
+            an optional num_classes can be used to specify the number of
+            classes. Otherwise, we infer the value from the train data.
     """
-    def __init__(self, task_type: TaskType):
+    def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
         self.task_type = task_type
         if task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.obj = "multi:softmax"
@@ -28,6 +32,7 @@ class GBDT:
             raise ValueError(
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
+        self._num_classes = num_classes
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,

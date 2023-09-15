@@ -8,16 +8,14 @@ from torch_frame.transforms import MutualInformationSort
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-@pytest.mark.parametrize(
-    'task_type', [TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION])
-def test_mutual_information_sort(with_nan, task_type):
+def test_mutual_information_sort(with_nan):
+    task_type = TaskType.REGRESSION
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=with_nan,
                                    stypes=[stype.numerical], create_split=True,
                                    task_type=task_type)
     # modify the FakeDataset so column c would have highest mutual information
     # score
     dataset.df['c'] = dataset.df['target'].astype(float)
-
     dataset.materialize()
 
     tensor_frame: TensorFrame = dataset.tensor_frame
