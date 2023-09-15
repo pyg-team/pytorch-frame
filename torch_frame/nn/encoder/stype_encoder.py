@@ -35,7 +35,7 @@ class StypeEncoder(Module, ABC):
             output, such as activation function and normalization. Must
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
-        na_strategy (Optional[NAStrategy]): The strategy for imputing NaN
+        na_strategy (NAStrategy, optional): The strategy for imputing NaN
             values. If na_strategy is None, then it outputs non-learnable
             all-zero embedding for :obj:`NaN` category.
     """
