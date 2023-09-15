@@ -32,8 +32,7 @@ class GBDT:
             raise ValueError(
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
-        if num_classes is not None:
-            self.num_classes = num_classes
+        self.num_classes = num_classes
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
