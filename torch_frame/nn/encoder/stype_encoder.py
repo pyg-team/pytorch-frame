@@ -30,10 +30,14 @@ class StypeEncoder(Module, ABC):
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
+        stype (stype): The stype of the encoder.
         post_module (Module, optional): The posthoc module applied to the
             output, such as activation function and normalization. Must
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
+        na_strategy (Optional[NAStrategy]): The strategy for imputing NaN
+            values. If na_strategy is None, then it outputs non-learnable
+            all-zero embedding for :obj:`NaN` category.
     """
     LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
 
@@ -98,17 +102,18 @@ class StypeEncoder(Module, ABC):
         if self.na_strategy is None:
             return x
         x = x.clone()
-        col_type = self.stype
 
         for col in range(x.size(1)):
             column_data = x[:, col]
-            if col_type == stype.numerical:
+            if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data)
             else:
                 nan_mask = (column_data == -1)
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
+                # Categorical index is sorted based on count,
+                # so 0-th index is always the most frequent.
                 fill_value = 0
             elif self.na_strategy == NAStrategy.MEAN:
                 fill_value = self.stats_list[col][StatType.MEAN]
@@ -158,8 +163,11 @@ class EmbeddingEncoder(StypeEncoder):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
         outputs non-learnable all-zero embedding for :obj:`NaN` category
-        (specified as -1).
+        (specified as -1) unless a NAStrategy is specified.
         """
+        # TODO: Make this more efficient.
+        # Increment the index by one so that NaN index (-1) becomes 0
+        # (padding_idx)
         x = self.na_forward(x)
         x = x + 1
 
