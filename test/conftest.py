@@ -1,10 +1,16 @@
 from typing import Callable
 
+import numpy as np
 import pytest
 import torch
 
 import torch_frame
 from torch_frame import TensorFrame
+
+
+@pytest.fixture
+def random():
+    np.random.seed(0)
 
 
 @pytest.fixture()

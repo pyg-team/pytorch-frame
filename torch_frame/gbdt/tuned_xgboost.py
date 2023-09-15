@@ -131,7 +131,9 @@ class XGBoost(GBDT):
         pruning_callback = optuna.integration.XGBoostPruningCallback(
             trial, f"validation-{self.eval_metric}")
         if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            self.params["num_class"] = len(np.unique(dtrain.get_label()))
+            self.params["num_class"] = (self.num_classes if self.num_classes
+                                        is not None else len(
+                                            np.unique(dtrain.get_label())))
         boost = xgboost.train(self.params, dtrain,
                               num_boost_round=num_boost_round,
                               early_stopping_rounds=50, verbose_eval=False,

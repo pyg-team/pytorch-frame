@@ -18,7 +18,7 @@ def test_xgboost(task_type):
     train_dataset = dataset.get_split_dataset('train')
     val_dataset = dataset.get_split_dataset('val')
     test_dataset = dataset.get_split_dataset('test')
-    xgb = XGBoost(task_type=task_type)
+    xgb = XGBoost(task_type=task_type, num_classes=dataset.num_classes)
     xgb.tune(tf_train=train_dataset.tensor_frame,
              tf_val=val_dataset.tensor_frame, num_trials=2, num_boost_round=2)
     pred = xgb.predict(tf_test=test_dataset.tensor_frame)
