@@ -13,7 +13,7 @@ class GBDT:
 
     Args:
         task_type (TaskType): The task type.
-        num_classes (Optional[int]): If the task is multiclass classification,
+        num_classes (int, optional): If the task is multiclass classification,
             an optional num_classes can be used to specify the number of
             classes. Otherwise, we infer the value from the train data.
     """
@@ -32,7 +32,7 @@ class GBDT:
             raise ValueError(
                 f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
-        self.num_classes = num_classes
+        self._num_classes = num_classes
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
