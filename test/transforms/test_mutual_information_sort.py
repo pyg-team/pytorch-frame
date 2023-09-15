@@ -17,7 +17,6 @@ def test_mutual_information_sort(with_nan, task_type):
     # modify the FakeDataset so column c would have highest mutual information
     # score
     dataset.df['c'] = dataset.df['target'].astype(float)
-    print(dataset.df)
     dataset.materialize()
 
     tensor_frame: TensorFrame = dataset.tensor_frame
