@@ -15,7 +15,12 @@ from torch_frame.data.mapper import (
     NumericalTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.typing import ColumnSelectType, DataFrame, IndexSelectType
+from torch_frame.typing import (
+    ColumnSelectType,
+    DataFrame,
+    IndexSelectType,
+    TaskType,
+)
 
 
 def requires_pre_materialization(func):
@@ -50,16 +55,36 @@ class Dataset(ABC):
         col_to_stype (Dict[str, torch_frame.stype]): A dictionary that maps
             each column in the data frame to a semantic type.
         target_col (str, optional): The column used as target.
+            (default: :obj:`None`)
+        split_col (str, optional): The column that stores the pre-defined split
+            information. The column should only contain 'train', 'val', or
+            'test'. (default: :obj:`None`).
     """
     def __init__(
         self,
         df: DataFrame,
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
+        split_col: Optional[str] = None,
     ):
         self.df = df
         self.col_to_stype = col_to_stype
         self.target_col = target_col
+
+        if split_col is not None:
+            if split_col not in df.columns:
+                raise ValueError(
+                    f"Given split_col ({split_col}) does not match columns of "
+                    f"the given df.")
+            if split_col in col_to_stype:
+                raise ValueError(
+                    f"col_to_stype should not contain the split_col "
+                    f"({self.col_to_stype}).")
+            if not set(df[split_col]).issubset({'train', 'val', 'test'}):
+                raise ValueError(
+                    "split_col must only contain either 'train', 'val', or "
+                    "'test'.")
+        self.split_col = split_col
 
         cols = self.feat_cols + ([] if target_col is None else [target_col])
         missing_cols = set(cols) - set(df.columns)
@@ -115,6 +140,11 @@ class Dataset(ABC):
         if self.target_col is not None:
             cols.remove(self.target_col)
         return cols
+
+    @property
+    def task_type(self) -> TaskType:
+        r"""The task type of the dataset."""
+        raise NotImplementedError
 
     @property
     @requires_post_materialization
@@ -261,17 +291,17 @@ class Dataset(ABC):
         return dataset
 
     def get_split_dataset(self, split: str) -> 'Dataset':
-        r"""Get splitted dataset defined in the 'split' column of
-        :obj:`self.df`.
+        r"""Get splitted dataset defined in `split_col` of :obj:`self.df`.
 
         Args:
             split (str): The split name. Should be 'train', 'val', or 'test'.
         """
+        if self.split_col is None:
+            raise ValueError(
+                f"'get_split_dataset' is not supported for {self} "
+                "since 'split_col' is not specified.")
         if split not in ['train', 'val', 'test']:
             raise ValueError(f"The split named {split} is not available. "
                              f"Needs to either 'train', 'val', or 'test'.")
-        if 'split' not in self.df:
-            raise ValueError(
-                f"'get_split_dataset' is not supported for {self}.")
-        indices = self.df.index[self.df['split'] == split].tolist()
+        indices = self.df.index[self.df[self.split_col] == split].tolist()
         return self[indices]

@@ -17,9 +17,7 @@ california_housing 0.486 (0.523)
 """
 import argparse
 import os.path as osp
-import random
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -38,14 +36,10 @@ from torch_frame.nn import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='adult')
-parser.add_argument(
-    '--numerical_encoder_type', type=str, default='linear',
-    choices=['linear', 'linearbucket', 'linearperiodic'],
-    help='''The numerical encoder type to use: "linear",
-    "linearbucket" or "linearperiodic".''')
+parser.add_argument('--numerical_encoder_type', type=str, default='linear',
+                    choices=['linear', 'linearbucket', 'linearperiodic'])
 parser.add_argument('--model_type', type=str, default='fttransformer',
-                    choices=['fttransformer', 'resnet'],
-                    help='The model type to use: "fttransformer" or "resnet".')
+                    choices=['fttransformer', 'resnet'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
@@ -54,19 +48,15 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-device = (torch.device('cuda')
-          if torch.cuda.is_available() else torch.device('cpu'))
-random.seed(args.seed)
-np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-torch.cuda.manual_seed_all(args.seed)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-is_classification = args.dataset in dataset.classification_datasets
+is_classification = dataset.task_type.is_classification
 
 train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
@@ -124,11 +114,11 @@ else:
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
-def train() -> float:
+def train(epoch: int) -> float:
     model.train()
-    loss_accum = 0
+    loss_accum = total_count = 0
 
-    for step, tf in enumerate(tqdm(train_loader)):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         pred = model(tf)
         if is_classification:
             loss = F.cross_entropy(pred, tf.y)
@@ -136,65 +126,59 @@ def train() -> float:
             loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss)
+        loss_accum += float(loss) * len(tf.y)
+        total_count += len(tf.y)
         optimizer.step()
-    return loss_accum / (step + 1)
+    return loss_accum / total_count
 
 
 @torch.no_grad()
-def eval(loader: DataLoader) -> dict:
+def test(loader: DataLoader) -> float:
     model.eval()
-    total_loss = 0
-    total_count = 0
-    is_correct = []
+    accum = total_count = 0
 
     for tf in loader:
         pred = model(tf)
         if is_classification:
             pred_class = pred.argmax(dim=-1)
-            is_correct.append((tf.y == pred_class).detach().cpu())
+            accum += float((tf.y == pred_class).sum())
         else:
-            total_loss += float(
+            accum += float(
                 F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
-            total_count += len(tf.y)
+        total_count += len(tf.y)
+
     if is_classification:
-        is_correct_cat = torch.cat(is_correct)
-        accuracy = float(is_correct_cat.sum()) / len(is_correct_cat)
-        return {"accuracy": accuracy}
+        accuracy = accum / total_count
+        return accuracy
     else:
-        rmse = (total_loss / total_count)**0.5
-        return {"rmse": rmse}
+        rmse = (accum / total_count)**0.5
+        return rmse
 
 
 if is_classification:
+    metric = 'Acc'
     best_val_metric = 0
     best_test_metric = 0
 else:
+    metric = 'RMSE'
     best_val_metric = float('inf')
     best_test_metric = float('inf')
 
-for epoch in range(args.epochs):
-    print(f"=====epoch {epoch}")
-    loss = train()
-    print(f'Train loss: {loss}')
-    train_metrics = eval(train_loader)
-    val_metrics = eval(val_loader)
-    test_metrics = eval(test_loader)
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_metric = test(train_loader)
+    val_metric = test(val_loader)
+    test_metric = test(test_loader)
 
-    if is_classification:
-        metric_name = "accuracy"
-        if val_metrics[metric_name] > best_val_metric:
-            best_val_metric = val_metrics[metric_name]
-            best_test_metric = test_metrics[metric_name]
-    else:
-        metric_name = "rmse"
-        if val_metrics[metric_name] < best_val_metric:
-            best_val_metric = val_metrics[metric_name]
-            best_test_metric = test_metrics[metric_name]
+    if is_classification and val_metric > best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+    elif val_metric < best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
 
-    print(f'Train {metric_name}: {train_metrics[metric_name]}, '
-          f'val {metric_name}: {val_metrics[metric_name]}, '
-          f'test {metric_name}: {test_metrics[metric_name]}')
+    print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
+          f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
 
-print(f'Best val {metric_name}: {best_val_metric}, '
-      f'best test {metric_name}: {best_test_metric}')
+print(f'Best Val {metric}: {best_val_metric:.4f}, '
+      f'Best Test {metric}: {best_test_metric:.4f}')

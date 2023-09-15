@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
-from torch_frame import stype
+from torch_frame import NAStrategy, stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
 
@@ -30,22 +30,37 @@ class StypeEncoder(Module, ABC):
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
+        stype (stype): The stype of the encoder input.
         post_module (Module, optional): The posthoc module applied to the
             output, such as activation function and normalization. Must
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
+        na_strategy (NAStrategy, optional): The strategy for imputing NaN
+            values. If na_strategy is None, then it outputs non-learnable
+            all-zero embedding for :obj:`NaN` category. (default: :obj:`None`)
     """
     supported_stypes: Set[stype] = {}
-    LAZY_ATTRS = {'out_channels', 'stats_list'}
+    LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
 
-    @abstractmethod
-    def __init__(
-        self,
-        out_channels: Optional[int] = None,
-        stats_list: Optional[List[Dict[StatType, Any]]] = None,
-        post_module: Optional[Module] = None,
-    ):
-        super().__init__(out_channels, stats_list, post_module)
+    def __init__(self, out_channels: Optional[int] = None,
+                 stats_list: Optional[List[Dict[StatType, Any]]] = None,
+                 stype: Optional[stype] = None,
+                 post_module: Optional[Module] = None,
+                 na_strategy: Optional[NAStrategy] = None):
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        if self.na_strategy is not None:
+            if (self.stype == stype.numerical
+                    and not self.na_strategy.is_numerical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on numerical columns.")
+            if (self.stype == stype.categorical
+                    and not self.na_strategy.is_categorical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on categorical"
+                    " columns.")
 
     @abstractmethod
     def forward(self, x: Tensor):
@@ -75,6 +90,39 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
+    def na_forward(self, x: Tensor) -> Tensor:
+        r"""Replace NaN values in a x :obj:`Tensor` given na_strategy.
+
+        Args:
+            x (Tensor): Input :obj:`Tensor`.
+
+        Returns:
+            x (Tensor): Output :obj:`Tensor` with NaNs replaced given
+                na_strategy.
+        """
+        if self.na_strategy is None:
+            return x
+        x = x.clone()
+
+        for col in range(x.size(1)):
+            column_data = x[:, col]
+            if self.stype == stype.numerical:
+                nan_mask = torch.isnan(column_data)
+            else:
+                nan_mask = (column_data == -1)
+            if not nan_mask.any():
+                continue
+            if self.na_strategy == NAStrategy.MOST_FREQUENT:
+                # Categorical index is sorted based on count,
+                # so 0-th index is always the most frequent.
+                fill_value = 0
+            elif self.na_strategy == NAStrategy.MEAN:
+                fill_value = self.stats_list[col][StatType.MEAN]
+            elif self.na_strategy == NAStrategy.ZEROS:
+                fill_value = 0
+            column_data[nan_mask] = fill_value
+        return x
+
 
 class EmbeddingEncoder(StypeEncoder):
     r"""Embedding look-up based encoder for categorical features. It applies
@@ -86,11 +134,15 @@ class EmbeddingEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         self.embs = ModuleList([])
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
@@ -112,11 +164,12 @@ class EmbeddingEncoder(StypeEncoder):
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
         into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
         outputs non-learnable all-zero embedding for :obj:`NaN` category
-        (specified as -1).
+        (specified as -1) unless a NAStrategy is specified.
         """
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
+        x = self.na_forward(x)
         x = x + 1
 
         # x: [batch_size, num_cols]
@@ -139,11 +192,15 @@ class LinearEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -165,6 +222,7 @@ class LinearEncoder(StypeEncoder):
         into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
+        x = self.na_forward(x)
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -187,11 +245,15 @@ class LinearBucketEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         # The min, 25th, 50th, 75th quantile, and max of the column.
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         self.boundaries = torch.tensor(quantiles)
@@ -209,6 +271,7 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x: Tensor):
+        x = self.na_forward(x)
         device = x.device  # Infer the device from input tensor 'x'
 
         # Move all tensors to the device where 'x' is
@@ -264,13 +327,17 @@ class LinearPeriodicEncoder(StypeEncoder):
         self,
         out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
         n_bins: Optional[int] = 16,
     ):
         self.n_bins = n_bins
-        super().__init__(out_channels, stats_list, post_module)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -289,6 +356,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
     def forward(self, x: Tensor):
+        x = self.na_forward(x)
         x = (x - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -325,11 +393,15 @@ class ExcelFormerEncoder(StypeEncoder):
         self,
         out_channels: int,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
     ):
-        super().__init__(out_channels, stats_list, post_module)
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
 
     def init_modules(self):
+        super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
         self.register_buffer('mean', mean)
@@ -353,6 +425,7 @@ class ExcelFormerEncoder(StypeEncoder):
         Returns:
             x (TensorFrame): [batch_size, num_cols, out_channels].
         """
+        x = self.na_forward(x)
         x = (x - self.mean) / self.std
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
