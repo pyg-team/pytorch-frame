@@ -30,14 +30,14 @@ class StypeEncoder(Module, ABC):
         out_channels (int): The output channel dimensionality
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
-        stype (stype): The stype of the encoder.
+        stype (stype): The stype of the encoder input.
         post_module (Module, optional): The posthoc module applied to the
             output, such as activation function and normalization. Must
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
         na_strategy (Optional[NAStrategy]): The strategy for imputing NaN
             values. If na_strategy is None, then it outputs non-learnable
-            all-zero embedding for :obj:`NaN` category.
+            all-zero embedding for :obj:`NaN` category. (default: :obj:`None`)
     """
     supported_stypes: Set[stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
