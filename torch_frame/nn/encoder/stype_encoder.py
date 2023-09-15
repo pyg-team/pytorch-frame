@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
@@ -39,6 +39,7 @@ class StypeEncoder(Module, ABC):
             values. If na_strategy is None, then it outputs non-learnable
             all-zero embedding for :obj:`NaN` category.
     """
+    supported_stypes: Set[stype] = {}
     LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
 
     def __init__(self, out_channels: Optional[int] = None,
