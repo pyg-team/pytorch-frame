@@ -43,14 +43,16 @@ class CatBoost(GBDT):
             trial.suggest_int("depth", 3, 11),
             "boosting_type":
             trial.suggest_categorical("boosting_type", ["Ordered", "Plain"]),
-            "bootstrap_type":
-            "Bayesian",
+            "bagging_temperature":
+            trial.suggest_float("bagging_temperature", 0, 1),
             "colsample_bylevel":
             trial.suggest_float("colsample_bylevel", 0.01, 0.1),
             "leaf_estimation_iterations":
             trial.suggest_int("leaf_estimation_iterations", 1, 11),
             "l2_leaf_reg":
-            trial.suggest_float("l2_leaf_reg", 1, 11, log=True)
+            trial.suggest_float("l2_leaf_reg", 1, 11, log=True),
+            "eta":
+            trial.suggest_float("eta", 1e-6, 1.0, log=True),
         }
         if self.task_type == TaskType.REGRESSION:
             self.params["objective"] = trial.suggest_categorical(
@@ -72,9 +74,6 @@ class CatBoost(GBDT):
                 "objective", ["MultiLogloss", "MultiCrossEntropy"])
             self.params["eval_metric"] = trial.suggest_categorical(
                 "eval_metric", ["MultiLogloss", "MultiCrossEntropy"])
-        if self.params["bootstrap_type"] == "Bayesian":
-            self.params["bagging_temperature"] = trial.suggest_float(
-                "bagging_temperature", 0, 1)
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
         eval_x, eval_y, _ = self._to_catboost_input(tf_val)
         boost = catboost.CatBoost(self.params)
