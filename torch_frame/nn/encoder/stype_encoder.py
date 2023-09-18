@@ -153,8 +153,37 @@ class StypeEncoder(Module, ABC):
 class ColumnEncoder(StypeEncoder):
     supported_stypes = {stype.categorical}
 
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+    ):
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        num_categories = []
+        num_special_tokens = 2
+        for stats in self.stats_list:
+            num_categories.append(len(stats[StatType.COUNT][0]))
+        total_categories = sum(num_categories)
+        if total_categories > 0:
+            offset = F.pad(torch.tensor(num_categories), (1, 0),
+                           value=num_special_tokens)
+            offset = offset.cumsum(dim=-1)[:-1]
+            self.register_buffer('categories_offset', offset)
+
+    def reset_parameters(self):
+        return super().reset_parameters(self)
+
+    def encode_forward(self, x: Tensor) -> Tensor:
+        if self.offset:
+            x += self.offset
+        return x
 
 
 class ColumnEncoder(StypeEncoder):
