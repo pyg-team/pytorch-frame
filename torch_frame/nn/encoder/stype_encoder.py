@@ -149,6 +149,12 @@ class StypeEncoder(Module, ABC):
             column_data[nan_mask] = fill_value
         return x
 
+class ColumnEncoder(StypeEncoder):
+    supported_stypes = {stype.categorical}
+
+    def __init__(self):
+        pass
+
 
 class ColumnEncoder(StypeEncoder):
     supported_stypes = {stype.categorical}
