@@ -104,6 +104,7 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
+    print(dataset.col_stats)
     stats_list = [
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
