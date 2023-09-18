@@ -1,7 +1,7 @@
 """
 Reported (reproduced) results of Tuned CatBoost on TabularBenchmark of
 the Trompt paper: https://arxiv.org/abs/2305.18446
-electricity (A4): 87.73 (84.79)
+electricity (A4): 87.73 (88.09)
 eye_movements (A5): 66.84 (64.27)
 MagicTelescope (B2): 85.92 (87.18)
 bank-marketing (B4): 80.39 (80.50)

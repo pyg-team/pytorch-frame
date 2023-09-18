@@ -13,7 +13,7 @@ from torch_frame.gbdt import GBDT
 
 class CatBoost(GBDT):
     r"""A CatBoost model implementation with hyper-parameter tuning using
-        Optuna.
+    Optuna.
 
     This implementation extends GBDT and aims to find optimal hyperparameters
     by optimizing the given objective function.

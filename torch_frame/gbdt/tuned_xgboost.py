@@ -30,7 +30,7 @@ def neg_to_nan(x: Tensor) -> Tensor:
 
 class XGBoost(GBDT):
     r"""An XGBoost model implementation with hyper-parameter tuning using
-        Optuna.
+    Optuna.
 
     This implementation extends GBDT and aims to find optimal hyperparameters
     by optimizing the given objective function.
