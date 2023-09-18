@@ -18,7 +18,7 @@ class TabNet(torch.nn.Module):
         num_dependent_glu_layers: int = 2,
         epsilon: float = 1e-15,
     ):
-        super(TabNet, self).__init__()
+        super().__init__()
         self.in_channels = in_channels
         self.split_feature_channels = split_feature_channels
         self.split_attention_channels = split_attention_channels
