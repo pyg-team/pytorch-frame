@@ -32,8 +32,8 @@ class XGBoost(GBDT):
     r"""An XGBoost model implementation with hyper-parameter tuning using
         Optuna.
 
-    This implementation extends GradientBoostingDecisionTrees and aims to find
-    optimal hyperparameters by optimizing the given objective function.
+    This implementation extends GBDT and aims to find optimal hyperparameters
+    by optimizing the given objective function.
     """
     def __init__(self):
         super().__init__()
@@ -55,15 +55,15 @@ class XGBoost(GBDT):
         tf: TensorFrame,
     ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         r"""Convert :obj:`TensorFrame` into XGBoost-compatible input format:
-        :obj:`(test_x, test_y, feat_types)`.
+        :obj:`(x, y, feat_types)`.
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            test_x (numpy.ndarray): Output :obj:`numpy.ndarray` by
+            x (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
                 the input :obj:`TensorFrame`.
-            test_y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation
                 aligns with xgboost tutorial.

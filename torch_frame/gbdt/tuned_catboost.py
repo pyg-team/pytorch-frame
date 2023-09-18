@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import catboost
 import numpy as np
 import optuna
@@ -5,12 +7,31 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from torch_frame import TaskType, TensorFrame, stype
+from torch_frame import DataFrame, TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
 
 
 class CatBoost(GBDT):
-    def _to_catboost_input(self, tf):
+    r"""A CatBoost model implementation with hyper-parameter tuning using
+        Optuna.
+
+    This implementation extends GBDT and aims to find optimal hyperparameters
+    by optimizing the given objective function.
+    """
+    def _to_catboost_input(self, tf) -> Tuple[DataFrame]:
+        r"""Convert :obj:`TensorFrame` into CatBoost-compatible input format:
+        :obj:`(x, y, cat_features)`.
+
+        Args:
+            tf (Tensor Frame): Input :obj:TensorFrame object.
+        Returns:
+            x (DataFrame): Output :obj:`Dataframe` by
+                concatenating tensors of categorical and numerical features of
+                the input :obj:`TensorFrame`.
+            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features :obj:`numpy.ndarray`.
+        """
         tf = tf.cpu()
         y = tf.y
         assert y is not None
@@ -36,6 +57,18 @@ class CatBoost(GBDT):
 
     def objective(self, trial, tf_train: TensorFrame, tf_val: TensorFrame,
                   num_boost_round: int):
+        r""" Objective function to be optimized.
+
+        Args:
+            trial (optuna.trial.Trial): Optuna trial object.
+            tf_train (TensorFrame): Train data.
+            tf_val (TensorFrame): Validation data.
+            num_boost_round (int): Number of boosting round.
+
+        Returns:
+            score (float): Best objective value. Root mean squared error for
+                regression task and accuracy for classification task.
+        """
         self.params = {
             "iterations":
             num_boost_round,
@@ -61,9 +94,9 @@ class CatBoost(GBDT):
                 "eval_metric", ["RMSE", "MAE", "MAPE"])
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
             self.params["objective"] = trial.suggest_categorical(
-                "objective", ["CrossEntropy"])
+                "objective", ["Logloss", "CrossEntropy"])
             self.params["eval_metric"] = trial.suggest_categorical(
-                "eval_metric", ["AUC", "Logloss", "CrossEntropy"])
+                "eval_metric", ["Logloss", "CrossEntropy"])
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "MultiClass"
             self.params["eval_metric"] = "MultiClass"
@@ -104,6 +137,6 @@ class CatBoost(GBDT):
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
-        test_x, test_y, cat_features = self._to_catboost_input(tf_test)
+        test_x, _, _ = self._to_catboost_input(tf_test)
         pred = self.model.predict(test_x)
         return torch.from_numpy(pred).to(device)
