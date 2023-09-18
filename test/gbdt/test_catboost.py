@@ -24,6 +24,8 @@ def test_catboost(task_type):
     cb.tune(tf_train=train_dataset.tensor_frame,
             tf_val=val_dataset.tensor_frame, num_trials=2, num_boost_round=2)
     pred = cb.predict(tf_test=test_dataset.tensor_frame)
+    # ensure the prediction is of shape [batch_size, 1]
+    assert (pred.shape == (10, 1))
     score = cb.compute_metric(test_dataset.tensor_frame.y, pred)
     if task_type == TaskType.REGRESSION:
         # score is root mean squared error

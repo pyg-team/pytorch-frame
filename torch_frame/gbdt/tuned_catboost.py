@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import catboost
 import numpy as np
@@ -18,7 +18,8 @@ class CatBoost(GBDT):
     This implementation extends GBDT and aims to find optimal hyperparameters
     by optimizing the given objective function.
     """
-    def _to_catboost_input(self, tf) -> Tuple[DataFrame]:
+    def _to_catboost_input(
+            self, tf) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
         r"""Convert :obj:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -29,7 +30,7 @@ class CatBoost(GBDT):
                 concatenating tensors of categorical and numerical features of
                 the input :obj:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
-            cat_features (numpy.ndarray): Array containing indexes of
+            cat_features (numpy.ndarray, optional): Array containing indexes of
                 categorical features :obj:`numpy.ndarray`.
         """
         tf = tf.cpu()
@@ -49,8 +50,9 @@ class CatBoost(GBDT):
                               columns=tf.col_names_dict[stype.categorical])
             cat_features = np.arange(tf.x_dict[stype.categorical].shape[1])
         elif stype.numerical in tf.x_dict:
-            df = pd.DataFrame(tf.x_dict[stype.categorical],
+            df = pd.DataFrame(tf.x_dict[stype.numerical],
                               columns=tf.col_names_dict[stype.numerical])
+            cat_features = None
         else:
             raise ValueError("The input TensorFrame object is empty.")
         return df, y.numpy(), cat_features
@@ -114,6 +116,8 @@ class CatBoost(GBDT):
                           eval_set=[(eval_x, eval_y)],
                           early_stopping_rounds=50, logging_level="Silent")
         pred = boost.predict(eval_x)
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            pred = pred.argmax(axis=-1)
         score = self.compute_metric(torch.from_numpy(eval_y),
                                     torch.from_numpy(pred))
         return score
@@ -139,4 +143,6 @@ class CatBoost(GBDT):
         device = tf_test.device
         test_x, _, _ = self._to_catboost_input(tf_test)
         pred = self.model.predict(test_x)
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            pred = pred.argmax(axis=-1)
         return torch.from_numpy(pred).to(device)
