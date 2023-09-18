@@ -104,11 +104,9 @@ class CatBoost(GBDT):
             self.params["eval_metric"] = "MultiClass"
             self.params["classes_count"] = self._num_classes or len(
                 np.unique(tf_train.y.cpu().numpy()))
-        elif self.task_type == TaskType.MULTILABEL_CLASSIFICATION:
-            self.params["objective"] = trial.suggest_categorical(
-                "objective", ["MultiLogloss", "MultiCrossEntropy"])
-            self.params["eval_metric"] = trial.suggest_categorical(
-                "eval_metric", ["MultiLogloss", "MultiCrossEntropy"])
+        else:
+            raise ValueError(f"{self.__class__.__name__} is not supported for "
+                             f"{self.task_type}.")
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
         eval_x, eval_y, _ = self._to_catboost_input(tf_val)
         boost = catboost.CatBoost(self.params)
