@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import optuna
@@ -35,8 +35,8 @@ class XGBoost(GBDT):
     This implementation extends GBDT and aims to find optimal hyperparameters
     by optimizing the given objective function.
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
+        super().__init__(task_type, num_classes)
         if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.obj = "multi:softmax"
             self.eval_metric = "mlogloss"

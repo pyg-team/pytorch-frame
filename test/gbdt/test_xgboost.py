@@ -25,7 +25,7 @@ def test_xgboost(task_type):
              tf_val=val_dataset.tensor_frame, num_trials=2, num_boost_round=2)
     pred = xgb.predict(tf_test=test_dataset.tensor_frame)
     # ensure the prediction is of shape [batch_size, 1]
-    assert (pred.shape == (10, 1))
+    assert (pred.size(-1) == 1)
     score = xgb.compute_metric(test_dataset.tensor_frame.y, pred)
     if task_type == TaskType.REGRESSION:
         # score is root mean squared error
