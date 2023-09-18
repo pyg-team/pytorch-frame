@@ -115,9 +115,11 @@ class CatBoost(GBDT):
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
                           eval_set=[(eval_x, eval_y)],
                           early_stopping_rounds=50, logging_level="Silent")
-        pred = boost.predict(eval_x)
-        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            pred = pred.argmax(axis=-1)
+        pred = boost.predict(
+            eval_x, prediction_type="Class" if self.task_type in [
+                TaskType.BINARY_CLASSIFICATION,
+                TaskType.MULTICLASS_CLASSIFICATION
+            ] else "RawFormulaVal")
         score = self.compute_metric(torch.from_numpy(eval_y),
                                     torch.from_numpy(pred))
         return score
@@ -142,7 +144,9 @@ class CatBoost(GBDT):
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
         test_x, _, _ = self._to_catboost_input(tf_test)
-        pred = self.model.predict(test_x)
-        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            pred = pred.argmax(axis=-1)
+        pred = self.model.predict(
+            test_x, prediction_type="Class" if self.task_type in [
+                TaskType.BINARY_CLASSIFICATION,
+                TaskType.MULTICLASS_CLASSIFICATION
+            ] else "RawFormulaVal")
         return torch.from_numpy(pred).to(device)
