@@ -8,7 +8,7 @@ bank-marketing (B4): 80.39 (80.50)
 california (B5): 90.32 (87.56)
 credit (B7): 77.59 (77.29)
 pol (B14): 98.49 (98.21)
-jannis (mathcal B4): 79.89 (77.81)
+jannis (mathcal B4): 79.89 (78.96)
 """
 import argparse
 import os.path as osp
