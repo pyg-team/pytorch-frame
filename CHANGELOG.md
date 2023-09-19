@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support inductive `DataFrame` to `TensorFrame` transformation ([#75](https://github.com/pyg-team/pytorch-frame/pull/75))
 - Added `na_strategy` as argument in `StypeEncoder`. ([#69](https://github.com/pyg-team/pytorch-frame/pull/69))
 - Added `NAStrategy` class and impute NaN values in `MutualInformationSort`. ([#68](https://github.com/pyg-team/pytorch-frame/pull/68))
 - Added `XGBoost` baseline and updated extensively tuned `XGBoost` example. ([#57](https://github.com/pyg-team/pytorch-frame/pull/57))
