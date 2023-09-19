@@ -4,7 +4,7 @@ import pytest
 import torch
 
 import torch_frame
-from torch_frame.data import Dataset, TensorFrameConverter
+from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 
@@ -66,7 +66,7 @@ def test_dataset_inductive_transform():
     dataset = FakeDataset(num_rows=10).materialize()
 
     df = dataset.df
-    converter = dataset.get_tensor_frame_converter()
+    converter = dataset.get_converter()
     assert converter.col_names_dict[torch_frame.numerical] == ['a', 'b', 'c']
     assert converter.col_names_dict[torch_frame.categorical] == ['x', 'y']
     mapped_tensor_frame = converter(df)
@@ -83,7 +83,7 @@ def test_dataset_inductive_transform():
 
 def test_converter():
     dataset = FakeDataset(num_rows=10).materialize()
-    converter = TensorFrameConverter(
+    converter = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         target_col=dataset.target_col,
         col_stats=dataset.col_stats,

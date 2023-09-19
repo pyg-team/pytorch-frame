@@ -48,7 +48,7 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-class TensorFrameConverter:
+class DataFrameToTensorFrameConverter:
     r"""DataFrame to TensorFrame converter.
 
     Args:
@@ -252,12 +252,12 @@ class Dataset(ABC):
                     self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._tensor_frame_converter = TensorFrameConverter(
+        self._converter = DataFrameToTensorFrameConverter(
             col_to_stype=self.col_to_stype,
             target_col=self.target_col,
             col_stats=self._col_stats,
         )
-        self._tensor_frame = self._tensor_frame_converter(self.df, device)
+        self._tensor_frame = self._converter(self.df, device)
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
@@ -349,5 +349,5 @@ class Dataset(ABC):
         return self[indices]
 
     @requires_post_materialization
-    def get_tensor_frame_converter(self) -> TensorFrameConverter:
-        return self._tensor_frame_converter
+    def get_converter(self) -> DataFrameToTensorFrameConverter:
+        return self._converter
