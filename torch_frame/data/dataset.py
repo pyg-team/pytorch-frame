@@ -48,6 +48,78 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
+class TensorFrameConverter:
+    r"""DataFrame to TensorFrame converter.
+
+    Args:
+        col_to_stype (Dict[str, torch_frame.stype]): A dictionary that maps
+            each column in the data frame to a semantic type.
+        target_col (str, optional): The column used as target.
+            (default: :obj:`None`)
+        col_stats (Dict[str, Dict[StatType, Any]]): The column statistics.
+    """
+    def __init__(
+        self,
+        col_to_stype: Dict[str, torch_frame.stype],
+        target_col: Optional[str],
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
+        self.col_to_stype = col_to_stype
+        self.target_col = target_col
+        self.col_stats = col_stats
+
+        # Pre-compute a canonical `col_names_dict` for tensor frame.
+        self._col_names_dict: Dict[torch_frame.stype,
+                                   List[str]] = defaultdict(list)
+        for col, stype in self.col_to_stype.items():
+            if col != self.target_col:
+                self._col_names_dict[stype].append(col)
+        for stype in self._col_names_dict.keys():
+            # in-place sorting of col_names for each stype
+            sorted(self._col_names_dict[stype])
+
+    @property
+    def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
+        return self._col_names_dict
+
+    def _get_mapper(self, col: str) -> TensorMapper:
+        r"""Get TensorMapper given a column name."""
+        stype = self.col_to_stype[col]
+        if stype == torch_frame.numerical:
+            return NumericalTensorMapper()
+        elif stype == torch_frame.categorical:
+            index, _ = self.col_stats[col][StatType.COUNT]
+            return CategoricalTensorMapper(index)
+        else:
+            raise NotImplementedError(f"Unable to process the semantic "
+                                      f"type '{stype.value}'")
+
+    def __call__(
+        self,
+        df: DataFrame,
+        device: Optional[torch.device] = None,
+    ) -> TensorFrame:
+        r"""Convert a given dataframe into tensorframe."""
+
+        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+
+        for stype, col_names in self.col_names_dict.items():
+            for col in col_names:
+                out = self._get_mapper(col).forward(df[col], device=device)
+                xs_dict[stype].append(out)
+        x_dict = {
+            stype: torch.stack(xs, dim=1)
+            for stype, xs in xs_dict.items()
+        }
+
+        y: Optional[Tensor] = None
+        if self.target_col is not None:
+            y = self._get_mapper(self.target_col).forward(
+                df[self.target_col], device=device)
+
+        return TensorFrame(x_dict, self.col_names_dict, y)
+
+
 class Dataset(ABC):
     r"""Base class for creating tabular datasets.
 
@@ -86,16 +158,6 @@ class Dataset(ABC):
                     "'test'.")
         self.split_col = split_col
         self.col_to_stype = col_to_stype
-
-        # Pre-compute a canonical `col_names_dict` for tensor frame.
-        self._col_names_dict: Dict[torch_frame.stype,
-                                   List[str]] = defaultdict(list)
-        for col, stype in self.col_to_stype.items():
-            if col != self.target_col:
-                self._col_names_dict[stype].append(col)
-        for stype in self._col_names_dict.keys():
-            # in-place sorting of col_names for each stype
-            sorted(self._col_names_dict[stype])
 
         cols = self.feat_cols + ([] if target_col is None else [target_col])
         missing_cols = set(cols) - set(df.columns)
@@ -145,10 +207,6 @@ class Dataset(ABC):
         return self.index_select(index)
 
     @property
-    def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
-        return self._col_names_dict
-
-    @property
     def feat_cols(self) -> List[str]:
         r"""The input feature columns of the dataset."""
         cols = list(self.col_to_stype.keys())
@@ -194,7 +252,12 @@ class Dataset(ABC):
                     self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._tensor_frame = self.data_to_tensor_frame(self.df, device)
+        self._tensor_frame_converter = TensorFrameConverter(
+            col_to_stype=self.col_to_stype,
+            target_col=self.target_col,
+            col_stats=self._col_stats,
+        )
+        self._tensor_frame = self._tensor_frame_converter(self.df, device)
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
@@ -217,43 +280,6 @@ class Dataset(ABC):
     def col_stats(self) -> Dict[str, Dict[StatType, Any]]:
         r"""Returns column-wise dataset statistics."""
         return self._col_stats
-
-    def _get_mapper(self, col: str) -> TensorMapper:
-        r"""Get TensorMapper given a column name."""
-        stype = self.col_to_stype[col]
-        if stype == torch_frame.numerical:
-            return NumericalTensorMapper()
-        elif stype == torch_frame.categorical:
-            index, _ = self._col_stats[col][StatType.COUNT]
-            return CategoricalTensorMapper(index)
-        else:
-            raise NotImplementedError(f"Unable to process the semantic "
-                                      f"type '{stype.value}'")
-
-    def data_to_tensor_frame(
-        self,
-        df: DataFrame,
-        device: Optional[torch.device] = None,
-    ) -> TensorFrame:
-        r"""Transform a given dataframe into tensorframe."""
-
-        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
-
-        for stype, col_names in self.col_names_dict.items():
-            for col in col_names:
-                out = self._get_mapper(col).forward(df[col], device=device)
-                xs_dict[stype].append(out)
-        x_dict = {
-            stype: torch.stack(xs, dim=1)
-            for stype, xs in xs_dict.items()
-        }
-
-        y: Optional[Tensor] = None
-        if self.target_col is not None:
-            y = self._get_mapper(self.target_col).forward(
-                df[self.target_col], device=device)
-
-        return TensorFrame(x_dict, self.col_names_dict, y)
 
     # Indexing ################################################################
 
@@ -321,3 +347,7 @@ class Dataset(ABC):
                              f"Needs to either 'train', 'val', or 'test'.")
         indices = self.df.index[self.df[self.split_col] == split].tolist()
         return self[indices]
+
+    @requires_post_materialization
+    def get_tensor_frame_converter(self) -> TensorFrameConverter:
+        return self._tensor_frame_converter
