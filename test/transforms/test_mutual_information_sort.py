@@ -33,8 +33,8 @@ def test_mutual_information_sort(with_nan):
     expected_first_col_nan_mask = torch.isnan(expected_first_col)
     # if the tensor on first column contains NaNs, make sure the NaNs
     # are unchanged
-    assert (torch.allclose(actual_first_col_nan_mask,
-                           expected_first_col_nan_mask))
+    assert (torch.equal(actual_first_col_nan_mask,
+                        expected_first_col_nan_mask))
     actual = actual_first_col[~actual_first_col_nan_mask]
     expected = expected_first_col[~expected_first_col_nan_mask]
     # make sure that the non NaN values are the same on first column
