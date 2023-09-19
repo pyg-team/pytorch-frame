@@ -56,7 +56,8 @@ class DataFrameToTensorFrameConverter:
             each column in the data frame to a semantic type.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        col_stats (Dict[str, Dict[StatType, Any]]): The column statistics.
+        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
+            column name into stats. Available as :obj:`dataset.col_stats`.
     """
     def __init__(
         self,
