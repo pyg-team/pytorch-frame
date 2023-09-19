@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import optuna
@@ -30,25 +30,40 @@ def neg_to_nan(x: Tensor) -> Tensor:
 
 class XGBoost(GBDT):
     r"""An XGBoost model implementation with hyper-parameter tuning using
-        Optuna.
+    Optuna.
 
-    This implementation extends GradientBoostingDecisionTrees and aims to find
-    optimal hyperparameters by optimizing the given objective function.
+    This implementation extends GBDT and aims to find optimal hyperparameters
+    by optimizing the given objective function.
     """
+    def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
+        super().__init__(task_type, num_classes)
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            self.obj = "multi:softmax"
+            self.eval_metric = "mlogloss"
+        elif self.task_type == TaskType.REGRESSION:
+            self.obj = 'reg:squarederror'
+            self.eval_metric = 'rmse'
+        elif self.task_type == TaskType.BINARY_CLASSIFICATION:
+            self.obj = 'binary:logistic'
+            self.eval_metric = 'auc'
+        else:
+            raise ValueError(f"{self.__class__.__name__} is not supported for "
+                             f"{self.task_type}.")
+
     def _to_xgboost_input(
         self,
         tf: TensorFrame,
     ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         r"""Convert :obj:`TensorFrame` into XGBoost-compatible input format:
-        :obj:`(test_x, test_y, feat_types)`.
+        :obj:`(x, y, feat_types)`.
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            test_x (numpy.ndarray): Output :obj:`numpy.ndarray` by
+            x (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
                 the input :obj:`TensorFrame`.
-            test_y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation
                 aligns with xgboost tutorial.
@@ -56,22 +71,22 @@ class XGBoost(GBDT):
                 tutorials/categorical.rst#using-native-interface>
         """
         tf = tf.cpu()
-        test_y = tf.y
-        assert test_y is not None
+        y = tf.y
+        assert y is not None
         if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
             x_cat = neg_to_nan(tf.x_dict[stype.categorical])
-            test_x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
+            x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
             feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
                              ["c"] * len(tf.col_names_dict[stype.categorical]))
         elif stype.categorical in tf.x_dict:
-            test_x = neg_to_nan(tf.x_dict[stype.categorical])
+            x = neg_to_nan(tf.x_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
         elif stype.numerical in tf.x_dict:
-            test_x = tf.x_dict[stype.numerical]
+            x = tf.x_dict[stype.numerical]
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return test_x.numpy(), test_y.numpy(), feature_types
+        return x.numpy(), y.numpy(), feature_types
 
     def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
                   dvalid: xgboost.DMatrix, num_boost_round: int) -> float:

@@ -19,18 +19,6 @@ class GBDT:
     """
     def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
         self.task_type = task_type
-        if task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            self.obj = "multi:softmax"
-            self.eval_metric = "mlogloss"
-        elif task_type == TaskType.REGRESSION:
-            self.obj = 'reg:squarederror'
-            self.eval_metric = 'rmse'
-        elif task_type == TaskType.BINARY_CLASSIFICATION:
-            self.obj = 'binary:logistic'
-            self.eval_metric = 'auc'
-        else:
-            raise ValueError(
-                f"{self.__class__.__name__} is not supported for {task_type}.")
         self._is_fitted: bool = False
         self._num_classes = num_classes
 
