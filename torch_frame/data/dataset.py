@@ -13,6 +13,7 @@ from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
+    TensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
@@ -68,7 +69,6 @@ class Dataset(ABC):
         split_col: Optional[str] = None,
     ):
         self.df = df
-        self.col_to_stype = col_to_stype
         self.target_col = target_col
 
         if split_col is not None:
@@ -85,6 +85,17 @@ class Dataset(ABC):
                     "split_col must only contain either 'train', 'val', or "
                     "'test'.")
         self.split_col = split_col
+        self.col_to_stype = col_to_stype
+
+        # Pre-compute fixed `col_names_dict` for tensor frame.
+        self._col_names_dict: Dict[torch_frame.stype,
+                                   List[str]] = defaultdict(list)
+        for col, stype in self.col_to_stype.items():
+            if col != self.target_col:
+                self._col_names_dict[stype].append(col)
+        for stype in self._col_names_dict.keys():
+            # in-place sorting of col_names for each stype
+            sorted(self._col_names_dict[stype])
 
         cols = self.feat_cols + ([] if target_col is None else [target_col])
         missing_cols = set(cols) - set(df.columns)
@@ -134,6 +145,10 @@ class Dataset(ABC):
         return self.index_select(index)
 
     @property
+    def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
+        return self._col_names_dict
+
+    @property
     def feat_cols(self) -> List[str]:
         r"""The input feature columns of the dataset."""
         cols = list(self.col_to_stype.keys())
@@ -168,9 +183,18 @@ class Dataset(ABC):
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
             self._col_stats[col] = compute_col_stats(self.df[col], stype)
+            # For a target column, sort categories lexicographically such that
+            # we do not accidentially swap labels in binary classification
+            # tasks.
+            if col == self.target_col and stype == torch_frame.categorical:
+                index, value = self._col_stats[col][StatType.COUNT]
+                if len(index) == 2:
+                    ser = pd.Series(index=index, data=value).sort_index()
+                    index, value = ser.index.tolist(), ser.values.tolist()
+                    self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._tensor_frame = self._to_tensor_frame(device)
+        self._tensor_frame = self.data_to_tensor_frame(self.df, device)
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
@@ -194,50 +218,41 @@ class Dataset(ABC):
         r"""Returns column-wise dataset statistics."""
         return self._col_stats
 
-    def _to_tensor_frame(
+    def _get_mapper(self, col: str) -> TensorMapper:
+        stype = self.col_to_stype[col]
+        if stype == torch_frame.numerical:
+            return NumericalTensorMapper()
+        elif stype == torch_frame.categorical:
+            index, _ = self._col_stats[col][StatType.COUNT]
+            return CategoricalTensorMapper(index)
+        else:
+            raise NotImplementedError(f"Unable to process the semantic "
+                                      f"type '{stype.value}'")
+
+    def data_to_tensor_frame(
         self,
+        df: DataFrame,
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
+        r"""Transform a given dataframe into tensorframe."""
 
         xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
-        col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
-        y: Optional[Tensor] = None
 
-        for col, stype in self.col_to_stype.items():
-
-            if stype == torch_frame.numerical:
-                mapper = NumericalTensorMapper()
-
-            elif stype == torch_frame.categorical:
-                index, value = self._col_stats[col][StatType.COUNT]
-
-                if col == self.target_col and len(index) == 2:
-                    # Sort categories lexicographically such that we do not
-                    # accidentially swap labels in binary classification tasks.
-                    ser = pd.Series(index=index, data=value).sort_index()
-                    index, value = ser.index.tolist(), ser.values.tolist()
-                    self._col_stats[col][StatType.COUNT] = (index, value)
-
-                mapper = CategoricalTensorMapper(index)
-
-            else:
-                raise NotImplementedError(f"Unable to process the semantic "
-                                          f"type '{stype.value}'")
-
-            out = mapper.forward(self.df[col], device=device)
-
-            if col == self.target_col:
-                y = out
-            else:
+        for stype, col_names in self.col_names_dict.items():
+            for col in col_names:
+                out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
-                col_names_dict[stype].append(col)
-
         x_dict = {
             stype: torch.stack(xs, dim=1)
             for stype, xs in xs_dict.items()
         }
 
-        return TensorFrame(x_dict, col_names_dict, y)
+        y: Optional[Tensor] = None
+        if self.target_col is not None:
+            y = self._get_mapper(self.target_col).forward(
+                df[self.target_col], device=device)
+
+        return TensorFrame(x_dict, self.col_names_dict, y)
 
     # Indexing ################################################################
 
