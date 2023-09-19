@@ -253,12 +253,12 @@ class Dataset(ABC):
                     self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._converter = DataFrameToTensorFrameConverter(
+        self._to_tensor_frame_converter = DataFrameToTensorFrameConverter(
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
         )
-        self._tensor_frame = self._converter(self.df, device)
+        self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
@@ -349,6 +349,7 @@ class Dataset(ABC):
         indices = self.df.index[self.df[self.split_col] == split].tolist()
         return self[indices]
 
+    @property
     @requires_post_materialization
-    def get_converter(self) -> DataFrameToTensorFrameConverter:
-        return self._converter
+    def convert_to_tensor_frame(self) -> DataFrameToTensorFrameConverter:
+        return self._to_tensor_frame_converter

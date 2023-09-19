@@ -66,28 +66,29 @@ def test_dataset_inductive_transform():
     dataset = FakeDataset(num_rows=10).materialize()
 
     df = dataset.df
-    converter = dataset.get_converter()
-    assert converter.col_names_dict[torch_frame.numerical] == ['a', 'b', 'c']
-    assert converter.col_names_dict[torch_frame.categorical] == ['x', 'y']
-    mapped_tensor_frame = converter(df)
+    assert dataset.convert_to_tensor_frame.col_names_dict[
+        torch_frame.numerical] == ['a', 'b', 'c']
+    assert dataset.convert_to_tensor_frame.col_names_dict[
+        torch_frame.categorical] == ['x', 'y']
+    mapped_tensor_frame = dataset.convert_to_tensor_frame(df)
     for key in dataset.tensor_frame.x_dict.keys():
         assert torch.equal(mapped_tensor_frame.x_dict[key],
                            dataset.tensor_frame.x_dict[key])
 
     # A new dataframe with an unseen categorical column
     df['x'] = 999
-    unseen_tensor_frame = converter(df)
+    unseen_tensor_frame = dataset.convert_to_tensor_frame(df)
     assert torch.eq(unseen_tensor_frame.x_dict[torch_frame.categorical][:, 0],
                     -1).all()
 
 
 def test_converter():
     dataset = FakeDataset(num_rows=10).materialize()
-    converter = DataFrameToTensorFrameConverter(
+    convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,
         target_col=dataset.target_col,
     )
-    tf = converter(dataset.df)
-    assert tf.col_names_dict == converter.col_names_dict
+    tf = convert_to_tensor_frame(dataset.df)
+    assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
     assert len(tf) == len(dataset)
