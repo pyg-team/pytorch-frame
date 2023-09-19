@@ -87,7 +87,7 @@ class Dataset(ABC):
         self.split_col = split_col
         self.col_to_stype = col_to_stype
 
-        # Pre-compute fixed `col_names_dict` for tensor frame.
+        # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype,
                                    List[str]] = defaultdict(list)
         for col, stype in self.col_to_stype.items():
