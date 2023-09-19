@@ -219,6 +219,7 @@ class Dataset(ABC):
         return self._col_stats
 
     def _get_mapper(self, col: str) -> TensorMapper:
+        r"""Get TensorMapper given a column name."""
         stype = self.col_to_stype[col]
         if stype == torch_frame.numerical:
             return NumericalTensorMapper()
