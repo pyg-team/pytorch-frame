@@ -54,20 +54,20 @@ class DataFrameToTensorFrameConverter:
     Args:
         col_to_stype (Dict[str, torch_frame.stype]): A dictionary that maps
             each column in the data frame to a semantic type.
-        target_col (str, optional): The column used as target.
-            (default: :obj:`None`)
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
             column name into stats. Available as :obj:`dataset.col_stats`.
+        target_col (str, optional): The column used as target.
+            (default: :obj:`None`)
     """
     def __init__(
         self,
         col_to_stype: Dict[str, torch_frame.stype],
-        target_col: Optional[str],
         col_stats: Dict[str, Dict[StatType, Any]],
+        target_col: Optional[str] = None,
     ):
         self.col_to_stype = col_to_stype
-        self.target_col = target_col
         self.col_stats = col_stats
+        self.target_col = target_col
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype,
@@ -255,8 +255,8 @@ class Dataset(ABC):
         # 2. Create the `TensorFrame`:
         self._converter = DataFrameToTensorFrameConverter(
             col_to_stype=self.col_to_stype,
-            target_col=self.target_col,
             col_stats=self._col_stats,
+            target_col=self.target_col,
         )
         self._tensor_frame = self._converter(self.df, device)
 

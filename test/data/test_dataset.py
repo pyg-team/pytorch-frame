@@ -85,8 +85,8 @@ def test_converter():
     dataset = FakeDataset(num_rows=10).materialize()
     converter = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
-        target_col=dataset.target_col,
         col_stats=dataset.col_stats,
+        target_col=dataset.target_col,
     )
     tf = converter(dataset.df)
     assert tf.col_names_dict == converter.col_names_dict
