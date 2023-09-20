@@ -1,9 +1,11 @@
 import logging
+from typing import Any, Dict
 
 import torch
 from category_encoders import CatBoostEncoder
 
 from torch_frame import DataFrame, TensorFrame, stype
+from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.transforms import FittableBaseTransform
 
 
@@ -11,7 +13,8 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
     r"""Encode the categorical features of :class:`TensorFrame` using
         CatBoostEncoder.
     """
-    def _fit(self, tf_train: TensorFrame):
+    def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
+                                                                    Any]]):
         if tf_train.y is None:
             raise RuntimeError(
                 "'{self.__class__.__name__}' cannot be used when target column"
@@ -33,6 +36,15 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         self.encoder.fit(df, tf_train.y.cpu())
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical] + tf_train.col_names_dict[stype.categorical]
+        transformed_df = self.encoder.transform(df)
+        transformed_col_stats = col_stats.copy()
+        for col in tf_train.col_names_dict[stype.categorical]:
+            # TODO: Make col stats computed purely with Pytorch
+            # (without mapping back to pandas series).
+            transformed_col_stats[col] = compute_col_stats(
+                transformed_df[col], stype.numerical)
+
+        self._transformed_stats = transformed_col_stats
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical not in tf.col_names_dict:

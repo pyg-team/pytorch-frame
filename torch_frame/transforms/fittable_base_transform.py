@@ -1,7 +1,9 @@
 import copy
 from abc import abstractmethod
+from typing import Any, Dict
 
 from torch_frame import TensorFrame
+from torch_frame.data.stats import StatType
 from torch_frame.transforms import BaseTransform
 
 
@@ -11,6 +13,7 @@ class FittableBaseTransform(BaseTransform):
     Fittable transforms must be fitted on training data before transform.
     """
     def __init__(self):
+        super().__init__()
         self._is_fitted: bool = False
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:
@@ -22,13 +25,19 @@ class FittableBaseTransform(BaseTransform):
         r"""Whether the transform is already fitted."""
         return self._is_fitted
 
-    def fit(self, tf: TensorFrame) -> TensorFrame:
+    def fit(
+        self,
+        tf: TensorFrame,
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         r"""Fit the transform with train data.
 
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
+            col_stats (Dict[str, Dict[StatType, Any]], optional): The column
+            stats of the input :obj:`TensorFrame`.
         """
-        self._fit(tf)
+        self._fit(tf, col_stats)
         self._is_fitted = True
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
@@ -40,7 +49,7 @@ class FittableBaseTransform(BaseTransform):
         return self._forward(tf)
 
     @abstractmethod
-    def _fit(self, tf: TensorFrame):
+    def _fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
         raise NotImplementedError
 
     @abstractmethod
