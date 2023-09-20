@@ -40,7 +40,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         self.encoder.fit(df, tf_train.y.cpu())
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical] + tf_train.col_names_dict[stype.categorical]
-        transformed_col_stats = dict()
+        transformed_col_stats = col_stats.copy()
 
         for i in range(len(tf_train.col_names_dict[stype.categorical])):
             col = tf_train.col_names_dict[stype.categorical][i]
