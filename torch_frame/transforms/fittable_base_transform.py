@@ -34,13 +34,14 @@ class FittableBaseTransform(BaseTransform):
 
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
-            col_stats (Dict[str, Dict[StatType, Any]], optional): The col stats
-                of the input :obj:`TensorFrame`.
+            col_stats (Dict[str, Dict[StatType, Any]], optional): The column
+            stats of the input :obj:`TensorFrame`.
         Return:
             transformed_stats (Dict[str, Dict[StatType, Any]], optional):
-                Transformed col stats. The :obj:`TensorFrame` might be modified
-                by the transform, so the returned transformed_stats would
-                contain the col stats of the modified :obj:`TensorFrame`.
+                Transformed column stats. The :obj:`TensorFrame` might be
+                modified by the transform, so the returned transformed_stats
+                would contain the column stats of the modified
+                :obj:`TensorFrame`.
         """
         self._fit(tf, col_stats)
         self._is_fitted = True
