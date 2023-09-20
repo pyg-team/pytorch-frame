@@ -44,6 +44,8 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
 
         for i in range(len(tf_train.col_names_dict[stype.categorical])):
             col = tf_train.col_names_dict[stype.categorical][i]
+            # TODO: Make col stats computed purely with Pytorch
+            # (without mapping back to pandas series).
             x = pd.Series(tf_train.x_dict[stype.categorical][:,
                                                              i].cpu().numpy())
             transformed_col_stats[col] = compute_col_stats(x, stype.numerical)
