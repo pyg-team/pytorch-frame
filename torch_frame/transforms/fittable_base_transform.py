@@ -13,8 +13,8 @@ class FittableBaseTransform(BaseTransform):
     Fittable transforms must be fitted on training data before transform.
     """
     def __init__(self):
+        super().__init__()
         self._is_fitted: bool = False
-        self._transformed_stats: Dict[str, Dict[StatType, Any]] = {}
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:
         # Shallow-copy the data so that we prevent in-place data modification.
@@ -36,12 +36,6 @@ class FittableBaseTransform(BaseTransform):
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
             col_stats (Dict[str, Dict[StatType, Any]], optional): The column
             stats of the input :obj:`TensorFrame`.
-        Return:
-            transformed_stats (Dict[str, Dict[StatType, Any]], optional):
-                Transformed column stats. The :obj:`TensorFrame` might be
-                modified by the transform, so the returned transformed_stats
-                would contain the column stats of the modified
-                :obj:`TensorFrame`.
         """
         self._fit(tf, col_stats)
         self._is_fitted = True
@@ -61,12 +55,3 @@ class FittableBaseTransform(BaseTransform):
     @abstractmethod
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         raise NotImplementedError
-
-    @property
-    def transformed_stats(self) -> Dict[str, Dict[StatType, Any]]:
-        r"""The column stats after the transform."""
-        if not self.is_fitted:
-            raise ValueError(f"'{self.__class__.__name__}' is not yet fitted ."
-                             f"Please run `fit()` first before attempting to "
-                             f"obtain the transformed stats.")
-        return self._transformed_stats
