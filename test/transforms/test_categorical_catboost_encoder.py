@@ -2,6 +2,7 @@ import torch
 
 from torch_frame import TensorFrame, stype
 from torch_frame.data import Dataset
+from torch_frame.data.stats import StatType
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.transforms import CategoricalCatBoostEncoder
 
@@ -20,7 +21,13 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = CategoricalCatBoostEncoder()
-    transform.fit(train_dataset.tensor_frame)
+    col_stats = transform.fit(train_dataset.tensor_frame,
+                              train_dataset.col_stats)
+    for col in col_stats:
+        # ensure that the transformed col stats contain
+        # only numerical col stats
+        assert (StatType.MEAN in col_stats[col])
+        assert (StatType.COUNT not in col_stats[col])
     out = transform(tensor_frame)
 
     # assert that there are no categorical features

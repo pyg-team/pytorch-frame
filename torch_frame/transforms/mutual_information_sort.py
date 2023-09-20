@@ -1,3 +1,5 @@
+from typing import Any, Dict, Optional
+
 import numpy as np
 import torch
 from sklearn.feature_selection import (
@@ -7,6 +9,7 @@ from sklearn.feature_selection import (
 from torch import Tensor
 
 from torch_frame import NAStrategy, TaskType, TensorFrame, stype
+from torch_frame.data.stats import StatType
 from torch_frame.transforms import FittableBaseTransform
 
 
@@ -63,7 +66,11 @@ class MutualInformationSort(FittableBaseTransform):
             column_data[nan_mask] = fill_value
         return x
 
-    def _fit(self, tf_train: TensorFrame):
+    def _fit(
+        self, tf_train: TensorFrame, col_stats: Optional[Dict[str,
+                                                              Dict[StatType,
+                                                                   Any]]]
+    ) -> Optional[Dict[str, Dict[StatType, Any]]]:
         if tf_train.y is None:
             raise RuntimeError(
                 "'{self.__class__.__name__}' cannot be used when target column"
