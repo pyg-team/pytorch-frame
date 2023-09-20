@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from torch_frame import TensorFrame
 from torch_frame.data.stats import StatType
@@ -14,6 +14,7 @@ class FittableBaseTransform(BaseTransform):
     """
     def __init__(self):
         self._is_fitted: bool = False
+        self._transformed_stats: Dict[str, Dict[StatType, Any]] = {}
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:
         # Shallow-copy the data so that we prevent in-place data modification.
@@ -27,8 +28,8 @@ class FittableBaseTransform(BaseTransform):
     def fit(
         self,
         tf: TensorFrame,
-        col_stats: Optional[Dict[str, Dict[StatType, Any]]] = None,
-    ) -> Optional[Dict[str, Dict[StatType, Any]]]:
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         r"""Fit the transform with train data.
 
         Args:
@@ -41,9 +42,8 @@ class FittableBaseTransform(BaseTransform):
                 by the transform, so the returned transformed_stats would
                 contain the col stats of the modified :obj:`TensorFrame`.
         """
-        transformed_stats = self._fit(tf, col_stats)
+        self._fit(tf, col_stats)
         self._is_fitted = True
-        return transformed_stats
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         if not self.is_fitted:
@@ -54,12 +54,18 @@ class FittableBaseTransform(BaseTransform):
         return self._forward(tf)
 
     @abstractmethod
-    def _fit(
-        self, tf: TensorFrame, col_stats: Optional[Dict[str, Dict[StatType,
-                                                                  Any]]]
-    ) -> Optional[Dict[str, Dict[StatType, Any]]]:
+    def _fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
         raise NotImplementedError
 
     @abstractmethod
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         raise NotImplementedError
+
+    @property
+    def transformed_stats(self) -> Dict[str, Dict[StatType, Any]]:
+        r"""The column stats after the transform."""
+        if not self.is_fitted:
+            raise ValueError(f"'{self.__class__.__name__}' is not yet fitted ."
+                             f"Please run `fit()` first before attempting to "
+                             f"obtain the transformed stats.")
+        return self._transformed_stats

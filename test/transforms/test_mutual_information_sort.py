@@ -21,7 +21,7 @@ def test_mutual_information_sort(with_nan):
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = MutualInformationSort(task_type)
-    transform.fit(train_dataset.tensor_frame)
+    transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
     out = transform(tensor_frame)
 
     # column c ranks the first

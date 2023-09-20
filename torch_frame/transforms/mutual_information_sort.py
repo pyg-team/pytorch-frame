@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 import torch
@@ -66,11 +66,8 @@ class MutualInformationSort(FittableBaseTransform):
             column_data[nan_mask] = fill_value
         return x
 
-    def _fit(
-        self, tf_train: TensorFrame, col_stats: Optional[Dict[str,
-                                                              Dict[StatType,
-                                                                   Any]]]
-    ) -> Optional[Dict[str, Dict[StatType, Any]]]:
+    def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
+                                                                    Any]]):
         if tf_train.y is None:
             raise RuntimeError(
                 "'{self.__class__.__name__}' cannot be used when target column"
@@ -90,6 +87,7 @@ class MutualInformationSort(FittableBaseTransform):
 
         for col, rank in ranks.items():
             self.reordered_col_names[rank] = col
+        self._transformed_stats = col_stats
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical in tf.col_names_dict:

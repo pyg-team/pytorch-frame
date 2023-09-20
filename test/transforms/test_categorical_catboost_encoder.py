@@ -20,14 +20,23 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
 
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
+    for col in dataset.feat_cols:
+        col_stats = train_dataset.col_stats[col]
+        # all the original columns are categorical
+        for stat in StatType.stats_for_stype(stype.numerical):
+            assert (stat not in col_stats)
+        for stat in StatType.stats_for_stype(stype.categorical):
+            assert (stat in col_stats)
     transform = CategoricalCatBoostEncoder()
-    col_stats = transform.fit(train_dataset.tensor_frame,
-                              train_dataset.col_stats)
-    for col in col_stats:
+    transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    transformed_col_stats = transform.transformed_stats
+    for col in dataset.feat_cols:
         # ensure that the transformed col stats contain
         # only numerical col stats
-        assert (StatType.MEAN in col_stats[col])
-        assert (StatType.COUNT not in col_stats[col])
+        for stat in StatType.stats_for_stype(stype.numerical):
+            assert (stat in transformed_col_stats[col])
+        for stat in StatType.stats_for_stype(stype.categorical):
+            assert (stat not in transformed_col_stats[col])
     out = transform(tensor_frame)
 
     # assert that there are no categorical features
@@ -51,7 +60,15 @@ def test_categorical_catboost_encoder():
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = CategoricalCatBoostEncoder()
-    transform.fit(train_dataset.tensor_frame)
+    transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    transformed_col_stats = transform.transformed_stats
+    for col in dataset.feat_cols:
+        # ensure that the transformed col stats contain
+        # only numerical col stats
+        for stat in StatType.stats_for_stype(stype.numerical):
+            assert (stat in transformed_col_stats[col])
+        for stat in StatType.stats_for_stype(stype.categorical):
+            assert (stat not in transformed_col_stats[col])
     out = transform(tensor_frame)
 
     # assert that there are no categorical features
