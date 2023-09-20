@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Dict
 
-import pandas as pd
 import torch
 from category_encoders import CatBoostEncoder
 
@@ -37,16 +36,13 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         self.encoder.fit(df, tf_train.y.cpu())
         self.reordered_col_names = tf_train.col_names_dict[
             stype.numerical] + tf_train.col_names_dict[stype.categorical]
-        print("col stats is ", col_stats)
+        transformed_df = self.encoder.transform(df)
         transformed_col_stats = col_stats.copy()
-
-        for i in range(len(tf_train.col_names_dict[stype.categorical])):
-            col = tf_train.col_names_dict[stype.categorical][i]
+        for col in tf_train.col_names_dict[stype.categorical]:
             # TODO: Make col stats computed purely with Pytorch
             # (without mapping back to pandas series).
-            x = pd.Series(tf_train.x_dict[stype.categorical][:,
-                                                             i].cpu().numpy())
-            transformed_col_stats[col] = compute_col_stats(x, stype.numerical)
+            transformed_col_stats[col] = compute_col_stats(
+                transformed_df[col], stype.numerical)
 
         self._transformed_stats = transformed_col_stats
 
