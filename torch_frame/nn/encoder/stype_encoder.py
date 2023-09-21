@@ -242,6 +242,46 @@ class LinearEncoder(StypeEncoder):
         return x
 
 
+class StackEncoder(StypeEncoder):
+    r"""Simply stack input numerical features of shape [batch_size, num_cols]
+    into [batch_size, num_cols, out_channels]."""
+    supported_stypes = {stype.numerical}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+    ):
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        mean = torch.tensor(
+            [stats[StatType.MEAN] for stats in self.stats_list])
+        self.register_buffer('mean', mean)
+        std = torch.tensor([stats[StatType.STD]
+                            for stats in self.stats_list]) + 1e-6
+        self.register_buffer('std', std)
+
+    def reset_parameters(self):
+        super().reset_parameters()
+
+    def encode_forward(self, x: Tensor) -> Tensor:
+        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
+        outputs non-learnable all-zero embedding for :obj:`NaN` entries.
+        """
+        # x: [batch_size, num_cols]
+        x = (x - self.mean) / self.std
+        # x: [batch_size, num_cols, out_channels]
+        x = x.unsqueeze(2).repeat(1, 1, self.out_channels)
+        return x
+
+
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
     linear representation, followed by a linear transformation. The original

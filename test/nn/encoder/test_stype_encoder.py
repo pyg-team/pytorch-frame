@@ -12,6 +12,7 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
+    StackEncoder,
 )
 
 
@@ -61,6 +62,7 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     (ExcelFormerEncoder, {
         'post_module': ReLU(),
     }),
+    (StackEncoder, {}),
 ])
 def test_numerical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
