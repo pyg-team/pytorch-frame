@@ -169,8 +169,7 @@ class ColumnEncoder(StypeEncoder):
         num_categories = []
         for stats in self.stats_list:
             num_categories.append(len(stats[StatType.COUNT][0]))
-        offset = F.pad(torch.tensor(num_categories), (1, 0),
-                       value=0)
+        offset = F.pad(torch.tensor(num_categories), (1, 0), value=0)
         offset = offset.cumsum(dim=-1)[:-1]
         self.register_buffer('categories_offset', offset)
         self.emb = Embedding(sum(num_categories), self.out_channles)
