@@ -140,6 +140,12 @@ class ExcelFormer(Module):
                 [batch_size, num_classes] for classification and
                 [batch_size, 1] for regression.
         """
+        if stype.numerical not in tf.x_dict or len(
+                tf.x_dict[stype.numerical]) == 0:
+            raise ValueError(
+                "Excelformer only takes in numerical features, but"
+                " the input TensorFrame object does not have numerical"
+                " features.")
         if mixup:
             tf, y_mixedup = self.feat_mix(tf, beta)
         x, _ = self.excelformer_encoder(tf)
