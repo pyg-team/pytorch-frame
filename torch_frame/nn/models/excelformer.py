@@ -78,7 +78,7 @@ class ExcelFormer(Module):
         self.excelformer_decoder.reset_parameters()
 
     def feat_mix(self, tf: TensorFrame, beta: float) -> TensorFrame:
-        r"""Mixup :obj: Tensor by swaping some representation elements of
+        r"""Mixup :obj: Tensor by swaping some feature elements of
                 two samples. The shuffle rates for each row is sampled from
                 the Beta distribution with shape parameter self.beta.
 
