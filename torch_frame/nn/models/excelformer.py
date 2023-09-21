@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional, Tuple
+import copy
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -96,28 +96,31 @@ class ExcelFormer(Module):
         beta_distribution = torch.distributions.beta.Beta(beta, beta)
         shuffle_rates = beta_distribution.sample((B, 1)).to(x.device)
         feat_masks = torch.rand((B, num_cols), device=x.device) < shuffle_rates
-        shuffled_sample_ids = np.random.permutation(B)
+        shuffled_sample_ids = torch.randperm(B)
 
         x_shuffled = x[shuffled_sample_ids]
         x_mixup = feat_masks * x + ~feat_masks * x_shuffled
-        tf.x_dict[stype.numerical] = x_mixup
+        tf_mixedup = copy.copy(tf)
+        tf_mixedup.x_dict[stype.numerical] = x_mixup
 
-        mix_rates = shuffle_rates[:, 0].float().to(x.device)
+        mix_rates = shuffle_rates[:, 0].float()
         y_shuffled = tf.y[shuffled_sample_ids]
         if tf.y.is_floating_point():
-            y = mix_rates * tf.y + (1 - mix_rates) * y_shuffled
+            y_mixedup = mix_rates * tf.y + (1 - mix_rates) * y_shuffled
         else:
             one_hot_y = F.one_hot(tf.y, num_classes=self.out_channels)
             y_shuffled = tf.y[shuffled_sample_ids]
             one_hot_y_shuffled = F.one_hot(y_shuffled,
                                            num_classes=self.out_channels)
-            y = torch.einsum(
+            y_mixedup = torch.einsum(
                 'i, ij-> ij', mix_rates, one_hot_y) + torch.einsum(
                     'i, ij->ij', (1 - mix_rates), one_hot_y_shuffled)
-        return tf, y
+        return tf_mixedup, y_mixedup
 
-    def forward(self, tf: TensorFrame, mixup: bool = False,
-                beta: Optional[float] = 0.5) -> Tuple[Tensor, Tensor]:
+    def forward(
+            self, tf: TensorFrame, mixup: bool = False,
+            beta: Optional[float] = 0.5
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
         r"""Transform :obj:`TensorFrame` object into
             output predictions, return feature masks and shuffled
             ids as well if mixup is used.
@@ -132,18 +135,18 @@ class ExcelFormer(Module):
 
         Returns:
             x (Tensor): [batch_size, out_channels].
-            y (Tensor): Transformed target [batch_size, num_classes]
-                for classification and [batch_size, 1] for regression.
+            y_mixedup (Tensor): Output :obj:`Tensor` y_mixedup will be
+                returned only when mixup is set to true. The size is
+                [batch_size, num_classes] for classification and
+                [batch_size, 1] for regression.
         """
         if mixup:
-            tf, y = self.feat_mix(tf, beta)
-        else:
-            if tf.y.is_floating_point():
-                y = tf.y
-            else:
-                y = F.one_hot(tf.y, num_classes=self.out_channels)
+            tf, y_mixedup = self.feat_mix(tf, beta)
         x, _ = self.excelformer_encoder(tf)
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
         x = self.excelformer_decoder(x)
-        return x, y
+        if mixup:
+            return x, y_mixedup
+        else:
+            return x

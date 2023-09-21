@@ -23,6 +23,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
             logging.info(
                 "The input TensorFrame does not contain any categorical "
                 "columns. No fitting will be performed.")
+            self._transformed_stats = col_stats
             return
         # TODO: Implement the CatBoostEncoder with Pytorch rather than relying
         # on external library.

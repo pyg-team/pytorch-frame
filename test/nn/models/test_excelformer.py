@@ -19,6 +19,6 @@ def test_excelformer():
                         num_cols=num_cols, num_layers=num_layers,
                         num_heads=num_heads, col_stats=dataset.col_stats,
                         col_names_dict=tensor_frame.col_names_dict)
-    out, y = model(tensor_frame, mixup=True)
-    assert out.shape == (batch_size, out_channels)
-    assert y.shape == tensor_frame.y.shape
+    out_mixedup, y_mixedup = model(tensor_frame, mixup=True)
+    assert out_mixedup.shape == (batch_size, out_channels)
+    assert y_mixedup.shape == tensor_frame.y.shape

@@ -18,7 +18,6 @@ import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
-from torch_frame import stype
 from torch_frame.data.loader import DataLoader
 from torch_frame.datasets.yandex import Yandex
 from torch_frame.nn import ExcelFormer
@@ -28,7 +27,7 @@ from torch_frame.transforms import (
 )
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='jannis')
+parser.add_argument('--dataset', type=str, default='higgs_small')
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--num_heads', type=int, default=4)
@@ -55,18 +54,18 @@ train_tensor_frame = train_dataset.tensor_frame.to(device)
 val_tensor_frame = val_dataset.tensor_frame.to(device)
 test_tensor_frame = test_dataset.tensor_frame.to(device)
 
-if train_tensor_frame.col_names_dict[stype.categorical]:
-    categorical_transform = CategoricalCatBoostEncoder()
-    categorical_transform.fit(train_dataset.tensor_frame,
-                              train_dataset.col_stats)
+# CategoricalCatBoostEncoder encodes the categorical features
+# into numerical features with CatBoostEncoder.
+categorical_transform = CategoricalCatBoostEncoder()
+categorical_transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
 
-    train_tensor_frame = categorical_transform(train_tensor_frame)
-    val_tensor_frame = categorical_transform(val_tensor_frame)
-    test_tensor_frame = categorical_transform(test_tensor_frame)
-    col_stats = categorical_transform.transformed_stats
-else:
-    col_stats = train_dataset.col_stats
+train_tensor_frame = categorical_transform(train_tensor_frame)
+val_tensor_frame = categorical_transform(val_tensor_frame)
+test_tensor_frame = categorical_transform(test_tensor_frame)
+col_stats = categorical_transform.transformed_stats
 
+# MutualInformationSort sorts the features based on mutual
+# information.
 mutual_info_sort = MutualInformationSort(task_type=dataset.task_type)
 
 mutual_info_sort.fit(train_tensor_frame, col_stats)
@@ -107,15 +106,15 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
-        pred, y = model(tf, mixup=True)
+        pred_mixedup, y_mixedup = model(tf, mixup=True)
         if is_classification:
-            loss = F.cross_entropy(pred, y)
+            loss = F.cross_entropy(pred_mixedup, y_mixedup)
         else:
-            loss = F.mse_loss(pred.view(-1), y.view(-1))
+            loss = F.mse_loss(pred_mixedup.view(-1), y_mixedup.view(-1))
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss) * len(y)
-        total_count += len(y)
+        loss_accum += float(loss) * len(y_mixedup)
+        total_count += len(y_mixedup)
         optimizer.step()
     return loss_accum / total_count
 
@@ -126,15 +125,14 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
-        pred, y = model(tf)
+        pred = model(tf)
         if is_classification:
             pred_class = pred.argmax(dim=-1)
-            y_class = y.argmax(dim=-1)
-            accum += float((y_class == pred_class).sum())
+            accum += float((tf.y == pred_class).sum())
         else:
             accum += float(
-                F.mse_loss(pred.view(-1), y.view(-1), reduction='sum'))
-        total_count += len(y)
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
+        total_count += len(tf.y)
 
     if is_classification:
         accuracy = accum / total_count
