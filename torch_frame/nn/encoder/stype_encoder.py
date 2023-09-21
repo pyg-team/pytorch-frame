@@ -167,21 +167,22 @@ class ColumnEncoder(StypeEncoder):
     def init_modules(self):
         super().init_modules()
         num_categories = []
-        num_special_tokens = 2
         for stats in self.stats_list:
             num_categories.append(len(stats[StatType.COUNT][0]))
-
         offset = F.pad(torch.tensor(num_categories), (1, 0),
-                       value=num_special_tokens)
+                       value=0)
         offset = offset.cumsum(dim=-1)[:-1]
         self.register_buffer('categories_offset', offset)
+        self.emb = Embedding(sum(num_categories), self.out_channles)
 
     def reset_parameters(self):
+        self.emb.reset_parameters()
         return super().reset_parameters(self)
 
     def encode_forward(self, x: Tensor) -> Tensor:
         x += self.categories_offset
-        return x
+        out = self.emb(x)
+        return out
 
 
 class EmbeddingEncoder(StypeEncoder):
