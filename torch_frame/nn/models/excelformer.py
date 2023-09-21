@@ -1,5 +1,8 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
+import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Module, ModuleList
 from torch.nn.modules.module import Module
@@ -74,17 +77,73 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transforming :obj:`TensorFrame` object into
-        output predictions.
+    def feat_mix(self, tf: TensorFrame, beta: float) -> TensorFrame:
+        r"""Mixup :obj: Tensor by swaping some representation elements of
+                two samples. The shuffle rates for each row is sampled from
+                the Beta distribution with shape parameter self.beta.
+
+            Args:
+                x (Tensor): Input :obj:`TensorFrame` object.
+            Returns:
+                tf (TensorFrame): Input :obj:`TensorFrame` object with
+                    x_dict mixed with feat_mix.
+                y (Tensor): Transformed target [batch_size, num_classes]
+                    for classification and [batch_size, 1] for regression.
+        """
+        # TODO: Modularize this so other models can add mixup easily.
+        x = tf.x_dict[stype.numerical]
+        B, num_cols = x.shape
+        beta_distribution = torch.distributions.beta.Beta(beta, beta)
+        shuffle_rates = beta_distribution.sample((B, 1)).to(x.device)
+        feat_masks = torch.rand((B, num_cols), device=x.device) < shuffle_rates
+        shuffled_sample_ids = np.random.permutation(B)
+
+        x_shuffled = x[shuffled_sample_ids]
+        x_mixup = feat_masks * x + ~feat_masks * x_shuffled
+        tf.x_dict[stype.numerical] = x_mixup
+
+        mix_rates = shuffle_rates[:, 0].float().to(x.device)
+        y_shuffled = tf.y[shuffled_sample_ids]
+        if tf.y.is_floating_point():
+            y = mix_rates * tf.y + (1 - mix_rates) * y_shuffled
+        else:
+            one_hot_y = F.one_hot(tf.y, num_classes=self.out_channels)
+            y_shuffled = tf.y[shuffled_sample_ids]
+            one_hot_y_shuffled = F.one_hot(y_shuffled,
+                                           num_classes=self.out_channels)
+            y = torch.einsum(
+                'i, ij-> ij', mix_rates, one_hot_y) + torch.einsum(
+                    'i, ij->ij', (1 - mix_rates), one_hot_y_shuffled)
+        return tf, y
+
+    def forward(self, tf: TensorFrame, mixup: bool = False,
+                beta: Optional[float] = 0.5) -> Tuple[Tensor, Tensor]:
+        r"""Transform :obj:`TensorFrame` object into
+            output predictions, return feature masks and shuffled
+            ids as well if mixup is used.
 
         Args:
-            tf (TensorFrame): Input :obj:TensorFrame object.
+            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            mixup (bool): True if mixup is used during training otherwise
+                False. (default: False)
+            beta (float, optional): Shape parameter for beta distribution to
+                calculate shuffle rate in mixup. Only useful when mixup is
+                true. (default: 0.5)
 
         Returns:
-            x (Tensor): [batch_size, num_cols, out_channels].
+            x (Tensor): [batch_size, out_channels].
+            y (Tensor): Transformed target [batch_size, num_classes]
+                for classification and [batch_size, 1] for regression.
         """
+        if mixup:
+            tf, y = self.feat_mix(tf, beta)
+        else:
+            if tf.y.is_floating_point():
+                y = tf.y
+            else:
+                y = F.one_hot(tf.y, num_classes=self.out_channels)
         x, _ = self.excelformer_encoder(tf)
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
-        return x
+        x = self.excelformer_decoder(x)
+        return x, y
