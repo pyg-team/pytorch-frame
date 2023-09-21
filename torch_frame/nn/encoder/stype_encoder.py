@@ -170,19 +170,17 @@ class ColumnEncoder(StypeEncoder):
         num_special_tokens = 2
         for stats in self.stats_list:
             num_categories.append(len(stats[StatType.COUNT][0]))
-        total_categories = sum(num_categories)
-        if total_categories > 0:
-            offset = F.pad(torch.tensor(num_categories), (1, 0),
-                           value=num_special_tokens)
-            offset = offset.cumsum(dim=-1)[:-1]
-            self.register_buffer('categories_offset', offset)
+
+        offset = F.pad(torch.tensor(num_categories), (1, 0),
+                       value=num_special_tokens)
+        offset = offset.cumsum(dim=-1)[:-1]
+        self.register_buffer('categories_offset', offset)
 
     def reset_parameters(self):
         return super().reset_parameters(self)
 
     def encode_forward(self, x: Tensor) -> Tensor:
-        if self.offset:
-            x += self.offset
+        x += self.categories_offset
         return x
 
 
