@@ -140,7 +140,8 @@ class ExcelFormer(Module):
         x, _ = self.excelformer_encoder(tf)
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
-        return self.excelformer_decoder(x)
+        out = self.excelformer_decoder(x)
+        return out
 
     def forward_mixup(
         self,
@@ -181,7 +182,9 @@ class ExcelFormer(Module):
                 x_dict[stype_name] = x_mixedup
             else:
                 x_dict[stype_name] = x
-
         tf_mixedup = TensorFrame(x_dict, tf.col_names_dict, tf.y)
+
+        # Call Excelformer forward function
         out_mixedup = self(tf_mixedup)
+
         return out_mixedup, y_mixedup
