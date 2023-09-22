@@ -106,7 +106,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
-        pred_mixedup, y_mixedup = model(tf, mixup=True)
+        pred_mixedup, y_mixedup = model.forward_mixup(tf)
         if is_classification:
             loss = F.cross_entropy(pred_mixedup, y_mixedup)
         else:

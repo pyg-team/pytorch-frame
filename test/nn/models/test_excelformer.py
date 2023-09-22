@@ -1,4 +1,7 @@
+import copy
+
 import pytest
+import torch
 
 from torch_frame import TaskType
 from torch_frame.data.dataset import Dataset
@@ -30,8 +33,17 @@ def test_excelformer(task_type):
                         num_cols=num_cols, num_layers=num_layers,
                         num_heads=num_heads, col_stats=dataset.col_stats,
                         col_names_dict=tensor_frame.col_names_dict)
-    out_mixedup, y_mixedup = model(tensor_frame, mixup=True)
+
+    # Test the original forward pass
+    out = model(tensor_frame)
+    assert out.shape == (batch_size, out_channels)
+
+    # Test the mixup forward pass
+    x_num = copy.copy(tensor_frame.x_dict[stype.numerical])
+    out_mixedup, y_mixedup = model.forward_mixup(tensor_frame)
     assert out_mixedup.shape == (batch_size, out_channels)
+    # Make sure the numerical feature is not modified.
+    assert torch.allclose(x_num, tensor_frame.x_dict[stype.numerical])
 
     if task_type.is_classification:
         assert y_mixedup.shape == (batch_size, out_channels)

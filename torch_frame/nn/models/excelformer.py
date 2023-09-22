@@ -1,4 +1,3 @@
-import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -15,6 +14,52 @@ from torch_frame.nn.conv import ExcelFormerConv
 from torch_frame.nn.decoder import ExcelFormerDecoder
 from torch_frame.nn.encoder.stype_encoder import ExcelFormerEncoder
 from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
+
+
+def feature_mixup(
+    x: Tensor,
+    y: Tensor,
+    num_classes: Optional[int] = None,
+    beta: int = 0.5,
+) -> TensorFrame:
+    r"""Mixup :obj: input numerical feature tensor `x` by swaping some
+        feature elements of two samples. The shuffle rates for each row is
+        sampled from the Beta distribution. The target `y` is also linearly
+        mixed up.
+
+        Args:
+            x (Tensor): The input numerical feature.
+            y (Tensor): The target.
+            num_classes (int): Number of classes (in the case of
+                classification task)
+            beta (float): The concentration parameter of the Beta distribution.
+
+        Returns:
+            x_mixedup (Tensor): The mixedup numerical feature.
+            y_mixedup (Tensor): Transformed target.
+                [batch_size, num_classes] for classification and
+                [batch_size, 1] for regression.
+    """
+    beta = torch.tensor(beta, device=x.device)
+    beta_distribution = torch.distributions.beta.Beta(beta, beta)
+    shuffle_rates = beta_distribution.sample((len(x), 1))
+    feat_masks = torch.rand(x.shape, device=x.device) < shuffle_rates
+    shuffled_idx = torch.randperm(len(x), device=x.device)
+    x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
+
+    y_shuffled = y[shuffled_idx]
+    if y.is_floating_point():
+        # Regression task
+        shuffle_rates = shuffle_rates.view(-1, )
+        y_mixedup = shuffle_rates * y + (1 - shuffle_rates) * y_shuffled
+    else:
+        # Classification task
+        assert num_classes is not None
+        one_hot_y = F.one_hot(y, num_classes=num_classes)
+        one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
+        y_mixedup = (shuffle_rates * one_hot_y +
+                     (1 - shuffle_rates) * one_hot_y_shuffled)
+    return x_mixedup, y_mixedup
 
 
 class ExcelFormer(Module):
@@ -77,85 +122,66 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def feat_mix(self, tf: TensorFrame, beta: float) -> TensorFrame:
-        r"""Mixup :obj: Tensor by swaping some feature elements of
-                two samples. The shuffle rates for each row is sampled from
-                the Beta distribution with shape parameter self.beta.
-
-            Args:
-                x (Tensor): Input :obj:`TensorFrame` object.
-            Returns:
-                tf (TensorFrame): Input :obj:`TensorFrame` object with
-                    x_dict mixed with feat_mix.
-                y (Tensor): Transformed target [batch_size, num_classes]
-                    for classification and [batch_size, 1] for regression.
-        """
-        # TODO: Modularize this so other models can add mixup easily.
-        x = tf.x_dict[stype.numerical]
-        B, num_cols = x.shape
-        device = x.device
-        beta = torch.tensor(beta, device=device)
-        beta_distribution = torch.distributions.beta.Beta(beta, beta)
-        shuffle_rates = beta_distribution.sample((B, 1))
-        feat_masks = torch.rand((B, num_cols), device=x.device) < shuffle_rates
-        shuffled_sample_ids = torch.randperm(B)
-
-        x_shuffled = x[shuffled_sample_ids]
-        x_mixup = feat_masks * x + ~feat_masks * x_shuffled
-        tf_mixedup = copy.copy(tf)
-        tf_mixedup.x_dict[stype.numerical] = x_mixup
-
-        mix_rates = shuffle_rates.view(-1, )
-        y_shuffled = tf.y[shuffled_sample_ids]
-        if tf.y.is_floating_point():
-            y_mixedup = mix_rates * tf.y + (1 - mix_rates) * y_shuffled
-        else:
-            one_hot_y = F.one_hot(tf.y, num_classes=self.out_channels)
-            y_shuffled = tf.y[shuffled_sample_ids]
-            one_hot_y_shuffled = F.one_hot(y_shuffled,
-                                           num_classes=self.out_channels)
-            y_mixedup = torch.einsum(
-                'i, ij-> ij', mix_rates, one_hot_y) + torch.einsum(
-                    'i, ij->ij', (1 - mix_rates), one_hot_y_shuffled)
-        return tf_mixedup, y_mixedup
-
-    def forward(
-            self, tf: TensorFrame, mixup: bool = False,
-            beta: Optional[float] = 0.5
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        r"""Transform :obj:`TensorFrame` object into
-            output predictions, return feature masks and shuffled
-            ids as well if mixup is used.
+    def forward(self, tf: TensorFrame) -> Tensor:
+        r"""Transform :obj:`TensorFrame` object into output embeddings.
 
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame` object.
-            mixup (bool): True if mixup is used during training otherwise
-                False. (default: False)
+
+        Returns:
+            out (Tensor): The output embeddings of size
+                [batch_size, out_channels].
+        """
+        if stype.numerical not in tf.x_dict or len(
+                tf.x_dict[stype.numerical]) == 0:
+            raise ValueError(
+                "Excelformer only takes in numerical features, but the input "
+                "TensorFrame object does not have numerical features.")
+        x, _ = self.excelformer_encoder(tf)
+        for excelformer_conv in self.excelformer_convs:
+            x = excelformer_conv(x)
+        return self.excelformer_decoder(x)
+
+    def forward_mixup(
+        self,
+        tf: TensorFrame,
+        beta: Optional[float] = 0.5,
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+        r"""Transform :obj:`TensorFrame` object into output embeddings. If
+        `mixup` is :obj:`True`, it produces the output embeddings together with
+        the mixed-up targets.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` object.
             beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when mixup is
                 true. (default: 0.5)
 
         Returns:
-            x (Tensor): [batch_size, out_channels].
+            out_mixedup (Tensor): The mixed up output embeddings of size
+                [batch_size, out_channels].
             y_mixedup (Tensor): Output :obj:`Tensor` y_mixedup will be
                 returned only when mixup is set to true. The size is
                 [batch_size, num_classes] for classification and
                 [batch_size, 1] for regression.
         """
-        if stype.numerical not in tf.x_dict or len(
-                tf.x_dict[stype.numerical]) == 0:
-            raise ValueError(
-                "Excelformer only takes in numerical features, but"
-                " the input TensorFrame object does not have numerical"
-                " features.")
-        if mixup:
-            tf, y_mixedup = self.feat_mix(tf, beta)
-        x, _ = self.excelformer_encoder(tf)
-        for excelformer_conv in self.excelformer_convs:
-            x = excelformer_conv(x)
-        x = self.excelformer_decoder(x)
-        if mixup:
-            # x is the output after mixup.
-            return x, y_mixedup
-        else:
-            return x
+        # Mixup numerical features
+        x_mixedup, y_mixedup = feature_mixup(
+            tf.x_dict[stype.numerical],
+            tf.y,
+            num_classes=self.out_channels,
+            beta=beta,
+        )
+
+        # Create a new `x_dict`, where stype.numerical is swapped with
+        # mixed up feature.
+        x_dict: Dict[stype, Tensor] = {}
+        for stype_name, x in tf.x_dict.items():
+            if stype_name == stype.numerical:
+                x_dict[stype_name] = x_mixedup
+            else:
+                x_dict[stype_name] = x
+
+        tf_mixedup = TensorFrame(x_dict, tf.col_names_dict, tf.y)
+        out_mixedup = self(tf_mixedup)
+        return out_mixedup, y_mixedup
