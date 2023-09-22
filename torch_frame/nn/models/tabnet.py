@@ -18,21 +18,39 @@ from torch_frame.nn import (
 
 
 class TabNet(Module):
-    r"""TODO add doctring"""
+    r"""TabNet model introduced in https://arxiv.org/abs/1908.07442
+
+    Args:
+        out_channels (int): Output dimensionality
+        num_layers (int): Number of TabNet layers.
+        split_feature_channels (int): Dimensionality of feature channels.
+        split_attention_channels (int): Dimensionality of attention channels.
+        gamma (float): The gamma value for updating the prior for the attention
+            mask.
+        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
+            column name into stats.
+        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
+            maps stype to a list of column names. The column names are sorted
+            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+        num_shared_glu_layers (int): Number of GLU layers shared across the
+            TabNet layers. (default: `2`)
+        num_dependent_gpu_layers (int): Number of GLU layers specific to each
+            TabNet layer. (default: `2`)
+    """
     def __init__(
-            self,
-            out_channels: int,
-            # kwargs for encoder
-            col_stats: Dict[str, Dict[StatType, Any]],
-            col_names_dict: Dict[torch_frame.stype, List[str]],
-            # kwargs for TabNet
-            split_feature_channels: int = 8,
-            split_attention_channels: int = 8,
-            num_layers: int = 3,
-            gamma: float = 1.3,
-            num_shared_glu_layers: int = 2,
-            num_dependent_glu_layers: int = 2,
-            num_multi: int = 2):
+        self,
+        out_channels: int,
+        num_layers: int,
+        split_feature_channels: int,
+        split_attention_channels: int,
+        gamma: float,
+        # kwargs for encoder
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+        # Additional kwargs for TabNet
+        num_shared_glu_layers: int = 2,
+        num_dependent_glu_layers: int = 2,
+    ):
         super().__init__()
 
         self.split_feature_channels = split_feature_channels
@@ -41,12 +59,13 @@ class TabNet(Module):
         self.gamma = gamma
 
         num_cols = sum([len(v) for v in col_names_dict.values()])
-        in_channels = num_multi * num_cols
-
-        # Maps input tensor frame into (batch_size, num_cols, num_multi),
-        # which is then flattened into (batch_size, num_cols * num_multi)
+        cat_emb_channels = (2 if torch_frame.stype.categorical
+                            in col_names_dict else 1)
+        in_channels = cat_emb_channels * num_cols
+        # Map input tensor frame into (batch_size, num_cols, cat_emb_channels),
+        # which is flattened into (batch_size, in_channels)
         self.feature_encoder = StypeWiseFeatureEncoder(
-            out_channels=num_multi,
+            out_channels=cat_emb_channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
             stype_encoder_dict={
@@ -97,14 +116,14 @@ class TabNet(Module):
             self, tf: TensorFrame,
             return_reg: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
         r"""TODO add doctring"""
-        # [batch_size, num_cols, num_multi]
+        # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
         batch_size = x.shape[0]
-        # [batch_size, num_cols * num_multi]
+        # [batch_size, num_cols * cat_emb_channels]
         x = x.view(batch_size, -1)
         x = self.bn(x)
 
-        # [batch_size, num_cols * num_multi]
+        # [batch_size, num_cols * cat_emb_channels]
         prior = torch.ones_like(x)
 
         if return_reg:
@@ -116,10 +135,10 @@ class TabNet(Module):
 
         outs = []
         for i in range(self.num_layers):
-            # [batch_size, num_cols * num_multi]
+            # [batch_size, num_cols * cat_emb_channels]
             attention_mask = self.attn_transformers[i](attention_x, prior)
 
-            # [batch_size, num_cols * num_multi]
+            # [batch_size, num_cols * cat_emb_channels]
             masked_x = attention_mask * x
             # [batch_size, split_feature_channels + split_attention_channel]
             out = self.feat_transformers[i + 1](masked_x)
