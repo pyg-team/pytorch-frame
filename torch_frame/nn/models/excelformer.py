@@ -155,7 +155,7 @@ class ExcelFormer(Module):
             x = excelformer_conv(x)
         x = self.excelformer_decoder(x)
         if mixup:
-            # x is mixed up.
+            # x is the output after mixup.
             return x, y_mixedup
         else:
             return x
