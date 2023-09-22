@@ -93,8 +93,10 @@ class ExcelFormer(Module):
         # TODO: Modularize this so other models can add mixup easily.
         x = tf.x_dict[stype.numerical]
         B, num_cols = x.shape
+        device = x.device
+        beta = torch.tensor(beta, device=device)
         beta_distribution = torch.distributions.beta.Beta(beta, beta)
-        shuffle_rates = beta_distribution.sample((B, 1)).to(x.device)
+        shuffle_rates = beta_distribution.sample((B, 1))
         feat_masks = torch.rand((B, num_cols), device=x.device) < shuffle_rates
         shuffled_sample_ids = torch.randperm(B)
 
@@ -103,7 +105,7 @@ class ExcelFormer(Module):
         tf_mixedup = copy.copy(tf)
         tf_mixedup.x_dict[stype.numerical] = x_mixup
 
-        mix_rates = shuffle_rates[:, 0].float()
+        mix_rates = shuffle_rates.view(-1, )
         y_shuffled = tf.y[shuffled_sample_ids]
         if tf.y.is_floating_point():
             y_mixedup = mix_rates * tf.y + (1 - mix_rates) * y_shuffled
@@ -153,6 +155,7 @@ class ExcelFormer(Module):
             x = excelformer_conv(x)
         x = self.excelformer_decoder(x)
         if mixup:
+            # x is mixed up.
             return x, y_mixedup
         else:
             return x

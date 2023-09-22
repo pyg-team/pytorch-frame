@@ -20,7 +20,7 @@ def test_excelformer(task_type):
                                    stypes=[stype.numerical],
                                    task_type=task_type)
     dataset.materialize()
-    if dataset.task_type.is_classification:
+    if task_type.is_classification:
         out_channels = dataset.num_classes
     else:
         out_channels = 1
@@ -33,7 +33,7 @@ def test_excelformer(task_type):
     out_mixedup, y_mixedup = model(tensor_frame, mixup=True)
     assert out_mixedup.shape == (batch_size, out_channels)
 
-    if dataset.task_type.is_classification:
+    if task_type.is_classification:
         assert y_mixedup.shape == (batch_size, out_channels)
     else:
         assert y_mixedup.shape == tensor_frame.y.shape

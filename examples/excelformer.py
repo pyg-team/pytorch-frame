@@ -6,9 +6,9 @@ ExcelFormer uses the same train-validation-test split as the Yandex paper.
 california: 0.4587 (0.4733) num_layers=5, num_heads=4, num_layers=5,
 channels=32, lr: 0.001,
 jannis : 72.51 (72.38) num_heads=32, lr: 0.0001
-covtype: 97.17 (96.09)
+covtype: 97.17 (95.04)
 helena: 38.20 (36.80)
-higgs_small: 80.75 (71.50)
+higgs_small: 80.75 (65.17)
 """
 import argparse
 import os.path as osp

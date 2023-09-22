@@ -29,7 +29,6 @@ class FakeDataset(torch_frame.data.Dataset):
                  create_split: bool = False,
                  task_type: TaskType = TaskType.REGRESSION):
         assert len(stypes) > 0
-        self.dataset_task_type = task_type
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
@@ -74,11 +73,3 @@ class FakeDataset(torch_frame.data.Dataset):
             df['split'] = split
         super().__init__(df, col_to_stype, target_col='target',
                          split_col='split' if create_split else None)
-
-    @property
-    def task_type(self) -> TaskType:
-        r"""
-        Returns:
-            task_type (TaskType): The task type of the current dataset.
-        """
-        return self.dataset_task_type
