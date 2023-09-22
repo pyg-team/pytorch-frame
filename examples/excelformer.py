@@ -8,7 +8,7 @@ channels=32, lr: 0.001,
 jannis : 72.51 (72.38) num_heads=32, lr: 0.0001
 covtype: 97.17 (95.37)
 helena: 38.20 (36.80)
-higgs_small: 80.75 (65.17)
+higgs_small: 80.75 (65.17) lr: 0.0001
 """
 import argparse
 import os.path as osp
