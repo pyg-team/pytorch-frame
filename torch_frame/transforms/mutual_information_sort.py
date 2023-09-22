@@ -72,7 +72,8 @@ class MutualInformationSort(FittableBaseTransform):
             raise RuntimeError(
                 "'{self.__class__.__name__}' cannot be used when target column"
                 " is None.")
-        if stype.categorical in tf_train.col_names_dict:
+        if (stype.categorical in tf_train.col_names_dict
+                and len(tf_train.col_names_dict[stype.categorical]) != 0):
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
         x = tf_train.x_dict[stype.numerical]
@@ -90,7 +91,8 @@ class MutualInformationSort(FittableBaseTransform):
         self._transformed_stats = col_stats
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
-        if stype.categorical in tf.col_names_dict:
+        if (stype.categorical in tf.col_names_dict
+                and len(tf.col_names_dict[stype.categorical]) != 0):
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
 
