@@ -164,7 +164,7 @@ class TabNet(Module):
             # Update prior
             prior = (self.gamma - attention_mask) * prior
 
-            # Compute step regularization
+            # Compute entropy regularization
             if return_reg:
                 entropy = -torch.sum(
                     attention_mask * torch.log(attention_mask + 1e-15),
