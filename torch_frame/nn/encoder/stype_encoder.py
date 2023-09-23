@@ -115,8 +115,8 @@ class StypeEncoder(Module, ABC):
         """
         if self.na_strategy is None:
             return x
-        x = x.clone()
 
+        x = x.clone()
         for col in range(x.size(1)):
             column_data = x[:, col]
             if self.stype == stype.numerical:
