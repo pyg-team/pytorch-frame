@@ -8,7 +8,8 @@ def test_tabnet():
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
     tabnet = TabNet(out_channels=8, num_layers=3, split_feature_channels=8,
-                    split_attention_channels=8, col_stats=dataset.col_stats,
+                    split_attention_channels=8, gamma=1.2,
+                    col_stats=dataset.col_stats,
                     col_names_dict=tensor_frame.col_names_dict)
     out, reg = tabnet(tensor_frame, return_reg=True)
     assert out.shape == (10, 8)

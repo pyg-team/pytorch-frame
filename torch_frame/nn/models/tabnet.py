@@ -36,6 +36,7 @@ class TabNet(Module):
             TabNet layers. (default: `2`)
         num_dependent_gpu_layers (int): Number of GLU layers specific to each
             TabNet layer. (default: `2`)
+        cat_emb_channels (int): The categorical embedding dimensionality.
     """
     def __init__(
         self,
@@ -50,16 +51,19 @@ class TabNet(Module):
         # Additional kwargs for TabNet
         num_shared_glu_layers: int = 2,
         num_dependent_glu_layers: int = 2,
+        cat_emb_channels: int = 2,
     ):
         super().__init__()
 
         self.split_feature_channels = split_feature_channels
         self.split_attention_channels = split_attention_channels
+        assert num_layers > 0
         self.num_layers = num_layers
         self.gamma = gamma
 
         num_cols = sum([len(v) for v in col_names_dict.values()])
-        cat_emb_channels = (2 if torch_frame.stype.categorical
+        # if there is no categorical feature, we just set cat_emb_channels to 1
+        cat_emb_channels = (cat_emb_channels if torch_frame.stype.categorical
                             in col_names_dict else 1)
         in_channels = cat_emb_channels * num_cols
         # Map input tensor frame into (batch_size, num_cols, cat_emb_channels),
@@ -74,28 +78,20 @@ class TabNet(Module):
             },
         )
 
+        # Batch norm applied to input feature.
         self.bn = BatchNorm1d(in_channels)
 
-        shared_glu_block = Identity()
         if num_shared_glu_layers > 0:
             shared_glu_block = GLUBlock(
                 in_channels=in_channels,
                 out_channels=split_feature_channels + split_attention_channels,
                 no_first_residual=True,
             )
+        else:
+            shared_glu_block = Identity()
 
         self.feat_transformers = ModuleList()
-        self.attn_transformers = ModuleList()
-
-        self.feat_transformers.append(
-            FeatureTransformer(
-                in_channels,
-                split_feature_channels + split_attention_channels,
-                num_dependent_glu_layers=num_dependent_glu_layers,
-                shared_glu_block=shared_glu_block,
-            ))
-
-        for _ in range(self.num_layers):
+        for _ in range(self.num_layers + 1):
             self.feat_transformers.append(
                 FeatureTransformer(
                     in_channels,
@@ -104,6 +100,8 @@ class TabNet(Module):
                     shared_glu_block=shared_glu_block,
                 ))
 
+        self.attn_transformers = ModuleList()
+        for _ in range(self.num_layers):
             self.attn_transformers.append(
                 AttentiveTransformer(
                     in_channels=split_attention_channels,
@@ -113,9 +111,21 @@ class TabNet(Module):
         self.lin = Linear(self.split_feature_channels, out_channels)
 
     def forward(
-            self, tf: TensorFrame,
-            return_reg: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        r"""TODO add doctring"""
+        self,
+        tf: TensorFrame,
+        return_reg: bool = False,
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+        r"""Transform :obj:`TensorFrame` object into output embeddings.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` object.
+
+        Returns:
+            out (Tensor): The output embeddings of size
+                [batch_size, out_channels].
+            reg (Tensor): If :obj:`return_reg` is :obj:`True`, then return the
+                entropy regularization.
+        """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
         batch_size = x.shape[0]
@@ -171,7 +181,6 @@ class TabNet(Module):
 
 
 class FeatureTransformer(Module):
-    r"""TODO add doctring"""
     def __init__(
         self,
         in_channels: int,
@@ -205,7 +214,6 @@ class FeatureTransformer(Module):
 
 
 class GLUBlock(Module):
-    r"""TODO add doctring"""
     def __init__(
         self,
         in_channels: int,
@@ -231,8 +239,7 @@ class GLUBlock(Module):
             if self.no_first_residual and i == 0:
                 x = glu_layer(x)
             else:
-                x = torch.add(x, glu_layer(x))
-                x = x * math.sqrt(0.5)
+                x = x * math.sqrt(0.5) + glu_layer(x)
         return x
 
     def reset_parameters(self):
@@ -241,7 +248,6 @@ class GLUBlock(Module):
 
 
 class GLULayer(Module):
-    r"""TODO add doctring"""
     def __init__(
         self,
         in_channels: int,
@@ -266,7 +272,6 @@ class GLULayer(Module):
 
 
 class AttentiveTransformer(Module):
-    r"""TODO add doctring"""
     def __init__(
         self,
         in_channels: int,
