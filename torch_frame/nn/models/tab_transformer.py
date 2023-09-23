@@ -8,7 +8,7 @@ from torch.nn.modules.module import Module
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import EmbeddingEncoder
+from torch_frame.nn import ContextualEmbeddingEncoder
 from torch_frame.nn.conv import TabTransformerConv
 
 
@@ -64,10 +64,11 @@ class TabTransformer(Module):
             ]
         else:
             stats_list = []
-        self.cat_encoder = EmbeddingEncoder(
+        self.cat_encoder = ContextualEmbeddingEncoder(
             out_channels=channels,
             stats_list=stats_list,
             stype=stype.categorical,
+            contextual_column_pad=2,
         )
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
         self.padded_embedding = Embedding(embedding_pad_dim, channels)

@@ -150,7 +150,7 @@ class StypeEncoder(Module, ABC):
         return x
 
 
-class ColumnEncoder(StypeEncoder):
+class ContextualEmbeddingEncoder(StypeEncoder):
     supported_stypes = {stype.categorical}
 
     def __init__(
@@ -160,43 +160,9 @@ class ColumnEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        contextual_column_pad: Optional[int] = 2,
     ):
-        super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
-
-    def init_modules(self):
-        super().init_modules()
-        num_categories = []
-        num_special_tokens = 2
-        for stats in self.stats_list:
-            num_categories.append(len(stats[StatType.COUNT][0]))
-        total_categories = sum(num_categories)
-        if total_categories > 0:
-            offset = F.pad(torch.tensor(num_categories), (1, 0),
-                           value=num_special_tokens)
-            offset = offset.cumsum(dim=-1)[:-1]
-            self.register_buffer('categories_offset', offset)
-
-    def reset_parameters(self):
-        return super().reset_parameters(self)
-
-    def encode_forward(self, x: Tensor) -> Tensor:
-        if self.offset:
-            x += self.offset
-        return x
-
-
-class ColumnEncoder(StypeEncoder):
-    supported_stypes = {stype.categorical}
-
-    def __init__(
-        self,
-        out_channels: Optional[int] = None,
-        stats_list: Optional[List[Dict[StatType, Any]]] = None,
-        stype: Optional[stype] = None,
-        post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = None,
-    ):
+        self.contextual_column_pad = contextual_column_pad
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
@@ -205,14 +171,17 @@ class ColumnEncoder(StypeEncoder):
         num_categories = []
         for stats in self.stats_list:
             num_categories.append(len(stats[StatType.COUNT][0]))
-        offset = F.pad(torch.tensor(num_categories), (1, 0), value=0)
+        total_categories = sum(num_categories) + self.contextual_column_pad
+        offset = F.pad(torch.tensor(num_categories), (1, 0),
+                       value=self.contextual_column_pad)
         offset = offset.cumsum(dim=-1)[:-1]
         self.register_buffer('categories_offset', offset)
-        self.emb = Embedding(sum(num_categories), self.out_channles)
+        self.emb = Embedding(total_categories, self.out_channels)
+        self.reset_parameters()
 
     def reset_parameters(self):
         self.emb.reset_parameters()
-        return super().reset_parameters(self)
+        return super().reset_parameters()
 
     def encode_forward(self, x: Tensor) -> Tensor:
         x += self.categories_offset
