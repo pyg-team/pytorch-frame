@@ -54,10 +54,12 @@ class TabNet(Module):
         cat_emb_channels: int = 2,
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
 
         self.split_feature_channels = split_feature_channels
         self.split_attention_channels = split_attention_channels
-        assert num_layers > 0
         self.num_layers = num_layers
         self.gamma = gamma
 

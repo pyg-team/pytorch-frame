@@ -44,6 +44,10 @@ class Trompt(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
+
         self.channels = channels
         self.out_channels = out_channels
         self.num_layers = num_layers

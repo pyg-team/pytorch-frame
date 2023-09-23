@@ -125,6 +125,9 @@ class ResNet(Module):
         dropout_prob: float = 0.2,
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
 
         if stype_encoder_dict is None:
             stype_encoder_dict = {
@@ -138,6 +141,7 @@ class ResNet(Module):
             col_names_dict=col_names_dict,
             stype_encoder_dict=stype_encoder_dict,
         )
+
         in_channels = channels * (len(col_stats) - 1)
         self.backbone = Sequential(*[
             FCResidualBlock(in_channels if i == 0 else channels, channels,
