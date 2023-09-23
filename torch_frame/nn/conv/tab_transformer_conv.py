@@ -14,6 +14,7 @@ class GEGLU(Module):
 
 class FFN(Module):
     def __init__(self, channels, mult=4, dropout=0.):
+        super().__init__()
         self.lin_1 = Linear(channels, mult * channels * 2)
         self.geglu = GEGLU()
         self.dropout = Dropout(dropout)
@@ -29,13 +30,15 @@ class FFN(Module):
 
 class Attention(Module):
     def __init__(self, channels: int, num_cols: int, num_heads: int,
-                 dropout=0.):
+                 dropout=0., scale=0.1):
+        super().__init__()
         self.lin_q = Linear(channels, channels)
         self.lin_k = Linear(channels, channels)
         self.lin_v = Linear(channels, channels)
-        self.lin_out = Linear(channels, num_cols)
+        self.lin_out = Linear(channels, channels)
         self.num_heads = num_heads
         self.dropout = Dropout(dropout)
+        self.scale = scale
 
     def _reshape(self, x: Tensor) -> Tensor:
         B, num_cols, channels = x.shape
@@ -46,7 +49,7 @@ class Attention(Module):
         return x
 
     def forward(self, x):
-        B, num_cols, _ = x
+        B, num_cols, _ = x.shape
         Q, K, V = self.lin_q(x), self.lin_k(x), self.lin_v(x)
         Q = self._reshape(Q)
         K = self._reshape(K)  # b * num_heads, num_cols, d_head
@@ -66,7 +69,7 @@ class Attention(Module):
 
 class TabTransformerConv(TableConv):
     def __init__(self, channels: int, num_categorical_cols: int,
-                 num_heads: int, attn_dropout: float):
+                 num_heads: int, attn_dropout: float = 0.):
         super().__init__()
         self.norm_1 = LayerNorm(channels)
         self.attn = Attention(channels, num_categorical_cols, num_heads,
