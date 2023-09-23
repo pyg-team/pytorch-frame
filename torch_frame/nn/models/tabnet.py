@@ -123,8 +123,8 @@ class TabNet(Module):
         Returns:
             out (Tensor): The output embeddings of size
                 [batch_size, out_channels].
-            reg (Tensor): If :obj:`return_reg` is :obj:`True`, then return the
-                entropy regularization.
+            reg (Tensor): If :obj:`return_reg` is :obj:`True`, return the
+                entropy regularization as well.
         """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
