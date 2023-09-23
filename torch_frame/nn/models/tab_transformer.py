@@ -77,9 +77,6 @@ class TabTransformer(Module):
                 num_categorical_cols=len(col_names_dict[stype.categorical]),
                 num_heads=num_heads) for _ in range(num_layers)
         ])
-        total_categories = 0
-        for col in col_names_dict[stype.categorical]:
-            total_categories += len(col_stats[col][StatType.COUNT][0])
         self.decoder = MLP(
             len(col_names_dict[stype.categorical]) * channels +
             len(col_names_dict[stype.numerical]), out_channels, channels)
@@ -101,14 +98,10 @@ class TabTransformer(Module):
         """
         B, _ = tf.x_dict[stype.categorical].shape
         x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
-        print("shape of x_cat", x_cat.shape)
         x_num = self.num_encoder(tf.x_dict[stype.numerical])
         for tab_transformer_conv in self.tab_transformer_convs:
             x_cat = tab_transformer_conv(x_cat)
         x_cat = x_cat.reshape(B, -1)
-        print("dim cate", x_cat.shape)
-        print("dim num ", x_num.shape)
         x = torch.cat((x_cat.reshape(B, -1), x_num), dim=1)
-        print("dim x ", x.shape)
         out = self.decoder(x)
         return out
