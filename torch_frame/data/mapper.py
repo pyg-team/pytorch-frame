@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 import pandas as pd
 import torch
 from torch import Tensor
 
-from torch_frame.typing import Series
+from torch_frame.typing import ColTextType, Series
 
 
 class TensorMapper(ABC):
@@ -87,3 +87,21 @@ class CategoricalTensorMapper(TensorMapper):
         ser = pd.Series(self.categories[index].index)
         ser[index < 0] = None
         return ser
+
+
+class TextEmbeddingMapper(TensorMapper):
+    def __init__(self, text_encoder: Callable[[ColTextType], Tensor]):
+        super().__init__()
+        self.text_encoder = text_encoder
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> Tensor:
+        emb = self.text_encoder(ser)
+        return emb.to(device)
+
+    def backward(self, tensor: Tensor) -> pd.Series:
+        raise NotImplementedError

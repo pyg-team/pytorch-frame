@@ -29,6 +29,8 @@ class StatType(Enum):
             return [
                 StatType.COUNT,
             ]
+        elif stype == torch_frame.text_encoded:
+            return []
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
 
