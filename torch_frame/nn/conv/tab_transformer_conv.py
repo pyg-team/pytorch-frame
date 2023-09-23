@@ -66,10 +66,8 @@ class Attention(Module):
 
 class TabTransformerConv(TableConv):
     def __init__(self, channels: int, num_categorical_cols: int,
-                 num_heads: int, embedding_pad_dim: int, num_layers: int,
-                 attn_dropout: float):
+                 num_heads: int, attn_dropout: float):
         super().__init__()
-        # self.padded_embedding = Embedding(embedding_pad_dim, channels)
         self.norm_1 = LayerNorm(channels)
         self.attn = Attention(channels, num_categorical_cols, num_heads,
                               attn_dropout)
