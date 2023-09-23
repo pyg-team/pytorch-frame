@@ -84,7 +84,9 @@ class StypeEncoder(Module, ABC):
 
     @abstractmethod
     def encode_forward(self, x: Tensor) -> Tensor:
-        r"""The main encode forward function."""
+        r"""The main forward function. Maps input :obj:`x` from TensorFrame
+        (shape [batch_size, num_cols]) into output :obj:`x` of shape
+        [batch_size, num_cols, out_channels]."""
         raise NotImplementedError
 
     def post_forward(self, out: Tensor) -> Tensor:
@@ -172,11 +174,6 @@ class EmbeddingEncoder(StypeEncoder):
             emb.reset_parameters()
 
     def encode_forward(self, x: Tensor) -> Tensor:
-        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
-        outputs non-learnable all-zero embedding for :obj:`NaN` category
-        (specified as -1) unless a NAStrategy is specified.
-        """
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
@@ -227,10 +224,6 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def encode_forward(self, x: Tensor) -> Tensor:
-        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
-        outputs non-learnable all-zero embedding for :obj:`NaN` entries.
-        """
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -271,10 +264,6 @@ class StackEncoder(StypeEncoder):
         super().reset_parameters()
 
     def encode_forward(self, x: Tensor) -> Tensor:
-        r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
-        outputs non-learnable all-zero embedding for :obj:`NaN` entries.
-        """
         # x: [batch_size, num_cols]
         x = (x - self.mean) / self.std
         # x: [batch_size, num_cols, out_channels]
@@ -453,15 +442,6 @@ class ExcelFormerEncoder(StypeEncoder):
         self.reset_parameters()
 
     def encode_forward(self, x: Tensor) -> Tensor:
-        r"""Transforming :obj:`x` into output embeddings.
-
-        Args:
-            x (Tensor): Input column-wise tensor of shape
-                [batch_size, num_cols]
-
-        Returns:
-            x (TensorFrame): [batch_size, num_cols, out_channels].
-        """
         x = (x - self.mean) / self.std
         x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
