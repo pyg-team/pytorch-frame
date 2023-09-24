@@ -2,9 +2,11 @@ from typing import Callable
 
 import pytest
 import torch
+from torch import Tensor
 
 import torch_frame
 from torch_frame import TensorFrame
+from torch_frame.typing import Series
 
 
 @pytest.fixture()
@@ -27,3 +29,11 @@ def get_fake_tensor_frame() -> Callable:
         )
 
     return _get_fake_tensor_frame
+
+
+@pytest.fixture()
+def get_fake_text_embedding() -> Callable:
+    def _get_fake_text_embedding(ser: Series) -> Tensor:
+        return torch.rand(len(ser), 10)
+
+    return _get_fake_text_embedding
