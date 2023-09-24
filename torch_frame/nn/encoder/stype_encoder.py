@@ -184,9 +184,10 @@ class ContextualEmbeddingEncoder(StypeEncoder):
         return super().reset_parameters()
 
     def encode_forward(self, x: Tensor) -> Tensor:
+        x = x.squeeze(-1)
         x += self.categories_offset
-        out = self.emb(x)
-        return out
+        x = self.emb(x)
+        return x
 
 
 class EmbeddingEncoder(StypeEncoder):

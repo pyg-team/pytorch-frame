@@ -40,7 +40,10 @@ def test_contextual_embedding_encoder(encoder_cls_kwargs):
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
+@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {}),
+                                                (ContextualEmbeddingEncoder, {
+                                                    'contextual_column_pad': 2
+                                                })])
 def test_categorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -52,12 +55,13 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
                                     stype=stype.categorical,
                                     **encoder_cls_kwargs[1])
-    x_cat = tensor_frame.x_dict[stype.categorical]
+    x_cat = tensor_frame.x_dict[stype.categorical].clone()
     x = encoder(x_cat)
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
 
     # Perturb the first column
     num_categories = len(stats_list[0][StatType.COUNT])
+    x_cat = tensor_frame.x_dict[stype.categorical].clone()
     x_cat[:, 0] = (x_cat[:, 0] + 1) % num_categories
     x_perturbed = encoder(x_cat)
     # Make sure other column embeddings are unchanged
