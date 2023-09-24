@@ -21,10 +21,26 @@ from torch_frame.nn import (
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {}),
-                                                (ContextualEmbeddingEncoder, {
-                                                    'contextual_column_pad': 2
-                                                })])
+@pytest.mark.parametrize('encoder_cls_kwargs', [(ContextualEmbeddingEncoder, {
+    'contextual_column_pad': 2
+})])
+def test_contextual_embedding_encoder(encoder_cls_kwargs):
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.categorical]
+    ]
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.categorical,
+                                    **encoder_cls_kwargs[1])
+    x_cat = tensor_frame.x_dict[stype.categorical]
+    x = encoder(x_cat)
+    assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
+
+
+@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
 def test_categorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -108,7 +124,6 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
-    print(dataset.col_stats)
     stats_list = [
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
