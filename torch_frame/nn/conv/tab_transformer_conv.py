@@ -13,6 +13,12 @@ class GEGLU(Module):
 
 
 class FFN(Module):
+    r"""Feedforward network
+
+    Args:
+        channels (int): Input channel dimensionality
+        dropout (float): Percentage of random deactivation
+    """
     def __init__(self, channels, mult=4, dropout=0.):
         super().__init__()
         self.lin_1 = Linear(channels, mult * channels * 2)
@@ -29,8 +35,13 @@ class FFN(Module):
 
 
 class Attention(Module):
-    def __init__(self, channels: int, num_cols: int, num_heads: int,
-                 dropout=0., scale=0.1):
+    r"""Self-attention module.
+
+    Args:
+        channels (int): Input channel dimensionality
+        dropout (float): Percentage of random deactivation in the AiuM module
+    """
+    def __init__(self, channels: int, num_heads: int, dropout=0.):
         super().__init__()
         self.lin_q = Linear(channels, channels)
         self.lin_k = Linear(channels, channels)
@@ -38,7 +49,8 @@ class Attention(Module):
         self.lin_out = Linear(channels, channels)
         self.num_heads = num_heads
         self.dropout = Dropout(dropout)
-        self.scale = scale
+        d_head = channels // num_heads
+        self.scale = d_head**-0.5
 
     def _reshape(self, x: Tensor) -> Tensor:
         B, num_cols, channels = x.shape
@@ -64,10 +76,19 @@ class Attention(Module):
         x = x.reshape(B, self.num_heads, num_cols, d_heads)
         x = x.transpose(1, 2)
         x = x.reshape(B, num_cols, self.num_heads * d_heads)
-        return self.lin_out(x), attention
+        return self.lin_out(x)
 
 
 class TabTransformerConv(TableConv):
+    r"""The TabTransformer Layer introduced in
+        https://arxiv.org/abs/2012.06678
+
+    Args:
+        channels (int): Input/output channel dimensionality
+        num_categorical_cols (int): Number of categorical columns
+        num_heads (int): Number of attention heads
+        attn_dropout (float): attention module dropout (default: 0)
+    """
     def __init__(self, channels: int, num_categorical_cols: int,
                  num_heads: int, attn_dropout: float = 0.):
         super().__init__()
@@ -77,12 +98,9 @@ class TabTransformerConv(TableConv):
         self.norm_2 = LayerNorm(channels)
         self.ffn = FFN(channels)
 
-    def forward(self, x, return_attn=False):
+    def forward(self, x):
         x = self.norm_1(x)
-        out, attention = self.attn(x)
+        out = self.attn(x)
         x += out
         x = self.ffn(x)
-        if not return_attn:
-            return x
-        else:
-            return x, attention
+        return x

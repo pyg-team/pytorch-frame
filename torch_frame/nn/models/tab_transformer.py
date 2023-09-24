@@ -1,8 +1,9 @@
+import logging
 from typing import Any, Dict, List
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, LayerNorm, Linear, Module, ModuleList, ReLU
+from torch.nn import LayerNorm, Linear, Module, ModuleList, ReLU
 from torch.nn.modules.module import Module
 
 import torch_frame
@@ -31,12 +32,14 @@ class MLP(Module):
 
 
 class TabTransformer(Module):
-    r"""The FT-Transformer model introduced in https://arxiv.org/abs/2106.11959
+    r"""The Tab-Transformer model introduced in
+        https://arxiv.org/abs/2012.06678
 
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_layers (int): Numner of layers.  (default: 3)
+        num_layers (int): Numner of layers.
+        num_heads (int): Number of heads in the self-attention layer.
         col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
         col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
@@ -57,27 +60,34 @@ class TabTransformer(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
-        if stype.categorical in col_names_dict:
+        if stype.categorical in col_names_dict and len(
+                col_names_dict[stype.categorical]) != 0:
             stats_list = [
                 col_stats[col_name]
                 for col_name in col_names_dict[stype.categorical]
             ]
+            self.cat_encoder = ContextualEmbeddingEncoder(
+                out_channels=channels,
+                stats_list=stats_list,
+                stype=stype.categorical,
+                contextual_column_pad=embedding_pad_dim,
+            )
+            self.tab_transformer_convs = ModuleList([
+                TabTransformerConv(
+                    channels=channels, num_categorical_cols=len(
+                        col_names_dict[stype.categorical]),
+                    num_heads=num_heads) for _ in range(num_layers)
+            ])
         else:
-            stats_list = []
-        self.cat_encoder = ContextualEmbeddingEncoder(
-            out_channels=channels,
-            stats_list=stats_list,
-            stype=stype.categorical,
-            contextual_column_pad=2,
-        )
+            logging.info(
+                "The data does not contain any categorical columns. "
+                "TabTransformer will simply be a multi layer perceptron "
+                "network over numerical values.")
+            # make sure the code does not error out if stype.categorical
+            # is not in col_names_dict
+            if stype.categorical not in col_names_dict:
+                col_names_dict[stype.categorical] = []
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
-        self.padded_embedding = Embedding(embedding_pad_dim, channels)
-        self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(
-                channels=channels,
-                num_categorical_cols=len(col_names_dict[stype.categorical]),
-                num_heads=num_heads) for _ in range(num_layers)
-        ])
         self.decoder = MLP(
             len(col_names_dict[stype.categorical]) * channels +
             len(col_names_dict[stype.numerical]), out_channels, channels)
@@ -98,11 +108,15 @@ class TabTransformer(Module):
             out (Tensor): Output. The shape is [batch_size, out_channels].
         """
         B, _ = tf.x_dict[stype.categorical].shape
-        x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
-        x_num = self.num_encoder(tf.x_dict[stype.numerical])
-        for tab_transformer_conv in self.tab_transformer_convs:
-            x_cat = tab_transformer_conv(x_cat)
-        x_cat = x_cat.reshape(B, -1)
-        x = torch.cat((x_cat.reshape(B, -1), x_num), dim=1)
+        if stype.categorical in tf.col_names_dict and len(
+                tf.col_names_dict[stype.categorical]) != 0:
+            x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
+            for tab_transformer_conv in self.tab_transformer_convs:
+                x_cat = tab_transformer_conv(x_cat)
+            x_cat = x_cat.reshape(B, -1)
+            x_num = self.num_encoder(tf.x_dict[stype.numerical])
+            x = torch.cat((x_cat.reshape(B, -1), x_num), dim=1)
+        else:
+            x = self.num_encoder(tf.x_dict[stype.numerical])
         out = self.decoder(x)
         return out
