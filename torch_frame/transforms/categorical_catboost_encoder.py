@@ -68,11 +68,11 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
             self.encoder.transform(df).values)
 
         # turn the categorical features into numerical features
-        if stype.numerical not in tf.x_dict:
-            tf.x_dict[stype.numerical] = transformed_tensor
-        else:
+        if stype.numerical in tf.x_dict:
             tf.x_dict[stype.numerical] = torch.cat(
                 (tf.x_dict[stype.numerical], transformed_tensor), dim=1)
+        else:
+            tf.x_dict[stype.numerical] = transformed_tensor
         tf.col_names_dict[
             stype.numerical] = self.new_numerical_col_names.copy()
 
