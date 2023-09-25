@@ -13,16 +13,17 @@ def test_tab_transformer(stypes):
     channels = 8
     out_channels = 1
     num_layers = 3
+    num_heads = 2
+    embedding_pad_dim = 2
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False, stypes=stypes)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
-    # Feature-based embeddings
     model = TabTransformer(
         channels=channels,
         out_channels=out_channels,
         num_layers=num_layers,
-        num_heads=2,
-        embedding_pad_dim=2,
+        num_heads=num_heads,
+        embedding_pad_dim=embedding_pad_dim,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )

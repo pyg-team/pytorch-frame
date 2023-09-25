@@ -7,16 +7,19 @@ from torch_frame.nn.conv import TableConv
 
 
 class GEGLU(Module):
+    r"""GEGLU activation.
+    """
     def forward(self, x):
         x, gates = x.chunk(2, dim=-1)
         return x * F.gelu(gates)
 
 
 class FFN(Module):
-    r"""Feedforward network
+    r"""Feedforward network.
 
     Args:
         channels (int): Input channel dimensionality
+        mult (int): Expansion factor of the first layer (default: 4)
         dropout (float): Percentage of random deactivation
     """
     def __init__(self, channels, mult=4, dropout=0.):
@@ -25,6 +28,10 @@ class FFN(Module):
         self.geglu = GEGLU()
         self.dropout = Dropout(dropout)
         self.lin_2 = Linear(channels * mult, channels)
+
+    def reset_parameters(self):
+        self.lin_1.reset_parameters()
+        self.lin_2.reset_parameters()
 
     def forward(self, x):
         x = self.lin_1(x)
@@ -78,6 +85,12 @@ class Attention(Module):
         x = x.reshape(B, num_cols, self.num_heads * d_heads)
         return self.lin_out(x)
 
+    def reset_parameters(self):
+        self.lin_q.reset_parameters()
+        self.lin_k.reset_parameters()
+        self.lin_v.reset_parameters()
+        self.lin_out.reset_parameters()
+
 
 class TabTransformerConv(TableConv):
     r"""The TabTransformer Layer introduced in
@@ -102,3 +115,7 @@ class TabTransformerConv(TableConv):
         x += out
         x = self.ffn(x)
         return x
+
+    def reset_parameters(self):
+        self.attn.reset_parameters()
+        self.ffn.reset_parameters()

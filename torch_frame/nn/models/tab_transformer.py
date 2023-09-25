@@ -14,8 +14,16 @@ from torch_frame.nn.conv import TabTransformerConv
 
 
 class MLP(Module):
+    r""" MLP decoder for TabTransformer.
+
+    Args:
+        in_channels (int): Input dimensionality.
+        out_channles (int): Output dimensionality.
+        hidden_size (int): Size of hidden layer.
+    """
     def __init__(self, in_channels, out_channels, hidden_size):
         super().__init__()
+        print("hidden size ", hidden_size)
         self.layer1 = Linear(in_channels, hidden_size)
         self.act1 = ReLU()
         self.layer2 = Linear(hidden_size, out_channels)
@@ -40,6 +48,9 @@ class TabTransformer(Module):
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.
         num_heads (int): Number of heads in the self-attention layer.
+        encoder_pad_size (int): Size of contextual padding to the encoder.
+        decoder_hidden_layer_size (int): Size of the hidden layer of MLP
+            decoder.
         col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
         col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
@@ -55,7 +66,8 @@ class TabTransformer(Module):
         out_channels: int,
         num_layers: int,
         num_heads: int,
-        embedding_pad_dim: int,
+        encoder_pad_size: int,
+        decoder_hidden_layer_size: int,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
@@ -80,7 +92,7 @@ class TabTransformer(Module):
             out_channels=channels,
             stats_list=stats_list,
             stype=stype.categorical,
-            contextual_column_pad=embedding_pad_dim,
+            contextual_column_pad=encoder_pad_size,
         )
         self.tab_transformer_convs = ModuleList([
             TabTransformerConv(channels=channels, num_heads=num_heads)
@@ -89,10 +101,13 @@ class TabTransformer(Module):
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
         self.decoder = MLP(
             len(col_names_dict[stype.categorical]) * channels +
-            len(col_names_dict[stype.numerical]), out_channels, channels)
+            len(col_names_dict[stype.numerical]), out_channels,
+            decoder_hidden_layer_size)
         self.reset_parameters()
 
     def reset_parameters(self):
+        self.cat_encoder.reset_parameters()
+        self.num_encoder.reset_parameters()
         for tab_transformer_conv in self.tab_transformer_convs:
             tab_transformer_conv.reset_parameters()
         self.decoder.reset_parameters()
