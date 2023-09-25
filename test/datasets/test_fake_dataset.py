@@ -14,7 +14,7 @@ def test_fake_dataset(with_nan, get_fake_text_embedding):
         stypes=[
             torch_frame.numerical,
             torch_frame.categorical,
-            torch_frame.text_encoded,
+            torch_frame.text_embedded,
         ],
         text_encoder=get_fake_text_embedding,
     )
@@ -41,6 +41,6 @@ def test_fake_dataset(with_nan, get_fake_text_embedding):
     else:
         assert (x_cat >= 0).all()
 
-    x_text_encoded = tensor_frame.x_dict[torch_frame.text_encoded]
-    assert x_text_encoded.dtype == torch.float
-    assert x_text_encoded.shape == (20, 2, 10)
+    x_text_embedded = tensor_frame.x_dict[torch_frame.text_embedded]
+    assert x_text_embedded.dtype == torch.float
+    assert x_text_embedded.shape == (20, 2, 10)

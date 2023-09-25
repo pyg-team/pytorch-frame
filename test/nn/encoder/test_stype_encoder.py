@@ -154,7 +154,7 @@ def test_text_embedding_encoder(get_fake_text_embedding):
         stypes=[
             torch_frame.numerical,
             torch_frame.categorical,
-            torch_frame.text_encoded,
+            torch_frame.text_embedded,
         ],
         text_encoder=get_fake_text_embedding,
     )
@@ -162,10 +162,10 @@ def test_text_embedding_encoder(get_fake_text_embedding):
     tensor_frame = dataset.tensor_frame
     stats_list = [
         dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.text_encoded]
+        for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
     encoder = TextEmbeddingEncoder(out_channels=5, stats_list=stats_list,
-                                   stype=stype.text_encoded, in_channels=10)
-    x_text = tensor_frame.x_dict[stype.text_encoded]
+                                   stype=stype.text_embedded, in_channels=10)
+    x_text = tensor_frame.x_dict[stype.text_embedded]
     x = encoder(x_text)
     assert x.shape == (10, 2, 5)

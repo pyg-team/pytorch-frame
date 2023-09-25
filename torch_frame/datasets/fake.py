@@ -60,13 +60,13 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[1::2] = np.nan
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
-        if stype.text_encoded in stypes:
+        if stype.text_embedded in stypes:
             for col_name in ['text_1', 'text_2']:
                 arr = ['Hello world!'] * num_rows
                 if with_nan:
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
-                col_to_stype[col_name] = stype.text_encoded
+                col_to_stype[col_name] = stype.text_embedded
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and

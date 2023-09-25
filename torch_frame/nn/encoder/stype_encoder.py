@@ -62,9 +62,9 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
                     " columns.")
-            if self.stype == stype.text_encoded:
+            if self.stype == stype.text_embedded:
                 raise ValueError(f"Only the default `na_strategy` (None) "
-                                 f"can be used on embeded text columns, but "
+                                 f"can be used on embedded text columns, but "
                                  f"{self.na_strategy} is given.")
 
     @abstractmethod
@@ -118,7 +118,7 @@ class StypeEncoder(Module, ABC):
             x (Tensor): Output :obj:`Tensor` with NaNs replaced given
                 :obj:`na_strategy`.
         """
-        if self.na_strategy is None or self.stype == torch_frame.text_encoded:
+        if self.na_strategy is None or self.stype == torch_frame.text_embedded:
             return x
         x = x.clone()
 
@@ -444,7 +444,7 @@ class ExcelFormerEncoder(StypeEncoder):
 
 
 class TextEmbeddingEncoder(StypeEncoder):
-    supported_stypes = {stype.text_encoded}
+    supported_stypes = {stype.text_embedded}
 
     def __init__(
         self,
