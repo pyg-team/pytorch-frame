@@ -83,8 +83,5 @@ def test_empty_tensor_frame():
         torch_frame.categorical: [],
         torch_frame.numerical: ['x', 'y'],
     }
-    tf = TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
-
-    # Test that categorical stype is removed from tensor frame.
-    assert torch_frame.categorical not in tf.x_dict
-    assert torch_frame.categorical not in tf.x_dict
+    with pytest.raises(RuntimeError, match='Empty columns'):
+        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)

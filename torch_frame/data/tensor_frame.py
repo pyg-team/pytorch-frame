@@ -31,6 +31,10 @@ class TensorFrame:
     y: Optional[Tensor] = None
 
     def __post_init__(self):
+        self.validate()
+
+    def validate(self):
+        r"""Validate the tensor frame object."""
         num_rows = self.num_rows
         empty_stypes: List[stype] = []
         for stype_name, x in self.x_dict.items():
@@ -52,10 +56,10 @@ class TensorFrame:
                     f"The length of elements in x_dict are not aligned, got "
                     f"{x.size(0)} but expected {num_rows}.")
 
-        # Remove the empty stypes
-        for stype_name in empty_stypes:
-            self.x_dict.pop(stype_name)
-            self.col_names_dict.pop(stype_name)
+        if len(empty_stypes) > 0:
+            raise RuntimeError(
+                f"Empty columns for the following stypes: {empty_stypes}."
+                f"Please manually delete the above stypes.")
 
         if self.y is not None:
             if len(self.y) != num_rows:

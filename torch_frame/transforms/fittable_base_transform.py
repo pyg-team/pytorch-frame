@@ -46,7 +46,9 @@ class FittableBaseTransform(BaseTransform):
                              f"Please run `fit()` first before attempting to "
                              f"transform the TensorFrame.")
 
-        return self._forward(tf)
+        transformed_tf = self._forward(tf)
+        transformed_tf.validate()
+        return transformed_tf
 
     @abstractmethod
     def _fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):

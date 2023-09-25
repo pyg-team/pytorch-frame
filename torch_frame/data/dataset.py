@@ -70,11 +70,13 @@ class DataFrameToTensorFrameConverter:
         self.target_col = target_col
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
-        self._col_names_dict: Dict[torch_frame.stype,
-                                   List[str]] = defaultdict(list)
+        self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
         for col, stype in self.col_to_stype.items():
             if col != self.target_col:
-                self._col_names_dict[stype].append(col)
+                if stype not in self._col_names_dict:
+                    self._col_names_dict[stype] = [col]
+                else:
+                    self._col_names_dict[stype].append(col)
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
