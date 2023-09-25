@@ -46,7 +46,7 @@ class Attention(Module):
 
     Args:
         channels (int): Input channel dimensionality
-        dropout (float): Percentage of random deactivation in the AiuM module
+        dropout (float): Percentage of random deactivation
     """
     def __init__(self, channels: int, num_heads: int, dropout=0.):
         super().__init__()
