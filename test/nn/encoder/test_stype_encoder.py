@@ -13,7 +13,7 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
-    TextEmbeddingEncoder,
+    TextEmbedder,
 )
 
 
@@ -147,7 +147,7 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert x_num[isnan_mask].isnan().all()
 
 
-def test_text_embedding_encoder(get_fake_text_embedding):
+def test_text_embedding_encoder(get_fake_text_embedder):
     num_rows = 10
     dataset = FakeDataset(
         num_rows=num_rows,
@@ -156,7 +156,7 @@ def test_text_embedding_encoder(get_fake_text_embedding):
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_encoder=get_fake_text_embedding,
+        text_embedder=get_fake_text_embedder,
     )
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
@@ -164,8 +164,8 @@ def test_text_embedding_encoder(get_fake_text_embedding):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
-    encoder = TextEmbeddingEncoder(out_channels=5, stats_list=stats_list,
-                                   stype=stype.text_embedded, in_channels=10)
+    encoder = TextEmbedder(out_channels=5, stats_list=stats_list,
+                           stype=stype.text_embedded, in_channels=10)
     x_text = tensor_frame.x_dict[stype.text_embedded]
     x = encoder(x_text)
     assert x.shape == (10, 2, 5)

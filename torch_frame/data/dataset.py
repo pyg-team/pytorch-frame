@@ -14,7 +14,7 @@ from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
-    TextEmbedder,
+    TextEmbeddingTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
@@ -59,9 +59,9 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        text_encoder (callable, optional): A callable text encoder that
+        text_embedder (callable, optional): A callable text embedder that
             takes list of strings as input and returns corresponding text
-            embedding tensor. This text encoder is only called when there
+            embedding tensor. This text embedder is only called when there
             is text stype data in the dataframe. Series data will call
             :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
@@ -70,12 +70,12 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        text_encoder: Optional[Callable[[List[str]], Tensor]] = None,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.text_encoder = text_encoder
+        self.text_embedder = text_embedder
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype,
@@ -84,8 +84,8 @@ class DataFrameToTensorFrameConverter:
             if col != self.target_col:
                 self._col_names_dict[stype].append(col)
         if (torch_frame.text_embedded
-                in self.col_names_dict) and (self.text_encoder is None):
-            raise ValueError("`text_encoder` need to be "
+                in self.col_names_dict) and (self.text_embedder is None):
+            raise ValueError("`text_embedder` need to be "
                              "specified when `text_embedded` "
                              "stype column exist.")
         for stype in self._col_names_dict.keys():
@@ -105,7 +105,7 @@ class DataFrameToTensorFrameConverter:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.text_embedded:
-            return TextEmbedder(self.text_encoder)
+            return TextEmbeddingTensorMapper(self.text_embedder)
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -272,7 +272,7 @@ class Dataset(ABC):
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
-            text_encoder=getattr(self, 'text_encoder', None),
+            text_embedder=getattr(self, 'text_embedder', None),
         )
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 

@@ -31,8 +31,8 @@ def get_fake_tensor_frame() -> Callable:
 
 
 @pytest.fixture()
-def get_fake_text_embedding() -> Callable:
-    def _get_fake_text_embedding(sentences: List[str]) -> Tensor:
+def get_fake_text_embedder() -> Callable:
+    def _get_fake_text_embedder(sentences: List[str]) -> Tensor:
         return torch.rand(len(sentences), 10)
 
-    return _get_fake_text_embedding
+    return _get_fake_text_embedder

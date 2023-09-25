@@ -23,9 +23,9 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-        text_encoder (callable, optional): A callable text encoder that
+        text_embedder (callable, optional): A callable text embedder that
             takes list of strings as input and returns corresponding text
-            embedding tensor. This text encoder is only called when there
+            embedding tensor. This text embedder is only called when there
             is text stype data in the dataframe. Series data will call
             :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
@@ -33,7 +33,8 @@ class FakeDataset(torch_frame.data.Dataset):
                  stypes: List[stype] = [stype.categorical, stype.numerical],
                  create_split: bool = False,
                  task_type: TaskType = TaskType.REGRESSION,
-                 text_encoder: Optional[Callable[[List[str]], Tensor]] = None):
+                 text_embedder: Optional[Callable[[List[str]],
+                                                  Tensor]] = None):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
@@ -84,6 +85,6 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = 'val'
             split[2] = 'test'
             df['split'] = split
-        self.text_encoder = text_encoder
+        self.text_embedder = text_embedder
         super().__init__(df, col_to_stype, target_col='target',
                          split_col='split' if create_split else None)

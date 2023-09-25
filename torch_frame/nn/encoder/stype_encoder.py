@@ -397,7 +397,7 @@ class ExcelFormerEncoder(StypeEncoder):
 
     def __init__(
         self,
-        out_channels: int,
+        out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
@@ -445,7 +445,7 @@ class ExcelFormerEncoder(StypeEncoder):
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
 
 
-class TextEmbeddingEncoder(StypeEncoder):
+class TextEmbedder(StypeEncoder):
     r"""A text embedding encoder that uses a linear layer transform
     the embedding dimension from :obj:`in_channels` to
     :obj:`out_channels`.

@@ -89,17 +89,17 @@ class CategoricalTensorMapper(TensorMapper):
         return ser
 
 
-class TextEmbedder(TensorMapper):
+class TextEmbeddingTensorMapper(TensorMapper):
     r"""Embed any text series into tensor.
 
     Args:
-        text_encoder (callable): A callable function that takes
+        text_embedder (callable): A callable function that takes
             list of strings and returns embedding for that list
             of strings.
     """
-    def __init__(self, text_encoder: Callable[[List[str]], Tensor]):
+    def __init__(self, text_embedder: Callable[[List[str]], Tensor]):
         super().__init__()
-        self.text_encoder = text_encoder
+        self.text_embedder = text_embedder
 
     def forward(
         self,
@@ -107,7 +107,7 @@ class TextEmbedder(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        emb = self.text_encoder(ser.tolist())
+        emb = self.text_embedder(ser.tolist())
         return emb.to(device)
 
     def backward(self, tensor: Tensor) -> pd.Series:

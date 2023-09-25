@@ -6,7 +6,7 @@ from torch_frame.datasets import FakeDataset
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_fake_dataset(with_nan, get_fake_text_embedding):
+def test_fake_dataset(with_nan, get_fake_text_embedder):
     num_rows = 20
     dataset = FakeDataset(
         num_rows=num_rows,
@@ -16,7 +16,7 @@ def test_fake_dataset(with_nan, get_fake_text_embedding):
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_encoder=get_fake_text_embedding,
+        text_embedder=get_fake_text_embedder,
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
