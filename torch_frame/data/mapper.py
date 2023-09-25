@@ -50,8 +50,8 @@ class NumericalTensorMapper(TensorMapper):
 
 
 class CategoricalTensorMapper(TensorMapper):
-    r"""Maps any categorical series into a index representation, with :obj:`-1`
-    denoting N/A values."""
+    r"""Maps any categorical series into an index representation, with
+    :obj:`-1` denoting N/A values."""
     def __init__(self, categories: Iterable[Any]):
         super().__init__()
 
@@ -90,6 +90,12 @@ class CategoricalTensorMapper(TensorMapper):
 
 
 class TextEmbedder(TensorMapper):
+    r"""Embed any text series into tensor.
+    Args:
+        text_encoder (callable): A callable function that takes
+            list of string and returns embedding for that list
+            of string.
+    """
     def __init__(self, text_encoder: Callable[[List[str]], Tensor]):
         super().__init__()
         self.text_encoder = text_encoder

@@ -138,6 +138,8 @@ class StypeEncoder(Module, ABC):
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
                 fill_value = 0
+            else:
+                raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
         return x
 
@@ -235,7 +237,7 @@ class LinearEncoder(StypeEncoder):
 
     def encode_forward(self, x: Tensor) -> Tensor:
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
         # x: [batch_size, num_cols]
@@ -252,7 +254,7 @@ class LinearEncoder(StypeEncoder):
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
     linear representation, followed by a linear transformation. The original
-    encoding is described in https://arxiv.org/abs/2203.05556"""
+    encoding is described in https://arxiv.org/abs/2203.05556."""
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -325,7 +327,7 @@ class LinearPeriodicEncoder(StypeEncoder):
     in https://arxiv.org/abs/2203.05556.
 
     Args:
-        n_bins (int): Number of bins for periodic encoding
+        n_bins (int): Number of bins for periodic encoding.
     """
     supported_stypes = {stype.numerical}
 
@@ -387,7 +389,7 @@ class ExcelFormerEncoder(StypeEncoder):
     The original encoding is described in https://arxiv.org/pdf/2301.02819
 
     Args:
-        out_channels (int): The output channel dimensionality
+        out_channels (int): The output channel dimensionality.
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
     """
@@ -444,6 +446,13 @@ class ExcelFormerEncoder(StypeEncoder):
 
 
 class TextEmbeddingEncoder(StypeEncoder):
+    r"""A text embedding encoder that uses a linear layer transform
+    the embedding dimension from :obj:`in_channels` to
+    :obj:`out_channels`.
+
+    Args:
+        in_channels (int): Text data embedding dimensionality.
+    """
     supported_stypes = {stype.text_embedded}
 
     def __init__(
