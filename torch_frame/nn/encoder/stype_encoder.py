@@ -151,6 +151,11 @@ class StypeEncoder(Module, ABC):
 
 
 class ContextualEmbeddingEncoder(StypeEncoder):
+    r"""Contextual embedding encoder used by TabTransformer
+    (https://arxiv.org/pdf/2012.06678.pdf). Each categorical feature is
+    is padded with some special tokens. The vocabulary size is equal to
+    the number of total categories + number of special tokens.
+    """
     supported_stypes = {stype.categorical}
 
     def __init__(
@@ -175,6 +180,8 @@ class ContextualEmbeddingEncoder(StypeEncoder):
         offset = F.pad(torch.tensor(num_categories), (1, 0),
                        value=self.contextual_column_pad)
         offset = offset.cumsum(dim=-1)[:-1]
+        # the categories offset added to each column before the embedding
+        # layer.
         self.register_buffer('categories_offset', offset)
         self.emb = Embedding(total_categories, self.out_channels)
         self.reset_parameters()
