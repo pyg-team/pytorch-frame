@@ -72,6 +72,9 @@ class TabTransformer(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
         self.stypes = []
         if not (stype.categorical in col_names_dict
                 and len(col_names_dict[stype.categorical]) != 0):
