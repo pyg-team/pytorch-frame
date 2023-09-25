@@ -60,33 +60,32 @@ class TabTransformer(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
         super().__init__()
-        if stype.categorical in col_names_dict and len(
-                col_names_dict[stype.categorical]) != 0:
-            stats_list = [
-                col_stats[col_name]
-                for col_name in col_names_dict[stype.categorical]
-            ]
-            self.cat_encoder = ContextualEmbeddingEncoder(
-                out_channels=channels,
-                stats_list=stats_list,
-                stype=stype.categorical,
-                contextual_column_pad=embedding_pad_dim,
-            )
-            self.tab_transformer_convs = ModuleList([
-                TabTransformerConv(
-                    channels=channels, num_categorical_cols=len(
-                        col_names_dict[stype.categorical]),
-                    num_heads=num_heads) for _ in range(num_layers)
-            ])
-        else:
+        self.stypes = []
+        if not (stype.categorical in col_names_dict
+                and len(col_names_dict[stype.categorical]) != 0):
             logging.info(
                 "The data does not contain any categorical columns. "
-                "TabTransformer will simply be a multi layer perceptron "
-                "network over numerical values.")
-            # make sure the code does not error out if stype.categorical
-            # is not in col_names_dict
-            if stype.categorical not in col_names_dict:
-                col_names_dict[stype.categorical] = []
+                "TabTransformer will simply be a multi layer perceptron ")
+        else:
+            self.stypes.append(stype.categorical)
+
+        if stype.numerical in col_names_dict and len(
+                col_names_dict[stype.numerical]) != 0:
+            self.stypes.append(stype.numerical)
+        stats_list = [
+            col_stats[col_name]
+            for col_name in col_names_dict[stype.categorical]
+        ]
+        self.cat_encoder = ContextualEmbeddingEncoder(
+            out_channels=channels,
+            stats_list=stats_list,
+            stype=stype.categorical,
+            contextual_column_pad=embedding_pad_dim,
+        )
+        self.tab_transformer_convs = ModuleList([
+            TabTransformerConv(channels=channels, num_heads=num_heads)
+            for _ in range(num_layers)
+        ])
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
         self.decoder = MLP(
             len(col_names_dict[stype.categorical]) * channels +
@@ -107,16 +106,17 @@ class TabTransformer(Module):
         Returns:
             out (Tensor): Output. The shape is [batch_size, out_channels].
         """
-        B, _ = tf.x_dict[stype.categorical].shape
-        if stype.categorical in tf.col_names_dict and len(
-                tf.col_names_dict[stype.categorical]) != 0:
+        xs = []
+        if stype.categorical in self.stypes:
+            B, _ = tf.x_dict[stype.categorical].shape
             x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
             for tab_transformer_conv in self.tab_transformer_convs:
                 x_cat = tab_transformer_conv(x_cat)
             x_cat = x_cat.reshape(B, -1)
+            xs.append(x_cat)
+        if stype.numerical in self.stypes:
             x_num = self.num_encoder(tf.x_dict[stype.numerical])
-            x = torch.cat((x_cat.reshape(B, -1), x_num), dim=1)
-        else:
-            x = self.num_encoder(tf.x_dict[stype.numerical])
+            xs.append(x_num)
+        x = torch.cat(xs, dim=1)
         out = self.decoder(x)
         return out

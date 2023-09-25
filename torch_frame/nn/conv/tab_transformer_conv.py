@@ -85,16 +85,14 @@ class TabTransformerConv(TableConv):
 
     Args:
         channels (int): Input/output channel dimensionality
-        num_categorical_cols (int): Number of categorical columns
         num_heads (int): Number of attention heads
         attn_dropout (float): attention module dropout (default: 0)
     """
-    def __init__(self, channels: int, num_categorical_cols: int,
-                 num_heads: int, attn_dropout: float = 0.):
+    def __init__(self, channels: int, num_heads: int,
+                 attn_dropout: float = 0.):
         super().__init__()
         self.norm_1 = LayerNorm(channels)
-        self.attn = Attention(channels, num_categorical_cols, num_heads,
-                              attn_dropout)
+        self.attn = Attention(channels, num_heads, attn_dropout)
         self.norm_2 = LayerNorm(channels)
         self.ffn = FFN(channels)
 

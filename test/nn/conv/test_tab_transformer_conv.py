@@ -10,7 +10,6 @@ def test_tab_transformer_conv():
     num_heads = 8
     # Feature-based embeddings
     x = torch.randn(size=(batch_size, num_cols, channels))
-    conv = TabTransformerConv(channels, num_cols, num_heads=num_heads,
-                              attn_dropout=0.)
+    conv = TabTransformerConv(channels, num_heads=num_heads, attn_dropout=0.)
     x_out = conv(x)
     assert x_out.shape == (batch_size, num_cols, channels)
