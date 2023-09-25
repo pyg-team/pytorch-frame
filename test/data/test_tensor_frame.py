@@ -71,3 +71,20 @@ def test_tensor_frame_index_select(get_fake_tensor_frame, index):
         assert out.num_rows == len(index)
 
     assert out.col_names_dict == tf.col_names_dict
+
+
+def test_empty_tensor_frame():
+    # Categorical feature is empty
+    x_dict = {
+        torch_frame.categorical: torch.randint(0, 3, size=(10, 0)),
+        torch_frame.numerical: torch.randn(size=(10, 2)),
+    }
+    col_names_dict = {
+        torch_frame.categorical: [],
+        torch_frame.numerical: ['x', 'y'],
+    }
+    tf = TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
+
+    # Test that categorical stype is removed from tensor frame.
+    assert torch_frame.categorical not in tf.x_dict
+    assert torch_frame.categorical not in tf.x_dict
