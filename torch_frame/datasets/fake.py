@@ -6,7 +6,7 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
-from torch_frame.typing import Series, TaskType
+from torch_frame.typing import TaskType
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -23,13 +23,17 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-
+        text_encoder (callable, optional): A callable text encoder that
+            takes list of strings as input and returns corresponding text
+            embedding tensor. This text encoder is only called when there
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
     def __init__(self, num_rows: int, with_nan: bool = False,
                  stypes: List[stype] = [stype.categorical, stype.numerical],
                  create_split: bool = False,
                  task_type: TaskType = TaskType.REGRESSION,
-                 text_encoder: Optional[Callable[[Series], Tensor]] = None):
+                 text_encoder: Optional[Callable[[List[str]], Tensor]] = None):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}

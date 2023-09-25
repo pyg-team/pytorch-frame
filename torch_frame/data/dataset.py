@@ -60,9 +60,10 @@ class DataFrameToTensorFrameConverter:
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
         text_encoder (callable, optional): A callable text encoder that
-            takes :obj:`Series` as input and returns corresponding text
+            takes list of strings as input and returns corresponding text
             embedding tensor. This text encoder is only called when there
-            is text stype data in the dataframe. (default: :obj:`None`)
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
     def __init__(
         self,

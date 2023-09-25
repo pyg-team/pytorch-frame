@@ -91,10 +91,11 @@ class CategoricalTensorMapper(TensorMapper):
 
 class TextEmbedder(TensorMapper):
     r"""Embed any text series into tensor.
+
     Args:
         text_encoder (callable): A callable function that takes
-            list of string and returns embedding for that list
-            of string.
+            list of strings and returns embedding for that list
+            of strings.
     """
     def __init__(self, text_encoder: Callable[[List[str]], Tensor]):
         super().__init__()
