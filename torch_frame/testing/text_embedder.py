@@ -14,7 +14,8 @@ class HashTextEmbedder:
     Args:
         out_channels (int): The output dimensionality
         num_hash_bins (int): Number of hash bins to use.
-        device (torch.device, optional): The device to put Embedding module.
+        device (torch.device, optional): The device to put :class:`Embedding`
+            module.
     """
     def __init__(self, out_channels: int, num_hash_bins: int = 64,
                  device: Optional[torch.device] = None):
