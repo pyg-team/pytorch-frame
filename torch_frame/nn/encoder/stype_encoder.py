@@ -4,9 +4,10 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, ModuleList, Parameter, Sequential
+from torch.nn import Embedding, Linear, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
+import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
@@ -23,7 +24,7 @@ def reset_parameters_soft(module: Module):
 
 class StypeEncoder(Module, ABC):
     r"""Base class for stype encoder. This module transforms tensor of a
-    specific stype, i.e., `Tensorframe.x_dict[stype.xxx]` into 3-dimensional
+    specific stype, i.e., `TensorFrame.x_dict[stype.xxx]` into 3-dimensional
     column-wise tensor that is input into :class:`TableConv`.
 
     Args:
@@ -31,7 +32,7 @@ class StypeEncoder(Module, ABC):
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
         stype (stype): The stype of the encoder input.
-        post_module (Module, optional): The posthoc module applied to the
+        post_module (Module, optional): The post-hoc module applied to the
             output, such as activation function and normalization. Must
             preserve the shape of the output. If :obj:`None`, no module will be
             applied to the output. (default: :obj:`None`)
@@ -61,6 +62,10 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
                     " columns.")
+            if self.stype == stype.text_embedded:
+                raise ValueError(f"Only the default `na_strategy` (None) "
+                                 f"can be used on embedded text columns, but "
+                                 f"{self.na_strategy} is given.")
 
     @abstractmethod
     def reset_parameters(self):
@@ -102,15 +107,20 @@ class StypeEncoder(Module, ABC):
         return out
 
     def na_forward(self, x: Tensor) -> Tensor:
-        r"""Replace NaN values in a x :obj:`Tensor` given na_strategy.
+        r"""Replace NaN values in input :obj:`Tensor` given
+        :obj:`na_strategy`.
 
         Args:
             x (Tensor): Input :obj:`Tensor`.
 
         Returns:
             x (Tensor): Output :obj:`Tensor` with NaNs replaced given
-                na_strategy.
+                :obj:`na_strategy`.
         """
+        if (self.stype == torch_frame.text_embedded) and (self.na_strategy
+                                                          is not None):
+            raise ValueError("NA strategy should be `None` "
+                             "for text stype data.")
         if self.na_strategy is None:
             return x
         x = x.clone()
@@ -131,6 +141,8 @@ class StypeEncoder(Module, ABC):
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
                 fill_value = 0
+            else:
+                raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
         return x
 
@@ -228,7 +240,7 @@ class LinearEncoder(StypeEncoder):
 
     def encode_forward(self, x: Tensor) -> Tensor:
         r"""Maps input :obj:`x` from TensorFrame (shape [batch_size, num_cols])
-        into output :obj:`x` of shape [batch_size, num_cols, out_channels].  It
+        into output :obj:`x` of shape [batch_size, num_cols, out_channels]. It
         outputs non-learnable all-zero embedding for :obj:`NaN` entries.
         """
         # x: [batch_size, num_cols]
@@ -245,7 +257,7 @@ class LinearEncoder(StypeEncoder):
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
     linear representation, followed by a linear transformation. The original
-    encoding is described in https://arxiv.org/abs/2203.05556"""
+    encoding is described in https://arxiv.org/abs/2203.05556."""
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -318,7 +330,7 @@ class LinearPeriodicEncoder(StypeEncoder):
     in https://arxiv.org/abs/2203.05556.
 
     Args:
-        n_bins (int): Number of bins for periodic encoding
+        n_bins (int): Number of bins for periodic encoding.
     """
     supported_stypes = {stype.numerical}
 
@@ -372,15 +384,15 @@ class LinearPeriodicEncoder(StypeEncoder):
 
 class ExcelFormerEncoder(StypeEncoder):
     r""" An attention based encoder that transforms input numerical features
-    to a 3-dimentional tensor.
+    to a 3-dimensional tensor.
     Before being fed to the embedding layer, numerical features are normalized
     and categorical features are transformed into numerical features by the
     CatBoost Encoder implemented with the Sklearn Python package. The features
-    are then ranked based on mutural information.
+    are then ranked based on mutual information.
     The original encoding is described in https://arxiv.org/pdf/2301.02819
 
     Args:
-        out_channels (int): The output channel dimensionality
+        out_channels (int): The output channel dimensionality.
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
     """
@@ -388,7 +400,7 @@ class ExcelFormerEncoder(StypeEncoder):
 
     def __init__(
         self,
-        out_channels: int,
+        out_channels: Optional[int] = None,
         stats_list: Optional[List[Dict[StatType, Any]]] = None,
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
@@ -434,3 +446,41 @@ class ExcelFormerEncoder(StypeEncoder):
         attenuated_kaiming_uniform_(self.W_2)
         kaiming_uniform_(self.b_1, a=math.sqrt(5))
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
+
+
+class TextEmbedder(StypeEncoder):
+    r"""A text embedding encoder that uses a linear layer transform
+    the embedding dimension from :obj:`in_channels` to
+    :obj:`out_channels`.
+
+    Args:
+        in_channels (int): Text data embedding dimensionality.
+    """
+    supported_stypes = {stype.text_embedded}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        in_channels: Optional[int] = None,
+    ):
+        if in_channels is None:
+            raise ValueError("Please specify the `in_channels`, "
+                             "which is the text embedding dimensionality.")
+        self.in_channels = in_channels
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        self.linear = Linear(self.in_channels, self.out_channels)
+
+    def encode_forward(self, x: Tensor) -> Tensor:
+        return self.linear(x)
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        self.linear.reset_parameters()
