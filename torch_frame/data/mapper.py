@@ -99,7 +99,9 @@ class TextEmbeddingTensorMapper(TensorMapper):
             using GPU.
         batch_size (int, optional): The mini-batch size used for the text
             embedder. If :obj:`None`, we will encode all text in a full-batch
-            manner.
+            manner. If you use heavy text embedding model with GPU, we
+            recommend you setting :obj:`batch_size` to a reasonable number to
+            avoid the GPU OOM issue.
     """
     def __init__(
         self,
