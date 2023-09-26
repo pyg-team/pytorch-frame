@@ -6,7 +6,7 @@ from torch_frame.nn.decoder import Decoder
 
 
 class ExcelFormerDecoder(Decoder):
-    r"""The ExcelFormer Decoder introduced in https://arxiv.org/abs/2301.02819
+    r"""The ExcelFormer decoder introduced in https://arxiv.org/abs/2301.02819
 
     Args:
         in_channels (int): Input channel dimensionality
