@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, Linear, ModuleList, Parameter, Sequential
+from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 import torch_frame
@@ -476,11 +476,23 @@ class LinearTextEmbeddingEncoder(StypeEncoder):
 
     def init_modules(self):
         super().init_modules()
-        self.linear = Linear(self.in_channels, self.out_channels)
-
-    def encode_forward(self, x: Tensor) -> Tensor:
-        return self.linear(x)
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, self.in_channels, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
-        self.linear.reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.01)
+        torch.nn.init.zeros_(self.bias)
+
+    def encode_forward(self, x: Tensor) -> Tensor:
+        # [batch_size, num_cols, in_channels] *
+        # [num_cols, in_channels, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x_lin = torch.einsum('ijk,jkl->ijl', x, self.weight)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x = x_lin + self.bias
+        return x
