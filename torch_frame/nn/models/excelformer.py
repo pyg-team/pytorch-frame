@@ -121,6 +121,7 @@ class ExcelFormer(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        self.excelformer_encoder.reset_parameters()
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()

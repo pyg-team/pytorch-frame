@@ -3,6 +3,7 @@ from .ft_transformer import FTTransformer
 from .excelformer import ExcelFormer
 from .tabnet import TabNet
 from .resnet import ResNet
+from .tab_transformer import TabTransformer
 
 __all__ = classes = [
     'Trompt',
@@ -10,4 +11,5 @@ __all__ = classes = [
     'ExcelFormer',
     'TabNet',
     'ResNet',
+    'TabTransformer',
 ]

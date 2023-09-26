@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `TabTransformer`. ([#74](https://github.com/pyg-team/pytorch-frame/pull/74))
 - Added `TabNet` ([#35](https://github.com/pyg-team/pytorch-frame/pull/35))
 - Added text embedded stype, mapper and encoder. ([#78](https://github.com/pyg-team/pytorch-frame/pull/78))
 - Added `ExcelFormer` example. ([#46](https://github.com/pyg-team/pytorch-frame/pull/46))

@@ -77,7 +77,9 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
+        # Clone the tensor to avoid in-place modification
+        x = x.clone()
         # NaN handling of the input Tensor
         x = self.na_forward(x)
         # Main encoding into column embeddings
