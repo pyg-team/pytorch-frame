@@ -97,8 +97,9 @@ class TextEmbeddingTensorMapper(TensorMapper):
             strings and returns embedding for that list of strings. For heavy
             text embedding model (e.g., based on Transformer), we recommend
             using GPU.
-        batch_size (int, optional): Mini-batch size. If :obj:`None`, we will
-            encode all text in a full-batch manner.
+        batch_size (int, optional): The mini-batch size used for the text
+            embedder. If :obj:`None`, we will encode all text in a full-batch
+            manner.
     """
     def __init__(
         self,
