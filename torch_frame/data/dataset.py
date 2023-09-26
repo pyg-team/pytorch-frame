@@ -77,11 +77,6 @@ class DataFrameToTensorFrameConverter:
         self.target_col = target_col
         self.text_embedder = text_embedder
 
-        if (torch_frame.text_embedded
-                in self.col_names_dict) and (self.text_embedder is None):
-            raise ValueError("`text_embedder` needs to be specified when "
-                             "stype.text_embedded column exists.")
-
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
         for col, stype in self.col_to_stype.items():
@@ -94,6 +89,11 @@ class DataFrameToTensorFrameConverter:
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
+
+        if (torch_frame.text_embedded
+                in self.col_names_dict) and (self.text_embedder is None):
+            raise ValueError("`text_embedder` needs to be specified when "
+                             "stype.text_embedded column exists.")
 
     @property
     def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
