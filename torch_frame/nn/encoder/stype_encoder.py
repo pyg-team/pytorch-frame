@@ -468,7 +468,7 @@ class LinearTextEmbeddingEncoder(StypeEncoder):
         in_channels: Optional[int] = None,
     ):
         if in_channels is None:
-            raise ValueError("Please specify the `in_channels`, "
+            raise ValueError("Please manuallly specify the `in_channels`, "
                              "which is the text embedding dimensionality.")
         self.in_channels = in_channels
         super().__init__(out_channels, stats_list, stype, post_module,
