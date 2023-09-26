@@ -119,8 +119,7 @@ class DiaM(Module):
 
 
 class ExcelFormerConv(TableConv):
-    r"""The ExcelFormer Layer introduced in
-        https://arxiv.org/pdf/2301.02819.pdf
+    r"""The ExcelFormer Layer introduced in https://arxiv.org/abs/2301.02819
 
     Args:
         channels (int): Input/output channel dimensionality
