@@ -15,6 +15,7 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
+    StackEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
@@ -65,6 +66,7 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     (ExcelFormerEncoder, {
         'post_module': ReLU(),
     }),
+    (StackEncoder, {}),
 ])
 def test_numerical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
