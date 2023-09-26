@@ -25,9 +25,8 @@ class FakeDataset(torch_frame.data.Dataset):
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             config specifying :obj:`text_embedder` that maps sentences into
-            Pytorch embeddings, :obj:`batch_size` that specifies the mini-batch
-            size for :obj:`text_embedder`, and the output dimensionality
-            :obj:`out_channels` of the text embedder. (default: :obj:`None`)
+            Pytorch embeddings and :obj:`batch_size` that specifies the
+            mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
     """
     def __init__(
         self,
