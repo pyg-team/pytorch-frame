@@ -21,28 +21,6 @@ from torch_frame.nn import EmbeddingEncoder
 from torch_frame.nn.conv import TabTransformerConv
 
 
-class MLP(Module):
-    r""" MLP decoder for TabTransformer.
-
-    Args:
-        in_channels (int): Input dimensionality.
-        out_channles (int): Output dimensionality.
-        hidden_size (int): Size of hidden layer.
-    """
-    def __init__(self, in_channels, out_channels, hidden_size):
-        super().__init__()
-        self.mlp = Sequential(Linear(in_channels, hidden_size), ReLU(),
-                              Linear(hidden_size, out_channels))
-
-    def forward(self, x):
-        return self.mlp(x)
-
-    def reset_parameters(self):
-        for m in self.mlp:
-            if not isinstance(m, ReLU):
-                m.reset_parameters()
-
-
 class TabTransformer(Module):
     r"""The Tab-Transformer model introduced in
         https://arxiv.org/abs/2012.06678
@@ -91,12 +69,12 @@ class TabTransformer(Module):
         if stype.numerical in col_names_dict and len(
                 col_names_dict[stype.numerical]) != 0:
             self.stypes.append(stype.numerical)
-        stats_list = [
+        categorical_stats_list = [
             col_stats[col_name]
             for col_name in col_names_dict[stype.categorical]
         ]
         self.cat_encoder = EmbeddingEncoder(out_channels=channels,
-                                            stats_list=stats_list,
+                                            stats_list=categorical_stats_list,
                                             stype=stype.categorical)
         self.pad_embedding = Embedding(len(col_names_dict[stype.categorical]),
                                        encoder_pad_size)
@@ -106,10 +84,12 @@ class TabTransformer(Module):
             for _ in range(num_layers)
         ])
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
-        self.decoder = MLP(
-            len(col_names_dict[stype.categorical]) * in_channels +
-            len(col_names_dict[stype.numerical]), out_channels,
-            decoder_hidden_layer_size)
+        self.decoder = Sequential(
+            Linear(
+                len(col_names_dict[stype.categorical]) * in_channels +
+                len(col_names_dict[stype.numerical]),
+                decoder_hidden_layer_size), ReLU(),
+            Linear(decoder_hidden_layer_size, out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -117,7 +97,9 @@ class TabTransformer(Module):
         self.num_encoder.reset_parameters()
         for tab_transformer_conv in self.tab_transformer_convs:
             tab_transformer_conv.reset_parameters()
-        self.decoder.reset_parameters()
+        for m in self.decoder:
+            if not isinstance(m, ReLU):
+                m.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
         r"""Transforming :obj:`TensorFrame` object into output prediction.

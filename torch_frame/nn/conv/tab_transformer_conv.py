@@ -7,9 +7,8 @@ from torch_frame.nn.conv import TableConv
 
 
 class GEGLU(Module):
-    r"""GEGLU activation.
-    """
-    def forward(self, x):
+    r"""GEGLU activation proposed in https://arxiv.org/abs/2002.05202"""
+    def forward(self, x: Tensor) -> Tensor:
         x, gates = x.chunk(2, dim=-1)
         return x * F.gelu(gates)
 
@@ -20,9 +19,9 @@ class FFN(Module):
     Args:
         channels (int): Input channel dimensionality
         mult (int): Expansion factor of the first layer (default: 4)
-        dropout (float): Percentage of random deactivation
+        dropout (float): Percentage of random deactivation (default: 0.)
     """
-    def __init__(self, channels, mult=4, dropout=0.):
+    def __init__(self, channels: int, mult: int = 4, dropout: float = 0.):
         super().__init__()
         self.lin_1 = Linear(channels, mult * channels * 2)
         self.geglu = GEGLU()
@@ -33,7 +32,7 @@ class FFN(Module):
         self.lin_1.reset_parameters()
         self.lin_2.reset_parameters()
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.lin_1(x)
         x = self.geglu(x)
         x = self.dropout(x)
@@ -41,12 +40,13 @@ class FFN(Module):
         return x
 
 
-class Attention(Module):
+class SelfAttention(Module):
     r"""Self-attention module.
 
     Args:
         channels (int): Input channel dimensionality
-        dropout (float): Percentage of random deactivation
+        num_heads (int): Number of heads in Attention module
+        dropout (float): Percentage of random deactivation (default: 0.)
     """
     def __init__(self, channels: int, num_heads: int, dropout=0.):
         super().__init__()
@@ -105,7 +105,7 @@ class TabTransformerConv(TableConv):
                  attn_dropout: float = 0.):
         super().__init__()
         self.norm_1 = LayerNorm(channels)
-        self.attn = Attention(channels, num_heads, attn_dropout)
+        self.attn = SelfAttention(channels, num_heads, attn_dropout)
         self.norm_2 = LayerNorm(channels)
         self.ffn = FFN(channels)
 
@@ -117,5 +117,7 @@ class TabTransformerConv(TableConv):
         return x
 
     def reset_parameters(self):
+        self.norm_1.reset_parameters()
         self.attn.reset_parameters()
+        self.norm_2.reset_parameters()
         self.ffn.reset_parameters()
