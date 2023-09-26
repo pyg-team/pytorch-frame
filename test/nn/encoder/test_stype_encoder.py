@@ -9,7 +9,6 @@ from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
-    ContextualEmbeddingEncoder,
     EmbeddingEncoder,
     ExcelFormerEncoder,
     LinearBucketEncoder,
@@ -21,10 +20,7 @@ from torch_frame.nn import (
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {}),
-                                                (ContextualEmbeddingEncoder, {
-                                                    'contextual_column_pad': 2
-                                                })])
+@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
 def test_categorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()

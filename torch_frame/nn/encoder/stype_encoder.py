@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
@@ -147,53 +146,6 @@ class StypeEncoder(Module, ABC):
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
-        return x
-
-
-class ContextualEmbeddingEncoder(StypeEncoder):
-    r"""Contextual embedding encoder used by TabTransformer
-    (https://arxiv.org/pdf/2012.06678.pdf). Each categorical feature is
-    is padded with some special tokens. The vocabulary size is equal to
-    the number of total categories + number of special tokens.
-    """
-    supported_stypes = {stype.categorical}
-
-    def __init__(
-        self,
-        out_channels: Optional[int] = None,
-        stats_list: Optional[List[Dict[StatType, Any]]] = None,
-        stype: Optional[stype] = None,
-        post_module: Optional[Module] = None,
-        na_strategy: Optional[NAStrategy] = None,
-        contextual_column_pad: Optional[int] = 2,
-    ):
-        self.contextual_column_pad = contextual_column_pad
-        super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
-
-    def init_modules(self):
-        super().init_modules()
-        num_categories = []
-        for stats in self.stats_list:
-            num_categories.append(len(stats[StatType.COUNT][0]))
-        total_categories = sum(num_categories) + self.contextual_column_pad
-        offset = F.pad(torch.tensor(num_categories), (1, 0),
-                       value=self.contextual_column_pad)
-        offset = offset.cumsum(dim=-1)[:-1]
-        # the categories offset added to each column before the embedding
-        # layer.
-        self.register_buffer('categories_offset', offset)
-        self.emb = Embedding(total_categories, self.out_channels)
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        self.emb.reset_parameters()
-        return super().reset_parameters()
-
-    def encode_forward(self, x: Tensor) -> Tensor:
-        x = x.squeeze(-1)
-        x += self.categories_offset
-        x = self.emb(x)
         return x
 
 

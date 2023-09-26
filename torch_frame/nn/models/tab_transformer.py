@@ -127,10 +127,8 @@ class TabTransformer(Module):
         xs = []
         if stype.categorical in self.stypes:
             B, _ = tf.x_dict[stype.categorical].shape
-            x_cat = self.cat_encoder(
-                tf.x_dict[stype.categorical])  # B, col, channel
-            x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(
-                B, 1, 1)  # B, col, 2
+            x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
+            x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(B, 1, 1)
             x_cat = torch.cat((x_cat, x_pad), dim=-1)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x_cat = tab_transformer_conv(x_cat)
