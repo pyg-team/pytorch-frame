@@ -5,7 +5,7 @@ from .mutual_information_sort import MutualInformationSort
 
 __all__ = functions = [
     'BaseTransform',
-    'CategoricalCatBoostEncoder',
     'FittableBaseTransform',
+    'CategoricalCatBoostEncoder',
     'MutualInformationSort',
 ]
