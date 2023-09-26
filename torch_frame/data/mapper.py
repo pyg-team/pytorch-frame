@@ -93,13 +93,21 @@ class TextEmbeddingTensorMapper(TensorMapper):
     r"""Embed any text series into tensor.
 
     Args:
-        text_embedder (callable): A callable function that takes
-            list of strings and returns embedding for that list
-            of strings.
+        text_embedder (callable): A callable function that takes list of
+            strings and returns embedding for that list of strings. For heavy
+            text embedding model (e.g., based on Transformer), we recommend
+            using GPU.
+        batch_size (int, optional): Mini-batch size. If :obj:`None`, we will
+            encode all text in a full-batch manner. (default: :obj:`None`)
     """
-    def __init__(self, text_embedder: Callable[[List[str]], Tensor]):
+    def __init__(
+        self,
+        text_embedder: Callable[[List[str]], Tensor],
+        batch_size: Optional[int] = 128,
+    ):
         super().__init__()
         self.text_embedder = text_embedder
+        self.batch_size = batch_size
 
     def forward(
         self,
@@ -107,8 +115,16 @@ class TextEmbeddingTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        emb = self.text_embedder(ser.tolist())
-        return emb.to(device)
+        ser_list = ser.tolist()
+        if self.batch_size is None:
+            emb = self.text_embedder(ser_list)
+            return emb.to(device)
+
+        emb_list = []
+        for i in range(0, len(ser_list), self.batch_size):
+            emb = self.text_embedder(ser_list[i:i + self.batch_size])
+            emb_list.append(emb.to(device))
+        return torch.cat(emb_list, dim=0)
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError

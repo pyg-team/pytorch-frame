@@ -4,7 +4,9 @@ import torch
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
+    TextEmbeddingTensorMapper,
 )
+from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 def test_numerical_tensor_mapper():
@@ -34,3 +36,17 @@ def test_categorical_tensor_mapper():
 
     out = mapper.backward(out)
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
+
+
+def test_text_embedding_tensor_mapper():
+    out_channels = 10
+    num_sentences = 20
+    ser = pd.Series(["Hello world!"] * (num_sentences // 2) +
+                    ["I love torch-frame"] * (num_sentences // 2))
+    mapper = TextEmbeddingTensorMapper(HashTextEmbedder(out_channels),
+                                       batch_size=8)
+    emb = mapper.forward(ser)
+    assert emb.shape == (num_sentences, out_channels)
+    mapper.batch_size = None
+    emb2 = mapper.forward(ser)
+    assert torch.allclose(emb, emb2)

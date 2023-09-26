@@ -448,7 +448,7 @@ class ExcelFormerEncoder(StypeEncoder):
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
 
 
-class TextEmbedder(StypeEncoder):
+class LinearTextEmbeddingEncoder(StypeEncoder):
     r"""A text embedding encoder that uses a linear layer transform
     the embedding dimension from :obj:`in_channels` to
     :obj:`out_channels`.
