@@ -4,6 +4,7 @@ from torch.nn import ReLU
 
 import torch_frame
 from torch_frame import NAStrategy, stype
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -11,11 +12,12 @@ from torch_frame.nn import (
     EmbeddingEncoder,
     ExcelFormerEncoder,
     LinearBucketEncoder,
+    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
     StackEncoder,
-    TextEmbedder,
 )
+from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -149,9 +151,9 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert x_num[isnan_mask].isnan().all()
 
 
-def test_text_embedding_encoder(get_fake_text_embedder):
-    num_rows = 10
-    in_channels = 10
+def test_text_embedding_encoder():
+    num_rows = 20
+    text_emb_channels = 10
     out_channels = 5
     dataset = FakeDataset(
         num_rows=num_rows,
@@ -160,7 +162,9 @@ def test_text_embedding_encoder(get_fake_text_embedder):
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_embedder=get_fake_text_embedder,
+        text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(text_emb_channels),
+            batch_size=None),
     )
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
@@ -168,8 +172,12 @@ def test_text_embedding_encoder(get_fake_text_embedder):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
-    encoder = TextEmbedder(out_channels=5, stats_list=stats_list,
-                           stype=stype.text_embedded, in_channels=in_channels)
+    encoder = LinearEmbeddingEncoder(out_channels=out_channels,
+                                     stats_list=stats_list,
+                                     stype=stype.text_embedded,
+                                     in_channels=text_emb_channels)
     x_text = tensor_frame.x_dict[stype.text_embedded]
     x = encoder(x_text)
-    assert x.shape == (num_rows, 2, out_channels)
+    assert x.shape == (num_rows,
+                       len(tensor_frame.col_names_dict[stype.text_embedded]),
+                       out_channels)

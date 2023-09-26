@@ -2,11 +2,13 @@ import pytest
 import torch
 
 import torch_frame
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.datasets import FakeDataset
+from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_fake_dataset(with_nan, get_fake_text_embedder):
+def test_fake_dataset(with_nan):
     num_rows = 20
     out_channels = 10
     dataset = FakeDataset(
@@ -17,7 +19,8 @@ def test_fake_dataset(with_nan, get_fake_text_embedder):
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_embedder=get_fake_text_embedder,
+        text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(out_channels), batch_size=None),
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
@@ -44,4 +47,6 @@ def test_fake_dataset(with_nan, get_fake_text_embedder):
 
     x_text_embedded = tensor_frame.x_dict[torch_frame.text_embedded]
     assert x_text_embedded.dtype == torch.float
-    assert x_text_embedded.shape == (num_rows, 2, out_channels)
+    assert x_text_embedded.shape == (
+        num_rows, len(tensor_frame.col_names_dict[torch_frame.text_embedded]),
+        out_channels)

@@ -25,7 +25,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
                 "columns. No fitting will be performed.")
             self._transformed_stats = col_stats
             return
-        # TODO: Implement the CatBoostEncoder with Pytorch rather than relying
+        # TODO: Implement the CatBoostEncoder with PyTorch rather than relying
         # on external library.
         self.encoder = CatBoostEncoder(
             cols=tf_train.col_names_dict[stype.categorical])
@@ -46,7 +46,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         transformed_df = self.encoder.transform(df)
         transformed_col_stats = col_stats.copy()
         for col in tf_train.col_names_dict[stype.categorical]:
-            # TODO: Make col stats computed purely with Pytorch
+            # TODO: Make col stats computed purely with PyTorch
             # (without mapping back to pandas series).
             transformed_col_stats[col] = compute_col_stats(
                 transformed_df[col], stype.numerical)

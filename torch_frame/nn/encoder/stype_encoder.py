@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, Linear, ModuleList, Parameter, Sequential
+from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 import torch_frame
@@ -468,14 +468,20 @@ class ExcelFormerEncoder(StypeEncoder):
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
 
 
-class TextEmbedder(StypeEncoder):
-    r"""A text embedding encoder that uses a linear layer transform
-    the embedding dimension from :obj:`in_channels` to
-    :obj:`out_channels`.
+class LinearEmbeddingEncoder(StypeEncoder):
+    r"""Linear function based encoder for pre-computed embedding features.
+    It applies linear layer :obj:`torch.nn.Linear(in_channels, out_channels)`
+    on each embedding feature (:obj:`in_channels` is the dimensionality of the
+    embedding) and concatenates the output embeddings. Note that the
+    implementation does this for all numerical features in a batched manner.
 
     Args:
-        in_channels (int): Text data embedding dimensionality.
+        in_channels (int): The dimensionality of the embedding feature. Needs
+            to be specified manually.
     """
+    # NOTE: We currently support text embeddings but in princple, this encoder
+    # can support any pre-encoded embeddings, including image/audio/graph
+    # embeddings.
     supported_stypes = {stype.text_embedded}
 
     def __init__(
@@ -488,7 +494,7 @@ class TextEmbedder(StypeEncoder):
         in_channels: Optional[int] = None,
     ):
         if in_channels is None:
-            raise ValueError("Please specify the `in_channels`, "
+            raise ValueError("Please manuallly specify the `in_channels`, "
                              "which is the text embedding dimensionality.")
         self.in_channels = in_channels
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -496,11 +502,23 @@ class TextEmbedder(StypeEncoder):
 
     def init_modules(self):
         super().init_modules()
-        self.linear = Linear(self.in_channels, self.out_channels)
-
-    def encode_forward(self, x: Tensor) -> Tensor:
-        return self.linear(x)
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, self.in_channels, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
-        self.linear.reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.01)
+        torch.nn.init.zeros_(self.bias)
+
+    def encode_forward(self, x: Tensor) -> Tensor:
+        # [batch_size, num_cols, in_channels] *
+        # [num_cols, in_channels, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x_lin = torch.einsum('ijk,jkl->ijl', x, self.weight)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x = x_lin + self.bias
+        return x
