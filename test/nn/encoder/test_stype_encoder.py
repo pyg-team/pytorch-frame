@@ -2,6 +2,7 @@ import pytest
 import torch
 from torch.nn import ReLU
 
+import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
@@ -12,6 +13,8 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
+    StackEncoder,
+    TextEmbedder,
 )
 
 
@@ -61,6 +64,7 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     (ExcelFormerEncoder, {
         'post_module': ReLU(),
     }),
+    (StackEncoder, {}),
 ])
 def test_numerical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
@@ -143,3 +147,29 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert x_num[isnan_mask].isnan().all()
+
+
+def test_text_embedding_encoder(get_fake_text_embedder):
+    num_rows = 10
+    in_channels = 10
+    out_channels = 5
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=[
+            torch_frame.numerical,
+            torch_frame.categorical,
+            torch_frame.text_embedded,
+        ],
+        text_embedder=get_fake_text_embedder,
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.text_embedded]
+    ]
+    encoder = TextEmbedder(out_channels=5, stats_list=stats_list,
+                           stype=stype.text_embedded, in_channels=in_channels)
+    x_text = tensor_frame.x_dict[stype.text_embedded]
+    x = encoder(x_text)
+    assert x.shape == (num_rows, 2, out_channels)

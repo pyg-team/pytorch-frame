@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional
+from typing import Any, Callable, Iterable, List, Optional
 
 import pandas as pd
 import torch
@@ -50,8 +50,8 @@ class NumericalTensorMapper(TensorMapper):
 
 
 class CategoricalTensorMapper(TensorMapper):
-    r"""Maps any categorical series into a index representation, with :obj:`-1`
-    denoting N/A values."""
+    r"""Maps any categorical series into an index representation, with
+    :obj:`-1` denoting N/A values."""
     def __init__(self, categories: Iterable[Any]):
         super().__init__()
 
@@ -87,3 +87,28 @@ class CategoricalTensorMapper(TensorMapper):
         ser = pd.Series(self.categories[index].index)
         ser[index < 0] = None
         return ser
+
+
+class TextEmbeddingTensorMapper(TensorMapper):
+    r"""Embed any text series into tensor.
+
+    Args:
+        text_embedder (callable): A callable function that takes
+            list of strings and returns embedding for that list
+            of strings.
+    """
+    def __init__(self, text_embedder: Callable[[List[str]], Tensor]):
+        super().__init__()
+        self.text_embedder = text_embedder
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> Tensor:
+        emb = self.text_embedder(ser.tolist())
+        return emb.to(device)
+
+    def backward(self, tensor: Tensor) -> pd.Series:
+        raise NotImplementedError

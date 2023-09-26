@@ -43,6 +43,9 @@ class FTTransformer(Module):
                                           StypeEncoder]] = None,
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
 
         if stype_encoder_dict is None:
             stype_encoder_dict = {

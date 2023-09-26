@@ -95,6 +95,10 @@ class ExcelFormer(Module):
         residual_dropout: float = 0.0,
     ):
         super().__init__()
+        if num_layers <= 0:
+            raise ValueError(
+                f"num_layers must be a positive integer (got {num_layers})")
+
         self.in_channels = in_channels
         self.out_channels = out_channels
         if col_names_dict.keys() != set([stype.numerical]):
