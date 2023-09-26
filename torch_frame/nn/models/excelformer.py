@@ -63,8 +63,7 @@ def feature_mixup(
 
 
 class ExcelFormer(Module):
-    r"""The ExcelFormer model introduced in
-        https://arxiv.org/pdf/2301.02819.pdf
+    r"""The ExcelFormer model introduced in https://arxiv.org/abs/2301.02819
 
     Args:
         in_channels (int): Input channel dimensionality
