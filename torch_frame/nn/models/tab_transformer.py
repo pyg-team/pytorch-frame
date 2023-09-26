@@ -3,13 +3,13 @@ from typing import Any, Dict, List
 
 import torch
 from torch import Tensor
-from torch.nn import LayerNorm, Linear, Module, ModuleList, ReLU
+from torch.nn import Embedding, LayerNorm, Linear, Module, ModuleList, ReLU
 from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import ContextualEmbeddingEncoder
+from torch_frame.nn import EmbeddingEncoder
 from torch_frame.nn.conv import TabTransformerConv
 
 
@@ -91,19 +91,19 @@ class TabTransformer(Module):
             col_stats[col_name]
             for col_name in col_names_dict[stype.categorical]
         ]
-        self.cat_encoder = ContextualEmbeddingEncoder(
-            out_channels=channels,
-            stats_list=stats_list,
-            stype=stype.categorical,
-            contextual_column_pad=encoder_pad_size,
-        )
+        self.cat_encoder = EmbeddingEncoder(out_channels=channels,
+                                            stats_list=stats_list,
+                                            stype=stype.categorical)
+        self.pad_embedding = Embedding(len(col_names_dict[stype.categorical]),
+                                       encoder_pad_size)
+        in_channels = channels + encoder_pad_size
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=channels, num_heads=num_heads)
+            TabTransformerConv(channels=in_channels, num_heads=num_heads)
             for _ in range(num_layers)
         ])
         self.num_encoder = LayerNorm(len(col_names_dict[stype.numerical]))
         self.decoder = MLP(
-            len(col_names_dict[stype.categorical]) * channels +
+            len(col_names_dict[stype.categorical]) * in_channels +
             len(col_names_dict[stype.numerical]), out_channels,
             decoder_hidden_layer_size)
         self.reset_parameters()
@@ -127,7 +127,11 @@ class TabTransformer(Module):
         xs = []
         if stype.categorical in self.stypes:
             B, _ = tf.x_dict[stype.categorical].shape
-            x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
+            x_cat = self.cat_encoder(
+                tf.x_dict[stype.categorical])  # B, col, channel
+            x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(
+                B, 1, 1)  # B, col, 2
+            x_cat = torch.cat((x_cat, x_pad), dim=-1)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x_cat = tab_transformer_conv(x_cat)
             x_cat = x_cat.reshape(B, -1)
