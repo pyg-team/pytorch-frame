@@ -35,6 +35,12 @@ class TensorFrame:
 
     def validate(self):
         r"""Validate the tensor frame object."""
+        if set(self.x_dict.keys()) != set(self.col_names_dict.keys()):
+            raise RuntimeError(
+                f"The keys of x_dict and col_names_dict must be the same, but "
+                f"got {set(self.x_dict.keys())} for x_dict and "
+                f"{set(self.col_names_dict.keys())} for col_names_dict.")
+
         num_rows = self.num_rows
         empty_stypes: List[stype] = []
         for stype_name, x in self.x_dict.items():

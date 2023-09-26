@@ -85,3 +85,9 @@ def test_empty_tensor_frame():
     }
     with pytest.raises(RuntimeError, match='Empty columns'):
         TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
+
+    col_names_dict = {
+        torch_frame.numerical: ['x', 'y'],
+    }
+    with pytest.raises(RuntimeError, match='The keys of x_dict'):
+        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
