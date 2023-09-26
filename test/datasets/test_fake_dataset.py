@@ -8,6 +8,7 @@ from torch_frame.datasets import FakeDataset
 @pytest.mark.parametrize('with_nan', [True, False])
 def test_fake_dataset(with_nan, get_fake_text_embedder):
     num_rows = 20
+    out_channels = 10
     dataset = FakeDataset(
         num_rows=num_rows,
         with_nan=with_nan,
@@ -43,4 +44,4 @@ def test_fake_dataset(with_nan, get_fake_text_embedder):
 
     x_text_embedded = tensor_frame.x_dict[torch_frame.text_embedded]
     assert x_text_embedded.dtype == torch.float
-    assert x_text_embedded.shape == (20, 2, 10)
+    assert x_text_embedded.shape == (num_rows, 2, out_channels)

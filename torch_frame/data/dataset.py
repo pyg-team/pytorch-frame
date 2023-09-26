@@ -60,7 +60,7 @@ class DataFrameToTensorFrameConverter:
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
         text_embedder (callable, optional): A callable text embedder that
-            takes list of strings as input and returns corresponding text
+            takes a list of strings as input and returns corresponding text
             embedding tensor. This text embedder is only called when there
             is text stype data in the dataframe. Series data will call
             :obj:`tolist` before input to the function. (default: :obj:`None`)
@@ -85,7 +85,7 @@ class DataFrameToTensorFrameConverter:
                 self._col_names_dict[stype].append(col)
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder is None):
-            raise ValueError("`text_embedder` need to be "
+            raise ValueError("`text_embedder` needs to be "
                              "specified when `text_embedded` "
                              "stype column exist.")
         for stype in self._col_names_dict.keys():
@@ -148,6 +148,11 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain 'train', 'val', or
             'test'. (default: :obj:`None`).
+        text_embedder (callable, optional): A callable text embedder that
+            takes a list of strings as input and returns corresponding text
+            embedding tensor. This text embedder is only called when there
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -155,6 +160,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -181,6 +187,7 @@ class Dataset(ABC):
             raise ValueError(f"The column(s) '{missing_cols}' are specified "
                              f"but missing in the data frame")
 
+        self.text_embedder = text_embedder
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None

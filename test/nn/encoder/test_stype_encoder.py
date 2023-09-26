@@ -149,6 +149,8 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
 
 def test_text_embedding_encoder(get_fake_text_embedder):
     num_rows = 10
+    in_channels = 10
+    out_channels = 5
     dataset = FakeDataset(
         num_rows=num_rows,
         stypes=[
@@ -165,7 +167,7 @@ def test_text_embedding_encoder(get_fake_text_embedder):
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
     encoder = TextEmbedder(out_channels=5, stats_list=stats_list,
-                           stype=stype.text_embedded, in_channels=10)
+                           stype=stype.text_embedded, in_channels=in_channels)
     x_text = tensor_frame.x_dict[stype.text_embedded]
     x = encoder(x_text)
-    assert x.shape == (10, 2, 5)
+    assert x.shape == (num_rows, 2, out_channels)

@@ -24,17 +24,20 @@ class FakeDataset(torch_frame.data.Dataset):
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
         text_embedder (callable, optional): A callable text embedder that
-            takes list of strings as input and returns corresponding text
+            takes a list of strings as input and returns corresponding text
             embedding tensor. This text embedder is only called when there
             is text stype data in the dataframe. Series data will call
             :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
-    def __init__(self, num_rows: int, with_nan: bool = False,
-                 stypes: List[stype] = [stype.categorical, stype.numerical],
-                 create_split: bool = False,
-                 task_type: TaskType = TaskType.REGRESSION,
-                 text_embedder: Optional[Callable[[List[str]],
-                                                  Tensor]] = None):
+    def __init__(
+        self,
+        num_rows: int,
+        with_nan: bool = False,
+        stypes: List[stype] = [stype.categorical, stype.numerical],
+        create_split: bool = False,
+        task_type: TaskType = TaskType.REGRESSION,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
+    ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
@@ -85,6 +88,10 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = 'val'
             split[2] = 'test'
             df['split'] = split
-        self.text_embedder = text_embedder
-        super().__init__(df, col_to_stype, target_col='target',
-                         split_col='split' if create_split else None)
+        super().__init__(
+            df,
+            col_to_stype,
+            target_col='target',
+            split_col='split' if create_split else None,
+            text_embedder=text_embedder,
+        )

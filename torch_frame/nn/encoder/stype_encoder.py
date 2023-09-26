@@ -108,8 +108,7 @@ class StypeEncoder(Module, ABC):
 
     def na_forward(self, x: Tensor) -> Tensor:
         r"""Replace NaN values in input :obj:`Tensor` given
-        :obj:`na_strategy`. Text embedding will NaN replacement
-        will be skipped.
+        :obj:`na_strategy`.
 
         Args:
             x (Tensor): Input :obj:`Tensor`.
@@ -118,7 +117,11 @@ class StypeEncoder(Module, ABC):
             x (Tensor): Output :obj:`Tensor` with NaNs replaced given
                 :obj:`na_strategy`.
         """
-        if self.na_strategy is None or self.stype == torch_frame.text_embedded:
+        if (self.stype == torch_frame.text_embedded) and (self.na_strategy
+                                                          is not None):
+            raise ValueError("NA strategy should be `None` "
+                             "for text stype data.")
+        if self.na_strategy is None:
             return x
         x = x.clone()
 
@@ -465,7 +468,8 @@ class TextEmbedder(StypeEncoder):
         in_channels: Optional[int] = None,
     ):
         if in_channels is None:
-            raise ValueError("Please specify `in_channels`.")
+            raise ValueError("Please specify the `in_channels`, "
+                             "which is the text embedding dimensionality.")
         self.in_channels = in_channels
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
