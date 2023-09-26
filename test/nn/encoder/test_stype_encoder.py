@@ -32,13 +32,13 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
                                     stype=stype.categorical,
                                     **encoder_cls_kwargs[1])
-    x_cat = tensor_frame.x_dict[stype.categorical].clone()
+    x_cat = tensor_frame.x_dict[stype.categorical]
     x = encoder(x_cat)
     assert x.shape == (x_cat.size(0), x_cat.size(1), 8)
 
     # Perturb the first column
     num_categories = len(stats_list[0][StatType.COUNT])
-    x_cat = tensor_frame.x_dict[stype.categorical].clone()
+    x_cat = tensor_frame.x_dict[stype.categorical]
     x_cat[:, 0] = (x_cat[:, 0] + 1) % num_categories
     x_perturbed = encoder(x_cat)
     # Make sure other column embeddings are unchanged
