@@ -3,7 +3,15 @@ from typing import Any, Dict, List
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, LayerNorm, Linear, Module, ModuleList, ReLU
+from torch.nn import (
+    Embedding,
+    LayerNorm,
+    Linear,
+    Module,
+    ModuleList,
+    ReLU,
+    Sequential,
+)
 from torch.nn.modules.module import Module
 
 import torch_frame
@@ -23,20 +31,16 @@ class MLP(Module):
     """
     def __init__(self, in_channels, out_channels, hidden_size):
         super().__init__()
-        print("hidden size ", hidden_size)
-        self.layer1 = Linear(in_channels, hidden_size)
-        self.act1 = ReLU()
-        self.layer2 = Linear(hidden_size, out_channels)
-
-    def reset_parameters(self):
-        self.layer1.reset_parameters()
-        self.layer2.reset_parameters()
+        self.mlp = Sequential(Linear(in_channels, hidden_size), ReLU(),
+                              Linear(hidden_size, out_channels))
 
     def forward(self, x):
-        x = self.layer1(x)
-        x = self.act1(x)
-        x = self.layer2(x)
-        return x
+        return self.mlp(x)
+
+    def reset_parameters(self):
+        for m in self.mlp:
+            if not isinstance(m, ReLU):
+                m.reset_parameters()
 
 
 class TabTransformer(Module):
