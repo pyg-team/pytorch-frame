@@ -62,7 +62,7 @@ class DataFrameToTensorFrameConverter:
             (default: :obj:`None`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             config specifying :obj:`text_embedder` that maps sentences into
-            Pytorch embeddings and :obj:`batch_size` that specifies the
+            PyTorch embeddings and :obj:`batch_size` that specifies the
             mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
     """
     def __init__(
@@ -153,7 +153,7 @@ class Dataset(ABC):
             'test'. (default: :obj:`None`).
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             config specifying :obj:`text_embedder` that maps sentences into
-            Pytorch embeddings and :obj:`batch_size` that specifies the
+            PyTorch embeddings and :obj:`batch_size` that specifies the
             mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
     """
     def __init__(

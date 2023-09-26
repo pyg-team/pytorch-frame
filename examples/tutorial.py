@@ -45,7 +45,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 # Materialize the dataset, which obtains `TensorFrame` from `DataFrame`.
-# `TensorFrame` stores `DataFrame` features as Pytorch tensors organized by
+# `TensorFrame` stores `DataFrame` features as PyTorch tensors organized by
 # their stype (semantic type), e.g., categorical, numerical.
 dataset.materialize()
 
@@ -177,7 +177,7 @@ class TabularNN(Module):
         }
         # `StypeWiseFeatureEncoder` will take `TensorFrame` as input and apply
         # stype-specific feature encoder (specified via `stype_encoder_dict`)
-        # to Pytorch tensor of each stype to get embeddings for each stype. The
+        # to PyTorch tensor of each stype to get embeddings for each stype. The
         # embeddings of different stypes are then concatenated along the column
         # axis. In all, it transforms `TensorFrame` into 3-dimensional tensor
         # `x` of shape [batch_size, num_cols, channels].
