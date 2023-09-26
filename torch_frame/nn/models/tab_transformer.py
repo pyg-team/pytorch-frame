@@ -58,34 +58,38 @@ class TabTransformer(Module):
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
         self.stypes = list(col_names_dict.keys())
-        categorical_stats_list = [
-            col_stats[col_name]
-            for col_name in col_names_dict[stype.categorical]
-        ]
+        categorical_stats_list = []
+        categorical_col_len = 0
+        numerical_col_len = 0
+        if stype.categorical in col_names_dict:
+            categorical_stats_list = [
+                col_stats[col_name]
+                for col_name in col_names_dict[stype.categorical]
+            ]
+            categorical_col_len = len(col_names_dict[stype.categorical])
+        if stype.numerical in col_names_dict:
+            numerical_col_len = len(col_names_dict[stype.numerical])
         self.cat_encoder = EmbeddingEncoder(out_channels=channels,
                                             stats_list=categorical_stats_list,
                                             stype=stype.categorical)
         # We use the categorical embedding with EmbeddingEncoder and
         # added contextual padding to the end of each feature.
-        self.pad_embedding = Embedding(len(col_names_dict[stype.categorical]),
-                                       encoder_pad_size)
+        self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
         in_channels = channels + encoder_pad_size
         self.tab_transformer_convs = ModuleList([
             TabTransformerConv(channels=in_channels, num_heads=num_heads)
             for _ in range(num_layers)
         ])
-        self.num_norm = LayerNorm(len(col_names_dict[stype.numerical]))
+        self.num_norm = LayerNorm(numerical_col_len)
         self.decoder = Sequential(
-            Linear(
-                len(col_names_dict[stype.categorical]) * in_channels +
-                len(col_names_dict[stype.numerical]),
-                decoder_hidden_layer_size), ReLU(),
+            Linear(categorical_col_len * in_channels + numerical_col_len,
+                   decoder_hidden_layer_size), ReLU(),
             Linear(decoder_hidden_layer_size, out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
         self.cat_encoder.reset_parameters()
-        self.num_encoder.reset_parameters()
+        self.num_norm.reset_parameters()
         for tab_transformer_conv in self.tab_transformer_convs:
             tab_transformer_conv.reset_parameters()
         for m in self.decoder:
