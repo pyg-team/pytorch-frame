@@ -13,7 +13,7 @@ class HashTextEmbedder:
 
     Args:
         out_channels (int): The output dimensionality
-        num_hash (int): Number of hashes to use.
+        num_hash_bins (int): Number of hash bins to use.
         device (torch.device, optional): The device to put Embedding module.
     """
     def __init__(self, out_channels: int, num_hash_bins: int = 64,
