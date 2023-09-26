@@ -459,9 +459,9 @@ class LinearEmbeddingEncoder(StypeEncoder):
         in_channels (int): The dimensionality of the embedding feature. Needs
             to be specified manually.
     """
-    # NOTE: We currently support text embeddings for now but in princple, this
-    # encoder can support any pre-encoded embeddings, including
-    # image/audio/graph embeddings.
+    # NOTE: We currently support text embeddings but in princple, this encoder
+    # can support any pre-encoded embeddings, including image/audio/graph
+    # embeddings.
     supported_stypes = {stype.text_embedded}
 
     def __init__(
