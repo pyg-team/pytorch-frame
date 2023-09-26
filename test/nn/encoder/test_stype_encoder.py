@@ -12,9 +12,9 @@ from torch_frame.nn import (
     EmbeddingEncoder,
     ExcelFormerEncoder,
     LinearBucketEncoder,
+    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
-    LinearTextEmbeddingEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
@@ -170,10 +170,10 @@ def test_text_embedding_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
-    encoder = LinearTextEmbeddingEncoder(out_channels=out_channels,
-                                         stats_list=stats_list,
-                                         stype=stype.text_embedded,
-                                         in_channels=text_emb_channels)
+    encoder = LinearEmbeddingEncoder(out_channels=out_channels,
+                                     stats_list=stats_list,
+                                     stype=stype.text_embedded,
+                                     in_channels=text_emb_channels)
     x_text = tensor_frame.x_dict[stype.text_embedded]
     x = encoder(x_text)
     assert x.shape == (num_rows,

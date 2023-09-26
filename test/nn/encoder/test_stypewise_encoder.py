@@ -7,9 +7,9 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearBucketEncoder,
+    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearPeriodicEncoder,
-    LinearTextEmbeddingEncoder,
     StypeWiseFeatureEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
@@ -24,7 +24,7 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     }),
 ])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
-    (LinearTextEmbeddingEncoder, {
+    (LinearEmbeddingEncoder, {
         'in_channels': 12
     }),
 ])

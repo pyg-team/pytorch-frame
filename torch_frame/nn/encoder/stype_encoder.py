@@ -448,14 +448,20 @@ class ExcelFormerEncoder(StypeEncoder):
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
 
 
-class LinearTextEmbeddingEncoder(StypeEncoder):
-    r"""A text embedding encoder that uses a linear layer transform
-    the embedding dimension from :obj:`in_channels` to
-    :obj:`out_channels`.
+class LinearEmbeddingEncoder(StypeEncoder):
+    r"""Linear function based encoder for pre-computed embedding features.
+    It applies linear layer :obj:`torch.nn.Linear(in_channels, out_channels)`
+    on each embedding feature (:obj:`in_channels` is the dimensionality of the
+    embedding) and concatenates the output embeddings. Note that the
+    implementation does this for all numerical features in a batched manner.
 
     Args:
-        in_channels (int): Text data embedding dimensionality.
+        in_channels (int): The dimensionality of the embedding feature. Needs
+            to be specified manually.
     """
+    # NOTE: We currently support text embeddings for now but in princple, this
+    # encoder can support any pre-encoded embeddings, including
+    # image/audio/graph embeddings.
     supported_stypes = {stype.text_embedded}
 
     def __init__(
