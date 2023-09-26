@@ -10,7 +10,7 @@ from torch_frame.typing import TaskType
 
 
 class FakeDataset(torch_frame.data.Dataset):
-    r"""A fake regression dataset.
+    r"""A fake dataset for testing purpose.
 
     Args:
         num_rows (int): Number of rows.

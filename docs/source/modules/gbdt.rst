@@ -4,7 +4,7 @@ torch_frame.gbdt
 .. contents:: Contents
     :local:
 
-.. currentmodule:: torch_frame.gbdts
+.. currentmodule:: torch_frame.gbdt
 
 Gradient Boosted Decision Trees
 --------
