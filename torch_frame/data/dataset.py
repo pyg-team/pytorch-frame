@@ -85,7 +85,6 @@ class DataFrameToTensorFrameConverter:
                     self._col_names_dict[stype] = [col]
                 else:
                     self._col_names_dict[stype].append(col)
-                self._col_names_dict[stype].append(col)
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
