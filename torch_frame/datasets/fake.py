@@ -1,11 +1,11 @@
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.typing import TaskType
 
 
@@ -23,11 +23,11 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-        text_embedder (callable, optional): A callable text embedder that
-            takes a list of strings as input and returns corresponding text
-            embedding tensor. This text embedder is only called when there
-            is text stype data in the dataframe. Series data will call
-            :obj:`tolist` before input to the function. (default: :obj:`None`)
+        text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
+            config specifying :obj:`text_embedder` that maps sentences into
+            Pytorch embeddings, :obj:`batch_size` that specifies the mini-batch
+            size for :obj:`text_embedder`, and the output dimensionality
+            :obj:`out_channels` of the text embedder. (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -36,7 +36,7 @@ class FakeDataset(torch_frame.data.Dataset):
         stypes: List[stype] = [stype.categorical, stype.numerical],
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
-        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
+        text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
@@ -93,5 +93,5 @@ class FakeDataset(torch_frame.data.Dataset):
             col_to_stype,
             target_col='target',
             split_col='split' if create_split else None,
-            text_embedder=text_embedder,
+            text_embedder_cfg=text_embedder_cfg,
         )

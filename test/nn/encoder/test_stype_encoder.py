@@ -4,6 +4,7 @@ from torch.nn import ReLU
 
 import torch_frame
 from torch_frame import NAStrategy, stype
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -159,7 +160,9 @@ def test_text_embedding_encoder():
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_embedder=HashTextEmbedder(text_emb_channels),
+        text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(text_emb_channels),
+            batch_size=None),
     )
     dataset.materialize()
     tensor_frame = dataset.tensor_frame

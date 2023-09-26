@@ -2,6 +2,7 @@ import pytest
 import torch
 
 import torch_frame
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
@@ -18,7 +19,8 @@ def test_fake_dataset(with_nan):
             torch_frame.categorical,
             torch_frame.text_embedded,
         ],
-        text_embedder=HashTextEmbedder(out_channels),
+        text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(out_channels), batch_size=None),
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows

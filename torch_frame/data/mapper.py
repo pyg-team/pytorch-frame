@@ -98,12 +98,12 @@ class TextEmbeddingTensorMapper(TensorMapper):
             text embedding model (e.g., based on Transformer), we recommend
             using GPU.
         batch_size (int, optional): Mini-batch size. If :obj:`None`, we will
-            encode all text in a full-batch manner. (default: :obj:`None`)
+            encode all text in a full-batch manner.
     """
     def __init__(
         self,
         text_embedder: Callable[[List[str]], Tensor],
-        batch_size: Optional[int] = 128,
+        batch_size: Optional[int],
     ):
         super().__init__()
         self.text_embedder = text_embedder
