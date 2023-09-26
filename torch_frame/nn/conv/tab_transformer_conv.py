@@ -67,7 +67,7 @@ class SelfAttention(Module):
         x = x.reshape(B * self.num_heads, num_cols, d_head)
         return x
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         B, num_cols, _ = x.shape
         Q, K, V = self.lin_q(x), self.lin_k(x), self.lin_v(x)
         Q = self._reshape(Q)
@@ -109,7 +109,7 @@ class TabTransformerConv(TableConv):
         self.norm_2 = LayerNorm(channels)
         self.ffn = FFN(channels)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)
         out = self.attn(x)
         x += out
