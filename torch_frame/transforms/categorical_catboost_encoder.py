@@ -10,8 +10,8 @@ from torch_frame.transforms import FittableBaseTransform
 
 
 class CategoricalCatBoostEncoder(FittableBaseTransform):
-    r"""Encode the categorical features of :class:`TensorFrame` using
-        CatBoostEncoder.
+    r"""A transform that encodes the categorical features of
+        :class:`TensorFrame` using CatBoostEncoder.
     """
     def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
                                                                     Any]]):
@@ -35,8 +35,14 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         df = DataFrame(data=tf_train.x_dict[stype.categorical].cpu(),
                        columns=tf_train.col_names_dict[stype.categorical])
         self.encoder.fit(df, tf_train.y.cpu())
-        self.reordered_col_names = tf_train.col_names_dict[
-            stype.numerical] + tf_train.col_names_dict[stype.categorical]
+
+        if stype.numerical in tf_train.col_names_dict:
+            self.new_numerical_col_names = tf_train.col_names_dict[
+                stype.numerical] + tf_train.col_names_dict[stype.categorical]
+        else:
+            self.new_numerical_col_names = tf_train.col_names_dict[
+                stype.categorical]
+
         transformed_df = self.encoder.transform(df)
         transformed_col_stats = col_stats.copy()
         for col in tf_train.col_names_dict[stype.categorical]:
@@ -62,15 +68,16 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
             self.encoder.transform(df).values)
 
         # turn the categorical features into numerical features
-        if len(tf.col_names_dict[stype.numerical]) == 0:
-            tf.x_dict[stype.numerical] = transformed_tensor
-        else:
+        if stype.numerical in tf.x_dict:
             tf.x_dict[stype.numerical] = torch.cat(
                 (tf.x_dict[stype.numerical], transformed_tensor), dim=1)
-        tf.col_names_dict[stype.numerical] = self.reordered_col_names.copy()
+        else:
+            tf.x_dict[stype.numerical] = transformed_tensor
+        tf.col_names_dict[
+            stype.numerical] = self.new_numerical_col_names.copy()
 
         # delete the categorical features
-        del tf.col_names_dict[stype.categorical]
-        del tf.x_dict[stype.categorical]
+        tf.col_names_dict.pop(stype.categorical)
+        tf.x_dict.pop(stype.categorical)
 
         return tf

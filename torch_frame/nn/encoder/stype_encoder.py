@@ -150,9 +150,9 @@ class StypeEncoder(Module, ABC):
 
 
 class EmbeddingEncoder(StypeEncoder):
-    r"""Embedding look-up based encoder for categorical features. It applies
-    :class:`torch.nn.Embedding` for each categorical feature and concatenates
-    the output embeddings."""
+    r"""An embedding look-up based encoder for categorical features. It
+    applies :class:`torch.nn.Embedding` for each categorical feature and
+    concatenates the output embeddings."""
     supported_stypes = {stype.categorical}
 
     def __init__(
@@ -200,10 +200,10 @@ class EmbeddingEncoder(StypeEncoder):
 
 
 class LinearEncoder(StypeEncoder):
-    r"""Linear function based encoder for numerical features. It applies linear
-    layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical feature
-    and concatenates the output embeddings. Note that the implementation does
-    this for all numerical features in a batched manner."""
+    r"""A linear function based encoder for numerical features. It applies
+    linear layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical
+    feature and concatenates the output embeddings. Note that the
+    implementation does this for all numerical features in a batched manner."""
     supported_stypes = {stype.numerical}
 
     def __init__(

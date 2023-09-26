@@ -31,12 +31,26 @@ class TensorFrame:
     y: Optional[Tensor] = None
 
     def __post_init__(self):
+        self.validate()
+
+    def validate(self):
+        r"""Validate the tensor frame object."""
+        if self.x_dict.keys() != self.col_names_dict.keys():
+            raise RuntimeError(
+                f"The keys of x_dict and col_names_dict must be the same, but "
+                f"got {self.x_dict.keys()} for x_dict and "
+                f"{self.col_names_dict.keys()} for col_names_dict.")
+
         num_rows = self.num_rows
+        empty_stypes: List[stype] = []
         for stype_name, x in self.x_dict.items():
+            num_cols = len(self.col_names_dict[stype_name])
+            if num_cols == 0:
+                empty_stypes.append(stype_name)
+
             if x.dim() < 2:
                 raise ValueError(
                     f"x_dict['{stype_name}'] must be at least 2-dimensional")
-            num_cols = len(self.col_names_dict[stype_name])
             if num_cols != x.size(1):
                 raise ValueError(
                     f"The expected number of columns for {stype_name} feature "
@@ -47,6 +61,12 @@ class TensorFrame:
                 raise ValueError(
                     f"The length of elements in x_dict are not aligned, got "
                     f"{x.size(0)} but expected {num_rows}.")
+
+        if len(empty_stypes) > 0:
+            raise RuntimeError(
+                f"Empty columns for the following stypes: {empty_stypes}."
+                f"Please manually delete the above stypes.")
+
         if self.y is not None:
             if len(self.y) != num_rows:
                 raise ValueError(

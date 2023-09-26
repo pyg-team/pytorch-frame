@@ -14,8 +14,8 @@ from torch_frame.transforms import FittableBaseTransform
 
 
 class MutualInformationSort(FittableBaseTransform):
-    r"""Sorts the numerical features of input :obj:`TensorFrame` based
-        on mutual information.
+    r"""A transform that sorts the numerical features of input
+        :obj:`TensorFrame` based on mutual information.
 
     Args:
         task_type (TaskType): The task type.
@@ -91,8 +91,7 @@ class MutualInformationSort(FittableBaseTransform):
         self._transformed_stats = col_stats
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
-        if (stype.categorical in tf.col_names_dict
-                and len(tf.col_names_dict[stype.categorical]) != 0):
+        if tf.col_names_dict.keys() != set([stype.numerical]):
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
 
