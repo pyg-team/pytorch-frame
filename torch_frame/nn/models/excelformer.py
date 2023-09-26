@@ -97,7 +97,7 @@ class ExcelFormer(Module):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        if set(col_names_dict.keys()) != set([stype.numerical]):
+        if col_names_dict.keys() != set([stype.numerical]):
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
         self.excelformer_encoder = StypeWiseFeatureEncoder(
