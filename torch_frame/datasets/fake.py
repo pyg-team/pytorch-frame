@@ -1,10 +1,11 @@
-from typing import List
+from typing import Callable, List, Optional
 
 import numpy as np
 import pandas as pd
+from torch import Tensor
 
 import torch_frame
-from torch_frame import TaskType, stype
+from torch_frame import stype
 from torch_frame.typing import TaskType
 
 
@@ -22,12 +23,21 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-
+        text_embedder (callable, optional): A callable text embedder that
+            takes a list of strings as input and returns corresponding text
+            embedding tensor. This text embedder is only called when there
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
-    def __init__(self, num_rows: int, with_nan: bool = False,
-                 stypes: List[stype] = [stype.categorical, stype.numerical],
-                 create_split: bool = False,
-                 task_type: TaskType = TaskType.REGRESSION):
+    def __init__(
+        self,
+        num_rows: int,
+        with_nan: bool = False,
+        stypes: List[stype] = [stype.categorical, stype.numerical],
+        create_split: bool = False,
+        task_type: TaskType = TaskType.REGRESSION,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
+    ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
             df_dict = {'target': np.random.randn(num_rows)}
@@ -58,6 +68,13 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[1::2] = np.nan
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
+        if stype.text_embedded in stypes:
+            for col_name in ['text_1', 'text_2']:
+                arr = ['Hello world!'] * num_rows
+                if with_nan:
+                    arr[0::2] = len(arr[0::2]) * [np.nan]
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.text_embedded
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
@@ -71,5 +88,10 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = 'val'
             split[2] = 'test'
             df['split'] = split
-        super().__init__(df, col_to_stype, target_col='target',
-                         split_col='split' if create_split else None)
+        super().__init__(
+            df,
+            col_to_stype,
+            target_col='target',
+            split_col='split' if create_split else None,
+            text_embedder=text_embedder,
+        )

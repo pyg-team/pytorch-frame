@@ -10,9 +10,10 @@ class BankMarketing(torch_frame.data.Dataset):
     a Portuguese banking institution. The marketing campaigns
     were based on phone calls. Often, more than one contant to
     the same client was required, in order to access if the
-    product(bank term deposit) would be(or not) subscribed.
+    product (bank term deposit) would be (or not) subscribed.
     The classification goal is to predict if the client will
-    subscribe a term deposit. """
+    subscribe a term deposit.
+    """
 
     url = 'https://archive.ics.uci.edu/static/public/222/bank+marketing.zip'  # noqa
 

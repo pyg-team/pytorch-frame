@@ -2,7 +2,7 @@ import copy
 import functools
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import torch
@@ -14,6 +14,7 @@ from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
+    TextEmbeddingTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
@@ -58,16 +59,23 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
+        text_embedder (callable, optional): A callable text embedder that
+            takes a list of strings as input and returns corresponding text
+            embedding tensor. This text embedder is only called when there
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
     def __init__(
         self,
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
+        self.text_embedder = text_embedder
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype,
@@ -75,6 +83,11 @@ class DataFrameToTensorFrameConverter:
         for col, stype in self.col_to_stype.items():
             if col != self.target_col:
                 self._col_names_dict[stype].append(col)
+        if (torch_frame.text_embedded
+                in self.col_names_dict) and (self.text_embedder is None):
+            raise ValueError("`text_embedder` needs to be "
+                             "specified when `text_embedded` "
+                             "stype column exist.")
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
@@ -91,6 +104,8 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
+        elif stype == torch_frame.text_embedded:
+            return TextEmbeddingTensorMapper(self.text_embedder)
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -100,7 +115,7 @@ class DataFrameToTensorFrameConverter:
         df: DataFrame,
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
-        r"""Convert a given dataframe into tensorframe."""
+        r"""Convert a given dataframe into :obj:`TensorFrame`."""
 
         xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
 
@@ -133,6 +148,11 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain 'train', 'val', or
             'test'. (default: :obj:`None`).
+        text_embedder (callable, optional): A callable text embedder that
+            takes a list of strings as input and returns corresponding text
+            embedding tensor. This text embedder is only called when there
+            is text stype data in the dataframe. Series data will call
+            :obj:`tolist` before input to the function. (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -140,6 +160,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
+        text_embedder: Optional[Callable[[List[str]], Tensor]] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -152,7 +173,7 @@ class Dataset(ABC):
             if split_col in col_to_stype:
                 raise ValueError(
                     f"col_to_stype should not contain the split_col "
-                    f"({self.col_to_stype}).")
+                    f"({col_to_stype}).")
             if not set(df[split_col]).issubset({'train', 'val', 'test'}):
                 raise ValueError(
                     "split_col must only contain either 'train', 'val', or "
@@ -166,6 +187,7 @@ class Dataset(ABC):
             raise ValueError(f"The column(s) '{missing_cols}' are specified "
                              f"but missing in the data frame")
 
+        self.text_embedder = text_embedder
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -243,7 +265,7 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             self._col_stats[col] = compute_col_stats(self.df[col], stype)
             # For a target column, sort categories lexicographically such that
-            # we do not accidentially swap labels in binary classification
+            # we do not accidentally swap labels in binary classification
             # tasks.
             if col == self.target_col and stype == torch_frame.categorical:
                 index, value = self._col_stats[col][StatType.COUNT]
@@ -257,6 +279,7 @@ class Dataset(ABC):
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
+            text_embedder=getattr(self, 'text_embedder', None),
         )
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 

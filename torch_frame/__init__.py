@@ -1,4 +1,4 @@
-from .stype import stype, numerical, categorical
+from .stype import stype, numerical, categorical, text_embedded
 from .data import TensorFrame
 from .typing import TaskType, DataFrame, NAStrategy
 import torch_frame.utils  # noqa
@@ -14,6 +14,7 @@ __all__ = [
     'stype',
     'numerical',
     'categorical',
+    'text_embedded',
     'TaskType',
     'NAStrategy',
     'TensorFrame',

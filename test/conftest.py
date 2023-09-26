@@ -1,7 +1,8 @@
-from typing import Callable
+from typing import Callable, List
 
 import pytest
 import torch
+from torch import Tensor
 
 import torch_frame
 from torch_frame import TensorFrame
@@ -27,3 +28,11 @@ def get_fake_tensor_frame() -> Callable:
         )
 
     return _get_fake_tensor_frame
+
+
+@pytest.fixture()
+def get_fake_text_embedder() -> Callable:
+    def _get_fake_text_embedder(sentences: List[str]) -> Tensor:
+        return torch.rand(len(sentences), 10)
+
+    return _get_fake_text_embedder

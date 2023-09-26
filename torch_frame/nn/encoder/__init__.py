@@ -8,6 +8,7 @@ from .stype_encoder import (
     LinearPeriodicEncoder,
     ExcelFormerEncoder,
     StackEncoder,
+    TextEmbedder,
 )
 
 __all__ = classes = [
@@ -20,4 +21,5 @@ __all__ = classes = [
     'LinearPeriodicEncoder',
     'ExcelFormerEncoder',
     'StackEncoder',
+    'TextEmbedder',
 ]
