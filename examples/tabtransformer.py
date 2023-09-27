@@ -16,7 +16,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
-from torch_frame.datasets import TabularBenchmark
+from torch_frame.datasets import BankMarketing
 from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
@@ -37,7 +37,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-dataset = TabularBenchmark(root=path, name=args.dataset)
+dataset = BankMarketing(root=path)
 dataset.materialize()
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2012.06678

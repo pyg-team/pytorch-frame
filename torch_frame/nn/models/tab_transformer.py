@@ -73,8 +73,9 @@ class TabTransformer(Module):
         # We use the categorical embedding with EmbeddingEncoder and
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
+        in_channels = channels + encoder_pad_size
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=channels, num_heads=num_heads)
+            TabTransformerConv(channels=in_channels, num_heads=num_heads)
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
