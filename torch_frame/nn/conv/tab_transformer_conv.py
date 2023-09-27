@@ -112,7 +112,7 @@ class TabTransformerConv(TableConv):
     def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)
         out = self.attn(x)
-        x += out
+        x = x + out
         x = self.ffn(x)
         return x
 
