@@ -17,4 +17,22 @@ A table contains different columns containing different data types. Each data ty
 
 Common Benchmark Datasets
 -------------------------
-:pyg:`PyTorch Frame` contains a large number of common benchmark datasets.
+:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`.
+
+Initializing the dataset is straightforward. An initialization of a dataset will automatically download its raw files and process them to the previously described Dataset format. E.g., to load the adult dataset, type:
+
+.. code-block:: python
+
+    from torch_frame.datasets import Yandex
+
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    >>> Downloading https://data.pyg.org/datasets/tables/revisiting_data/adult.zip
+
+    len(dataset)
+    >>> 48842
+
+    dataset.materialize()
+
+    train_dataset = dataset.get_split_dataset('train')
+    val_dataset = dataset.get_split_dataset('val')
+    test_dataset = dataset.get_split_dataset('test')
