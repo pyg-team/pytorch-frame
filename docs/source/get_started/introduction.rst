@@ -48,6 +48,7 @@ A table's columns data can be represented with a :obj:`TensorFrame`, which holds
 We show a simple example of a :obj:`TensorFrame`.
 
 .. code-block:: python
+
     tensor_frame = train_dataset.tensor_frame
 
     tensor_frame.col_names_dict
