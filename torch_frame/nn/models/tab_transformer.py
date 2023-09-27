@@ -112,14 +112,14 @@ class TabTransformer(Module):
         if stype.categorical in tf.x_dict:
             B, _ = tf.x_dict[stype.categorical].shape
             x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
-            for tab_transformer_conv in self.tab_transformer_convs:
-                x_cat = tab_transformer_conv(x_cat)
             # A contextual padding [B, num_cols, encoder_pad_size]is added to
             # the categorical embedding [B, num_cols, channels].
             x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(B, 1, 1)
             # The final categorical embedding is of size [B, num_cols,
             # channels + encoder_pad_size]
             x_cat = torch.cat((x_cat, x_pad), dim=-1)
+            for tab_transformer_conv in self.tab_transformer_convs:
+                x_cat = tab_transformer_conv(x_cat)
             x_cat = x_cat.reshape(B, -1)
             xs.append(x_cat)
         if stype.numerical in tf.x_dict:
