@@ -1,7 +1,7 @@
 :github_url: https://github.com/pyg-team/pytorch-frame
 
 PyTorch Frame Documentation
-=============
+===========================
 :pyg:`null` **PyTorch Frame** is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
 
 .. slack_button::
@@ -11,6 +11,12 @@ PyTorch Frame Documentation
    :caption: Get Started
 
    get_started/introduction
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Get Started
+
+   tutorials/modular_design
 
 .. toctree::
    :maxdepth: 1
