@@ -298,13 +298,12 @@ class GhostBatchNorm1d(torch.nn.Module):
         self,
         input_dim: int,
         virtual_batch_size: int = 512,
-        momentum: float = 0.02,
     ):
         super().__init__()
 
         self.input_dim = input_dim
         self.virtual_batch_size = virtual_batch_size
-        self.bn = BatchNorm1d(self.input_dim, momentum=momentum)
+        self.bn = BatchNorm1d(self.input_dim)
 
     def forward(self, x: Tensor) -> Tensor:
         num_chunks = math.ceil(len(x) / self.virtual_batch_size)

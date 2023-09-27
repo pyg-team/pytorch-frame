@@ -2,7 +2,7 @@
 Reported (reproduced) results of of TabNet model in the original paper
 https://arxiv.org/abs/1908.07442
 
-Forest Cover Type: 96.99 ()
+Forest Cover Type: 96.99 (96.53)
 """
 
 import argparse
@@ -18,7 +18,7 @@ from torch_frame.datasets import ForestCoverType
 from torch_frame.nn import TabNet
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--channels', type=int, default=64)
+parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--gamma', type=int, default=1.2)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--batch_size', type=int, default=4096)
