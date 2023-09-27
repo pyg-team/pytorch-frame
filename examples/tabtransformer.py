@@ -22,7 +22,7 @@ from torch_frame.nn import TabTransformer
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='albert')
 parser.add_argument('--channels', type=int, default=128)
-parser.add_argument('--num_heads', type=int, default=1)
+parser.add_argument('--num_heads', type=int, default=8)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--encoder_pad_size', type=int, default=3)
 parser.add_argument('--batch_size', type=int, default=512)

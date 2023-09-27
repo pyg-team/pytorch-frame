@@ -67,9 +67,9 @@ class TabTransformer(Module):
             categorical_col_len = len(col_names_dict[stype.categorical])
         if stype.numerical in col_names_dict:
             numerical_col_len = len(col_names_dict[stype.numerical])
-        self.cat_encoder = EmbeddingEncoder(out_channels=channels,
-                                            stats_list=categorical_stats_list,
-                                            stype=stype.categorical)
+        self.cat_encoder = EmbeddingEncoder(
+            out_channels=channels - encoder_pad_size,
+            stats_list=categorical_stats_list, stype=stype.categorical)
         # We use the categorical embedding with EmbeddingEncoder and
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
@@ -79,8 +79,7 @@ class TabTransformer(Module):
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
-        mlp_input_len = categorical_col_len * (
-            channels + encoder_pad_size) + numerical_col_len
+        mlp_input_len = categorical_col_len * channels + numerical_col_len
         mlp_first_hidden_layer_size = 2 * mlp_input_len
         mlp_second_hidden_layer_size = 4 * mlp_input_len
         self.decoder = Sequential(
