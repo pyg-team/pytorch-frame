@@ -9,11 +9,13 @@ from .poker_hand import PokerHand
 from .bank_marketing import BankMarketing
 from .tabular_benchmark import TabularBenchmark
 from .yandex import Yandex
+from .dota2 import Dota2
 
 real_world_datasets = [
     'Titanic',
     'AdultCensusIncome',
     'ForestCoverType',
+    'Dota2',
     'Mushroom',
     'PokerHand',
     'BankMarketing',

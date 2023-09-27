@@ -36,6 +36,7 @@ class TabTransformer(Module):
         num_layers (int): Numner of layers.
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of contextual padding to the encoder.
+        attn_dropout (float): Dropout for 
         col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
         col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
@@ -48,6 +49,8 @@ class TabTransformer(Module):
         num_layers: int,
         num_heads: int,
         encoder_pad_size: int,
+        attn_dropout: float,
+        ffn_dropout: float,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
@@ -73,9 +76,8 @@ class TabTransformer(Module):
         # We use the categorical embedding with EmbeddingEncoder and
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
-        in_channels = channels + encoder_pad_size
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=in_channels, num_heads=num_heads)
+            TabTransformerConv(channels=channels, num_heads=num_heads, attn_dropout=attn_dropout, ffn_dropout=ffn_dropout)
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
