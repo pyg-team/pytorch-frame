@@ -73,16 +73,17 @@ class XGBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            x_cat = neg_to_nan(tf.x_dict[stype.categorical])
-            x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
+        if (stype.categorical in tf.feat_dict
+                and stype.numerical in tf.feat_dict):
+            x_cat = neg_to_nan(tf.feat_dict[stype.categorical])
+            x = torch.cat([tf.feat_dict[stype.numerical], x_cat], dim=1)
             feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
                              ["c"] * len(tf.col_names_dict[stype.categorical]))
-        elif stype.categorical in tf.x_dict:
-            x = neg_to_nan(tf.x_dict[stype.categorical])
+        elif stype.categorical in tf.feat_dict:
+            x = neg_to_nan(tf.feat_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
-        elif stype.numerical in tf.x_dict:
-            x = tf.x_dict[stype.numerical]
+        elif stype.numerical in tf.feat_dict:
+            x = tf.feat_dict[stype.numerical]
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")

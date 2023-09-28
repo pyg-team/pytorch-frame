@@ -129,7 +129,7 @@ class DataFrameToTensorFrameConverter:
             for col in col_names:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
-        x_dict = {
+        feat_dict = {
             stype: torch.stack(xs, dim=1)
             for stype, xs in xs_dict.items()
         }
@@ -139,7 +139,7 @@ class DataFrameToTensorFrameConverter:
             y = self._get_mapper(self.target_col).forward(
                 df[self.target_col], device=device)
 
-        return TensorFrame(x_dict, self.col_names_dict, y)
+        return TensorFrame(feat_dict, self.col_names_dict, y)
 
 
 class Dataset(ABC):

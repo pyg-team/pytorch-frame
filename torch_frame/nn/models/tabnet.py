@@ -31,7 +31,7 @@ class TabNet(Module):
             column name into stats.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
         num_shared_glu_layers (int): Number of GLU layers shared across the
             TabNet layers. (default: `2`)
         num_dependent_gpu_layers (int): Number of GLU layers specific to each

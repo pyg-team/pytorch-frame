@@ -30,7 +30,7 @@ class Trompt(Module):
             column name into stats. Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
             Available as :obj:`tensor_frame.col_names_dict`.
     """
     def __init__(

@@ -23,9 +23,9 @@ def teardown_module():
 
 def compare_tfs(tf_a: TensorFrame, tf_b: TensorFrame):
     assert torch.equal(tf_a.y, tf_b.y)
-    assert len(tf_a.x_dict) == len(tf_b.x_dict)
-    for stype in tf_a.x_dict:
-        assert torch.equal(tf_a.x_dict[stype], tf_b.x_dict[stype])
+    assert len(tf_a.feat_dict) == len(tf_b.feat_dict)
+    for stype in tf_a.feat_dict:
+        assert torch.equal(tf_a.feat_dict[stype], tf_b.feat_dict[stype])
     assert len(tf_a.col_names_dict) == len(tf_b.col_names_dict)
     for stype in tf_a.col_names_dict:
         assert tf_a.col_names_dict[stype] == tf_b.col_names_dict[stype]

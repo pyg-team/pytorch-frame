@@ -111,9 +111,9 @@ class TabTransformer(Module):
             out (Tensor): Output. The shape is [batch_size, out_channels].
         """
         xs = []
-        if stype.categorical in tf.x_dict:
-            B, _ = tf.x_dict[stype.categorical].shape
-            x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
+        if stype.categorical in tf.feat_dict:
+            B, _ = tf.feat_dict[stype.categorical].shape
+            x_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
             # A contextual padding [B, num_cols, encoder_pad_size]is added to
             # the categorical embedding [B, num_cols, channels].
             x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(B, 1, 1)
@@ -124,8 +124,8 @@ class TabTransformer(Module):
                 x_cat = tab_transformer_conv(x_cat)
             x_cat = x_cat.reshape(B, -1)
             xs.append(x_cat)
-        if stype.numerical in tf.x_dict:
-            x_num = self.num_norm(tf.x_dict[stype.numerical])
+        if stype.numerical in tf.feat_dict:
+            x_num = self.num_norm(tf.feat_dict[stype.numerical])
             xs.append(x_num)
         x = torch.cat(xs, dim=1)
         out = self.decoder(x)

@@ -41,7 +41,7 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
-    assert (stype.categorical not in out.x_dict)
+    assert (stype.categorical not in out.feat_dict)
 
     # assert that all features are numerical
     assert (len(out.col_names_dict[stype.numerical]) == total_cols)
@@ -73,14 +73,14 @@ def test_categorical_catboost_encoder():
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
-    assert (stype.categorical not in out.x_dict)
+    assert (stype.categorical not in out.feat_dict)
 
     # assert that all features are numerical
     assert (len(out.col_names_dict[stype.numerical]) == total_cols)
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(dataset.tensor_frame.x_dict[stype.numerical],
-                     out.x_dict[stype.numerical][:, :total_num_cols]).all())
+    assert (torch.eq(dataset.tensor_frame.feat_dict[stype.numerical],
+                     out.feat_dict[stype.numerical][:, :total_num_cols]).all())
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_num_cols])
     assert (dataset.tensor_frame.col_names_dict[stype.categorical] ==
