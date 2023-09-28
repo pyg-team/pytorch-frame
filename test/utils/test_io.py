@@ -32,8 +32,15 @@ def test_dataset_save_load_tf():
             stypes=stypes,
             text_embedder_cfg=text_embedder_cfg,
         )
+        # Test materialize via caching
         new_dataset.materialize(path=path)
         assert len(new_dataset.col_stats) == 8
         assert new_dataset.tensor_frame.y is not None
         assert len(new_dataset.tensor_frame.x_dict) == 3
         assert len(new_dataset.tensor_frame.col_names_dict) == 3
+
+        # Test `tensor_frame` converter
+        tf = new_dataset._to_tensor_frame_converter(new_dataset.df)
+        assert tf.y is not None
+        assert len(tf.x_dict) == 3
+        assert len(tf.col_names_dict) == 3

@@ -278,12 +278,20 @@ class Dataset(ABC):
         if self.is_materialized:
             return self
 
-        if path is not None:
-            if osp.isfile(path):
-                self._tensor_frame, self._col_stats = torch_frame.load_tf(
-                    path, device)
-                self._is_materialized = True
-                return self
+        if path is not None and osp.isfile(path):
+            # Load tensor_frame and col_stats
+            self._tensor_frame, self._col_stats = torch_frame.load_tf(
+                path, device)
+            # Instantiate the converter
+            self._to_tensor_frame_converter = DataFrameToTensorFrameConverter(
+                col_to_stype=self.col_to_stype,
+                col_stats=self._col_stats,
+                target_col=self.target_col,
+                text_embedder_cfg=self.text_embedder_cfg,
+            )
+            # Mark the dataset has been materialized
+            self._is_materialized = True
+            return self
 
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
@@ -311,6 +319,7 @@ class Dataset(ABC):
         self._is_materialized = True
 
         if path is not None:
+            # Cache the dataset if user specifies the path
             torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
 
         return self

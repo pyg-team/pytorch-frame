@@ -1,3 +1,4 @@
+from dataclasses import fields
 from typing import Any, Dict, Optional, Tuple
 
 import torch
@@ -18,7 +19,9 @@ def save_tf(tensor_frame: TensorFrame,
         path (str): Path to save the :obj:`TensorFrame` object and
             :obj:`col_stats`.
     """
-    torch.save((tensor_frame, col_stats), path)
+    tf_attrs = [field.name for field in fields(TensorFrame)]
+    tf_dict = {attr: getattr(tensor_frame, attr) for attr in tf_attrs}
+    torch.save((tf_dict, col_stats), path)
 
 
 def load_tf(
@@ -37,6 +40,7 @@ def load_tf(
         tuple: A tuple of loaded :obj:`TensorFrame` object and
             optional :obj:`col_stats`.
     """
-    tensor_frame, col_stats = torch.load(path)
+    tf_dict, col_stats = torch.load(path)
+    tensor_frame = TensorFrame(**tf_dict)
     tensor_frame.to(device)
     return tensor_frame, col_stats
