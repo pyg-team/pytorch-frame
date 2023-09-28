@@ -33,8 +33,8 @@ def test_shuffle():
 
     dataset, perm = dataset.shuffle(return_perm=True)
     assert torch.equal(torch.from_numpy(dataset.df['A'].values), perm)
-    x = dataset.tensor_frame.feat_dict[torch_frame.categorical].view(-1)
-    assert torch.equal(x, perm)
+    feat = dataset.tensor_frame.feat_dict[torch_frame.categorical].view(-1)
+    assert torch.equal(feat, perm)
 
 
 def test_col_select():
