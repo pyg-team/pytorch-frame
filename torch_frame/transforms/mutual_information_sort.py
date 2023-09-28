@@ -76,10 +76,10 @@ class MutualInformationSort(FittableBaseTransform):
                 and len(tf_train.col_names_dict[stype.categorical]) != 0):
             raise ValueError("The transform can be only used on TensorFrame"
                              " with numerical only features.")
-        x = tf_train.feat_dict[stype.numerical]
-        if torch.isnan(x).any():
-            x = self._replace_nans(x)
-        mi_scores = self.mi_func(x.cpu(), tf_train.y.cpu())
+        feat_train = tf_train.feat_dict[stype.numerical]
+        if torch.isnan(feat_train).any():
+            feat_train = self._replace_nans(feat_train)
+        mi_scores = self.mi_func(feat_train.cpu(), tf_train.y.cpu())
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]
         ranks = {col_names[self.mi_ranks[i]]: i for i in range(len(col_names))}
