@@ -75,8 +75,8 @@ class XGBoost(GBDT):
         assert y is not None
         if (stype.categorical in tf.feat_dict
                 and stype.numerical in tf.feat_dict):
-            x_cat = neg_to_nan(tf.feat_dict[stype.categorical])
-            x = torch.cat([tf.feat_dict[stype.numerical], x_cat], dim=1)
+            feat_cat = neg_to_nan(tf.feat_dict[stype.categorical])
+            x = torch.cat([tf.feat_dict[stype.numerical], feat_cat], dim=1)
             feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
                              ["c"] * len(tf.col_names_dict[stype.categorical]))
         elif stype.categorical in tf.feat_dict:

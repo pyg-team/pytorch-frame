@@ -39,11 +39,11 @@ def test_excelformer(task_type):
     assert out.shape == (batch_size, out_channels)
 
     # Test the mixup forward pass
-    x_num = copy.copy(tensor_frame.feat_dict[stype.numerical])
+    feat_num = copy.copy(tensor_frame.feat_dict[stype.numerical])
     out_mixedup, y_mixedup = model.forward_mixup(tensor_frame)
     assert out_mixedup.shape == (batch_size, out_channels)
     # Make sure the numerical feature is not modified.
-    assert torch.allclose(x_num, tensor_frame.feat_dict[stype.numerical])
+    assert torch.allclose(feat_num, tensor_frame.feat_dict[stype.numerical])
 
     if task_type.is_classification:
         assert y_mixedup.shape == (batch_size, out_channels)

@@ -81,8 +81,8 @@ class FTTransformerConvs(TableConv):
         # [batch_size, num_cols, channels]
         x_cls = self.cls_embedding.repeat(B, 1, 1)
         # [batch_size, num_cols + 1, channels]
-        x_cat = torch.cat([x_cls, x], dim=1)
+        feat_cat = torch.cat([x_cls, x], dim=1)
         # [batch_size, num_cols + 1, channels]
-        x_cat = self.transformer(x_cat)
-        x_cls, x = x_cat[:, 0, :], x_cat[:, 1:, :]
+        feat_cat = self.transformer(feat_cat)
+        x_cls, x = feat_cat[:, 0, :], feat_cat[:, 1:, :]
         return x, x_cls
