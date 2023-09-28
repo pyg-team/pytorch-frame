@@ -15,7 +15,8 @@ Common Benchmark Datasets
 :pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
-Initializing datasets is straightforward in :pyg:`PyTorch Frame`. An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the bank-marketing dataset, type:
+Initializing datasets is straightforward in :pyg:`PyTorch Frame`.
+An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the `Adult Census Income` dataset, type:
 
 .. code-block:: python
 
@@ -59,22 +60,23 @@ This is equivalent of doing:
     perm = torch.randperm(len(dataset))
     dataset = dataset[perm]
 
+.. note::
+    Each dataset contains only one table.
 
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :obj:`stype`.
 Currently :pyg:`PyTorch Frame` supports the following :obj:`stype`'s:
 
-- :obj:`stype.categorical` denotes Categorical values,
-- :obj:`stype.numerical` denotes Numerical values,
-- :obj:`stype.text` denotes Text.
+- :obj:`stype.categorical` denotes categorical values.
+- :obj:`stype.numerical` denotes numerical values.
+- :obj:`stype.text` denotes text.
 
 A table in :pyg:`PyTorch Frame` is described by an instance of :class:`TensorFrame`, which holds the following attributes by default:
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :obj:`stype`.
-- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s. The size of :obj:`Tensor` is at least two dimensional with shape [`num_rows`, `num_cols`, \*].
-The first dimension represents rows and the second dimension represents columns.
-Any remaining dimension describes the feature value of the (row, column) pair.
+- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s.
+The size of :obj:`Tensor` is at least two dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
 - :obj:`y`(optional): A tensor containing the target values for prediction.
 
 We show a simple example of a table with 3 categorical columns and 2 numerical columns.
@@ -114,10 +116,15 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
         )
 
 .. note::
+    When a :obj:`TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`).
+    The categories are sorted by their frequencies in descending order, mapping each category to their rank in sorted order.
+    Any invalid entries within the categorical columns are assigned to a value of `-1`.
+
+ .. note::
     The set of keys in `x_dict` must exactly match with the set of keys in `col_names_dict`.
     We validate the :obj:`TensorFrame` at initialization time.
 
-A :obj:`TensorFrame` contains many properties.
+A :obj:`TensorFrame` contains many properties:
 
 .. code-block:: python
 
