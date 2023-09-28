@@ -264,7 +264,18 @@ class Dataset(ABC):
     def materialize(self, device: Optional[torch.device] = None,
                     path: Optional[str] = None) -> 'Dataset':
         r"""Materializes the dataset into a tensor representation. From this
-        point onwards, the dataset should be treated as read-only."""
+        point onwards, the dataset should be treated as read-only.
+
+        Args:
+            device (torch.device, optional): Device to load the
+                :obj:`TensorFrame` object. (default: :obj:`None`)
+            path (str, optional): If path is specified and cache file exists,
+                will try to load saved :obj:`TensorFrame` and :obj:`col_stats`.
+                If path is specified but cache file does not exist, will
+                do materialization at first then save :obj:`TensorFrame` and
+                :obj:`col_stats` to the path. If path is not specified, will
+                materialize and does not cache. (default: :obj:`None`)
+        """
         if self.is_materialized:
             return self
 
