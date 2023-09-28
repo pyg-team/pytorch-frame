@@ -3,6 +3,7 @@ Reported (reproduced) results of of TabNet model in the original paper
 https://arxiv.org/abs/1908.07442
 
 Forest Cover Type: 96.99 (96.53)
+KDD Census Income: 95.5 (95.41)
 """
 
 import argparse
@@ -18,7 +19,8 @@ from torch_frame.datasets import ForestCoverType, KDDCensusIncome
 from torch_frame.nn import TabNet
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default="ForestCoverType")
+parser.add_argument('--dataset', type=str, default="ForestCoverType",
+                    choices=["ForestCoverType", "KDDCensusIncome"])
 parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--gamma', type=int, default=1.2)
 parser.add_argument('--num_layers', type=int, default=6)

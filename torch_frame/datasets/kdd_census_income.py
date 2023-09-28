@@ -2,10 +2,12 @@ import os
 import os.path as osp
 import tarfile
 import zipfile
+from typing import Dict
 
 import pandas as pd
 
 import torch_frame
+from torch_frame import stype
 
 
 class KDDCensusIncome(torch_frame.data.Dataset):
@@ -34,7 +36,6 @@ class KDDCensusIncome(torch_frame.data.Dataset):
             'class of worker',
             'industry code',
             'occupation code',
-            # 'adjusted gross income',
             'education',
             'wage per hour',
             'enrolled in edu inst last wk',
@@ -50,47 +51,48 @@ class KDDCensusIncome(torch_frame.data.Dataset):
             'capital gains',
             'capital losses',
             'divdends from stocks',
-            # 'federal income tax liability',
             'tax filer status',
             'region of previous residence',
             'state of previous residence',
             'detailed household and family stat',
             'detailed household summary in household',
-            # 'instance weight',
             'migration code-change in msa',
             'migration code-change in reg',
             'migration code-move within reg',
             'live in this house 1 year ago',
             'migration prev res in sunbelt',
-            'num persons worked for employer',
             'family members under 18',
-            # 'total person earnings',
+            'num persons worked for employer',
             'country of birth father',
             'country of birth mother',
             'country of birth self',
             'citizenship',
             'total person income',
             'own business or self employed',
-            # 'taxable income amount',
             "fill inc questionnaire for veteran's admin",
             'veterans benefits',
             'weeks worked in year',
             'year',
-            'income_to_predict',
+            'income above 50000',
         ]
 
         continous_cols = set([
-            'age', 'wage per hour', 'capital gains', 'capital losses',
-            'dividends from stocks', 'num persons worked for employer',
-            'weeks worked in year'
+            'age',
+            'wage per hour',
+            'capital gains',
+            'capital losses',
+            'divdends from stocks',
+            'num persons worked for employer',
+            'weeks worked in year',
         ])
 
-        col_to_stype = {}
+        col_to_stype: Dict[str, stype] = {}
         for name in names:
             if name in continous_cols:
                 col_to_stype[name] = torch_frame.numerical
             else:
                 col_to_stype[name] = torch_frame.categorical
+
         df = pd.read_csv(filename, names=names)
 
-        super().__init__(df, col_to_stype, target_col='income_to_predict')
+        super().__init__(df, col_to_stype, target_col='income above 50000')
