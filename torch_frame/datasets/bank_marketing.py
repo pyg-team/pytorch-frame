@@ -1,6 +1,4 @@
-import os.path as osp
 import pandas as pd
-import zipfile
 
 import torch_frame
 
@@ -21,14 +19,12 @@ class BankMarketing(torch_frame.data.Dataset):
 
     def __init__(self, root: str):
         path = self.download_url(self.url, root)
-        folder_path = osp.dirname(path)
-        with zipfile.ZipFile(path, 'r') as zip_ref:
-            zip_ref.extractall(folder_path)
-        data_path = osp.join(folder_path, 'bank.zip')
-        data_subfolder_path = osp.join(folder_path, 'bank')
-        with zipfile.ZipFile(data_path, 'r') as zip_ref:
-            zip_ref.extractall(data_subfolder_path)
-        df = pd.read_csv(osp.join(data_subfolder_path, 'bank-full.csv'), sep=';')
+        names = [
+            'age', 'job', 'marital', 'education', 'default', 'balance',
+            'housing', 'loan', 'contact', 'day', 'month', 'duration',
+            'campaign', 'pdays', 'previous', 'poutcome', 'y'
+        ]
+        df = pd.read_csv(path, names=names)
 
         col_to_stype = {
             'age': torch_frame.numerical,
