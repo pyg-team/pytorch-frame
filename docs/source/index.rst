@@ -11,12 +11,7 @@ PyTorch Frame Documentation
    :caption: Get Started
 
    get_started/introduction
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Get Started
-
-   tutorials/modular_design
+   get_started/modular_design
 
 .. toctree::
    :maxdepth: 1

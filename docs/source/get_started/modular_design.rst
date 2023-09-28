@@ -1,11 +1,19 @@
 Modular Design of Deep Tabular Models
 =====================================
-Many recent strong tabular deep models follow modular design (Encoder, Table convolution, Decoder). We design the overall architecture of deep tabular models in :pyg:`PyTorch Frame` in the following image.
+Many recent strong tabular deep models follow modular design (Encoder, Table convolution, Decoder).
+The overall design of deep tabular models in :pyg:`PyTorch Frame` follows the architecture show in the image below.
 
 .. figure:: ../_figures/modular.png
   :align: center
   :width: 100%
 
+
+The above image explains the high-level architecture of deep tabular models in :pyg:`PyTorchFrame`:
+
+- The input dataframe is first converted to :class:`TensorFrame`, where data of each semantic type is stored separately.
+- Then, the :obj:`TensorFrame` representing the dataset is fed into the Feature Encoder which converts it into three dimmensional :obj:`Tensor`'s.
+- The :obj:`Tensor`'s are then concatenated into a single :obj:`Tensor` of shape [`batch_size`, `num_cols`, `num_channels`] and then fed into layers of :class:`TableConv`.
+- The output :obj:`Tensor` from the convolution is then inputed into the decoder to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
 Encoder
 -------
@@ -14,15 +22,48 @@ Encoder
 
 :obj:`StypeWiseFeatureEncoder` inherits from :obj:`FeatureEncoder`. It will take :obj:`TensorFrame` as input and apply stype-specific feature encoder (specified via `stype_encoder_dict`) to PyTorch :obj:`Tensor` of each stype to get embeddings for each stype.
 
-The embeddings of different stypes are then concatenated along the column axis. In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
+The embeddings of different stypes are then concatenated along the column axis.
+In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
+
 :obj:`StypeEncoder` encodes :obj:`tensor` of a specific stype into 3-dimensional column-wise tensor that is input into :class:`TableConv`. We have already implemented many encoders:
 
 - :obj:`EmbeddingEncoder` is a :obj:`torch.nn.Embedding`-based encoder for categorical features
 - :obj:`LinearBucketEncoder` is a bucket-based encoder for numerical features introduced in https://arxiv.org/abs/2203.05556
 
-for a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
+For a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
+
+`NaN` handling is accomplished in the :class:`StypeEncoder`.
+By default, :class:`StypeEncoder` converts `NaN` values in categorical features to a new category and keeps the `NaN` values in numerical features.
+With :class:`NAStrategy` specified, you can encode `NaN` values to the most frequent category.
+
+You can also specify a post module to an :obj:`StypeEncoder`.
+
+A simple example is as follows:
 
 .. code-block:: python
+
+    from torch.nn import ReLU
+    from torch_frame import NAStrategy
+    from torch_frame.nn import EmbeddingEncoder
+
+    encoder = EmbeddingEncoder(8, stats_list=stats_list,
+                                stype=stype.categorical,
+                                na_strategy=NAStrategy.MOST_FREQUENT,
+                                post_module=ReLU())
+
+Similarly, :obj:`NAStrategy.MEAN` :obj:`NAStrategy.ZEROS` is provided for numerical features.
+
+Here is a example to create a Feature Encoder.
+For each :obj:`Stype` in your :obj:`TensorFrame`, you'd need to specify a specific :obj:`StypeEncoder`.
+
+.. code-block:: python
+
+    from torch import LayerNorm
+    from torch_frame import stype
+    from torch_frame.nn import (
+        EmbeddingEncoder,
+        LinearBucketEncoder,
+    )
 
     stype_encoder_dict = {
         stype.categorical:
@@ -41,7 +82,8 @@ for a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_fr
 Implementation of Convolution Layer
 -----------------------------------
 
-The table convolution layer inherits from :obj:`TableConv`.
+The table convolution layer inherits from :class:`TableConv`.
+Table Convolution handles cross column interactions.
 
 .. code-block:: python
 
@@ -101,7 +143,7 @@ Initializing and calling it is straightforward.
 Decoder
 -------
 
-Decoder transforms the input column-wise :obj:`Tensor` into output tensor on which prediction head is applied.
+Decoder transforms the input column-wise :obj:`Tensor` into output :ojb:`Tensor` on which prediction head is applied.
 
 .. code-block:: python
 

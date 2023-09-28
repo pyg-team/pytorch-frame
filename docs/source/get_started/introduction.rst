@@ -10,17 +10,20 @@ At its core, :pyg:`PyTorch Frame` provides the following main features:
 
 Data Handling of Tables
 -----------------------
-A table contains different columns with different data types. Each data type is described by an :obj:`stype`. Currently :pyg:`PyTorch Frame` supports the following :obj:`stype`'s:
+A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :obj:`stype`.
+Currently :pyg:`PyTorch Frame` supports the following :obj:`stype`'s:
 
 - :obj:`stype.categorical` denotes Categorical values,
 - :obj:`stype.numerical` denotes Numerical values,
 - :obj:`stype.text` denotes Text.
 
-A table in :pyg:`PyTorch Frame` is described by an instance of :obj:`TensorFrame`, which holds the following attributes by default:
+A table in :pyg:`PyTorch Frame` is described by an instance of :class:`TensorFrame`, which holds the following attributes by default:
 
-- :obj:`col_names_dict`: A dictionary holding the column names for each :obj:`stype`'s.
-- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s. The size of :obj:`Tensor` is two-dimentional. The first dimension represents rows and the second dimension represents columns.
-- :obj:`y`: A tensor containing the target values for prediction.
+- :obj:`col_names_dict`: A dictionary holding the column names for each :obj:`stype`.
+- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s. The size of :obj:`Tensor` is at least two dimensional with shape [`num_rows`, `num_cols`, \*].
+The first dimension represents rows and the second dimension represents columns.
+Any remaining dimension describes the feature value of the (row, column) pair.
+- :obj:`y`(optional): A tensor containing the target values for prediction.
 
 We show a simple example of a table with 3 categorical columns and 2 numerical columns.
 
@@ -59,7 +62,8 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
         )
 
 .. note::
-    The set of keys in `x_dict` must be exactly match the set of keys in `col_names_dict`. We validate the :obj:`TensorFrame` at initialization time.
+    The set of keys in `x_dict` must exactly match with the set of keys in `col_names_dict`.
+    We validate the :obj:`TensorFrame` at initialization time.
 
 A :obj:`TensorFrame` contains many properties.
 
@@ -97,7 +101,6 @@ Initializing datasets is straightforward in :pyg:`PyTorch Frame`. An initializat
     from torch_frame.datasets import Yandex
 
     dataset = Yandex(root='/tmp/adult', name='adult')
-    >>> Downloading https://huggingface.co/datasets/inria-soda/tabular-benchmark/raw/main/clf_num/california.csv
 
     len(dataset)
     >>> 48842
@@ -135,7 +138,9 @@ This is equivalent of doing:
     perm = torch.randperm(len(dataset))
     dataset = dataset[perm]
 
-To obtain the :obj:`TensorFrame` from a :obj:`torch_frame.dataset.Dataset`, we need to materialize the dataset first. We show a simple example.
+
+Converting a :class:`torch_frame.dataset.Dataset` into a :obj:`TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
+We show a simple example.
 
 .. code-block:: python
 
@@ -145,21 +150,6 @@ To obtain the :obj:`TensorFrame` from a :obj:`torch_frame.dataset.Dataset`, we n
 
     tensor_frame.col_names_dict
     >>> {<stype.categorical: 'categorical'>: ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7'], <stype.numerical: 'numerical'>: ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5']}
-    tensor_frame.x_dict
-
-    >>> {<stype.categorical: 'categorical'>: tensor([[3, 1, 1,  ..., 0, 1, 0],
-            [0, 1, 0,  ..., 0, 0, 0],
-            [0, 1, 0,  ..., 0, 0, 0],
-            ...,
-            [0, 0, 1,  ..., 0, 0, 0],
-            [3, 9, 0,  ..., 0, 0, 0],
-            [0, 2, 0,  ..., 0, 0, 0]]), <stype.numerical: 'numerical'>: tensor([[1.9000e+01, 1.4040e+05, 1.0000e+01, 0.0000e+00, 0.0000e+00, 3.0000e+01],
-            [5.0000e+01, 1.5828e+05, 1.0000e+01, 0.0000e+00, 0.0000e+00, 4.0000e+01],
-            [6.2000e+01, 1.8374e+05, 1.0000e+01, 0.0000e+00, 0.0000e+00, 4.0000e+01],
-            ...,
-            [2.1000e+01, 2.0576e+05, 9.0000e+00, 0.0000e+00, 0.0000e+00, 4.0000e+01],
-            [7.3000e+01, 1.9139e+05, 1.5000e+01, 0.0000e+00, 0.0000e+00, 4.0000e+01],
-            [5.3000e+01, 3.1135e+05, 1.3000e+01, 0.0000e+00, 0.0000e+00, 5.0000e+01]])}
 
     tensor_frame.y
     >>> tensor([0, 0, 0,  ..., 0, 0, 1])
@@ -191,7 +181,7 @@ For numerical features,
 
 Mini-batches
 -----------------------
-Neural networks are usually trained in a batch-wise fasion. :pyg:`PyTorch Frame` contains its own :obj:`torch_frame.data.DataLoader`, which can load :obj:`torch_frame.data.Dataset` or :obj:`TensorFrame` in mini batches.
+Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame` contains its own :obj:`torch_frame.data.DataLoader`, which can load :obj:`torch_frame.data.Dataset` or :obj:`TensorFrame` in mini batches.
 
 .. code-block:: python
 
@@ -213,9 +203,9 @@ Neural networks are usually trained in a batch-wise fasion. :pyg:`PyTorch Frame`
 
 Data Transforms
 -----------------------
-:pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and .
+:pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 
-Let's look an example, where we apply CatBoostEncoder to transform the categorical features into numerical features.
+Let's look an example, where we apply `CatBoostEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>` to transform the categorical features into numerical features.
 
 .. code-block:: python
 
