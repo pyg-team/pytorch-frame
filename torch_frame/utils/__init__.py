@@ -1,4 +1,4 @@
-from .utils import save_tf, load_tf
+from .io import save_tf, load_tf
 
 __all__ = functions = [
     'save_tf',

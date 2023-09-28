@@ -25,7 +25,6 @@ from torch_frame.typing import (
     IndexSelectType,
     TaskType,
 )
-from torch_frame.utils import load_tf, save_tf
 
 
 def requires_pre_materialization(func):
@@ -281,7 +280,8 @@ class Dataset(ABC):
 
         if path is not None:
             if osp.isfile(path):
-                self._tensor_frame, self._col_stats = load_tf(path, device)
+                self._tensor_frame, self._col_stats = torch_frame.load_tf(
+                    path, device)
                 self._is_materialized = True
                 return self
 
@@ -311,7 +311,7 @@ class Dataset(ABC):
         self._is_materialized = True
 
         if path is not None:
-            save_tf(path, self._tensor_frame, self._col_stats)
+            torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
 
         return self
 

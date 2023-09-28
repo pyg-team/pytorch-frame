@@ -6,18 +6,17 @@ from torch_frame.data import TensorFrame
 from torch_frame.data.stats import StatType
 
 
-def save_tf(path: str, tensor_frame: TensorFrame,
-            col_stats: Optional[Dict[str, Dict[StatType, Any]]] = None):
+def save_tf(tensor_frame: TensorFrame,
+            col_stats: Optional[Dict[str, Dict[StatType, Any]]], path: str):
     r"""Save a :obj:`TensorFrame` object and optional :obj:`col_stats`
     to specified path.
 
     Args:
-        path (str): Path to save the :obj:`TensorFrame` object and
-            :obj:`col_stats`.
         tensor_frame(TensorFrame): The :obj:`TensorFrame` object
             to be saved.
         col_stats (dict, optional): The :obj:`col_stats` to be saved.
-            (default: :obj:`None`)
+        path (str): Path to save the :obj:`TensorFrame` object and
+            :obj:`col_stats`.
     """
     torch.save((tensor_frame, col_stats), path)
 
