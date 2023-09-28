@@ -3,12 +3,13 @@ from typing import Any, Dict, List
 import torch
 from torch import Tensor
 from torch.nn import (
+    SELU,
+    BatchNorm1d,
     Embedding,
     LayerNorm,
     Linear,
     Module,
     ModuleList,
-    ReLU,
     Sequential,
 )
 from torch.nn.modules.module import Module
@@ -35,8 +36,7 @@ class TabTransformer(Module):
         num_layers (int): Numner of layers.
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of contextual padding to the encoder.
-        decoder_hidden_layer_size (int): Size of the hidden layer of MLP
-            decoder.
+        attn_dropout (float): Dropout for 
         col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
         col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
@@ -49,7 +49,8 @@ class TabTransformer(Module):
         num_layers: int,
         num_heads: int,
         encoder_pad_size: int,
-        decoder_hidden_layer_size: int,
+        attn_dropout: float,
+        ffn_dropout: float,
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
     ):
@@ -69,22 +70,26 @@ class TabTransformer(Module):
             categorical_col_len = len(col_names_dict[stype.categorical])
         if stype.numerical in col_names_dict:
             numerical_col_len = len(col_names_dict[stype.numerical])
-        self.cat_encoder = EmbeddingEncoder(out_channels=channels,
-                                            stats_list=categorical_stats_list,
-                                            stype=stype.categorical)
+        self.cat_encoder = EmbeddingEncoder(
+            out_channels=channels - encoder_pad_size,
+            stats_list=categorical_stats_list, stype=stype.categorical)
         # We use the categorical embedding with EmbeddingEncoder and
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
-        in_channels = channels + encoder_pad_size
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=in_channels, num_heads=num_heads)
+            TabTransformerConv(channels=channels, num_heads=num_heads, attn_dropout=attn_dropout, ffn_dropout=ffn_dropout)
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
+        mlp_input_len = categorical_col_len * channels + numerical_col_len
+        mlp_first_hidden_layer_size = 2 * mlp_input_len
+        mlp_second_hidden_layer_size = 4 * mlp_input_len
         self.decoder = Sequential(
-            Linear(categorical_col_len * in_channels + numerical_col_len,
-                   decoder_hidden_layer_size), ReLU(),
-            Linear(decoder_hidden_layer_size, out_channels))
+            Linear(mlp_input_len, mlp_first_hidden_layer_size), SELU(),
+            BatchNorm1d(mlp_first_hidden_layer_size),
+            Linear(2 * mlp_input_len, mlp_second_hidden_layer_size), SELU(),
+            BatchNorm1d(mlp_second_hidden_layer_size),
+            Linear(mlp_second_hidden_layer_size, out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -93,7 +98,7 @@ class TabTransformer(Module):
         for tab_transformer_conv in self.tab_transformer_convs:
             tab_transformer_conv.reset_parameters()
         for m in self.decoder:
-            if not isinstance(m, ReLU):
+            if not isinstance(m, SELU):
                 m.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
