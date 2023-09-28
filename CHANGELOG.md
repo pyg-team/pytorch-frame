@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Renamed Rename `x_dict` to `feat_dict` in `TensorFrame` ([#86](https://github.com/pyg-team/pytorch-frame/pull/86))
+- Renamed `x_dict` to `feat_dict` in `TensorFrame` ([#86](https://github.com/pyg-team/pytorch-frame/pull/86))
 - Added `TabTransformer` example. ([#82](https://github.com/pyg-team/pytorch-frame/pull/82))
 - Added `TabNet` example ([#85](https://github.com/pyg-team/pytorch-frame/pull/85))
 - Added dataset `tensorframe` and `col_stats` caching ([#84](https://github.com/pyg-team/pytorch-frame/pull/84))
