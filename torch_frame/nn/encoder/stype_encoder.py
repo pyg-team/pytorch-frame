@@ -7,7 +7,6 @@ from torch import Tensor
 from torch.nn import Embedding, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
-import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
@@ -24,7 +23,7 @@ def reset_parameters_soft(module: Module):
 
 class StypeEncoder(Module, ABC):
     r"""Base class for stype encoder. This module transforms tensor of a
-    specific stype, i.e., `TensorFrame.x_dict[stype.xxx]` into 3-dimensional
+    specific stype, i.e., `TensorFrame.feat_dict[stype.xxx]` into 3-dimensional
     column-wise tensor that is input into :class:`TableConv`.
 
     Args:
@@ -77,21 +76,21 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, feat: Tensor) -> Tensor:
         # Clone the tensor to avoid in-place modification
-        x = x.clone()
+        feat = feat.clone()
         # NaN handling of the input Tensor
-        x = self.na_forward(x)
+        feat = self.na_forward(feat)
         # Main encoding into column embeddings
-        x = self.encode_forward(x)
+        x = self.encode_forward(feat)
         # Handle NaN in case na_strategy is None
         x = torch.nan_to_num(x, nan=0)
         # Post-forward (e.g., normalization, activation)
         return self.post_forward(x)
 
     @abstractmethod
-    def encode_forward(self, x: Tensor) -> Tensor:
-        r"""The main forward function. Maps input :obj:`x` from TensorFrame
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
         [batch_size, num_cols, out_channels]."""
         raise NotImplementedError
@@ -110,27 +109,21 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
-    def na_forward(self, x: Tensor) -> Tensor:
-        r"""Replace NaN values in input :obj:`Tensor` given
-        :obj:`na_strategy`.
+    def na_forward(self, feat: Tensor) -> Tensor:
+        r"""Replace NaN values in input :obj:`Tensor` given :obj:`na_strategy`.
 
         Args:
-            x (Tensor): Input :obj:`Tensor`.
+            feat (Tensor): Input :obj:`Tensor`.
 
         Returns:
             x (Tensor): Output :obj:`Tensor` with NaNs replaced given
                 :obj:`na_strategy`.
         """
-        if (self.stype == torch_frame.text_embedded) and (self.na_strategy
-                                                          is not None):
-            raise ValueError("NA strategy should be `None` "
-                             "for text stype data.")
         if self.na_strategy is None:
-            return x
+            return feat
 
-        x = x.clone()
-        for col in range(x.size(1)):
-            column_data = x[:, col]
+        for col in range(feat.size(1)):
+            column_data = feat[:, col]
             if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data)
             else:
@@ -148,7 +141,7 @@ class StypeEncoder(Module, ABC):
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
-        return x
+        return feat
 
 
 class EmbeddingEncoder(StypeEncoder):
@@ -187,18 +180,18 @@ class EmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, x: Tensor) -> Tensor:
+    def encode_forward(self, feat: Tensor) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
-        x = x + 1
-        # x: [batch_size, num_cols]
+        # feat: [batch_size, num_cols]
+        feat = feat + 1
         xs = []
         for i, emb in enumerate(self.embs):
-            xs.append(emb(x[:, i]))
+            xs.append(emb(feat[:, i]))
         # [batch_size, num_cols, hidden_channels]
-        out = torch.stack(xs, dim=1)
-        return out
+        x = torch.stack(xs, dim=1)
+        return x
 
 
 class LinearEncoder(StypeEncoder):
@@ -237,12 +230,12 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, x: Tensor) -> Tensor:
-        # x: [batch_size, num_cols]
-        x = (x - self.mean) / self.std
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        # feat: [batch_size, num_cols]
+        feat = (feat - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ij,jk->ijk', x, self.weight)
+        x_lin = torch.einsum('ij,jk->ijk', feat, self.weight)
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
@@ -277,11 +270,11 @@ class StackEncoder(StypeEncoder):
     def reset_parameters(self):
         super().reset_parameters()
 
-    def encode_forward(self, x: Tensor) -> Tensor:
-        # x: [batch_size, num_cols]
-        x = (x - self.mean) / self.std
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        # feat: [batch_size, num_cols]
+        feat = (feat - self.mean) / self.std
         # x: [batch_size, num_cols, out_channels]
-        x = x.unsqueeze(2).repeat(1, 1, self.out_channels)
+        x = feat.unsqueeze(2).repeat(1, 1, self.out_channels)
         return x
 
 
@@ -322,12 +315,12 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, x: Tensor) -> Tensor:
+    def encode_forward(self, feat: Tensor) -> Tensor:
         encoded_values = []
-        for i in range(x.size(1)):
+        for i in range(feat.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
-            xi = x[:, i].contiguous()
-            bucket_indices = torch.bucketize(xi, self.boundaries[i, 1:-1])
+            feat_i = feat[:, i].contiguous()
+            bucket_indices = torch.bucketize(feat_i, self.boundaries[i, 1:-1])
 
             # Create a mask for the one-hot encoding based on bucket indices
             one_hot_mask = torch.nn.functional.one_hot(
@@ -335,11 +328,11 @@ class LinearBucketEncoder(StypeEncoder):
                 len(self.boundaries[i]) - 1).float()
 
             # Create a mask for values that are greater than upper bounds
-            greater_mask = (x[:, i:i + 1] > self.boundaries[i, :-1]).float()
+            greater_mask = (feat[:, i:i + 1] > self.boundaries[i, :-1]).float()
 
             # Combine the masks to create encoded_values
             # [batch_size, num_buckets]
-            encoded_value = (one_hot_mask * x[:, i:i + 1] - one_hot_mask *
+            encoded_value = (one_hot_mask * feat[:, i:i + 1] - one_hot_mask *
                              self.boundaries[i, :-1].unsqueeze(0)) / (
                                  self.interval[i].unsqueeze(0) + greater_mask *
                                  (1 - one_hot_mask))
@@ -397,25 +390,26 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_in, std=0.01)
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
-    def encode_forward(self, x: Tensor) -> Tensor:
-        x = (x - self.mean) / self.std
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        feat = (feat - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
         # transformation.
-        v = 2 * torch.pi * self.linear_in[None] * x[..., None]
+        v = 2 * torch.pi * self.linear_in[None] * feat[..., None]
 
         # Compute the sine and cosine values and concatenate them
-        x = torch.cat([torch.sin(v), torch.cos(v)], dim=-1)
+        feat_sincos = torch.cat([torch.sin(v), torch.cos(v)], dim=-1)
 
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
-        x = torch.einsum('ijk,jkl->ijl', x, self.linear_out)
+        x = torch.einsum('ijk,jkl->ijl', feat_sincos, self.linear_out)
         return x
 
 
 class ExcelFormerEncoder(StypeEncoder):
     r""" An attention based encoder that transforms input numerical features
     to a 3-dimensional tensor.
+
     Before being fed to the embedding layer, numerical features are normalized
     and categorical features are transformed into numerical features by the
     CatBoost Encoder implemented with the Sklearn Python package. The features
@@ -455,10 +449,10 @@ class ExcelFormerEncoder(StypeEncoder):
         self.b_2 = Parameter(Tensor(num_cols, self.out_channels))
         self.reset_parameters()
 
-    def encode_forward(self, x: Tensor) -> Tensor:
-        x = (x - self.mean) / self.std
-        x1 = self.W_1[None] * x[:, :, None] + self.b_1[None]
-        x2 = self.W_2[None] * x[:, :, None] + self.b_2[None]
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        feat = (feat - self.mean) / self.std
+        x1 = self.W_1[None] * feat[:, :, None] + self.b_1[None]
+        x2 = self.W_2[None] * feat[:, :, None] + self.b_2[None]
         x = torch.tanh(x1) * x2
         return x
 
@@ -515,11 +509,11 @@ class LinearEmbeddingEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, x: Tensor) -> Tensor:
+    def encode_forward(self, feat: Tensor) -> Tensor:
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', x, self.weight)
+        x_lin = torch.einsum('ijk,jkl->ijl', feat, self.weight)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias

@@ -34,9 +34,9 @@ def test_simple_basecls():
         def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
             xs = []
             for i, lin in enumerate(self.lins):
-                xs.append(lin(tf.x_dict[torch_frame.numerical][:, i:i + 1]))
+                xs.append(lin(tf.feat_dict[torch_frame.numerical][:, i:i + 1]))
             for i, emb in enumerate(self.embs):
-                xs.append(emb(tf.x_dict[torch_frame.categorical][:, i]))
+                xs.append(emb(tf.feat_dict[torch_frame.categorical][:, i]))
 
             x = torch.stack(xs, dim=1)
             col_names = (tf.col_names_dict[stype.numerical] +
@@ -60,7 +60,7 @@ def test_simple_basecls():
             return torch.mean(x, dim=1)
 
     tf = TensorFrame(
-        x_dict={
+        feat_dict={
             torch_frame.numerical: torch.randn(10, 2),
             torch_frame.categorical: torch.randint(0, 5, (10, 2)),
         },

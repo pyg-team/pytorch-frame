@@ -32,7 +32,7 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         # Converts the categorical columns of a :obj:`TensorFrame` into
         # :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
         # tensor so we need to convert the TensorFrame obj to DataFrame first.
-        df = DataFrame(data=tf_train.x_dict[stype.categorical].cpu(),
+        df = DataFrame(data=tf_train.feat_dict[stype.categorical].cpu(),
                        columns=tf_train.col_names_dict[stype.categorical])
         self.encoder.fit(df, tf_train.y.cpu())
 
@@ -62,22 +62,22 @@ class CategoricalCatBoostEncoder(FittableBaseTransform):
         # Converts the categorical columns of a :obj:`TensorFrame` into
         # :obj:`pd.DataFrame`. CatBoostEncoder does not take in numpy array or
         # tensor so we need to convert the TensorFrame obj to DataFrame first.
-        df = DataFrame(data=tf.x_dict[stype.categorical],
+        df = DataFrame(data=tf.feat_dict[stype.categorical],
                        columns=tf.col_names_dict[stype.categorical])
         transformed_tensor = torch.from_numpy(
             self.encoder.transform(df).values)
 
         # turn the categorical features into numerical features
-        if stype.numerical in tf.x_dict:
-            tf.x_dict[stype.numerical] = torch.cat(
-                (tf.x_dict[stype.numerical], transformed_tensor), dim=1)
+        if stype.numerical in tf.feat_dict:
+            tf.feat_dict[stype.numerical] = torch.cat(
+                (tf.feat_dict[stype.numerical], transformed_tensor), dim=1)
         else:
-            tf.x_dict[stype.numerical] = transformed_tensor
+            tf.feat_dict[stype.numerical] = transformed_tensor
         tf.col_names_dict[
             stype.numerical] = self.new_numerical_col_names.copy()
 
         # delete the categorical features
         tf.col_names_dict.pop(stype.categorical)
-        tf.x_dict.pop(stype.categorical)
+        tf.feat_dict.pop(stype.categorical)
 
         return tf

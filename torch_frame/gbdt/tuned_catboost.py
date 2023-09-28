@@ -36,21 +36,22 @@ class CatBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
+        if (stype.categorical in tf.feat_dict
+                and stype.numerical in tf.feat_dict):
             categorical_df = pd.DataFrame(
-                tf.x_dict[stype.categorical],
+                tf.feat_dict[stype.categorical],
                 columns=tf.col_names_dict[stype.categorical])
             numerical_df = pd.DataFrame(
-                tf.x_dict[stype.numerical],
+                tf.feat_dict[stype.numerical],
                 columns=tf.col_names_dict[stype.numerical])
             df = pd.concat([categorical_df, numerical_df], axis=1)
-            cat_features = np.arange(tf.x_dict[stype.categorical].shape[1])
-        elif stype.categorical in tf.x_dict:
-            df = pd.DataFrame(tf.x_dict[stype.categorical],
+            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
+        elif stype.categorical in tf.feat_dict:
+            df = pd.DataFrame(tf.feat_dict[stype.categorical],
                               columns=tf.col_names_dict[stype.categorical])
-            cat_features = np.arange(tf.x_dict[stype.categorical].shape[1])
-        elif stype.numerical in tf.x_dict:
-            df = pd.DataFrame(tf.x_dict[stype.numerical],
+            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
+        elif stype.numerical in tf.feat_dict:
+            df = pd.DataFrame(tf.feat_dict[stype.numerical],
                               columns=tf.col_names_dict[stype.numerical])
             cat_features = None
         else:

@@ -33,7 +33,7 @@ def test_shuffle():
 
     dataset, perm = dataset.shuffle(return_perm=True)
     assert torch.equal(torch.from_numpy(dataset.df['A'].values), perm)
-    x = dataset.tensor_frame.x_dict[torch_frame.categorical].view(-1)
+    x = dataset.tensor_frame.feat_dict[torch_frame.categorical].view(-1)
     assert torch.equal(x, perm)
 
 
@@ -56,7 +56,7 @@ def test_categorical_target_order():
     assert dataset.col_stats['B'][StatType.COUNT] == ([0, 1], [1, 3])
 
     assert torch.equal(
-        dataset.tensor_frame.x_dict[torch_frame.categorical],
+        dataset.tensor_frame.feat_dict[torch_frame.categorical],
         torch.tensor([[1], [0], [0], [0]]),
     )
     assert torch.equal(dataset.tensor_frame.y, torch.tensor([0, 1, 1, 1]))
@@ -71,15 +71,16 @@ def test_dataset_inductive_transform():
     assert dataset.convert_to_tensor_frame.col_names_dict[
         torch_frame.categorical] == ['x', 'y']
     mapped_tensor_frame = dataset.convert_to_tensor_frame(df)
-    for key in dataset.tensor_frame.x_dict.keys():
-        assert torch.equal(mapped_tensor_frame.x_dict[key],
-                           dataset.tensor_frame.x_dict[key])
+    for key in dataset.tensor_frame.feat_dict.keys():
+        assert torch.equal(mapped_tensor_frame.feat_dict[key],
+                           dataset.tensor_frame.feat_dict[key])
 
     # A new dataframe with an unseen categorical column
     df['x'] = 999
     unseen_tensor_frame = dataset.convert_to_tensor_frame(df)
-    assert torch.eq(unseen_tensor_frame.x_dict[torch_frame.categorical][:, 0],
-                    -1).all()
+    assert torch.eq(
+        unseen_tensor_frame.feat_dict[torch_frame.categorical][:, 0],
+        -1).all()
 
 
 def test_converter():
