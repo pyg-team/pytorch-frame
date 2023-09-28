@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `TabNet` example ([#85](https://github.com/pyg-team/pytorch-frame/pull/85))
 - Added dataset `tensorframe` and `col_stats` caching ([#84](https://github.com/pyg-team/pytorch-frame/pull/84))
 - Added `TabTransformer`. ([#74](https://github.com/pyg-team/pytorch-frame/pull/74))
 - Added `TabNet` ([#35](https://github.com/pyg-team/pytorch-frame/pull/35))
