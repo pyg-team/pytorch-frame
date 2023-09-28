@@ -1,12 +1,64 @@
 Introduction by Example
 =======================
 
+:pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
+:pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data.
 We shortly introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
 
 At its core, :pyg:`PyTorch Frame` provides the following main features:
 
 .. contents::
     :local:
+
+Common Benchmark Datasets
+-------------------------
+:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
+, datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
+
+Initializing datasets is straightforward in :pyg:`PyTorch Frame`. An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the bank-marketing dataset, type:
+
+.. code-block:: python
+
+    from torch_frame.datasets import Yandex
+
+    dataset = Yandex(root='/tmp/adult', name='adult')
+
+    len(dataset)
+    >>> 48842
+
+    dataset.feat_cols
+    >>> ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7', 'N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5']
+
+We can use slices, long or bool tensors to split the dataset, *e.g.*, to create a 90/10 train/test split, type:
+
+.. code-block:: python
+
+    train_dataset = dataset[:0.9]
+    >>> Yandex()
+
+    len(train_dataset)
+    >>> 43958
+
+    test_dataset = dataset[0.9:]
+    >>> Yandex()
+
+    len(test_dataset)
+    >>> 4884
+
+If you are unsure whether the dataset is already shuffled before you split, you can randomly permutate it by running:
+
+.. code-block:: python
+
+    dataset.shuffle(return_perm=True)
+    >>> (Yandex(), tensor([40091, 36301, 47858,  ...,  2003, 11049, 25131]))
+
+This is equivalent of doing:
+
+.. code-block:: python
+
+    perm = torch.randperm(len(dataset))
+    dataset = dataset[perm]
+
 
 Data Handling of Tables
 -----------------------
@@ -88,56 +140,6 @@ We support transferring the data in a :obj:`TensorFrame` across devices.
     tensor_frame.cpu()
 
     tensor_frame.cuda()
-
-Common Benchmark Datasets
--------------------------
-:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
-, datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
-
-Initializing datasets is straightforward in :pyg:`PyTorch Frame`. An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the bank-marketing dataset, type:
-
-.. code-block:: python
-
-    from torch_frame.datasets import Yandex
-
-    dataset = Yandex(root='/tmp/adult', name='adult')
-
-    len(dataset)
-    >>> 48842
-
-    dataset.feat_cols
-    >>> ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7', 'N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5']
-
-We can use slices, long or bool tensors to split the dataset, *e.g.*, to create a 90/10 train/test split, type:
-
-.. code-block:: python
-
-    train_dataset = dataset[:0.9]
-    >>> Yandex()
-
-    len(train_dataset)
-    >>> 43958
-
-    test_dataset = dataset[0.9:]
-    >>> Yandex()
-
-    len(test_dataset)
-    >>> 4884
-
-If you are unsure whether the dataset is already shuffled before you split, you can randomly permutate it by running:
-
-.. code-block:: python
-
-    dataset.shuffle(return_perm=True)
-    >>> (Yandex(), tensor([40091, 36301, 47858,  ...,  2003, 11049, 25131]))
-
-This is equivalent of doing:
-
-.. code-block:: python
-
-    perm = torch.randperm(len(dataset))
-    dataset = dataset[perm]
-
 
 Converting a :class:`torch_frame.dataset.Dataset` into a :obj:`TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
 We show a simple example.

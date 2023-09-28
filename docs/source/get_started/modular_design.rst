@@ -10,17 +10,17 @@ The overall design of deep tabular models in :pyg:`PyTorch Frame` follows the ar
 
 The above image explains the high-level architecture of deep tabular models in :pyg:`PyTorchFrame`:
 
-- The input dataframe is first converted to :class:`TensorFrame`, where data of each semantic type is stored separately.
+- First, the input dataframe is first converted to :class:`TensorFrame`, where data of each semantic type is stored separately.
 - Then, the :obj:`TensorFrame` representing the dataset is fed into the Feature Encoder which converts it into three dimmensional :obj:`Tensor`'s.
-- The :obj:`Tensor`'s are then concatenated into a single :obj:`Tensor` of shape [`batch_size`, `num_cols`, `num_channels`] and then fed into layers of :class:`TableConv`.
-- The output :obj:`Tensor` from the convolution is then inputed into the decoder to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
+- The :obj:`Tensor`'s are then concatenated into a single :obj:`Tensor` of shape [`batch_size`, `num_cols`, `num_channels`] and fed into layers of :class:`TableConv`.
+- Finally, the output :obj:`Tensor` from the convolution is inputed into the decoder to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
 Encoder
 -------
 
 :obj:`FeatureEncoder` transforms input :obj:`TensorFrame` into :obj:`Tensor`. This class can contain learnable parameters and missing value handling.
 
-:obj:`StypeWiseFeatureEncoder` inherits from :obj:`FeatureEncoder`. It will take :obj:`TensorFrame` as input and apply stype-specific feature encoder (specified via `stype_encoder_dict`) to PyTorch :obj:`Tensor` of each stype to get embeddings for each stype.
+:obj:`StypeWiseFeatureEncoder` inherits from :obj:`FeatureEncoder`. It takes :obj:`TensorFrame` as input and apply stype-specific feature encoder (specified via `stype_encoder_dict`) to PyTorch :obj:`Tensor` of each stype to get embeddings for each stype.
 
 The embeddings of different stypes are then concatenated along the column axis.
 In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x` of shape [batch_size, num_cols, channels].
@@ -29,14 +29,16 @@ In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x` of shape 
 
 - :obj:`EmbeddingEncoder` is a :obj:`torch.nn.Embedding`-based encoder for categorical features
 - :obj:`LinearBucketEncoder` is a bucket-based encoder for numerical features introduced in https://arxiv.org/abs/2203.05556
+- :obj:`LinearPeriodicEncoder` utilizes sinusoidal functions to transform the input :obj:`Tensor` into a 3-dimensional tensor.
+The encoding is defined using trainable parameters and includes the application of `sine`` and `cosine`` functions. The original encoding is described in https://arxiv.org/abs/2203.05556
 
 For a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
 
 `NaN` handling is accomplished in the :class:`StypeEncoder`.
-By default, :class:`StypeEncoder` converts `NaN` values in categorical features to a new category and keeps the `NaN` values in numerical features.
-With :class:`NAStrategy` specified, you can encode `NaN` values to the most frequent category.
+By default, :class:`StypeEncoder` converts `NaN` values in each categorical feature to a new category and keeps the `NaN` values in numerical features.
+With :class:`NAStrategy` specified, you can encode `NaN` values with specific `NaStrategy`.
 
-You can also specify a post module to an :obj:`StypeEncoder`.
+A post module may also be supplied to an :obj:`StypeEncoder`.
 
 A simple example is as follows:
 
@@ -46,11 +48,13 @@ A simple example is as follows:
     from torch_frame import NAStrategy
     from torch_frame.nn import EmbeddingEncoder
 
-    encoder = EmbeddingEncoder(8, stats_list=stats_list,
+    encoder = EmbeddingEncoder(out_channels=8,
+                                stats_list=stats_list,
                                 stype=stype.categorical,
                                 na_strategy=NAStrategy.MOST_FREQUENT,
                                 post_module=ReLU())
 
+:obj:`NaStrategy.MOST_FREQUENT` converts `NaN` values to the most frequent category.
 Similarly, :obj:`NAStrategy.MEAN` :obj:`NAStrategy.ZEROS` is provided for numerical features.
 
 Here is a example to create a Feature Encoder.
@@ -143,7 +147,8 @@ Initializing and calling it is straightforward.
 Decoder
 -------
 
-Decoder transforms the input column-wise :obj:`Tensor` into output :ojb:`Tensor` on which prediction head is applied.
+Decoder transforms the input column-wise :obj:`Tensor` into output :obj:`Tensor` on which prediction head is applied.
+Here is an example implementation of a decoder:
 
 .. code-block:: python
 
