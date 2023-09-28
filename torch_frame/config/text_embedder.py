@@ -13,4 +13,4 @@ class TextEmbedderConfig:
     # it to a reasonable value when one uses a heavy text embedding model
     # (e.g., Transformer) on GPU. If set to :obj:`None`, the text embeddings
     # will be obtained in a full-batch manner.
-    batch_size: Optional[int]
+    batch_size: Optional[int] = None

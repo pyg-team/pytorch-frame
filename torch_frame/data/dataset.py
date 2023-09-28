@@ -1,5 +1,6 @@
 import copy
 import functools
+import os.path as osp
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -24,6 +25,7 @@ from torch_frame.typing import (
     IndexSelectType,
     TaskType,
 )
+from torch_frame.utils import load_tf, save_tf
 
 
 def requires_pre_materialization(func):
@@ -259,11 +261,18 @@ class Dataset(ABC):
 
     # Materialization #########################################################
 
-    def materialize(self, device: Optional[torch.device] = None) -> 'Dataset':
+    def materialize(self, device: Optional[torch.device] = None,
+                    path: Optional[str] = None) -> 'Dataset':
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only."""
         if self.is_materialized:
             return self
+
+        if path is not None:
+            if osp.isfile(path):
+                self._tensor_frame, self._col_stats = load_tf(path, device)
+                self._is_materialized = True
+                return self
 
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
@@ -289,6 +298,9 @@ class Dataset(ABC):
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
+
+        if path is not None:
+            save_tf(path, self._tensor_frame, self._col_stats)
 
         return self
 
