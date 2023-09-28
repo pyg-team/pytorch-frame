@@ -79,12 +79,12 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
-        pred = model(tf)
-        loss = F.cross_entropy(pred, tf.y)
+        pred_mixedup, y_mixedup = model.forward_mixup(tf)
+        loss = F.cross_entropy(pred_mixedup, y_mixedup)
         optimizer.zero_grad()
         loss.backward()
-        loss_accum += float(loss) * len(tf.y)
-        total_count += len(tf.y)
+        loss_accum += float(loss) * len(y_mixedup)
+        total_count += len(y_mixedup)
         optimizer.step()
     lr_scheduler.step()
     return loss_accum / total_count
