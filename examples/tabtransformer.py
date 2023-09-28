@@ -1,6 +1,6 @@
 """
-Reported (reproduced, xgboost) results of of TabTransformer model based on Table 1
-of original paper https://arxiv.org/abs/2012.06678
+Reported (reproduced, xgboost) results of of TabTransformer model based on
+Table 1 of original paper https://arxiv.org/abs/2012.06678
 albert: 75.7 (63.92, 65.74)
 adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
 bank-marketing: 93.4 (78.35, 81.00)
@@ -17,15 +17,18 @@ from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
-from torch_frame.datasets import BankMarketing
+from torch_frame.datasets import AdultCensusIncome, BankMarketing, Dota2
 from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='bank-marketing')
+parser.add_argument('--dataset', type=str, default='bank-marketing',
+                    choices=["adult", "dota2"])
 parser.add_argument('--channels', type=int, default=32)
 parser.add_argument('--num_heads', type=int, default=8)
 parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--encoder_pad_size', type=int, default=2)
+parser.add_argument('--attention_dropout', type=float, default=0.3)
+parser.add_argument('--ffn_dropout', type=float, default=0.3)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
@@ -38,7 +41,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-dataset = BankMarketing(root=path)
+if args.dataset == "adult":
+    dataset = AdultCensusIncome(root=path)
+elif args.dataset == "bank-marketing":
+    dataset = BankMarketing(root=path)
+elif args.dataset == "dota2":
+    dataset = Dota2(root=path)
+else:
+    raise ValueError(f"Unsupported dataset called {args.dataset}")
 dataset.materialize()
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2012.06678
@@ -63,8 +73,8 @@ model = TabTransformer(
     num_layers=args.num_layers,
     num_heads=args.num_heads,
     encoder_pad_size=args.encoder_pad_size,
-    attn_dropout=0.3,
-    ffn_dropout=0.3,
+    attn_dropout=args.attention_dropout,
+    ffn_dropout=args.ffn_dropout,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
 ).to(device)
