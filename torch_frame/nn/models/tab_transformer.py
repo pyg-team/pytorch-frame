@@ -77,7 +77,9 @@ class TabTransformer(Module):
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=channels, num_heads=num_heads, attn_dropout=attn_dropout, ffn_dropout=ffn_dropout)
+            TabTransformerConv(channels=channels, num_heads=num_heads,
+                               attn_dropout=attn_dropout,
+                               ffn_dropout=ffn_dropout)
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
