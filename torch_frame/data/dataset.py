@@ -1,5 +1,6 @@
 import copy
 import functools
+import os.path as osp
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -259,10 +260,32 @@ class Dataset(ABC):
 
     # Materialization #########################################################
 
-    def materialize(self, device: Optional[torch.device] = None) -> 'Dataset':
+    def materialize(self, device: Optional[torch.device] = None,
+                    path: Optional[str] = None) -> 'Dataset':
         r"""Materializes the dataset into a tensor representation. From this
-        point onwards, the dataset should be treated as read-only."""
+        point onwards, the dataset should be treated as read-only.
+
+        Args:
+            device (torch.device, optional): Device to load the
+                :obj:`TensorFrame` object. (default: :obj:`None`)
+            path (str, optional): If path is specified and cache file exists,
+                will try to load saved :obj:`TensorFrame` and :obj:`col_stats`.
+                If path is specified but cache file does not exist, will
+                do materialization at first then save :obj:`TensorFrame` and
+                :obj:`col_stats` to the path. If path is not specified, will
+                materialize and does not cache. (default: :obj:`None`)
+        """
         if self.is_materialized:
+            return self
+
+        if path is not None and osp.isfile(path):
+            # Load tensor_frame and col_stats
+            self._tensor_frame, self._col_stats = torch_frame.load_tf(
+                path, device)
+            # Instantiate the converter
+            self._to_tensor_frame_converter = self._get_tensorframe_converter()
+            # Mark the dataset has been materialized
+            self._is_materialized = True
             return self
 
         # 1. Fill column statistics:
@@ -279,18 +302,25 @@ class Dataset(ABC):
                     self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._to_tensor_frame_converter = DataFrameToTensorFrameConverter(
-            col_to_stype=self.col_to_stype,
-            col_stats=self._col_stats,
-            target_col=self.target_col,
-            text_embedder_cfg=self.text_embedder_cfg,
-        )
+        self._to_tensor_frame_converter = self._get_tensorframe_converter()
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
         # 3. Mark the dataset as materialized:
         self._is_materialized = True
 
+        if path is not None:
+            # Cache the dataset if user specifies the path
+            torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
+
         return self
+
+    def _get_tensorframe_converter(self) -> DataFrameToTensorFrameConverter:
+        return DataFrameToTensorFrameConverter(
+            col_to_stype=self.col_to_stype,
+            col_stats=self._col_stats,
+            target_col=self.target_col,
+            text_embedder_cfg=self.text_embedder_cfg,
+        )
 
     @property
     def is_materialized(self) -> bool:

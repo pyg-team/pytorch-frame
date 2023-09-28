@@ -10,6 +10,7 @@ from .bank_marketing import BankMarketing
 from .tabular_benchmark import TabularBenchmark
 from .yandex import Yandex
 from .dota2 import Dota2
+from .kdd_census_income import KDDCensusIncome
 
 real_world_datasets = [
     'Titanic',
@@ -21,6 +22,7 @@ real_world_datasets = [
     'BankMarketing',
     'TabularBenchmark',
     'Yandex',
+    'KDDCensusIncome',
 ]
 
 synthetic_datasets = [

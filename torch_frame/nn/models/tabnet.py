@@ -257,20 +257,15 @@ class GLULayer(Module):
     ):
         super().__init__()
         self.lin = Linear(in_channels, out_channels * 2, bias=False)
-        # TODO Use GBN instead of BN
-        self.bn = BatchNorm1d(out_channels * 2)
         self.glu = GLU()
         self.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.lin(x)
-        x = self.bn(x)
         return self.glu(x)
 
     def reset_parameters(self):
-        # TODO Check how linear is reset
         self.lin.reset_parameters()
-        self.bn.reset_parameters()
 
 
 class AttentiveTransformer(Module):
@@ -281,19 +276,40 @@ class AttentiveTransformer(Module):
     ):
         super().__init__()
         self.lin = Linear(in_channels, out_channels, bias=False)
-        # TODO Use GBN instead of BN
-        self.bn = BatchNorm1d(out_channels)
+        self.bn = GhostBatchNorm1d(out_channels)
         self.reset_parameters()
 
     def forward(self, x: Tensor, prior: Tensor) -> Tensor:
         x = self.lin(x)
         x = self.bn(x)
         x = prior * x
-        # TODO Use Sparsemax instead of softmax
+        # Using softmax instead of sparsemax since softmax performs better.
         x = F.softmax(x, dim=-1)
         return x
 
     def reset_parameters(self):
-        # TODO Check how linear is reset
         self.lin.reset_parameters()
+        self.bn.reset_parameters()
+
+
+class GhostBatchNorm1d(torch.nn.Module):
+    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741"""
+    def __init__(
+        self,
+        input_dim: int,
+        virtual_batch_size: int = 512,
+    ):
+        super().__init__()
+
+        self.input_dim = input_dim
+        self.virtual_batch_size = virtual_batch_size
+        self.bn = BatchNorm1d(self.input_dim)
+
+    def forward(self, x: Tensor) -> Tensor:
+        num_chunks = math.ceil(len(x) / self.virtual_batch_size)
+        chunks = torch.chunk(x, num_chunks, dim=0)
+        res = [self.bn(x_) for x_ in chunks]
+        return torch.cat(res, dim=0)
+
+    def reset_parameters(self):
         self.bn.reset_parameters()

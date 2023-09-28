@@ -1,7 +1,7 @@
 from .stype import stype, numerical, categorical, text_embedded
 from .data import TensorFrame
 from .typing import TaskType, DataFrame, NAStrategy
-import torch_frame.utils  # noqa
+from torch_frame.utils import save_tf, load_tf  # noqa
 import torch_frame.data  # noqa
 import torch_frame.datasets  # noqa
 import torch_frame.nn  # noqa
@@ -18,5 +18,7 @@ __all__ = [
     'TaskType',
     'NAStrategy',
     'TensorFrame',
+    'save_tf',
+    'load_tf',
     '__version__',
 ]

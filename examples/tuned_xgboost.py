@@ -45,7 +45,8 @@ dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
-xgb = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION)
+xgb = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION,
+              num_classes=dataset.num_classes)
 xgb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
          num_trials=10)
 pred = xgb.predict(tf_test=test_dataset.tensor_frame)
