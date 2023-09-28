@@ -10,10 +10,33 @@ Many recent strong tabular deep models follow modular design (Encoder, Table con
 Encoder
 -------
 
-Feature Encoder transforms input :obj:`TensorFrame` into :obj:`Tensor`. This class can contain learnable parameters and missing value handling. Each feature encoder contains
-an `stype_encoder_dict` that contains key value pairs of :obj:`stype` to :obj:`StypeEncoder`.
+:obj:`FeatureEncoder` transforms input :obj:`TensorFrame` into :obj:`Tensor`. This class can contain learnable parameters and missing value handling.
 
-:obj:`StypeEncoder` encodes :obj:`tensor` of a specific stype into 3-dimensional column-wise tensor that is input into :class:`TableConv`.
+:obj:`StypeWiseFeatureEncoder` inherits from :obj:`FeatureEncoder`. It will take `TensorFrame` as input and apply stype-specific feature encoder (specified via `stype_encoder_dict`) to PyTorch :obj:`Tensor`
+ of each stype to get embeddings for each stype. The embeddings of different stypes are then concatenated along the column axis. In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x`
+ of shape [batch_size, num_cols, channels].
+:obj:`StypeEncoder` encodes :obj:`tensor` of a specific stype into 3-dimensional column-wise tensor that is input into :class:`TableConv`. We have already implemented many encoders:
+
+- :obj:`EmbeddingEncoder` is a :obj:`~torch.nn.Embedding`-based encoder for categorical features
+- :obj:`LinearBucketEncoder` is a bucket-based encoder for numerical features introduced in https://arxiv.org/abs/2203.05556
+
+for a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
+
+.. code-block:: python
+
+    stype_encoder_dict = {
+        stype.categorical:
+        EmbeddingEncoder(),
+        stype.numerical:
+        LinearBucketEncoder(post_module=LayerNorm(channels)),
+    }
+
+    encoder = StypeWiseFeatureEncoder(
+        out_channels=channels,
+        col_stats=col_stats,
+        col_names_dict=col_names_dict,
+        stype_encoder_dict=stype_encoder_dict,
+    )
 
 Implementation of Convolution Layer
 -----------------------------------
@@ -79,3 +102,31 @@ Decoder
 -------
 
 Decoder transforms the input column-wise :obj:`Tensor` into output tensor on which prediction head is applied.
+
+.. code-block:: python
+
+    import torch
+    from torch import Tensor
+    from torch.nn import Linear
+    from torch_frame.nn import Decoder
+
+    class MeanDecoder(Decoder):
+        r"""Simple decoder that mean-pools over the embeddings of all columns and
+        apply a linear transformation to map the pooled embeddings to desired
+        dimensionality.
+
+        Args:
+            in_channels (int): Input channel dimensionality
+            out_channels (int): Output channel dimensionality
+        """
+        def __init__(self, in_channels: int, out_channels: int):
+            super().__init__()
+            # Linear function to map pooled embeddings into desired dimensionality
+            self.lin = torch.nn.Linear(in_channels, out_channels)
+
+        def forward(self, x: Tensor) -> Tensor:
+            # Mean pooling over the column dimension
+            # [batch_size, num_cols, in_channels] -> [batch_size, in_channels]
+            out = torch.mean(x, dim=1)
+            # [batch_size, out_channels]
+            return self.lin(out)
