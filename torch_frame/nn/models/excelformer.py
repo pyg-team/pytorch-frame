@@ -75,7 +75,7 @@ class ExcelFormer(Module):
             column name into stats.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
         diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout (default: `0.0`)
@@ -136,8 +136,8 @@ class ExcelFormer(Module):
             out (Tensor): The output embeddings of size
                 [batch_size, out_channels].
         """
-        if stype.numerical not in tf.x_dict or len(
-                tf.x_dict[stype.numerical]) == 0:
+        if stype.numerical not in tf.feat_dict or len(
+                tf.feat_dict[stype.numerical]) == 0:
             raise ValueError(
                 "Excelformer only takes in numerical features, but the input "
                 "TensorFrame object does not have numerical features.")
@@ -172,21 +172,21 @@ class ExcelFormer(Module):
         """
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(
-            tf.x_dict[stype.numerical],
+            tf.feat_dict[stype.numerical],
             tf.y,
             num_classes=self.out_channels,
             beta=beta,
         )
 
-        # Create a new `x_dict`, where stype.numerical is swapped with
+        # Create a new `feat_dict`, where stype.numerical is swapped with
         # mixed up feature.
-        x_dict: Dict[stype, Tensor] = {}
-        for stype_name, x in tf.x_dict.items():
+        feat_dict: Dict[stype, Tensor] = {}
+        for stype_name, x in tf.feat_dict.items():
             if stype_name == stype.numerical:
-                x_dict[stype_name] = x_mixedup
+                feat_dict[stype_name] = x_mixedup
             else:
-                x_dict[stype_name] = x
-        tf_mixedup = TensorFrame(x_dict, tf.col_names_dict, tf.y)
+                feat_dict[stype_name] = x
+        tf_mixedup = TensorFrame(feat_dict, tf.col_names_dict, tf.y)
 
         # Call Excelformer forward function
         out_mixedup = self(tf_mixedup)

@@ -20,7 +20,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
 
 
 def test_tensor_frame_error():
-    x_dict = {
+    feat_dict = {
         torch_frame.categorical: torch.randint(0, 3, size=(10, 3)),
         torch_frame.numerical: torch.randn(size=(10, 2)),
     }
@@ -31,27 +31,27 @@ def test_tensor_frame_error():
     y = torch.randn(10)
 
     # Wrong number of channels
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, ))
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, ))
     with pytest.raises(ValueError, match='at least 2-dimensional'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict, y=y)
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
 
-    # Mis-alignment of the col_names and the number of columns in x_dict
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 4))
+    # Mis-alignment of the col_names and the number of columns in feat_dict
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 4))
     with pytest.raises(ValueError, match='not align with'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict, y=y)
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
 
-    # Mis-alignment of the lengths within x_dict
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(11, 3))
+    # Mis-alignment of the lengths within feat_dict
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(11, 3))
     with pytest.raises(ValueError, match='not aligned'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
-    x_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict, y=y)
+    feat_dict[torch_frame.categorical] = torch.randint(0, 3, size=(10, 3))
 
-    # Mis-alignment between the lengths of x_dict and y
+    # Mis-alignment between the lengths of feat_dict and y
     y = torch.randn(11)
     with pytest.raises(ValueError, match='not aligned'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict, y=y)
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict, y=y)
 
 
 @pytest.mark.parametrize('index', [
@@ -75,7 +75,7 @@ def test_tensor_frame_index_select(get_fake_tensor_frame, index):
 
 def test_empty_tensor_frame():
     # Categorical feature is empty
-    x_dict = {
+    feat_dict = {
         torch_frame.categorical: torch.randint(0, 3, size=(10, 0)),
         torch_frame.numerical: torch.randn(size=(10, 2)),
     }
@@ -84,10 +84,10 @@ def test_empty_tensor_frame():
         torch_frame.numerical: ['x', 'y'],
     }
     with pytest.raises(RuntimeError, match='Empty columns'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
 
     col_names_dict = {
         torch_frame.numerical: ['x', 'y'],
     }
-    with pytest.raises(RuntimeError, match='The keys of x_dict'):
-        TensorFrame(x_dict=x_dict, col_names_dict=col_names_dict)
+    with pytest.raises(RuntimeError, match='The keys of feat_dict'):
+        TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)

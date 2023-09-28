@@ -55,12 +55,12 @@ class XGBoost(GBDT):
         tf: TensorFrame,
     ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         r"""Convert :obj:`TensorFrame` into XGBoost-compatible input format:
-        :obj:`(x, y, feat_types)`.
+        :obj:`(feat, y, feat_types)`.
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
         Returns:
-            x (numpy.ndarray): Output :obj:`numpy.ndarray` by
+            feat (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
                 the input :obj:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
@@ -73,20 +73,21 @@ class XGBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if stype.categorical in tf.x_dict and stype.numerical in tf.x_dict:
-            x_cat = neg_to_nan(tf.x_dict[stype.categorical])
-            x = torch.cat([tf.x_dict[stype.numerical], x_cat], dim=1)
+        if (stype.categorical in tf.feat_dict
+                and stype.numerical in tf.feat_dict):
+            feat_cat = neg_to_nan(tf.feat_dict[stype.categorical])
+            feat = torch.cat([tf.feat_dict[stype.numerical], feat_cat], dim=1)
             feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
                              ["c"] * len(tf.col_names_dict[stype.categorical]))
-        elif stype.categorical in tf.x_dict:
-            x = neg_to_nan(tf.x_dict[stype.categorical])
+        elif stype.categorical in tf.feat_dict:
+            feat = neg_to_nan(tf.feat_dict[stype.categorical])
             feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
-        elif stype.numerical in tf.x_dict:
-            x = tf.x_dict[stype.numerical]
+        elif stype.numerical in tf.feat_dict:
+            feat = tf.feat_dict[stype.numerical]
             feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
         else:
             raise ValueError("The input TensorFrame object is empty.")
-        return x.numpy(), y.numpy(), feature_types
+        return feat.numpy(), y.numpy(), feature_types
 
     def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
                   dvalid: xgboost.DMatrix, num_boost_round: int) -> float:
@@ -165,12 +166,13 @@ class XGBoost(GBDT):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        train_x, train_y, train_ft = self._to_xgboost_input(tf_train)
-        val_x, val_y, val_ft = self._to_xgboost_input(tf_val)
-        dtrain = xgboost.DMatrix(train_x, label=train_y,
-                                 feature_types=train_ft,
+        train_feat, train_y, train_feat_type = self._to_xgboost_input(tf_train)
+        val_feat, val_y, val_feat_type = self._to_xgboost_input(tf_val)
+        dtrain = xgboost.DMatrix(train_feat, label=train_y,
+                                 feature_types=train_feat_type,
                                  enable_categorical=True)
-        dvalid = xgboost.DMatrix(val_x, label=val_y, feature_types=val_ft,
+        dvalid = xgboost.DMatrix(val_feat, label=val_y,
+                                 feature_types=val_feat_type,
                                  enable_categorical=True)
         study.optimize(
             lambda trial: self.objective(trial, dtrain, dvalid, num_boost_round
@@ -185,8 +187,9 @@ class XGBoost(GBDT):
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
-        test_x, test_y, test_ft = self._to_xgboost_input(tf_test)
-        dtest = xgboost.DMatrix(test_x, label=test_y, feature_types=test_ft,
+        test_feat, test_y, test_feat_type = self._to_xgboost_input(tf_test)
+        dtest = xgboost.DMatrix(test_feat, label=test_y,
+                                feature_types=test_feat_type,
                                 enable_categorical=True)
         pred = self.model.predict(dtest)
         return torch.from_numpy(pred).to(device)

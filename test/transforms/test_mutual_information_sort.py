@@ -26,7 +26,7 @@ def test_mutual_information_sort(with_nan):
 
     # column c ranks the first
     assert (out.col_names_dict[stype.numerical][0] == 'c')
-    actual_first_col = out.x_dict[stype.numerical][:, 0]
+    actual_first_col = out.feat_dict[stype.numerical][:, 0]
     actual_first_col_nan_mask = torch.isnan(actual_first_col)
     expected_first_col = torch.tensor(dataset.df['c'].values,
                                       dtype=torch.float32)
@@ -43,5 +43,5 @@ def test_mutual_information_sort(with_nan):
     # make sure the shapes are unchanged
     assert (set(out.col_names_dict[stype.numerical]) == set(
         tensor_frame.col_names_dict[stype.numerical]))
-    assert (out.x_dict[stype.numerical].size() == tensor_frame.x_dict[
+    assert (out.feat_dict[stype.numerical].size() == tensor_frame.feat_dict[
         stype.numerical].size())

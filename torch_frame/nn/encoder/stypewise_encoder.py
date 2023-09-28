@@ -21,7 +21,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
             column name into stats. Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.x_dict`.
+            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
             Available as :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict (Dict[torch_frame.stype, StypeEncoder]): A
             dictionary that maps stype into :class:`StypeEncoder` class.
@@ -58,8 +58,8 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         col_names = []
         xs = []
         for stype in tf.stypes:
-            x = tf.x_dict[stype]
-            x = self.encoder_dict[stype.value](x)
+            feat = tf.feat_dict[stype]
+            x = self.encoder_dict[stype.value](feat)
             xs.append(x)
             col_names.extend(self.col_names_dict[stype])
         x = torch.cat(xs, dim=1)

@@ -23,8 +23,8 @@ from torch_frame.nn.conv import TabTransformerConv
 
 class TabTransformer(Module):
     r"""The Tab-Transformer model introduced in
-        https://arxiv.org/abs/2012.06678. The model employs a contextual
-        embedding encoder on categorical features and executes multi-layer
+        https://arxiv.org/abs/2012.06678. The model pads a column positional
+        embedding in categorical feature embeddings and executes multi-layer
         column-interaction modeling exclusively on the categorical features.
         If the input :obj:`TensorFrame` lacks categorical features, the model
         simply applies layer normalization on input features and utilizes an
@@ -35,8 +35,8 @@ class TabTransformer(Module):
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.
         num_heads (int): Number of heads in the self-attention layer.
-        encoder_pad_size (int): Size of contextual padding to the encoder.
-        attn_dropout (float): Dropout for 
+        encoder_pad_size (int): Size of positional encoding padding to the
+            categorical embeddings.
         col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
             column statistics
         col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
@@ -77,7 +77,9 @@ class TabTransformer(Module):
         # added contextual padding to the end of each feature.
         self.pad_embedding = Embedding(categorical_col_len, encoder_pad_size)
         self.tab_transformer_convs = ModuleList([
-            TabTransformerConv(channels=channels, num_heads=num_heads, attn_dropout=attn_dropout, ffn_dropout=ffn_dropout)
+            TabTransformerConv(channels=channels, num_heads=num_heads,
+                               attn_dropout=attn_dropout,
+                               ffn_dropout=ffn_dropout)
             for _ in range(num_layers)
         ])
         self.num_norm = LayerNorm(numerical_col_len)
@@ -111,22 +113,23 @@ class TabTransformer(Module):
             out (Tensor): Output. The shape is [batch_size, out_channels].
         """
         xs = []
-        if stype.categorical in tf.x_dict:
-            B, _ = tf.x_dict[stype.categorical].shape
-            x_cat = self.cat_encoder(tf.x_dict[stype.categorical])
-            # A contextual padding [B, num_cols, encoder_pad_size]is added to
-            # the categorical embedding [B, num_cols, channels].
-            x_pad = self.pad_embedding.weight.unsqueeze(0).repeat(B, 1, 1)
+        if stype.categorical in tf.feat_dict:
+            B, _ = tf.feat_dict[stype.categorical].shape
+            x_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
+            # A positional embedding [B, num_cols, encoder_pad_size] is padded
+            # to the categorical embedding [B, num_cols, channels].
+            pos_enc_pad = self.pad_embedding.weight.unsqueeze(0).repeat(
+                B, 1, 1)
             # The final categorical embedding is of size [B, num_cols,
             # channels + encoder_pad_size]
-            x_cat = torch.cat((x_cat, x_pad), dim=-1)
+            x_cat = torch.cat((x_cat, pos_enc_pad), dim=-1)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x_cat = tab_transformer_conv(x_cat)
             x_cat = x_cat.reshape(B, -1)
             xs.append(x_cat)
-        if stype.numerical in tf.x_dict:
-            x_num = self.num_norm(tf.x_dict[stype.numerical])
-            xs.append(x_num)
+        if stype.numerical in tf.feat_dict:
+            feat_num = self.num_norm(tf.feat_dict[stype.numerical])
+            xs.append(feat_num)
         x = torch.cat(xs, dim=1)
         out = self.decoder(x)
         return out
