@@ -99,20 +99,21 @@ class TabTransformerConv(TableConv):
     Args:
         channels (int): Input/output channel dimensionality
         num_heads (int): Number of attention heads
-        attn_dropout (float): attention module dropout (default: 0)
+        attn_dropout (float): attention module dropout (default: 0.)
+        ffn_dropout (float): attention module dropout (default: 0.)
     """
     def __init__(self, channels: int, num_heads: int,
-                 attn_dropout: float = 0.):
+                 attn_dropout: float = 0., ffn_dropout: float=0.):
         super().__init__()
         self.norm_1 = LayerNorm(channels)
         self.attn = SelfAttention(channels, num_heads, attn_dropout)
         self.norm_2 = LayerNorm(channels)
-        self.ffn = FFN(channels)
+        self.ffn = FFN(channels, dropout=ffn_dropout)
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.norm_1(x)
         out = self.attn(x)
-        x += out
+        x = x + out
         x = self.ffn(x)
         return x
 
