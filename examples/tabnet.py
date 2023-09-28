@@ -14,10 +14,11 @@ from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
-from torch_frame.datasets import ForestCoverType
+from torch_frame.datasets import ForestCoverType, KDDCensusIncome
 from torch_frame.nn import TabNet
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, default="ForestCoverType")
 parser.add_argument('--channels', type=int, default=128)
 parser.add_argument('--gamma', type=int, default=1.2)
 parser.add_argument('--num_layers', type=int, default=6)
@@ -32,8 +33,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                "ForestCoverType")
-dataset = ForestCoverType(root=path)
+                args.dataset)
+if args.dataset == "ForestCoverType":
+    dataset = ForestCoverType(root=path)
+elif args.dataset == "KDDCensusIncome":
+    dataset = KDDCensusIncome(root=path)
+else:
+    raise ValueError(f"Unsupported dataset called {args.dataset}")
+
 dataset.materialize()
 dataset = dataset.shuffle()
 # Split ratio is set to 80% / 10% / 10% (no clear mentioning of split in the
