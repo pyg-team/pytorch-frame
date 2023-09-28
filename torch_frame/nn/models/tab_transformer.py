@@ -23,8 +23,8 @@ from torch_frame.nn.conv import TabTransformerConv
 
 class TabTransformer(Module):
     r"""The Tab-Transformer model introduced in
-        https://arxiv.org/abs/2012.06678. The model employs a positional
-        embedding encoder on categorical features and executes multi-layer
+        https://arxiv.org/abs/2012.06678. The model pads a column positional
+        embedding in categorical feature embeddings and executes multi-layer
         column-interaction modeling exclusively on the categorical features.
         If the input :obj:`TensorFrame` lacks categorical features, the model
         simply applies layer normalization on input features and utilizes an
@@ -115,18 +115,18 @@ class TabTransformer(Module):
         xs = []
         if stype.categorical in tf.feat_dict:
             B, _ = tf.feat_dict[stype.categorical].shape
-            feat_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
-            # A positional embedding [B, num_cols, encoder_pad_size] is added
+            x_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
+            # A positional embedding [B, num_cols, encoder_pad_size] is padded
             # to the categorical embedding [B, num_cols, channels].
             pos_enc_pad = self.pad_embedding.weight.unsqueeze(0).repeat(
                 B, 1, 1)
             # The final categorical embedding is of size [B, num_cols,
             # channels + encoder_pad_size]
-            feat_cat = torch.cat((feat_cat, pos_enc_pad), dim=-1)
+            x_cat = torch.cat((x_cat, pos_enc_pad), dim=-1)
             for tab_transformer_conv in self.tab_transformer_convs:
-                feat_cat = tab_transformer_conv(feat_cat)
-            feat_cat = feat_cat.reshape(B, -1)
-            xs.append(feat_cat)
+                x_cat = tab_transformer_conv(x_cat)
+            x_cat = x_cat.reshape(B, -1)
+            xs.append(x_cat)
         if stype.numerical in tf.feat_dict:
             feat_num = self.num_norm(tf.feat_dict[stype.numerical])
             xs.append(feat_num)

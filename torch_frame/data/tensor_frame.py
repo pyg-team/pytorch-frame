@@ -43,25 +43,25 @@ class TensorFrame:
 
         num_rows = self.num_rows
         empty_stypes: List[stype] = []
-        for stype_name, x in self.feat_dict.items():
+        for stype_name, feat in self.feat_dict.items():
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            if x.dim() < 2:
+            if feat.dim() < 2:
                 raise ValueError(
                     f"feat_dict['{stype_name}'] must be at least 2-dimensional"
                 )
-            if num_cols != x.size(1):
+            if num_cols != feat.size(1):
                 raise ValueError(
                     f"The expected number of columns for {stype_name} feature "
                     f"is {num_cols}, which does not align with the column "
                     f"dimensionality of feat_dict[{stype_name}] (got "
-                    f"{x.size(1)})")
-            if x.size(0) != num_rows:
+                    f"{feat.size(1)})")
+            if feat.size(0) != num_rows:
                 raise ValueError(
                     f"The length of elements in feat_dict are not aligned, "
-                    f"got {x.size(0)} but expected {num_rows}.")
+                    f"got {feat.size(0)} but expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(
