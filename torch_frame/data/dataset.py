@@ -283,12 +283,7 @@ class Dataset(ABC):
             self._tensor_frame, self._col_stats = torch_frame.load_tf(
                 path, device)
             # Instantiate the converter
-            self._to_tensor_frame_converter = DataFrameToTensorFrameConverter(
-                col_to_stype=self.col_to_stype,
-                col_stats=self._col_stats,
-                target_col=self.target_col,
-                text_embedder_cfg=self.text_embedder_cfg,
-            )
+            self._to_tensor_frame_converter = self._get_tensorframe_converter()
             # Mark the dataset has been materialized
             self._is_materialized = True
             return self
@@ -307,12 +302,7 @@ class Dataset(ABC):
                     self._col_stats[col][StatType.COUNT] = (index, value)
 
         # 2. Create the `TensorFrame`:
-        self._to_tensor_frame_converter = DataFrameToTensorFrameConverter(
-            col_to_stype=self.col_to_stype,
-            col_stats=self._col_stats,
-            target_col=self.target_col,
-            text_embedder_cfg=self.text_embedder_cfg,
-        )
+        self._to_tensor_frame_converter = self._get_tensorframe_converter()
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
         # 3. Mark the dataset as materialized:
@@ -323,6 +313,14 @@ class Dataset(ABC):
             torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
 
         return self
+
+    def _get_tensorframe_converter(self) -> DataFrameToTensorFrameConverter:
+        return DataFrameToTensorFrameConverter(
+            col_to_stype=self.col_to_stype,
+            col_stats=self._col_stats,
+            target_col=self.target_col,
+            text_embedder_cfg=self.text_embedder_cfg,
+        )
 
     @property
     def is_materialized(self) -> bool:
