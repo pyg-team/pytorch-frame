@@ -24,6 +24,8 @@ def test_tab_transformer(stypes):
         num_layers=num_layers,
         num_heads=num_heads,
         encoder_pad_size=encoder_pad_size,
+        attn_dropout=0.,
+        ffn_dropout=0.,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )
