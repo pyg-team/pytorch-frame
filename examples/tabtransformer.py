@@ -1,10 +1,10 @@
 """
-Reported (reproduced) results of of TabTransformer model based on Table 1
+Reported (reproduced, xgboost) results of of TabTransformer model based on Table 1
 of original paper https://arxiv.org/abs/2012.06678
-albert: 75.7 (63.92)
+albert: 75.7 (63.92, 65.74)
 adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
-bank-marketing: 93.4 (76.84)
-dota2: 63.3 (58.28)
+bank-marketing: 93.4 (78.35, 81.00)
+dota2: 63.3 (58.28, 53.75)
 """
 
 import argparse
@@ -17,14 +17,14 @@ from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
-from torch_frame.datasets import Dota2
+from torch_frame.datasets import BankMarketing
 from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='albert')
-parser.add_argument('--channels', type=int, default=64)
-parser.add_argument('--num_heads', type=int, default=32)
-parser.add_argument('--num_layers', type=int, default=2)
+parser.add_argument('--dataset', type=str, default='bank-marketing')
+parser.add_argument('--channels', type=int, default=32)
+parser.add_argument('--num_heads', type=int, default=8)
+parser.add_argument('--num_layers', type=int, default=6)
 parser.add_argument('--encoder_pad_size', type=int, default=2)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.0001)
@@ -38,7 +38,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-dataset = Dota2(root=path)
+dataset = BankMarketing(root=path)
 dataset.materialize()
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2012.06678
