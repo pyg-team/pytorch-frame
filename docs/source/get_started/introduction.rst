@@ -221,3 +221,134 @@ Learning Methods on Tabular Data
 After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`, it’s time to implement our first model!
 
 .. code-block:: python
+
+    from torch_frame.datasets import Yandex
+
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset.materialize()
+
+Now let’s implement a simplified version of TabTransformer:
+
+.. code-block:: python
+
+    from typing import Any, Dict, List
+    import torch
+    from torch import Tensor
+    from torch.nn import (
+            LayerNorm,
+            Linear,
+            Module,
+            ModuleList,
+            ReLU,
+            Sequential,
+    )
+
+    import torch_frame
+    from torch_frame import stype, TensorFrame
+    from torch_frame.data.stats import StatType
+    from torch_frame.nn import EmbeddingEncoder
+    from torch_frame.nn.conv import TabTransformerConv
+
+    class TabTransformer(Module):
+        def __init__(
+            self,
+            channels: int,
+            out_channels: int,
+            num_layers: int,
+            num_heads: int,
+            col_stats: Dict[str, Dict[StatType, Any]],
+            col_names_dict: Dict[torch_frame.stype, List[str]],
+        ):
+            super().__init__()
+            categorical_col_len = len(col_names_dict[stype.categorical])
+            numerical_column_size = len(col_names_dict[stype.numerical])
+            categorical_stats_list = [
+                col_stats[col_name]
+                for col_name in col_names_dict[stype.categorical]
+            ]
+            self.cat_encoder = EmbeddingEncoder(out_channels=channels,
+                                                stats_list=categorical_stats_list,
+                                                stype=stype.categorical)
+            self.num_norm = LayerNorm(numerical_column_size)
+            self.tab_transformer_convs = ModuleList([
+                TabTransformerConv(
+                    channels=channels,
+                    num_heads=num_heads,
+                ) for _ in range(num_layers)
+            ])
+            self.decoder = Sequential(
+                Linear(categorical_col_len * channels + numerical_column_size,
+                    out_channels * 2), ReLU(),
+                Linear(out_channels * 2, out_channels))
+
+        def forward(self, tf: TensorFrame) -> Tensor:
+
+            B, _ = tf.feat_dict[stype.categorical].shape
+            feat_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
+
+            for tab_transformer_conv in self.tab_transformer_convs:
+                feat_cat = tab_transformer_conv(feat_cat)
+
+            feat_cat = feat_cat.reshape(B, -1)
+
+            feat_num = self.num_norm(tf.feat_dict[stype.numerical])
+
+            x = torch.cat((feat_cat, feat_num), dim=1)
+
+            out = self.decoder(x)
+            return out
+
+In the constructor, you can specify the encoder, convolution and decoder.
+They are called in the forward pass of the network.
+
+Let's create train-test split and create data loaders.
+
+.. code-block:: python
+
+    from torch_frame.data import DataLoader
+
+    train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
+    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
+                            shuffle=True)
+    test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128,
+                            shuffle=True)
+
+Let’s train this model on the training nodes for 50 epochs:
+
+.. code-block:: python
+
+    import torch.nn.functional as F
+    from tqdm import tqdm
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = TabTransformer(
+        channels=32,
+        out_channels=dataset.num_classes,
+        num_layers=2,
+        num_heads=8,
+        col_stats=train_dataset.col_stats,
+        col_names_dict=train_dataset.tensor_frame.col_names_dict,
+    ).to(device)
+    optimizer = torch.optim.Adam(model.parameters())
+
+    for epoch in range(50):
+        for tf in tqdm(train_loader):
+            pred = model.forward(tf)
+            loss = F.cross_entropy(pred, tf.y)
+            optimizer.zero_grad()
+            loss.backward()
+
+Finally, we can evaluate our model on the test data:
+
+.. code-block:: python
+
+    model.eval()
+    pred = model(test_dataset.tensor_frame).argmax(dim=1)
+    pred_class = pred.argmax(dim=-1)
+    correct = float((tf.y == pred_class).sum())
+    acc = int(correct) / len(tf.y)
+    print(f'Accuracy: {acc:.4f}')
+    >>> Accuracy: 0.8235
+
+This is all it takes to implement your first deep tabular network.
+Happy hacking!
