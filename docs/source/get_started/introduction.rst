@@ -119,7 +119,7 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
         )
 
 .. note::
-    When a :class:`torch_frame.TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`-1].
+    When a :class:`~torch_frame.TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`-1].
     The categories are sorted by their frequencies in descending order.
     Any invalid entries within the categorical columns are assigned to a value of -1.
 
@@ -127,9 +127,9 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
 
 .. note::
     The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
-    :class:`torch_frame.TensorFrame` is validated at initialization time.
+    :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
-A :class:`torch_frame.TensorFrame` contains many properties:
+A :class:`~torch_frame.TensorFrame` contains many properties:
 
 .. code-block:: python
 
@@ -227,7 +227,7 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
 
-Now let’s implement a simplified version of :class:`~torch_frame.nn.models.TabTransformer`:
+Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer:
 
 .. code-block:: python
 
@@ -284,11 +284,9 @@ Now let’s implement a simplified version of :class:`~torch_frame.nn.models.Tab
             return out
 
 
-In the constructor, you can specify the encoder, convolution and decoder.
-In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features.
-The categorical embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
-:obj:`LayerNorm` is applied to numerical features.
-Then the outputs are concatenated and fed into an MLP decoder.
+In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and :class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
+The embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
+Then the outputs are concatenated and fed into a :obj:`torch.nn.Linear` decoder.
 
 Let's create train-test split and create data loaders.
 
