@@ -11,7 +11,7 @@ Transforms
 
 :pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 
-Let's look an example, where we apply `CatBoostEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>` to transform the categorical features into numerical features.
+Let's look an example, where we apply `CatBoostEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>`_ to transform the categorical features into numerical features.
 
 .. code-block:: python
 

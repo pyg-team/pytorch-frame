@@ -78,7 +78,7 @@ Currently :pyg:`PyTorch Frame` supports the following :obj:`stype`'s:
 A table in :pyg:`PyTorch Frame` is described by an instance of :class:`TensorFrame`, which holds the following attributes by default:
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :obj:`stype`.
-- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s.
+- :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s.
 The size of :obj:`Tensor` is at least two dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
 - :obj:`y`(optional): A tensor containing the target values for prediction.
 
@@ -91,7 +91,7 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
 
     num_rows = 10
 
-    x_dict = {
+    feat_dict = {
         torch_frame.categorical: torch.randint(0, 3, size=(num_rows, 3)),
         torch_frame.numerical: torch.randn(size=(num_rows, 2)),
     }
@@ -104,7 +104,7 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
     y = torch.randn(num_rows)
 
     tensor_frame = TensorFrame(
-            x_dict=x_dict,
+            feat_dict=feat_dict,
             col_names_dict=col_names_dict,
             y=y,
         )
@@ -119,15 +119,15 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
         )
 
 .. note::
-    When a :obj:`TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`).
+    When a :obj:`TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`-1].
     The categories are sorted by their frequencies in descending order, mapping each category to their rank in sorted order.
-    Any invalid entries within the categorical columns are assigned to a value of `-1`.
+    Any invalid entries within the categorical columns are assigned to a value of -1.
 
 
 
 .. note::
-    The set of keys in `x_dict` must exactly match with the set of keys in `col_names_dict`.
-    We validate the :obj:`TensorFrame` at initialization time.
+    The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
+    :obj:`TensorFrame` is validated at initialization time.
 
 A :obj:`TensorFrame` contains many properties:
 
@@ -299,7 +299,10 @@ Now let’s implement a simplified version of TabTransformer:
             return out
 
 In the constructor, you can specify the encoder, convolution and decoder.
-They are called in the forward pass of the network.
+In the example above, :class:`EmbeddingEncoder` is used to encode the categorical features.
+The categorical embeddings are then passed into layers of :class:`TabTransformerConv`.
+:class:`LayerNorm` is applied to numerical features.
+Then the outputs are concatenated and fed into an MLP decoder.
 
 Let's create train-test split and create data loaders.
 
@@ -338,7 +341,7 @@ Let’s train this model on the training nodes for 50 epochs:
             optimizer.zero_grad()
             loss.backward()
 
-Finally, we can evaluate our model on the test data:
+Finally, we can evaluate our model on the test split:
 
 .. code-block:: python
 
