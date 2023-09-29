@@ -68,19 +68,19 @@ This is equivalent of doing:
 
 Data Handling of Tables
 -----------------------
-A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :obj:`stype`.
-Currently :pyg:`PyTorch Frame` supports the following :obj:`stype`'s:
+A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
+Currently :pyg:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
 
-- :obj:`stype.categorical` denotes categorical values.
-- :obj:`stype.numerical` denotes numerical values.
-- :obj:`stype.text` denotes text.
+- :class:`~torch_frame.stype.categorical` denotes categorical values.
+- :obj:`~torch_frame.stype.numerical` denotes numerical values.
+- :obj:`~torch_frame.stype.text` denotes text.
 
-A table in :pyg:`PyTorch Frame` is described by an instance of :class:`TensorFrame`, which holds the following attributes by default:
+A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
 
-- :obj:`col_names_dict`: A dictionary holding the column names for each :obj:`stype`.
-- :obj:`x_dict`: A dictionary holding the :obj:`Tensor` of different :obj:`stype`'s.
-The size of :obj:`Tensor` is at least two dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
-- :obj:`y`(optional): A tensor containing the target values for prediction.
+- :obj:`col_names_dict`: A dictionary holding the column names for each :class:`~torch_frame.stype`.
+- :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :class:`~torch_frame.stype`'s.
+The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
+- :obj:`y` (optional): A tensor containing the target values for prediction.
 
 We show a simple example of a table with 3 categorical columns and 2 numerical columns.
 
@@ -91,7 +91,7 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
 
     num_rows = 10
 
-    x_dict = {
+    feat_dict = {
         torch_frame.categorical: torch.randint(0, 3, size=(num_rows, 3)),
         torch_frame.numerical: torch.randn(size=(num_rows, 2)),
     }
@@ -104,7 +104,7 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
     y = torch.randn(num_rows)
 
     tensor_frame = TensorFrame(
-            x_dict=x_dict,
+            feat_dict=feat_dict,
             col_names_dict=col_names_dict,
             y=y,
         )
@@ -119,17 +119,17 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
         )
 
 .. note::
-    When a :obj:`TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`).
-    The categories are sorted by their frequencies in descending order, mapping each category to their rank in sorted order.
-    Any invalid entries within the categorical columns are assigned to a value of `-1`.
+    When a :class:`torch_frame.TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`-1].
+    The categories are sorted by their frequencies in descending order.
+    Any invalid entries within the categorical columns are assigned to a value of -1.
 
 
 
 .. note::
-    The set of keys in `x_dict` must exactly match with the set of keys in `col_names_dict`.
-    We validate the :obj:`TensorFrame` at initialization time.
+    The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
+    :class:`torch_frame.TensorFrame` is validated at initialization time.
 
-A :obj:`TensorFrame` contains many properties:
+A :class:`torch_frame.TensorFrame` contains many properties:
 
 .. code-block:: python
 
@@ -145,7 +145,7 @@ A :obj:`TensorFrame` contains many properties:
     tensor_frame.device
     >>> device(type='cpu')
 
-We support transferring the data in a :obj:`TensorFrame` across devices.
+We support transferring the data in a :class:`~torch_frame.TensorFrame` across devices.
 
 .. code-block:: python
 
@@ -153,7 +153,7 @@ We support transferring the data in a :obj:`TensorFrame` across devices.
 
     tensor_frame.cuda()
 
-Converting a :class:`torch_frame.dataset.Dataset` into a :obj:`TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
+Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
 We show a simple example.
 
 .. code-block:: python
@@ -170,17 +170,17 @@ We show a simple example.
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
 
-For each :obj:`stype`, a different set of statistics is calculated.
+For each :class:`~torch_frame.stype`, a different set of statistics is calculated.
 
 For categorical features,
 
-- :obj:`StatType.COUNT` contains a tuple of two list, where first list contains ordered category names and the second list contains category count, sorted from high to low.
+- :class:`StatType.COUNT` contains a tuple of two list, where first list contains ordered category names and the second list contains category count, sorted from high to low.
 
 For numerical features,
 
-- :obj:`StatType.MEAN` denotes the mean value of the numerical feature,
-- :obj:`StatType.STD` denotes the standard deviation,
-- :obj:`StatType.QUANTILES` contains a list containing minimum value, first quartile(25th percentile), median(50th percentile), thrid quartile(75th percentile) and maximum value of the column.
+- :class:`StatType.MEAN` denotes the mean value of the numerical feature,
+- :class:`StatType.STD` denotes the standard deviation,
+- :class:`StatType.QUANTILES` contains a list containing minimum value, first quartile(25th percentile), median(50th percentile), thrid quartile(75th percentile) and maximum value of the column.
 
 .. code-block:: python
 
@@ -195,7 +195,7 @@ For numerical features,
 
 Mini-batches
 ------------
-Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame` contains its own :obj:`torch_frame.data.DataLoader`, which can load :obj:`torch_frame.data.Dataset` or :obj:`TensorFrame` in mini batches.
+Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
 
 .. code-block:: python
 
@@ -227,29 +227,27 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
 
-Now let’s implement a simplified version of TabTransformer:
+Now let’s implement a simplified version of :class:`~torch_frame.nn.models.TabTransformer`:
 
 .. code-block:: python
 
     from typing import Any, Dict, List
-    import torch
+
     from torch import Tensor
-    from torch.nn import (
-            LayerNorm,
-            Linear,
-            Module,
-            ModuleList,
-            ReLU,
-            Sequential,
-    )
+    from torch.nn import Linear, Module, ModuleList
 
     import torch_frame
-    from torch_frame import stype, TensorFrame
+    from torch_frame import TensorFrame, stype
     from torch_frame.data.stats import StatType
-    from torch_frame.nn import EmbeddingEncoder
     from torch_frame.nn.conv import TabTransformerConv
+    from torch_frame.nn.encoder import (
+        EmbeddingEncoder,
+        LinearEncoder,
+        StypeWiseFeatureEncoder,
+    )
 
-    class TabTransformer(Module):
+
+    class ExampleTransformer(Module):
         def __init__(
             self,
             channels: int,
@@ -260,46 +258,37 @@ Now let’s implement a simplified version of TabTransformer:
             col_names_dict: Dict[torch_frame.stype, List[str]],
         ):
             super().__init__()
-            categorical_col_len = len(col_names_dict[stype.categorical])
-            numerical_column_size = len(col_names_dict[stype.numerical])
-            categorical_stats_list = [
-                col_stats[col_name]
-                for col_name in col_names_dict[stype.categorical]
-            ]
-            self.cat_encoder = EmbeddingEncoder(out_channels=channels,
-                                                stats_list=categorical_stats_list,
-                                                stype=stype.categorical)
-            self.num_norm = LayerNorm(numerical_column_size)
+            self.encoder = StypeWiseFeatureEncoder(
+                out_channels=channels,
+                col_stats=col_stats,
+                col_names_dict=col_names_dict,
+                stype_encoder_dict={
+                    stype.categorical: EmbeddingEncoder(out_channels),
+                    stype.numerical: LinearEncoder()
+                },
+            )
             self.tab_transformer_convs = ModuleList([
                 TabTransformerConv(
                     channels=channels,
                     num_heads=num_heads,
                 ) for _ in range(num_layers)
             ])
-            self.decoder = Sequential(
-                Linear(categorical_col_len * channels + numerical_column_size,
-                    out_channels * 2), ReLU(),
-                Linear(out_channels * 2, out_channels))
+            self.decoder = Linear(channels * (len(col_stats) - 1), out_channels)
 
         def forward(self, tf: TensorFrame) -> Tensor:
-
             B, _ = tf.feat_dict[stype.categorical].shape
-            feat_cat = self.cat_encoder(tf.feat_dict[stype.categorical])
-
+            feat, _ = self.encoder(tf)
             for tab_transformer_conv in self.tab_transformer_convs:
-                feat_cat = tab_transformer_conv(feat_cat)
-
-            feat_cat = feat_cat.reshape(B, -1)
-
-            feat_num = self.num_norm(tf.feat_dict[stype.numerical])
-
-            x = torch.cat((feat_cat, feat_num), dim=1)
-
-            out = self.decoder(x)
+                feat = tab_transformer_conv(feat)
+            out = self.decoder(feat.reshape(B, -1))
             return out
 
+
 In the constructor, you can specify the encoder, convolution and decoder.
-They are called in the forward pass of the network.
+In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features.
+The categorical embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
+:obj:`LayerNorm` is applied to numerical features.
+Then the outputs are concatenated and fed into an MLP decoder.
 
 Let's create train-test split and create data loaders.
 
@@ -313,15 +302,17 @@ Let's create train-test split and create data loaders.
     test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
 
+
 Let’s train this model on the training nodes for 50 epochs:
 
 .. code-block:: python
 
+    import torch
     import torch.nn.functional as F
     from tqdm import tqdm
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = TabTransformer(
+    model = ExampleTransformer(
         channels=32,
         out_channels=dataset.num_classes,
         num_layers=2,
@@ -329,8 +320,9 @@ Let’s train this model on the training nodes for 50 epochs:
         col_stats=train_dataset.col_stats,
         col_names_dict=train_dataset.tensor_frame.col_names_dict,
     ).to(device)
-    optimizer = torch.optim.Adam(model.parameters())
 
+    optimizer = torch.optim.Adam(model.parameters())
+    print("out channels ", dataset.num_classes)
     for epoch in range(50):
         for tf in tqdm(train_loader):
             pred = model.forward(tf)
@@ -338,7 +330,7 @@ Let’s train this model on the training nodes for 50 epochs:
             optimizer.zero_grad()
             loss.backward()
 
-Finally, we can evaluate our model on the test data:
+Finally, we can evaluate our model on the test split:
 
 .. code-block:: python
 
@@ -348,7 +340,8 @@ Finally, we can evaluate our model on the test data:
     correct = float((tf.y == pred_class).sum())
     acc = int(correct) / len(tf.y)
     print(f'Accuracy: {acc:.4f}')
-    >>> Accuracy: 0.8235
+    >>> Accuracy: 0.7941
+
 
 This is all it takes to implement your first deep tabular network.
 Happy hacking!
