@@ -65,43 +65,6 @@ A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_fr
 The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
-We show a simple example of a table with 3 categorical columns and 2 numerical columns.
-
-.. code-block:: python
-
-    from torch_frame import stype
-    from torch_frame import TensorFrame
-
-    num_rows = 10
-
-    feat_dict = {
-        torch_frame.categorical: torch.randint(0, 3, size=(num_rows, 3)),
-        torch_frame.numerical: torch.randn(size=(num_rows, 2)),
-    }
-
-    col_names_dict = {
-        torch_frame.categorical: ['a', 'b', 'c'],
-        torch_frame.numerical: ['x', 'y'],
-    }
-
-    y = torch.randn(num_rows)
-
-    tensor_frame = TensorFrame(
-            feat_dict=feat_dict,
-            col_names_dict=col_names_dict,
-            y=y,
-        )
-
-    >>> TensorFrame(
-            num_cols=5,
-            num_rows=10,
-            categorical (3): ['a', 'b', 'c'],
-            numerical (2): ['x', 'y'],
-            has_target=True,
-            device=cpu,
-        )
-
-
 .. note::
     The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
@@ -111,9 +74,32 @@ We show a simple example.
 
 .. code-block:: python
 
+    from torch_frame import stype
+
     dataset.materialize() # materialize the dataset
 
     tensor_frame = dataset.tensor_frame
+
+    tensor_frame.feat_dict.keys()
+    >>> dict_keys([<stype.categorical: 'categorical'>, <stype.numerical: 'numerical'>])
+
+    tensor_frame.feat_dict[stype.numerical]
+    >>> tensor([[22.0000,  1.0000,  0.0000,  7.2500],
+                [38.0000,  1.0000,  0.0000, 71.2833],
+                [26.0000,  0.0000,  0.0000,  7.9250],
+                ...,
+                [    nan,  1.0000,  2.0000, 23.4500],
+                [26.0000,  0.0000,  0.0000, 30.0000],
+                [32.0000,  0.0000,  0.0000,  7.7500]])
+
+    tensor_frame.feat_dict[stype.categorical]
+    >>> tensor([[0, 0, 0],
+                [1, 1, 1],
+                [0, 1, 0],
+                ...,
+                [0, 1, 0],
+                [1, 0, 1],
+                [0, 0, 2]])
 
     tensor_frame.col_names_dict
     >>> {<stype.categorical: 'categorical'>: ['Pclass', 'Sex', 'Embarked'], <stype.numerical: 'numerical'>: ['Age', 'SibSp', 'Parch', 'Fare']}
