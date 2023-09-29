@@ -16,7 +16,7 @@ The above image explains the high-level architecture of deep tabular models in :
 - Finally, the output :obj:`Tensor` from the convolution is inputed into the decoder to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
 :class:`torch_frame.nn.FeatureEncoder`
--------
+--------------------------------------
 
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into :obj:`Tensor`. This class can contain learnable parameters and missing value handling.
 
@@ -49,11 +49,11 @@ A simple example is as follows:
 
 As you can see from the above example, `NaN` handling is accomplished in the :class:`StypeEncoder`.
 By default, :class:`~torch_frame.nn.encoder.StypeEncoder` converts `NaN` values in each categorical feature to a new category and keeps the `NaN` values in numerical features.
-With :class:`torch_frame.NAStrategy` specified, you can encode `NaN` values with specific :obj:`torch_frame.NaStrategy`.
+With :class:`torch_frame.NAStrategy` specified, you can encode `NaN` values with specific :class:`torch_frame.NaStrategy`.
 
 A post module may also be supplied to an :class:`~torch_frame.nn.encoder.StypeEncoder`.
 
-Aside from declaring a single :class:`~troch_frame.nn.encoder.StypeEncoder` for a :obj:`Tensor`, we can also declare a :class:`~torch_frame.nn.encoder.FeatureEncoder` for a :class:`~torch_frame.TensorFrame`.
+Aside from declaring a single :class:`~troch_frame.nn.encoder.StypeEncoder` for a :class:`Tensor`, we can also declare a :class:`~torch_frame.nn.encoder.FeatureEncoder` for a :class:`~torch_frame.TensorFrame`.
 
 .. code-block:: python
 
@@ -142,7 +142,7 @@ Initializing and calling it is straightforward.
 Decoder
 -------
 
-Decoder transforms the input column-wise :obj:`Tensor` into output :obj:`Tensor` on which prediction head is applied.
+Decoder transforms the input column-wise :class:`Tensor` into output :class:`Tensor` on which prediction head is applied.
 Here is an example implementation of a decoder:
 
 .. code-block:: python
