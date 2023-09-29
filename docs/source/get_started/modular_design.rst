@@ -29,8 +29,7 @@ In all, it transforms :obj:`TensorFrame` into 3-dimensional tensor `x` of shape 
 
 - :obj:`EmbeddingEncoder` is a :obj:`torch.nn.Embedding`-based encoder for categorical features
 - :obj:`LinearBucketEncoder` is a bucket-based encoder for numerical features introduced in https://arxiv.org/abs/2203.05556
-- :obj:`LinearPeriodicEncoder` utilizes sinusoidal functions to transform the input :obj:`Tensor` into a 3-dimensional tensor.
-The encoding is defined using trainable parameters and includes the application of `sine`` and `cosine`` functions. The original encoding is described in https://arxiv.org/abs/2203.05556
+- :obj:`LinearPeriodicEncoder` utilizes sinusoidal functions to transform the input :obj:`Tensor` into a 3-dimensional tensor. The encoding is defined using trainable parameters and includes the application of `sine`` and `cosine`` functions. The original encoding is described in https://arxiv.org/abs/2203.05556
 
 For a full list of :obj:`StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
 

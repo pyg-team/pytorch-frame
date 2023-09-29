@@ -2,8 +2,11 @@ Introduction by Example
 =======================
 
 :pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
-:pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data.
-We shortly introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
+Many recent tabular models follow the modular design of encoders, convolution and decoders.
+:pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
+Please refer to the :doc:`/get_started/modular_design` page for more information.
+
+In this doc, we shortly introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
 
 At its core, :pyg:`PyTorch Frame` provides the following main features:
 
@@ -120,7 +123,9 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
     The categories are sorted by their frequencies in descending order, mapping each category to their rank in sorted order.
     Any invalid entries within the categorical columns are assigned to a value of `-1`.
 
- .. note::
+
+
+.. note::
     The set of keys in `x_dict` must exactly match with the set of keys in `col_names_dict`.
     We validate the :obj:`TensorFrame` at initialization time.
 
@@ -189,7 +194,7 @@ For numerical features,
     >>> {<StatType.MEAN: 'MEAN'>: 38.64358543876172, <StatType.STD: 'STD'>: 13.71036957798689, <StatType.QUANTILES: 'QUANTILES'>: [17.0, 28.0, 37.0, 48.0, 90.0]}
 
 Mini-batches
------------------------
+------------
 Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame` contains its own :obj:`torch_frame.data.DataLoader`, which can load :obj:`torch_frame.data.Dataset` or :obj:`TensorFrame` in mini batches.
 
 .. code-block:: python
@@ -210,32 +215,9 @@ Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame
                 device=cpu,
             )
 
-Data Transforms
------------------------
-:pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
+Learning Methods on Tabular Data
+--------------------------------
 
-Let's look an example, where we apply `CatBoostEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>` to transform the categorical features into numerical features.
+After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`, it’s time to implement our first model!
 
 .. code-block:: python
-
-    from torch_frame.datasets import Yandex
-    from torch_frame.transforms import CategoricalCatBoostEncoder
-
-    dataset = Yandex(root='/tmp/adult', name='adult')
-    dataset.materialize()
-    tensor_frame = dataset.tensor_frame
-    transform = CategoricalCatBoostEncoder()
-    transform.fit(tensor_frame, dataset.col_stats)
-
-    transformed_col_stats = transform.transformed_stats
-    transformed_col_stats['C_feature_0']
-    >>> {<StatType.MEAN: 'MEAN'>: 0.23928034419669833, <StatType.STD: 'STD'>: 0.07742150848292455, <StatType.QUANTILES: 'QUANTILES'>: [0.021752887790314594, 0.21786767575325724, 0.21786767575325724, 0.21786767575325724, 0.5532071236826023]}
-
-    transform(tensor_frame)
-    >>> TensorFrame(
-            num_cols=14,
-            num_rows=48842,
-            numerical (14): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5', 'C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7'],
-            has_target=True,
-            device=cpu,
-        )
