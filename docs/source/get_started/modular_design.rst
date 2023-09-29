@@ -15,7 +15,7 @@ The above image explains the high-level architecture of deep tabular models in :
 - The :obj:`Tensor`'s are then concatenated into a single :obj:`Tensor` of shape [`batch_size`, `num_cols`, `num_channels`] and fed into layers of :class:`TableConv`.
 - Finally, the output :obj:`Tensor` from the convolution is inputed into the decoder to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
-Encoder
+:class:`torch_frame.nn.FeatureEncoder`
 -------
 
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into :obj:`Tensor`. This class can contain learnable parameters and missing value handling.
@@ -33,12 +33,6 @@ In all, it transforms :class:`~torch_frame.TensorFrame` into 3-dimensional tenso
 
 For a full list of :class:`~torch_frame.nn.encoder.StypeEncoder`'s, you can take a look at :obj:`/torch_frame/encoder/stype_encoder.py`.
 
-`NaN` handling is accomplished in the :class:`StypeEncoder`.
-By default, :class:`~torch_frame.nn.encoder.StypeEncoder` converts `NaN` values in each categorical feature to a new category and keeps the `NaN` values in numerical features.
-With :class:`torch_frame.NAStrategy` specified, you can encode `NaN` values with specific :obj:`torch_frame.NaStrategy`.
-
-A post module may also be supplied to an :class:`~torch_frame.nn.encoder.StypeEncoder`.
-
 A simple example is as follows:
 
 .. code-block:: python
@@ -53,11 +47,13 @@ A simple example is as follows:
                                 na_strategy=NAStrategy.MOST_FREQUENT,
                                 post_module=ReLU())
 
-:class:`torch_frame.NaStrategy.MOST_FREQUENT` converts `NaN` values to the most frequent category.
-Similarly, :class:`torch_frame.NAStrategy.MEAN` :class:`torch_frame.NAStrategy.ZEROS` is provided for numerical features.
+As you can see from the above example, `NaN` handling is accomplished in the :class:`StypeEncoder`.
+By default, :class:`~torch_frame.nn.encoder.StypeEncoder` converts `NaN` values in each categorical feature to a new category and keeps the `NaN` values in numerical features.
+With :class:`torch_frame.NAStrategy` specified, you can encode `NaN` values with specific :obj:`torch_frame.NaStrategy`.
 
-Here is a example to create a Feature Encoder.
-For each :class:`~torch_frame.stype` in your :class:`~torch_frame.TensorFrame`, you'd need to specify a specific :class:`~torch_frame.nn.encoder.StypeEncoder`.
+A post module may also be supplied to an :class:`~torch_frame.nn.encoder.StypeEncoder`.
+
+Aside from declaring a single :class:`~troch_frame.nn.encoder.StypeEncoder` for a :obj:`Tensor`, we can also declare a :class:`~torch_frame.nn.encoder.FeatureEncoder` for a :class:`~torch_frame.TensorFrame`.
 
 .. code-block:: python
 

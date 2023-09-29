@@ -2,6 +2,8 @@ Introduction by Example
 =======================
 
 :pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
+Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), texts (e.g., descriptions), images (e.g., pictures) etc.
+The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
 Many recent tabular models follow the modular design of encoders, convolution and decoders.
 :pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
@@ -23,48 +25,29 @@ An initialization of a dataset will automatically download its raw files and pro
 
 .. code-block:: python
 
-    from torch_frame.datasets import Yandex
+    from torch_frame.datasets import Titanic
 
-    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset = Titanic(root='/tmp/titanic')
 
     len(dataset)
-    >>> 48842
+    >>> 891
 
     dataset.feat_cols
-    >>> ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7', 'N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5']
+    >>> ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
 
-We can use slices, long or bool tensors to split the dataset, *e.g.*, to create a 90/10 train/test split, type:
+    dataset.materialize()
+    >>> Titanic()
 
-.. code-block:: python
+    dataset.df.head(5)
+    >>>
+                    Survived  Pclass                                            Name    Sex   Age   SibSp  Parch            Ticket     Fare Cabin Embarked
+    PassengerId
+    1                   0       3                            Braund, Mr. Owen Harris    male  22.0      1      0         A/5 21171   7.2500   NaN        S
+    2                   1       1  Cumings, Mrs. John Bradley (Florence Briggs Th...  female  38.0      1      0          PC 17599  71.2833   C85        C
+    3                   1       3                             Heikkinen, Miss. Laina  female  26.0      0      0  STON/O2. 3101282   7.9250   NaN        S
+    4                   1       1       Futrelle, Mrs. Jacques Heath (Lily May Peel)  female  35.0      1      0            113803  53.1000  C123        S
+    5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
-    train_dataset = dataset[:0.9]
-    >>> Yandex()
-
-    len(train_dataset)
-    >>> 43958
-
-    test_dataset = dataset[0.9:]
-    >>> Yandex()
-
-    len(test_dataset)
-    >>> 4884
-
-If you are unsure whether the dataset is already shuffled before you split, you can randomly permutate it by running:
-
-.. code-block:: python
-
-    dataset.shuffle(return_perm=True)
-    >>> (Yandex(), tensor([40091, 36301, 47858,  ...,  2003, 11049, 25131]))
-
-This is equivalent of doing:
-
-.. code-block:: python
-
-    perm = torch.randperm(len(dataset))
-    dataset = dataset[perm]
-
-.. note::
-    Each dataset contains only one table.
 
 Data Handling of Tables
 -----------------------
@@ -118,40 +101,10 @@ We show a simple example of a table with 3 categorical columns and 2 numerical c
             device=cpu,
         )
 
-.. note::
-    When a :class:`~torch_frame.TensorFrame` is initialized, the data in each categorical column is transformed into index-based integers from [0,`num_categories`-1].
-    The categories are sorted by their frequencies in descending order.
-    Any invalid entries within the categorical columns are assigned to a value of -1.
-
-
 
 .. note::
     The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
-
-A :class:`~torch_frame.TensorFrame` contains many properties:
-
-.. code-block:: python
-
-    tensor_frame.stypes
-    >>> [<stype.numerical: 'numerical'>, <stype.categorical: 'categorical'>]
-
-    tensor_frame.num_cols
-    >>> 5
-
-    tensor_frame.num_rows
-    >>> 10
-
-    tensor_frame.device
-    >>> device(type='cpu')
-
-We support transferring the data in a :class:`~torch_frame.TensorFrame` across devices.
-
-.. code-block:: python
-
-    tensor_frame.cpu()
-
-    tensor_frame.cuda()
 
 Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
 We show a simple example.
@@ -163,10 +116,35 @@ We show a simple example.
     tensor_frame = dataset.tensor_frame
 
     tensor_frame.col_names_dict
-    >>> {<stype.categorical: 'categorical'>: ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7'], <stype.numerical: 'numerical'>: ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5']}
+    >>> {<stype.categorical: 'categorical'>: ['Pclass', 'Sex', 'Embarked'], <stype.numerical: 'numerical'>: ['Age', 'SibSp', 'Parch', 'Fare']}
 
     tensor_frame.y
-    >>> tensor([0, 0, 0,  ..., 0, 0, 1])
+    >>> tensor([0, 1, 1,  ..., 0, 1, 0])
+
+A :class:`~torch_frame.TensorFrame` contains many properties:
+
+.. code-block:: python
+
+    tensor_frame.stypes
+    >>> [<stype.numerical: 'numerical'>, <stype.categorical: 'categorical'>]
+
+    tensor_frame.num_cols
+    >>> 7
+
+    tensor_frame.num_rows
+    >>> 891
+
+    tensor_frame.device
+    >>> device(type='cpu')
+
+
+We support transferring the data in a :class:`~torch_frame.TensorFrame` across devices.
+
+.. code-block:: python
+
+    tensor_frame.cpu()
+
+    tensor_frame.cuda()
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
 
@@ -185,17 +163,17 @@ For numerical features,
 .. code-block:: python
 
     dataset.col_to_stype
-    >>> {'C_feature_0': <stype.categorical: 'categorical'>, 'C_feature_1': <stype.categorical: 'categorical'>, 'C_feature_2': <stype.categorical: 'categorical'>, 'C_feature_3': <stype.categorical: 'categorical'>, 'C_feature_4': <stype.categorical: 'categorical'>, 'C_feature_5': <stype.categorical: 'categorical'>, 'C_feature_6': <stype.categorical: 'categorical'>, 'C_feature_7': <stype.categorical: 'categorical'>, 'N_feature_0': <stype.numerical: 'numerical'>, 'N_feature_1': <stype.numerical: 'numerical'>, 'N_feature_2': <stype.numerical: 'numerical'>, 'N_feature_3': <stype.numerical: 'numerical'>, 'N_feature_4': <stype.numerical: 'numerical'>, 'N_feature_5': <stype.numerical: 'numerical'>, 'label': <stype.categorical: 'categorical'>}
+    >>> {'Survived': <stype.categorical: 'categorical'>, 'Pclass': <stype.categorical: 'categorical'>, 'Sex': <stype.categorical: 'categorical'>, 'Age': <stype.numerical: 'numerical'>, 'SibSp': <stype.numerical: 'numerical'>, 'Parch': <stype.numerical: 'numerical'>, 'Fare': <stype.numerical: 'numerical'>, 'Embarked': <stype.categorical: 'categorical'>}
 
-    dataset.col_stats['C_feature_0']
-    >>> {<StatType.COUNT: 'COUNT'>: (['Private', 'Self-emp-not-inc', 'Local-gov', 'nan', 'State-gov', 'Self-emp-inc', 'Federal-gov', 'Without-pay', 'Never-worked'], [33906, 3862, 3136, 2799, 1981, 1695, 1432, 21, 10])}
+    dataset.col_stats['Sex']
+    >>> {<StatType.COUNT: 'COUNT'>: (['male', 'female'], [577, 314])}
 
-    dataset.col_stats['N_feature_0']
-    >>> {<StatType.MEAN: 'MEAN'>: 38.64358543876172, <StatType.STD: 'STD'>: 13.71036957798689, <StatType.QUANTILES: 'QUANTILES'>: [17.0, 28.0, 37.0, 48.0, 90.0]}
+    dataset.col_stats['Age']
+    >>> {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
 
 Mini-batches
 ------------
-Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
+Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
 
 .. code-block:: python
 
@@ -204,16 +182,16 @@ Neural networks are usually trained in a batch-wise fashion. :pyg:`PyTorch Frame
     data_loader = DataLoader(tensor_frame, batch_size=32,
                             shuffle=True)
 
-    for batch in loader:
+    for batch in data_loader:
         batch
         >>> TensorFrame(
-                num_cols=14,
+                num_cols=7,
                 num_rows=32,
-                categorical (8): ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7'],
-                numerical (6): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5'],
+                categorical (3): ['Pclass', 'Sex', 'Embarked'],
+                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
                 has_target=True,
                 device=cpu,
-            )
+                )
 
 Learning Methods on Tabular Data
 --------------------------------
@@ -227,7 +205,8 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
 
-Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer:
+Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
+Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires `col_stats` and `col_names_dict`, we can directly get them as properties of any materialized dataset.
 
 .. code-block:: python
 
@@ -273,14 +252,14 @@ Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torc
                     num_heads=num_heads,
                 ) for _ in range(num_layers)
             ])
-            self.decoder = Linear(channels * (len(col_stats) - 1), out_channels)
+            self.decoder = Linear(channels, out_channels)
 
         def forward(self, tf: TensorFrame) -> Tensor:
             B, _ = tf.feat_dict[stype.categorical].shape
-            feat, _ = self.encoder(tf)
+            x, _ = self.encoder(tf)
             for tab_transformer_conv in self.tab_transformer_convs:
-                feat = tab_transformer_conv(feat)
-            out = self.decoder(feat.reshape(B, -1))
+                x = tab_transformer_conv(x)
+            out = self.decoder(feat.mean(dim=1))
             return out
 
 
@@ -294,6 +273,7 @@ Let's create train-test split and create data loaders.
 
     from torch_frame.data import DataLoader
 
+    dataset.shuffle()
     train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
     train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
@@ -320,7 +300,7 @@ Let’s train this model on the training nodes for 50 epochs:
     ).to(device)
 
     optimizer = torch.optim.Adam(model.parameters())
-    print("out channels ", dataset.num_classes)
+
     for epoch in range(50):
         for tf in tqdm(train_loader):
             pred = model.forward(tf)
