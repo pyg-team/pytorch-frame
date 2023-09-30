@@ -5,6 +5,11 @@ import pandas as pd
 from torch import Tensor
 
 
+class FileType(Enum):
+    PARQUET = 'PARQUET'
+    CSV = 'CSV'
+
+
 class TaskType(Enum):
     REGRESSION = 'regression'
     MULTICLASS_CLASSIFICATION = 'multiclass_classification'
