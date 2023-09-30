@@ -192,7 +192,7 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
 
-Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
+Now let’s implement a model called :obj:`ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
 Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
 
 .. code-block:: python
@@ -250,7 +250,8 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
             return out
 
 
-In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and :class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
+In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and
+:class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
 The embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
 Then the outputs are concatenated and fed into a :obj:`torch.nn.Linear` decoder.
 
