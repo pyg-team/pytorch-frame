@@ -27,6 +27,7 @@ The embeddings of different `stypes` are then concatenated to give the final 3-d
 Below is an example usage of `~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
 It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
 
+
 .. code-block:: python
 
     from torch import LayerNorm
@@ -49,6 +50,9 @@ It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.ca
         col_names_dict=col_names_dict,
         stype_encoder_dict=stype_encoder_dict,
     )
+
+There are many other encoders implemnted such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
+:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for `stype.text_embedded` columns.
 
 
 :class:`TableConv`
