@@ -57,7 +57,7 @@ Currently :pyg:`PyTorch Frame` supports the following :class:`~torch_frame.stype
 
 - :class:`~torch_frame.stype.categorical` denotes categorical values.
 - :obj:`~torch_frame.stype.numerical` denotes numerical values.
-- :obj:`~torch_frame.stype.text` denotes text.
+- :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some sentence encoder.
 
 A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
 
