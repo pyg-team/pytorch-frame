@@ -18,7 +18,7 @@ as shown in the figure below.
 --------------------------------------
 
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into 3-dimensional :obj:`Tensor` `x`.
-This class can contain learnable parameters and missing value handling.
+This class can contain learnable parameters and `NaN` (missing value) handling.
 
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` inherits from :class:`~torch_frame.nn.encoder.FeatureEncoder`.
 It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via `stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
@@ -51,8 +51,9 @@ It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.ca
         stype_encoder_dict=stype_encoder_dict,
     )
 
-There are many other encoders implemnted such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
+There are other encoders implemnted as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
 :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for `stype.text_embedded` columns.
+You can also implement your custom encoder for given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
 
 
 :class:`TableConv`
