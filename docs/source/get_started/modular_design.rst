@@ -21,7 +21,7 @@ as shown in the figure below.
 This class can contain learnable parameters and `NaN` (missing value) handling.
 
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` inherits from :class:`~torch_frame.nn.encoder.FeatureEncoder`.
-It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via `stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
+It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via :obj:`stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
 The embeddings of different `stypes` are then concatenated to give the final 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
 Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
