@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for custom dataset. ([#90](https://github.com/pyg-team/pytorch-frame/pull/90))
 - Added tutorial documentation. ([#83](https://github.com/pyg-team/pytorch-frame/pull/83))
 - Renamed `x_dict` to `feat_dict` in `TensorFrame` ([#86](https://github.com/pyg-team/pytorch-frame/pull/86))
 - Added `TabTransformer` example. ([#82](https://github.com/pyg-team/pytorch-frame/pull/82))
