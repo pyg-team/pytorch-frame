@@ -55,8 +55,8 @@ Data Handling of Tables
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
 Currently :pyg:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
 
-- :class:`~torch_frame.stype.categorical` denotes categorical values.
-- :obj:`~torch_frame.stype.numerical` denotes numerical values.
+- :class:`~torch_frame.stype.categorical` denotes categorical columns.
+- :obj:`~torch_frame.stype.numerical` denotes numerical columns.
 - :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some sentence encoder.
 
 A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
