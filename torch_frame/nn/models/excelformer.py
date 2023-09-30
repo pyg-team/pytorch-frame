@@ -22,10 +22,10 @@ def feature_mixup(
     num_classes: Optional[int] = None,
     beta: int = 0.5,
 ) -> TensorFrame:
-    r"""Mixup :obj: input numerical feature tensor `x` by swaping some feature
-    elements of two shuffled sample samples. The shuffle rates for each row is
-    sampled from the Beta distribution. The target `y` is also linearly
-    mixed up.
+    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
+    feature elements of two shuffled sample samples. The shuffle rates for
+    each row is sampled from the Beta distribution. The target `y` is also
+    linearly mixed up.
 
     Args:
         x (Tensor): The input numerical feature.

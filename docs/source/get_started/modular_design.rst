@@ -1,6 +1,6 @@
 Modular Design of Deep Tabular Models
 =====================================
-Our key observation is that many tabular deep learning models all follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`,
+Our key observation is that many tabular deep learning models all follow a modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`,
 as shown in the figure below.
 
 .. figure:: ../_figures/modular.png
@@ -10,21 +10,21 @@ as shown in the figure below.
 
 - First, the input :obj:`DataFrame` with different columns is converted to :class:`TensorFrame`, where the columns are organized according to their `stype` (semantic types).
 - Then, the :class:`~torch_frame.TensorFrame` is fed into :class:`~torch_frame.nn.encoder.FeatureEncoder` which converts each `stype` feature into a 3-dimensional :obj:`Tensor`.
-- The :obj:`Tensor`'s across different `stypes` are then concatenated into a single :obj:`Tensor` `x` of shape [`batch_size`, `num_cols`, `num_channels`].
-- The :obj:`Tensor` `x` is then updated iteratively via :class:`TableConv`'s.
-- The updated :obj:`Tensor` `x` is inputed into :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
+- The :obj:`Tensor`'s across different `stypes` are then concatenated into a single :obj:`Tensor` :obj:`x` of shape [`batch_size`, `num_cols`, `num_channels`].
+- The :obj:`Tensor` :obj:`x` is then updated iteratively via :class:`TableConv`'s.
+- The updated :obj:`Tensor` :obj:`x` is inputed into :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
 :class:`FeatureEncoder`
 --------------------------------------
 
-:class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into 3-dimensional :obj:`Tensor` `x`.
+:class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into 3-dimensional :obj:`Tensor` :obj:`x`.
 This class can contain learnable parameters and `NaN` (missing value) handling.
 
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` inherits from :class:`~torch_frame.nn.encoder.FeatureEncoder`.
 It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via `stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
-The embeddings of different `stypes` are then concatenated to give the final 3-dimensional :obj:`Tensor` `x` of shape `[batch_size, num_cols, channels]`.
+The embeddings of different `stypes` are then concatenated to give the final 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
-Below is an example usage of `~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
+Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
 It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
 
 
@@ -60,7 +60,7 @@ You can also implement your custom encoder for given `stype` by inheriting :clas
 -----------------------------------
 
 The table convolution layer inherits from :class:`~torch_frame.nn.conv.TableConv`.
-It takes the 3-dimensional :obj:`Tensor` `x` of shape `[batch_size, num_cols, channels]` as input and
+It takes the 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]` as input and
 updates the column embeddings based on embeddings of other columns; thereby modeling the complex interactions among different column values.
 Below, we show a simple self-attention-based table convolution to modle the interaction among columns.
 
@@ -104,7 +104,7 @@ Initializing and calling it is straightforward.
 :class:`Decoder`
 -------
 
-:class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`Tensor` `x` into output :class:`Tensor` `out` of shape `[batch_size, out_channels]`, representing
+:class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`Tensor` :obj:`x` into output :class:`Tensor` `out` of shape :obj:`[batch_size, out_channels]`, representing
 the row embeddings of the original :obj:`DataFrame`.
 
 Below is a simple example of `Decoder` that mean-pools over the column embeddings, followed by a linear transformation.

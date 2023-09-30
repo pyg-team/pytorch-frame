@@ -180,7 +180,7 @@ class TabularNN(Module):
         # to PyTorch tensor of each stype to get embeddings for each stype. The
         # embeddings of different stypes are then concatenated along the column
         # axis. In all, it transforms `TensorFrame` into 3-dimensional tensor
-        # `x` of shape [batch_size, num_cols, channels].
+        # :obj:`x` of shape [batch_size, num_cols, channels].
         self.encoder = StypeWiseFeatureEncoder(
             out_channels=channels,
             col_stats=col_stats,
@@ -188,13 +188,13 @@ class TabularNN(Module):
             stype_encoder_dict=stype_encoder_dict,
         )
         # Set up table convolutions that iteratively transforms 3-dimensional
-        # `x` into another `x`
+        # :obj:`x` into another :obj:`x`
         self.convs = ModuleList()
         for _ in range(num_layers):
             self.convs.append(SelfAttentionConv(channels))
 
-        # Set up decoder that transforms 3-dimensional `x` into 2-dimensional
-        # output tensor
+        # Set up decoder that transforms 3-dimensional :obj:`x` into
+        # 2-dimensional output tensor
         self.decoder = MeanDecoder(channels, out_channels)
 
     def forward(self, tf: TensorFrame) -> Tensor:

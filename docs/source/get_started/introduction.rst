@@ -5,7 +5,7 @@ Introduction by Example
 Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
 The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
 
-Many recent tabular models follow the modular design of encoders, convolution and decoders.
+Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
 :pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
@@ -67,7 +67,7 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
-    The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
+    The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
 Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
@@ -193,7 +193,7 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset.materialize()
 
 Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
-Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires `col_stats` and `col_names_dict`, we can directly get them as properties of any materialized dataset.
+Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
 
 .. code-block:: python
 
