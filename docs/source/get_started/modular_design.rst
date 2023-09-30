@@ -30,18 +30,18 @@ It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.ca
 
 .. code-block:: python
 
-    from torch import LayerNorm
     from torch_frame import stype
     from torch_frame.nn import (
+        StypeWiseFeatureEncoder,
         EmbeddingEncoder,
-        LinearBucketEncoder,
+        LinearEncoder,
     )
 
     stype_encoder_dict = {
         stype.categorical:
         EmbeddingEncoder(),
         stype.numerical:
-        LinearBucketEncoder(),
+        LinearEncoder(),
     }
 
     encoder = StypeWiseFeatureEncoder(
