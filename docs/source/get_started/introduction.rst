@@ -108,7 +108,7 @@ We show a simple example.
     tensor_frame.y
     >>> tensor([0, 1, 1,  ..., 0, 1, 0])
 
-A :class:`~torch_frame.TensorFrame` contains basic properties:
+A :class:`~torch_frame.TensorFrame` contains the following basic properties:
 
 .. code-block:: python
 
