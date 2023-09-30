@@ -2,9 +2,10 @@ Introduction by Example
 =======================
 
 :pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
-Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), texts (e.g., descriptions), images (e.g., pictures) etc.
+Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
 The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
-Many recent tabular models follow the modular design of encoders, convolution and decoders.
+
+Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
 :pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
@@ -54,9 +55,9 @@ Data Handling of Tables
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
 Currently :pyg:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
 
-- :class:`~torch_frame.stype.categorical` denotes categorical values.
-- :obj:`~torch_frame.stype.numerical` denotes numerical values.
-- :obj:`~torch_frame.stype.text` denotes text.
+- :class:`~torch_frame.stype.categorical` denotes categorical columns.
+- :obj:`~torch_frame.stype.numerical` denotes numerical columns.
+- :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some sentence encoder.
 
 A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
 
@@ -66,7 +67,7 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
-    The set of keys in `feat_dict` must exactly match with the set of keys in `col_names_dict`.
+    The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
 Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
@@ -107,7 +108,7 @@ We show a simple example.
     tensor_frame.y
     >>> tensor([0, 1, 1,  ..., 0, 1, 0])
 
-A :class:`~torch_frame.TensorFrame` contains many properties:
+A :class:`~torch_frame.TensorFrame` contains the following basic properties:
 
 .. code-block:: python
 
@@ -177,7 +178,7 @@ Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame
                 numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
                 has_target=True,
                 device=cpu,
-                )
+            )
 
 Learning Methods on Tabular Data
 --------------------------------
@@ -191,8 +192,8 @@ After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`,
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
 
-Now let’s implement a model called `ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
-Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires `col_stats` and `col_names_dict`, we can directly get them as properties of any materialized dataset.
+Now let’s implement a model called :obj:`ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
+Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
 
 .. code-block:: python
 
@@ -228,7 +229,7 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
                 col_stats=col_stats,
                 col_names_dict=col_names_dict,
                 stype_encoder_dict={
-                    stype.categorical: EmbeddingEncoder(out_channels),
+                    stype.categorical: EmbeddingEncoder(),
                     stype.numerical: LinearEncoder()
                 },
             )
@@ -249,7 +250,8 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
             return out
 
 
-In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and :class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
+In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and
+:class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
 The embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
 Then the outputs are concatenated and fed into a :obj:`torch.nn.Linear` decoder.
 
