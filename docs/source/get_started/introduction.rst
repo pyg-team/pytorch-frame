@@ -2,8 +2,9 @@ Introduction by Example
 =======================
 
 :pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
-Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), texts (e.g., descriptions), images (e.g., pictures) etc.
+Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
 The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
+
 Many recent tabular models follow the modular design of encoders, convolution and decoders.
 :pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
@@ -107,7 +108,7 @@ We show a simple example.
     tensor_frame.y
     >>> tensor([0, 1, 1,  ..., 0, 1, 0])
 
-A :class:`~torch_frame.TensorFrame` contains many properties:
+A :class:`~torch_frame.TensorFrame` contains basic properties:
 
 .. code-block:: python
 
@@ -177,7 +178,7 @@ Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame
                 numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
                 has_target=True,
                 device=cpu,
-                )
+            )
 
 Learning Methods on Tabular Data
 --------------------------------
@@ -228,7 +229,7 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
                 col_stats=col_stats,
                 col_names_dict=col_names_dict,
                 stype_encoder_dict={
-                    stype.categorical: EmbeddingEncoder(out_channels),
+                    stype.categorical: EmbeddingEncoder(),
                     stype.numerical: LinearEncoder()
                 },
             )
