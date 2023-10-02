@@ -1,11 +1,20 @@
 import os.path as osp
 
+import numpy as np
 import pandas as pd
 
 import torch_frame
 
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
+    r"""The tabular data with text columns benchmark datasets used by
+    https://arxiv.org/abs/2111.02705
+
+    Args:
+        name (str): The name of the dataset to download.
+        text_stype (torch_frame.stype): Text stype to use for text columns
+            in the dataset. (default: :obj:`torch_frame.text_embedded`)
+    """
     base_url = 'https://automl-mm-bench.s3.amazonaws.com'
 
     classification_datasets = {
@@ -67,7 +76,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         'answer_type_reason_explanation',
         'google_qa_question_type_reason_explanation':
         'question_type_reason_explanation',
-        'bookprice_prediction': 'Price',  # Post process?
+        'bookprice_prediction': 'Price',
         'jc_penney_products': 'sale_price',
         'women_clothing_review': 'Rating',
         'ae_price_prediction': 'price',
@@ -240,12 +249,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         },
         'women_clothing_review': {
             torch_frame.text_embedded: ['Title', 'Review Text'],
-            torch_frame.numerical:
-            ['Age', 'Rating', 'Positive Feedback Count'],
-            torch_frame.categorical: [
-                'Clothing ID', 'Recommended IND', 'Division Name',
-                'Department Name', 'Class Name'
-            ],
+            torch_frame.numerical: ['Age', 'Rating'],
+            torch_frame.categorical:
+            ['Division Name', 'Department Name', 'Class Name'],
         },
         'ae_price_prediction': {
             # `style_attributes` should be multi-categorical
@@ -338,6 +344,19 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             split_df['split'] = split
 
         df = pd.concat(dfs, ignore_index=True)
+
+        target_col = self._dataset_target_col[self.name]
+
+        # Post transform some datasets' target column
+        if self.name == 'bookprice_prediction':
+            df[target_col] = np.power(10, df[target_col]) - 1
+            df[df[target_col] < 0][target_col] = 0
+        elif self.name == 'california_house_price':
+            df[target_col] = np.exp(df[target_col])
+        elif self.name == 'mercari_price_suggestion100K':
+            df[target_col] = np.exp(df[target_col]) - 1
+            df[df[target_col] < 0][target_col] = 0
+
         stype_to_col = self._dataset_stype_to_col[name]
 
         col_to_stype = {}
@@ -348,6 +367,5 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                     col_to_stype[col] = self.text_stype
                     continue
                 col_to_stype[col] = stype
-        super().__init__(df, col_to_stype,
-                         target_col=self._dataset_target_col[self.name],
+        super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split')
