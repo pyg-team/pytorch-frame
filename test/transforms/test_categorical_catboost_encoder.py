@@ -4,7 +4,7 @@ from torch_frame import TensorFrame, stype
 from torch_frame.data import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets.fake import FakeDataset
-from torch_frame.transforms import CategoricalCatBoostEncoder
+from torch_frame.transforms import OrderedTargetStatisticsEncoder
 
 
 def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
@@ -27,7 +27,7 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
             assert (stat not in col_stats)
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat in col_stats)
-    transform = CategoricalCatBoostEncoder()
+    transform = OrderedTargetStatisticsEncoder()
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
     transformed_col_stats = transform.transformed_stats
     for col in dataset.feat_cols:
@@ -59,7 +59,7 @@ def test_categorical_catboost_encoder():
     total_num_cols = len(dataset.tensor_frame.col_names_dict[stype.numerical])
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
-    transform = CategoricalCatBoostEncoder()
+    transform = OrderedTargetStatisticsEncoder()
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
     transformed_col_stats = transform.transformed_stats
     for col in dataset.feat_cols:
