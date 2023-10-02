@@ -1,0 +1,353 @@
+import os.path as osp
+
+import pandas as pd
+
+import torch_frame
+
+
+class MultimodalTextBenchmark(torch_frame.data.Dataset):
+    base_url = 'https://automl-mm-bench.s3.amazonaws.com'
+
+    classification_datasets = {
+        'product_sentiment_machine_hack', 'data_scientist_salary',
+        'melbourne_airbnb', 'news_channel', 'wine_reviews',
+        'imdb_genre_prediction', 'fake_job_postings2', 'kick_starter_funding',
+        'jigsaw_unintended_bias100K'
+    }
+
+    regression_datasets = {
+        'google_qa_answer_type_reason_explanation',
+        'google_qa_question_type_reason_explanation', 'bookprice_prediction',
+        'jc_penney_products', 'women_clothing_review', 'ae_price_prediction',
+        'news_popularity2', 'california_house_price',
+        'mercari_price_suggestion100K'
+    }
+
+    _csv_datasets = {
+        'product_sentiment_machine_hack', 'data_scientist_salary',
+        'news_channel', 'wine_reviews', 'imdb_genre_prediction',
+        'fake_job_postings2', 'kick_starter_funding', 'bookprice_prediction',
+        'jc_penney_products', 'news_popularity2', 'california_house_price'
+    }
+
+    _dataset_url_map = {
+        'product_sentiment_machine_hack': 'machine_hack_product_sentiment',
+        'data_scientist_salary':
+        'machine_hack_competitions/predict_the_data_scientists_salary_in_india_hackathon/',  # noqa
+        'melbourne_airbnb': 'airbnb_melbourne',
+        'news_channel': 'news_channel',
+        'wine_reviews': 'wine_reviews',
+        'imdb_genre_prediction': 'imdb_genre_prediction',
+        'fake_job_postings2': 'fake_job_postings2',
+        'kick_starter_funding': 'kick_starter_funding',
+        'jigsaw_unintended_bias100K': 'jigsaw_unintended_bias100K',
+        'google_qa_answer_type_reason_explanation': 'google_quest_qa',
+        'google_qa_question_type_reason_explanation': 'google_quest_qa',
+        'bookprice_prediction':
+        'machine_hack_competitions/predict_the_price_of_books/',
+        'jc_penney_products': 'jc_penney_products',
+        'women_clothing_review': 'women_clothing_review',
+        'ae_price_prediction': 'ae_price_prediction',
+        'news_popularity2': 'news_popularity2',
+        'california_house_price': 'kaggle-california-house-prices',
+        'mercari_price_suggestion100K': 'mercari_price_suggestion100K'
+    }
+
+    _dataset_target_col = {
+        'product_sentiment_machine_hack': 'Sentiment',
+        'data_scientist_salary': 'salary',
+        'melbourne_airbnb': 'price_label',
+        'news_channel': 'channel',
+        'wine_reviews': 'variety',
+        'imdb_genre_prediction': 'Genre_is_Drama',
+        'fake_job_postings2': 'fraudulent',
+        'kick_starter_funding': 'final_status',
+        'jigsaw_unintended_bias100K': 'target',
+        'google_qa_answer_type_reason_explanation':
+        'answer_type_reason_explanation',
+        'google_qa_question_type_reason_explanation':
+        'question_type_reason_explanation',
+        'bookprice_prediction': 'Price',  # Post process?
+        'jc_penney_products': 'sale_price',
+        'women_clothing_review': 'Rating',
+        'ae_price_prediction': 'price',
+        'news_popularity2': 'log_shares',
+        'california_house_price': 'Sold Price',
+        'mercari_price_suggestion100K': 'log_price'  # Post process?
+    }
+
+    _dataset_splits = {
+        'product_sentiment_machine_hack': ['train', 'dev', 'test'],
+        'data_scientist_salary': ['train', 'test', 'competition'],
+        'melbourne_airbnb': ['train', 'test'],
+        'news_channel': ['train', 'test'],
+        'wine_reviews': ['train', 'test'],
+        'imdb_genre_prediction': ['train', 'test'],
+        'fake_job_postings2': ['train', 'test'],
+        'kick_starter_funding': ['train', 'test'],
+        'jigsaw_unintended_bias100K': ['train', 'test'],
+        'google_qa_answer_type_reason_explanation': ['train', 'dev', 'test'],
+        'google_qa_question_type_reason_explanation': ['train', 'dev', 'test'],
+        'bookprice_prediction': ['train', 'test', 'competition'],
+        'jc_penney_products': ['train', 'test'],
+        'women_clothing_review': ['train', 'test'],
+        'ae_price_prediction': ['train', 'test'],
+        'news_popularity2': ['train', 'test'],
+        'california_house_price': ['train', 'test', 'competition'],
+        'mercari_price_suggestion100K': ['train', 'test'],
+    }
+
+    _dataset_stype_to_col = {
+        'product_sentiment_machine_hack': {
+            torch_frame.text_embedded: ['Product_Description'],
+            torch_frame.categorical: ['Product_Type', 'Sentiment'],
+        },
+        'jigsaw_unintended_bias100K': {
+            torch_frame.numerical: [
+                'asian', 'atheist', 'bisexual', 'black', 'buddhist',
+                'christian', 'female', 'heterosexual', 'hindu',
+                'homosexual_gay_or_lesbian',
+                'intellectual_or_learning_disability', 'jewish', 'latino',
+                'male', 'muslim', 'other_disability', 'other_gender',
+                'other_race_or_ethnicity', 'other_religion',
+                'other_sexual_orientation', 'physical_disability',
+                'psychiatric_or_mental_illness', 'transgender', 'white',
+                'funny', 'wow', 'sad', 'likes', 'disagree'
+            ],
+            torch_frame.text_embedded: ['comment_text'],
+            torch_frame.categorical: ['target'],
+        },
+        'data_scientist_salary': {
+            # `location` should be multi-categorical
+            torch_frame.categorical:
+            ['experience', 'job_type', 'location', 'salary'],
+            # `key_skills` should be multi-categorical
+            torch_frame.text_embedded:
+            ['job_description', 'job_desig', 'key_skills'],
+        },
+        'melbourne_airbnb': {
+            # `host_since` should be time column
+            # `amenities` should be multi-categorical
+            torch_frame.text_embedded: [
+                'name', 'summary', 'space', 'description',
+                'neighborhood_overview', 'notes', 'transit', 'access',
+                'interaction', 'house_rules', 'host_since', 'host_about',
+                'amenities', 'first_review', 'last_review'
+            ],
+            # `host_verifications` should be multi-categorical
+            torch_frame.categorical: [
+                'host_location', 'host_response_time', 'host_response_rate',
+                'host_is_superhost', 'host_neighborhood', 'host_verifications',
+                'host_has_profile_pic', 'host_identity_verified', 'street',
+                'neighborhood', 'city', 'suburb', 'state', 'zipcode',
+                'smart_location', 'country_code', 'country',
+                'is_location_exact', 'property_type', 'room_type', 'bed_type',
+                'calendar_updated', 'has_availability', 'requires_license',
+                'license', 'instant_bookable', 'cancellation_policy',
+                'require_guest_profile_picture',
+                'require_guest_phone_verification', 'price_label',
+                'host_verifications_jumio', 'host_verifications_government_id',
+                'host_verifications_kba', 'host_verifications_zhima_selfie',
+                'host_verifications_facebook', 'host_verifications_work_email',
+                'host_verifications_google', 'host_verifications_sesame',
+                'host_verifications_manual_online',
+                'host_verifications_manual_offline',
+                'host_verifications_offline_government_id',
+                'host_verifications_selfie', 'host_verifications_reviews',
+                'host_verifications_identity_manual',
+                'host_verifications_sesame_offline',
+                'host_verifications_weibo', 'host_verifications_email',
+                'host_verifications_sent_id', 'host_verifications_phone'
+            ],
+            torch_frame.numerical: [
+                'latitude', 'longitude', 'accommodates', 'bathrooms',
+                'bedrooms', 'beds', 'security_deposit', 'cleaning_fee',
+                'guests_included', 'extra_people', 'minimum_nights',
+                'maximum_nights', 'availability_30', 'availability_60',
+                'availability_90', 'availability_365', 'number_of_reviews',
+                'review_scores_rating', 'review_scores_accuracy',
+                'review_scores_cleanliness', 'review_scores_checkin',
+                'review_scores_communication', 'review_scores_location',
+                'review_scores_value', 'calculated_host_listings_count',
+                'reviews_per_month'
+            ],
+        },
+        'news_channel': {
+            torch_frame.numerical: [
+                ' n_tokens_content', ' n_unique_tokens', ' n_non_stop_words',
+                ' n_non_stop_unique_tokens', ' num_hrefs', ' num_self_hrefs',
+                ' num_imgs', ' num_videos', ' average_token_length',
+                ' num_keywords', ' global_subjectivity',
+                ' global_sentiment_polarity', ' rate_positive_words',
+                ' rate_negative_words'
+            ],
+            torch_frame.text_embedded: ['article_title'],
+            torch_frame.categorical: ['channel'],
+        },
+        'wine_reviews': {
+            torch_frame.text_embedded: ['description'],
+            torch_frame.categorical: ['country', 'province', 'variety'],
+            torch_frame.numerical: ['points', 'price'],
+        },
+        'imdb_genre_prediction': {
+            torch_frame.numerical: [
+                'Rank', 'Year', 'Runtime (Minutes)', 'Rating', 'Votes',
+                'Revenue (Millions)', 'Metascore'
+            ],
+            torch_frame.categorical: ['Director', 'Genre_is_Drama'],
+            # `Actors` should be multi-categorical
+            torch_frame.text_embedded: ['Title', 'Description', 'Actors'],
+        },
+        'fake_job_postings2': {
+            torch_frame.text_embedded: ['title', 'description'],
+            torch_frame.categorical: [
+                'salary_range', 'required_experience', 'required_education',
+                'fraudulent'
+            ]
+        },
+        'kick_starter_funding': {
+            # `keywords` should be multi-categorical
+            # `deadline` should be time column
+            # `created_at` should be time column
+            torch_frame.text_embedded:
+            ['name', 'desc', 'keywords', 'deadline', 'created_at'],
+            torch_frame.categorical:
+            ['disable_communication', 'country', 'currency', 'final_status'],
+            torch_frame.numerical: ['goal'],
+        },
+        'google_qa_answer_type_reason_explanation': {
+            torch_frame.text_embedded:
+            ['question_title', 'question_body', 'answer'],
+            torch_frame.categorical: ['category'],
+            torch_frame.numerical: ['answer_type_reason_explanation'],
+        },
+        'google_qa_question_type_reason_explanation': {
+            torch_frame.text_embedded:
+            ['question_title', 'question_body', 'answer'],
+            torch_frame.categorical: ['category'],
+            torch_frame.numerical: ['question_type_reason_explanation'],
+        },
+        'bookprice_prediction': {
+            torch_frame.text_embedded: ['Title', 'Edition', 'Synopsis'],
+            torch_frame.numerical: ['Price', 'Reviews', 'Ratings'],
+            torch_frame.categorical: ['Author', 'Genre', 'BookCategory'],
+        },
+        'jc_penney_products': {
+            torch_frame.text_embedded: ['name_title', 'description'],
+            torch_frame.numerical:
+            ['sale_price', 'average_product_rating', 'total_number_reviews'],
+            torch_frame.categorical: ['brand'],
+        },
+        'women_clothing_review': {
+            torch_frame.text_embedded: ['Title', 'Review Text'],
+            torch_frame.numerical:
+            ['Age', 'Rating', 'Positive Feedback Count'],
+            torch_frame.categorical: [
+                'Clothing ID', 'Recommended IND', 'Division Name',
+                'Department Name', 'Class Name'
+            ],
+        },
+        'ae_price_prediction': {
+            # `style_attributes` should be multi-categorical
+            # `total_sizes` should be multi-categorical
+            torch_frame.text_embedded: [
+                'description', 'style_attributes', 'total_sizes',
+                'available_size'
+            ],
+            torch_frame.numerical: ['price', 'rating', 'review_count'],
+            torch_frame.categorical: [
+                'product_name', 'brand_name', 'product_category', 'retailer',
+                'color'
+            ]
+        },
+        'news_popularity2': {
+            torch_frame.text_embedded: ['article_title'],
+            torch_frame.numerical: [
+                ' n_tokens_content', ' average_token_length', ' num_keywords',
+                'log_shares'
+            ]
+        },
+        'california_house_price': {
+            torch_frame.text_embedded: ['Address', 'Summary'],
+            torch_frame.numerical: [
+                'Sold Price', 'Year built', 'Lot', 'Bedrooms', 'Bathrooms',
+                'Full bathrooms', 'Total interior livable area',
+                'Total spaces', 'Garage spaces', 'Elementary School Score',
+                'Elementary School Distance', 'Middle School Score',
+                'Middle School Distance', 'High School Score',
+                'High School Distance', 'Tax assessed value',
+                'Annual tax amount', 'Listed Price', 'Last Sold Price'
+            ],
+            # `Heating` should be multi-categorical
+            # `Cooling` should be multi-categorical
+            # `Parking` should be multi-categorical
+            # `Flooring` should be multi-categorical
+            # `Heating features` should be multi-categorical
+            # `Cooling features` should be multi-categorical
+            # `Appliances included` should be multi-categorical
+            # `Laundry features` should be multi-categorical
+            # `Parking features` should be multi-categorical
+            # `Listed On` should be time column
+            # `Last Sold On` should be time column
+            torch_frame.categorical: [
+                'Type', 'Heating', 'Cooling', 'Parking', 'Region',
+                'Elementary School', 'Middle School', 'High School',
+                'Flooring', 'Heating features', 'Cooling features',
+                'Appliances included', 'Laundry features', 'Parking features',
+                'Listed On', 'Last Sold On', 'City', 'Zip', 'State'
+            ]
+        },
+        'mercari_price_suggestion100K': {
+            # `category_name` should be multi-categorical
+            torch_frame.text_embedded:
+            ['name', 'category_name', 'item_description'],
+            torch_frame.numerical: ['log_price'],
+            torch_frame.categorical: [
+                'item_condition_id', 'brand_name', 'shipping', 'cat1', 'cat2',
+                'cat3'
+            ],
+        },
+    }
+
+    def __init__(self, root: str, name: str,
+                 text_stype: torch_frame.stype = torch_frame.text_embedded):
+        assert name in self.classification_datasets | self.regression_datasets
+        self.root = root
+        self.name = name
+        self.text_stype = text_stype
+
+        extension = '.csv' if name in self._csv_datasets else '.pq'
+        url_name = self._dataset_url_map[self.name]
+
+        dfs = []
+        for split in self._dataset_splits[self.name]:
+            path = self.download_url(
+                osp.join(self.base_url, url_name, split + extension), root,
+                filename=f'{self.name}_{split}{extension}')
+            if extension == '.csv':
+                df = pd.read_csv(path)
+            else:
+                df = pd.read_parquet(path)
+            if 'Unnamed: 0' in df.columns:
+                df.drop(columns=['Unnamed: 0'], inplace=True)
+            dfs.append(df)
+
+        splits = ['train', 'val', 'test'] if len(
+            self._dataset_splits[self.name]) == 3 else ['train', 'test']
+        for split_df, split in zip(dfs, splits):
+            split_df['split'] = split
+
+        df = pd.concat(dfs, ignore_index=True)
+        stype_to_col = self._dataset_stype_to_col[name]
+
+        col_to_stype = {}
+        for stype in stype_to_col:
+            cols = stype_to_col[stype]
+            for col in cols:
+                if stype == torch_frame.text_embedded:
+                    col_to_stype[col] = self.text_stype
+                    continue
+                col_to_stype[col] = stype
+        super().__init__(df, col_to_stype,
+                         target_col=self._dataset_target_col[self.name],
+                         split_col='split')

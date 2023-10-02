@@ -11,6 +11,7 @@ from .tabular_benchmark import TabularBenchmark
 from .yandex import Yandex
 from .dota2 import Dota2
 from .kdd_census_income import KDDCensusIncome
+from .multimodal_text_benchmark import MultimodalTextBenchmark
 
 real_world_datasets = [
     'Titanic',
@@ -23,6 +24,7 @@ real_world_datasets = [
     'TabularBenchmark',
     'Yandex',
     'KDDCensusIncome',
+    'MultimodalTextBenchmark',
 ]
 
 synthetic_datasets = [
