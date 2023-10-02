@@ -11,17 +11,17 @@ Transforms
 
 :pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 
-Let's look an example, where we apply `CatBoostEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>`_ to transform the categorical features into numerical features.
+Let's look an example, where we apply `OrderedTargetStatisticsEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>`_ to transform the categorical features into numerical features.
 
 .. code-block:: python
 
     from torch_frame.datasets import Yandex
-    from torch_frame.transforms import CategoricalCatBoostEncoder
+    from torch_frame.transforms import OrderedTargetStatisticsEncoder
 
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
-    transform = CategoricalCatBoostEncoder()
+    transform = OrderedTargetStatisticsEncoder()
     transform.fit(tensor_frame, dataset.col_stats)
 
     transformed_col_stats = transform.transformed_stats

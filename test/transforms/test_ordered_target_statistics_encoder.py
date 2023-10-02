@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from torch_frame import TensorFrame, stype
@@ -7,8 +8,10 @@ from torch_frame.datasets.fake import FakeDataset
 from torch_frame.transforms import OrderedTargetStatisticsEncoder
 
 
-def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
-    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
+@pytest.mark.parametrize('with_nan', [True, False])
+def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
+        with_nan):
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=with_nan,
                                    stypes=[stype.categorical],
                                    create_split=True)
     dataset.materialize()
@@ -29,6 +32,7 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
             assert (stat in col_stats)
     transform = OrderedTargetStatisticsEncoder()
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    out = transform(tensor_frame)
     transformed_col_stats = transform.transformed_stats
     for col in dataset.feat_cols:
         # ensure that the transformed col stats contain
@@ -37,7 +41,6 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
             assert (stat in transformed_col_stats[col])
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat not in transformed_col_stats[col])
-    out = transform(tensor_frame)
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
@@ -50,7 +53,7 @@ def test_categorical_catboost_encoder_on_categorical_features_only_dataset():
     assert (out.col_names_dict[stype.numerical] == categorical_features)
 
 
-def test_categorical_catboost_encoder():
+def test_ordered_target_statistics_encoder():
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical, stype.categorical],
                                    create_split=True)
@@ -61,6 +64,7 @@ def test_categorical_catboost_encoder():
     train_dataset = dataset.get_split_dataset('train')
     transform = OrderedTargetStatisticsEncoder()
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    out = transform(tensor_frame)
     transformed_col_stats = transform.transformed_stats
     for col in dataset.feat_cols:
         # ensure that the transformed col stats contain
@@ -69,7 +73,6 @@ def test_categorical_catboost_encoder():
             assert (stat in transformed_col_stats[col])
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat not in transformed_col_stats[col])
-    out = transform(tensor_frame)
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)

@@ -3,6 +3,8 @@ from typing import Any, Dict
 
 import pandas as pd
 import torch
+import torch.nn.functional as F
+from torch import Tensor
 
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType, compute_col_stats
@@ -15,6 +17,25 @@ class OrderedTargetStatisticsEncoder(FittableBaseTransform):
         The original encoding is explained in
         https://arxiv.org/abs/1706.09516
     """
+    def _replace_nans(self, x: Tensor):
+        r"""Replace NaNs with most frequent class.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` whose NaN values
+                in categorical columns are to be replaced.
+        Returns:
+            tf (Tensor): Output :obj:`TensorFrame` with NaN values replaced.
+        """
+        x = x.clone()
+        for col in range(x.size(1)):
+            column_data = x[:, col]
+            nan_mask = column_data < 0
+            if not nan_mask.any():
+                continue
+            fill_value = 0.
+            column_data[nan_mask] = fill_value
+        return x
+
     def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
                                                                     Any]]):
         if tf_train.y is None:
@@ -42,16 +63,18 @@ class OrderedTargetStatisticsEncoder(FittableBaseTransform):
         # time if time column exists.
         perm_idx = torch.randperm(len(tf.y))
         permuted_tensor = tf.feat_dict[stype.categorical][perm_idx]
+        permuted_tensor = self._replace_nans(permuted_tensor)
         transformed_tensor = torch.zeros(tf.feat_dict[stype.categorical].shape)
+
         for i in range(len(tf.col_names_dict[stype.categorical])):
-            col_name = tf.col_names_dict[stype.categorical]
+            col_name = tf.col_names_dict[stype.categorical][i]
             num_classes = len(self.col_stats[col_name][StatType.COUNT][0])
             feat = permuted_tensor[:, i]
-            one_hot_col = torch.one_hot(feat + 1, num_classes)
-            accum_sum = torch.cumsum(one_hot_col, dim=1)
-            transformed_tensor[:i] = (accum_sum[:, feat] * tf.y +
-                                      self.target_mean) / (accum_sum[:, feat] +
-                                                           1)
+            one_hot_col = F.one_hot(feat, num_classes)
+            accum_sum = torch.cumsum(one_hot_col,
+                                     dim=0)[torch.arange(len(tf.y)), feat]
+            transformed_tensor[:, i] = (accum_sum * tf.y +
+                                        self.target_mean) / (accum_sum + 1)
 
         transformed_df = pd.DataFrame(
             transformed_tensor.cpu().numpy(),
@@ -70,10 +93,12 @@ class OrderedTargetStatisticsEncoder(FittableBaseTransform):
         if stype.numerical in tf.feat_dict:
             tf.feat_dict[stype.numerical] = torch.cat(
                 (tf.feat_dict[stype.numerical], transformed_tensor), dim=1)
+            tf.col_names_dict[stype.numerical] = tf.col_names_dict[
+                stype.numerical] + tf.col_names_dict[stype.categorical]
         else:
             tf.feat_dict[stype.numerical] = transformed_tensor
-        tf.col_names_dict[stype.numerical] = tf.col_names_dict[
-            stype.numerical] + tf.col_names_dict[stype.categorical]
+            tf.col_names_dict[stype.numerical] = tf.col_names_dict[
+                stype.categorical]
 
         # delete the categorical features
         tf.col_names_dict.pop(stype.categorical)
