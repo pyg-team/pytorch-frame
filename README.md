@@ -20,7 +20,7 @@ It consists of various methods for deep learning on tables from a variety of pub
 
 ## Architecture Overview
 
-Models in Pytorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
+Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
   <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png?sanitize=true" />
