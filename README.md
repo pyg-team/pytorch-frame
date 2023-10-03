@@ -23,7 +23,7 @@ It consists of various methods for deep learning on tables from a variety of pub
 Models in Pytorch Frame follow a modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`, as shown in the figure below:
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch_geometric/master/docs/source/_figures/modular.png?sanitize=true" />
+  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png?sanitize=true" />
 </p>
 
 ## Implemented Deep Tabular Models
