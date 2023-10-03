@@ -1,6 +1,7 @@
 import os.path as osp
-import pandas as pd
 import zipfile
+
+import pandas as pd
 
 import torch_frame
 
@@ -8,11 +9,11 @@ import torch_frame
 class Dota2(torch_frame.data.Dataset):
     r"""The `Dota2 Game Results
     <https://archive.ics.uci.edu/dataset/367/dota2+games+results>`_
-    dataset. Dota2 is a popula moba game with two teams of 5 players.
-    At start of the game, each palyer choose a unique hero with
+    dataset. Dota2 is a popular moba game with two teams of 5 players.
+    At start of the game, each player choose a unique hero with
     different strengths and weakness. The dataset is reasonably sparse
-    as only 10 of 113 possible heros are chosen in a given game. All
-    games were played in a space of 2 hours on the 13th of August, 2016.
+    as only 10 of 113 possible heroes are chosen in a given game. All
+    games were played in a space of 2 hours on the 13th of August 2016.
     The classification goal is to predict the winning team.
     """
 
