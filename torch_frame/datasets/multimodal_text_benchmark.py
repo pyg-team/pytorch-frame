@@ -8,7 +8,8 @@ import torch_frame
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
     r"""The tabular data with text columns benchmark datasets used by
-    https://arxiv.org/abs/2111.02705
+    https://arxiv.org/abs/2111.02705. Some regression datasets' target
+    column is transformed from log scale to original scale.
 
     Args:
         name (str): The name of the dataset to download.
@@ -320,6 +321,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
         self.name = name
+        if not text_stype.is_text_stype:
+            raise ValueError(f"`text_stype` should be a text stype, "
+                             f"got {text_stype}.")
         self.text_stype = text_stype
 
         extension = '.csv' if name in self._csv_datasets else '.pq'
@@ -347,7 +351,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
         target_col = self._dataset_target_col[self.name]
 
-        # Post transform some datasets' target column
+        # Post transform some regression datasets' target column
+        # by transforming from log scale to original scale
         if self.name == 'bookprice_prediction':
             df[target_col] = np.power(10, df[target_col]) - 1
             df[df[target_col] < 0][target_col] = 0
@@ -365,7 +370,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             for col in cols:
                 if stype == torch_frame.text_embedded:
                     col_to_stype[col] = self.text_stype
-                    continue
-                col_to_stype[col] = stype
+                else:
+                    col_to_stype[col] = stype
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split')

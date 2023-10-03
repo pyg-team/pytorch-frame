@@ -7,6 +7,10 @@ class stype(Enum):
     categorical = 'categorical'
     text_embedded = 'text_embedded'
 
+    @property
+    def is_text_stype(self) -> bool:
+        return self in [stype.text_embedded]
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')
