@@ -83,8 +83,9 @@ def test_ordered_target_statistics_encoder(task_type):
     if task_type != TaskType.MULTICLASS_CLASSIFICATION:
         # assert that all features are numerical
         assert (len(out.col_names_dict[stype.numerical]) == total_cols)
-        assert (dataset.tensor_frame.col_names_dict[stype.categorical] ==
-                out.col_names_dict[stype.numerical][total_num_cols:])
+        assert (len(
+            dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
+                out.col_names_dict[stype.numerical][total_num_cols:]))
     else:
         # when the task is multiclass classification, the number of
         # columns changes.

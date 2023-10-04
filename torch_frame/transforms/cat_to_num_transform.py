@@ -46,10 +46,11 @@ class CatToNumTransform(FittableBaseTransform):
         if tf_train.y.dtype == torch.long and tf_train.y.max() > 1:
             num_classes = tf_train.y.max() + 1
             target = F.one_hot(tf_train.y, num_classes)[:, :-1]
-            self.target_mean = target.float().mean(dim=0)
+            print("tf_train device", tf_train.device)
+            self.target_mean = target.float().mean(dim=0).to(tf_train.device)
             shape = tf_train.feat_dict[stype.categorical].shape
-            transformed_tensor = torch.zeros(shape[0],
-                                             shape[1] * (num_classes - 1))
+            transformed_tensor = torch.zeros(
+                shape[0], shape[1] * (num_classes - 1)).to(tf_train.device)
         else:
             num_classes = 2
             target = tf_train.y.unsqueeze(1)
@@ -59,7 +60,8 @@ class CatToNumTransform(FittableBaseTransform):
 
         for i in range(len(tf_train.col_names_dict[stype.categorical])):
             col_name = tf_train.col_names_dict[stype.categorical][i]
-            count = torch.tensor(col_stats[col_name][StatType.COUNT][1])
+            count = torch.tensor(col_stats[col_name][StatType.COUNT][1]).to(
+                tf_train.device)
             feat = tensor[:, i]
             v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(
                 1, num_classes - 1)
@@ -92,21 +94,22 @@ class CatToNumTransform(FittableBaseTransform):
         if tf.y.dtype == torch.long and tf.y.max() > 1:
             num_classes = tf.y.max() + 1
             shape = tf.feat_dict[stype.categorical].shape
-            transformed_tensor = torch.zeros(shape[0],
-                                             shape[1] * (num_classes - 1))
+            transformed_tensor = torch.zeros(shape[0], shape[1] *
+                                             (num_classes - 1)).to(tf.device)
         else:
             num_classes = 2
             transformed_tensor = torch.zeros_like(
                 tf.feat_dict[stype.categorical])
         for i in range(len(tf.col_names_dict[stype.categorical])):
             col_name = tf.col_names_dict[stype.categorical][i]
-            count = torch.tensor(self.col_stats[col_name][StatType.COUNT][1])
+            count = torch.tensor(
+                self.col_stats[col_name][StatType.COUNT][1]).to(tf.device)
             feat = tensor[:, i]
             v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(
                 1, num_classes - 1)
             transformed_tensor[:, i * (num_classes - 1):(i + 1) *
-                               (num_classes - 1)] = (v + self.target_mean) / (
-                                   self.train_data_size + 1)
+                               (num_classes - 1)] = (v + self.target_mean.to(
+                                   tf.device)) / (self.train_data_size + 1)
 
         # turn the categorical features into numerical features
         if stype.numerical in tf.feat_dict:
