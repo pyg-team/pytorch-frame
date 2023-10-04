@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import Any, Dict
 
@@ -78,6 +79,9 @@ class CatToNumTransform(FittableBaseTransform):
                                       columns=columns)
 
         transformed_col_stats = dict()
+        if stype.numerical in tf_train.col_names_dict:
+            for col in tf_train.col_names_dict[stype.numerical]:
+                transformed_col_stats[col] = copy.copy(col_stats[col])
         for col in columns:
             # TODO: Make col stats computed purely with PyTorch
             # (without mapping back to pandas series).
