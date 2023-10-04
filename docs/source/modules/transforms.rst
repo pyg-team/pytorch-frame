@@ -11,31 +11,43 @@ Transforms
 
 :pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 
-Let's look an example, where we apply `OrderedTargetStatisticsEncoder <https://catboost.ai/en/docs/concepts/algorithm-main-stages_cat-to-numberic>`_ to transform the categorical features into numerical features.
+Let's look an example, where we apply `CatToNumTransform <https://dl.acm.org/doi/10.1145/507533.507538>`_ to transform the categorical features into numerical features.
 
 .. code-block:: python
 
     from torch_frame.datasets import Yandex
-    from torch_frame.transforms import OrderedTargetStatisticsEncoder
+    from torch_frame.transforms import CatToNumTransform
+    from torch_frame import stype
 
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
-    tensor_frame = dataset.tensor_frame
-    transform = OrderedTargetStatisticsEncoder()
-    transform.fit(tensor_frame, dataset.col_stats)
+    transform = CatToNumTransform()
+    train_dataset = dataset.get_split_dataset('train')
+
+    train_dataset.tensor_frame.col_names_dict[stype.categorical]
+    >>> ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7']
+
+    test_dataset = dataset.get_split_dataset('test')
+    transform.fit(train_dataset.tensor_frame, dataset.col_stats)
 
     transformed_col_stats = transform.transformed_stats
-    transformed_col_stats['C_feature_0']
-    >>> {<StatType.MEAN: 'MEAN'>: 0.23928034419669833, <StatType.STD: 'STD'>: 0.07742150848292455, <StatType.QUANTILES: 'QUANTILES'>: [0.021752887790314594, 0.21786767575325724, 0.21786767575325724, 0.21786767575325724, 0.5532071236826023]}
 
-    transform(tensor_frame)
+    transformed_col_stats.keys()
+    >>> dict_keys(['C_feature_0_0', 'C_feature_1_0', 'C_feature_2_0', 'C_feature_3_0', 'C_feature_4_0', 'C_feature_5_0', 'C_feature_6_0', 'C_feature_7_0'])
+
+    transformed_col_stats['C_feature_0_0']
+    >>> {<StatType.MEAN: 'MEAN'>: 0.6984029484029484, <StatType.STD: 'STD'>: 0.45895127199411595, <StatType.QUANTILES: 'QUANTILES'>: [0.0, 0.0, 1.0, 1.0, 1.0]}
+
+    transform(test_dataset.tensor_frame)
     >>> TensorFrame(
-            num_cols=14,
-            num_rows=48842,
-            numerical (14): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5', 'C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7'],
-            has_target=True,
-            device=cpu,
+          num_cols=14,
+          num_rows=16281,
+          numerical (14): ['N_feature_0', 'N_feature_1', 'N_feature_2', 'N_feature_3', 'N_feature_4', 'N_feature_5', 'C_feature_0_0', 'C_feature_1_0', 'C_feature_2_0', 'C_feature_3_0', 'C_feature_4_0', 'C_feature_5_0', 'C_feature_6_0', 'C_feature_7_0'],
+          has_target=True,
+          device=cpu,
         )
+
+You can see that after the transform, the column names of the categorical features changes and the categorical features are transformed into numerical features.
 
 
 .. autosummary::

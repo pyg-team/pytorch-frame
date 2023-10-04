@@ -21,8 +21,11 @@ class CatToNumTransform(FittableBaseTransform):
         total count of the category, n is the total count,
         p is the prior probability and m is a smoothing factor.
     """
-    def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
-                                                                    Any]]):
+    def _fit(
+        self,
+        tf_train: TensorFrame,
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         if tf_train.y is None:
             raise RuntimeError(
                 "'{self.__class__.__name__}' cannot be used when target column"
