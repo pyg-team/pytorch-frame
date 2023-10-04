@@ -23,7 +23,7 @@ from torch_frame.datasets.yandex import Yandex
 from torch_frame.nn import ExcelFormer
 from torch_frame.transforms import (
     MutualInformationSort,
-    OrderedTargetStatisticsEncoder,
+    CatToNumTransform,
 )
 
 parser = argparse.ArgumentParser()
@@ -56,7 +56,7 @@ test_tensor_frame = test_dataset.tensor_frame.to(device)
 
 # CategoricalCatBoostEncoder encodes the categorical features
 # into numerical features with CatBoostEncoder.
-categorical_transform = OrderedTargetStatisticsEncoder()
+categorical_transform = CatToNumTransform()
 categorical_transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
 
 train_tensor_frame = categorical_transform(train_tensor_frame)

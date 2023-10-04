@@ -43,28 +43,6 @@ class MutualInformationSort(FittableBaseTransform):
                 f"Cannot use {na_strategy} for numerical features.")
         self.na_strategy = na_strategy
 
-    def _replace_nans(self, x: Tensor):
-        r"""Replace NaNs based on NAStrategy.
-
-        Args:
-            x (Tensor): Input :obj:`Tensor` whose NaN values are to be
-                replaced.
-        Returns:
-            x (Tensor): Output :obj:`Tensor` with NaN values replaced.
-        """
-        x = x.clone()
-        for col in range(x.size(1)):
-            column_data = x[:, col]
-            nan_mask = torch.isnan(column_data)
-            if not nan_mask.any():
-                continue
-            valid_data = column_data[~nan_mask]
-            if self.na_strategy == NAStrategy.MEAN:
-                fill_value = valid_data.mean()
-            elif self.na_strategy == NAStrategy.ZEROS:
-                fill_value = torch.tensor(0.)
-            column_data[nan_mask] = fill_value
-        return x
 
     def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
                                                                     Any]]):
@@ -78,7 +56,7 @@ class MutualInformationSort(FittableBaseTransform):
                              " with numerical only features.")
         feat_train = tf_train.feat_dict[stype.numerical]
         if torch.isnan(feat_train).any():
-            feat_train = self._replace_nans(feat_train)
+            feat_train = self._replace_nans(feat_train, self.na_strategy)
         mi_scores = self.mi_func(feat_train.cpu(), tf_train.y.cpu())
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]

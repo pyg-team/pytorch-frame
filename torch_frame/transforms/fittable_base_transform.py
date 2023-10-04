@@ -2,7 +2,9 @@ import copy
 from abc import abstractmethod
 from typing import Any, Dict
 
-from torch_frame import TensorFrame
+import torch
+from torch import Tensor
+from torch_frame import TensorFrame, NAStrategy
 from torch_frame.data.stats import StatType
 from torch_frame.transforms import BaseTransform
 
@@ -24,6 +26,34 @@ class FittableBaseTransform(BaseTransform):
     def is_fitted(self) -> bool:
         r"""Whether the transform is already fitted."""
         return self._is_fitted
+    
+    def _replace_nans(self, x: Tensor, na_strategy: NAStrategy):
+        r"""Replace NaNs based on NAStrategy.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` whose NaN values
+                in categorical columns are to be replaced.
+            na_strategy (NAStrategy): The :class:`NAStrategy` used to
+                replace NaN values.
+        Returns:
+            tf (Tensor): Output :obj:`TensorFrame` with NaN values replaced.
+        """
+        x = x.clone()
+        for col in range(x.size(1)):
+            column_data = x[:, col]
+            if na_strategy.is_numerical_strategy:
+                nan_mask = torch.isnan(column_data)
+            else:
+                nan_mask = column_data < 0
+            if not nan_mask.any():
+                continue
+            valid_data = column_data[~nan_mask]
+            if na_strategy == NAStrategy.MEAN:
+                fill_value = valid_data.mean()
+            elif na_strategy in [NAStrategy.ZEROS, NAStrategy.MOST_FREQUENT]:
+                fill_value = torch.tensor(0.)
+            column_data[nan_mask] = fill_value
+        return x
 
     def fit(
         self,
