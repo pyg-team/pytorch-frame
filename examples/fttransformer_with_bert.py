@@ -19,19 +19,23 @@ from torch_frame.nn import (
     LinearEncoder,
 )
 
+# Text embedded:
+# Best Val Acc: 0.7137, Best Test Acc: 0.7056
+
 
 class PretrainedBERTEncoder:
-    def __init__(self):
+    def __init__(self, device: torch.device):
+        self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-        self.model = BertModel.from_pretrained("bert-base-uncased")
+        self.model = BertModel.from_pretrained("bert-base-uncased").to(device)
 
     def __call__(self, sentences: List[str]) -> Tensor:
         embeddings = []
         for i, sentence in enumerate(sentences):
-            tokens = self.tokenizer(sentence, return_tensors="pt")
+            inputs = self.tokenizer(sentence, return_tensors="pt").to(device)
             # CLS embedding
-            embedding = self.model(**tokens).last_hidden_state[:, 0].detach()
-            embeddings.append(embedding)
+            embedding = self.model(**inputs).last_hidden_state[:, 0]
+            embeddings.append(embedding.detach())
             if i % 1000 == 0:
                 print(f"Encoded {i} sentences")
         return torch.concat(embeddings, dim=0)
@@ -53,7 +57,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-bert_encoder = PretrainedBERTEncoder()
+bert_encoder = PretrainedBERTEncoder(device=device)
 dataset = MultimodalTextBenchmark(
     root=path,
     name=args.dataset,
@@ -61,10 +65,10 @@ dataset = MultimodalTextBenchmark(
                                          batch_size=None),
 )
 
-dataset.materialize()
+dataset.materialize(path=osp.join(path, 'data.pt'))
 
-train_dataset = dataset.get_split_dataset('train')
-val_dataset = dataset.get_split_dataset('val')
+train_dataset = dataset.get_split_dataset('train')[:0.9]
+val_dataset = dataset.get_split_dataset('train')[0.9:]
 test_dataset = dataset.get_split_dataset('test')
 
 # Set up data loaders
