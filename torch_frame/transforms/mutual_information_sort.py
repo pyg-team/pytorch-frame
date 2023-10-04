@@ -6,7 +6,6 @@ from sklearn.feature_selection import (
     mutual_info_classif,
     mutual_info_regression,
 )
-from torch import Tensor
 
 from torch_frame import NAStrategy, TaskType, TensorFrame, stype
 from torch_frame.data.stats import StatType
@@ -42,7 +41,6 @@ class MutualInformationSort(FittableBaseTransform):
             raise RuntimeError(
                 f"Cannot use {na_strategy} for numerical features.")
         self.na_strategy = na_strategy
-
 
     def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
                                                                     Any]]):

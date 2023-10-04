@@ -4,18 +4,22 @@ from typing import Any, Dict
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from torch import Tensor
 
-from torch_frame import TensorFrame, stype, NAStrategy
+from torch_frame import NAStrategy, TensorFrame, stype
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.transforms import FittableBaseTransform
 
 
 class CatToNumTransform(FittableBaseTransform):
     r"""A transform that encodes the categorical features of
-        :class:`TensorFrame` using ordered target statistics.
-        The original encoding is explained in
-        https://arxiv.org/abs/1706.09516
+        :class:`TensorFrame` using target statistics.
+        The original transform is explained in
+        https://dl.acm.org/doi/10.1145/507533.507538
+        Specifically, each categorical feature is transformed
+        into numerical feature using m-probability estimate,
+        defined by (n_c + p * m)/ (n + m), where n_c is the
+        total count of the category, n is the total count,
+        p is the prior probability and m is a smoothing factor.
     """
     def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
                                                                     Any]]):
@@ -29,38 +33,43 @@ class CatToNumTransform(FittableBaseTransform):
                 "columns. No fitting will be performed.")
             self._transformed_stats = col_stats
 
-        tensor = self._replace_nans(tf_train.feat_dict[stype.categorical], NAStrategy.MOST_FREQUENT)
+        tensor = self._replace_nans(tf_train.feat_dict[stype.categorical],
+                                    NAStrategy.MOST_FREQUENT)
         self.col_stats = col_stats
         columns = []
-        # check if it is multi class classification task
+        self.train_data_size = tensor.size(0)
+        # Check if it is multiclass classification task.
+        # If it is multiclass classification task, then it doesn't make sense
+        # to assume the target mean as the prior. Therefore, we need to expand
+        # the number of columns to (num_target_classes - 1). More details can
+        # be found in https://dl.acm.org/doi/10.1145/507533.507538
         if tf_train.y.dtype == torch.long and tf_train.y.max() > 1:
             num_classes = tf_train.y.max() + 1
-            target = F.one_hot(tf_train.y, num_classes)[:,:-1]
+            target = F.one_hot(tf_train.y, num_classes)[:, :-1]
             self.target_mean = target.float().mean(dim=0)
             shape = tf_train.feat_dict[stype.categorical].shape
-            transformed_tensor = torch.zeros(shape[0], shape[1] * (num_classes -1))
-            for i in range(len(tf_train.col_names_dict[stype.categorical])):
-                col_name = tf_train.col_names_dict[stype.categorical][i]
-                count = torch.tensor(col_stats[col_name][StatType.COUNT][1])
-                feat = tensor[:, i]
-                v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(1, num_classes-1)
-                transformed_tensor[:, i * (num_classes - 1):(i + 1)* (num_classes - 1)] = (v * target + self.target_mean) / (v + 1)
-                columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
+            transformed_tensor = torch.zeros(shape[0],
+                                             shape[1] * (num_classes - 1))
         else:
-            target = tf_train.y
+            num_classes = 2
+            target = tf_train.y.unsqueeze(1)
             self.target_mean = torch.mean(target.float())
-            transformed_tensor = torch.zeros_like(tf_train.feat_dict[stype.categorical])
-            for i in range(len(tf_train.col_names_dict[stype.categorical])):
-                col_name = tf_train.col_names_dict[stype.categorical][i]
-                count = torch.tensor(col_stats[col_name][StatType.COUNT][1])
-                feat = tensor[:, i]
-                v = torch.index_select(count, 0, feat)
-                transformed_tensor[:, i] = (v * target + self.target_mean) / (v + 1)
-                columns.append(col_name)
+            transformed_tensor = torch.zeros_like(
+                tf_train.feat_dict[stype.categorical])
 
-        transformed_df = pd.DataFrame(
-            transformed_tensor.cpu().numpy(),
-            columns=columns)
+        for i in range(len(tf_train.col_names_dict[stype.categorical])):
+            col_name = tf_train.col_names_dict[stype.categorical][i]
+            count = torch.tensor(col_stats[col_name][StatType.COUNT][1])
+            feat = tensor[:, i]
+            v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(
+                1, num_classes - 1)
+            transformed_tensor[:, i * (num_classes - 1):(i + 1) *
+                               (num_classes - 1)] = (v + self.target_mean) / (
+                                   self.train_data_size + 1)
+            columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
+
+        transformed_df = pd.DataFrame(transformed_tensor.cpu().numpy(),
+                                      columns=columns)
 
         transformed_col_stats = dict()
         for col in columns:
@@ -71,46 +80,41 @@ class CatToNumTransform(FittableBaseTransform):
 
         self._transformed_stats = transformed_col_stats
 
-
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         if stype.categorical not in tf.col_names_dict:
             logging.info(
                 "The input TensorFrame does not contain any categorical "
                 "columns. The original TensorFrame will be returned.")
             return tf
-        tensor = self._replace_nans(tf.feat_dict[stype.categorical], NAStrategy.MOST_FREQUENT)
+        tensor = self._replace_nans(tf.feat_dict[stype.categorical],
+                                    NAStrategy.MOST_FREQUENT)
         columns = []
         if tf.y.dtype == torch.long and tf.y.max() > 1:
             num_classes = tf.y.max() + 1
-            target = F.one_hot(tf.y, num_classes)[:,:-1]
-            self.target_mean = target.float().mean(dim=0)
             shape = tf.feat_dict[stype.categorical].shape
-            transformed_tensor = torch.zeros(shape[0], shape[1] * (num_classes -1))
-            for i in range(len(tf.col_names_dict[stype.categorical])):
-                col_name = tf.col_names_dict[stype.categorical][i]
-                count = torch.tensor(self.col_stats[col_name][StatType.COUNT][1])
-                feat = tensor[:, i]
-                v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(1, num_classes-1)
-                transformed_tensor[:, i * (num_classes - 1):(i + 1)* (num_classes - 1)] = (v * target + self.target_mean) / (v + 1)
-                columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
+            transformed_tensor = torch.zeros(shape[0],
+                                             shape[1] * (num_classes - 1))
         else:
-            target = tf.y
-            self.target_mean = torch.mean(target.float())
-            transformed_tensor = torch.zeros_like(tf.feat_dict[stype.categorical])
-            for i in range(len(tf.col_names_dict[stype.categorical])):
-                col_name = tf.col_names_dict[stype.categorical][i]
-                count = torch.tensor(self.col_stats[col_name][StatType.COUNT][1])
-                feat = tensor[:, i]
-                v = torch.index_select(count, 0, feat)
-                transformed_tensor[:, i] = (v * target + self.target_mean) / (v + 1)
-                columns.append(col_name)
+            num_classes = 2
+            transformed_tensor = torch.zeros_like(
+                tf.feat_dict[stype.categorical])
+        for i in range(len(tf.col_names_dict[stype.categorical])):
+            col_name = tf.col_names_dict[stype.categorical][i]
+            count = torch.tensor(self.col_stats[col_name][StatType.COUNT][1])
+            feat = tensor[:, i]
+            v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(
+                1, num_classes - 1)
+            transformed_tensor[:, i * (num_classes - 1):(i + 1) *
+                               (num_classes - 1)] = (v + self.target_mean) / (
+                                   self.train_data_size + 1)
+            columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
 
         # turn the categorical features into numerical features
         if stype.numerical in tf.feat_dict:
             tf.feat_dict[stype.numerical] = torch.cat(
                 (tf.feat_dict[stype.numerical], transformed_tensor), dim=1)
-            tf.col_names_dict[stype.numerical] = tf.col_names_dict[
-                stype.numerical] + columns
+            tf.col_names_dict[
+                stype.numerical] = tf.col_names_dict[stype.numerical] + columns
         else:
             tf.feat_dict[stype.numerical] = transformed_tensor
             tf.col_names_dict[stype.numerical] = columns

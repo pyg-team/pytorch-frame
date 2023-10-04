@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torch_frame import TensorFrame, stype, TaskType
+from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.data import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets.fake import FakeDataset
@@ -52,12 +52,14 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     assert (out.col_names_dict[stype.numerical] == categorical_features)
 
 
-@pytest.mark.parametrize('task_type', [TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION, TaskType.BINARY_CLASSIFICATION])
+@pytest.mark.parametrize('task_type', [
+    TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
+    TaskType.BINARY_CLASSIFICATION
+])
 def test_ordered_target_statistics_encoder(task_type):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
                                    stypes=[stype.numerical, stype.categorical],
-                                   task_type= task_type,
-                                   create_split=True)
+                                   task_type=task_type, create_split=True)
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     total_num_cols = len(dataset.tensor_frame.col_names_dict[stype.numerical])
@@ -82,9 +84,12 @@ def test_ordered_target_statistics_encoder(task_type):
         # assert that all features are numerical
         assert (len(out.col_names_dict[stype.numerical]) == total_cols)
         assert (dataset.tensor_frame.col_names_dict[stype.categorical] ==
-        out.col_names_dict[stype.numerical][total_num_cols:])
+                out.col_names_dict[stype.numerical][total_num_cols:])
     else:
-        assert (len(out.col_names_dict[stype.numerical]) == total_num_cols + (dataset.num_classes - 1) * (total_cols - total_num_cols))
+        # when the task is multiclass classification, the number of
+        # columns changes.
+        assert (len(out.col_names_dict[stype.numerical]) == total_num_cols +
+                (dataset.num_classes - 1) * (total_cols - total_num_cols))
 
     # assert that the numerical features are unchanged
     assert (torch.eq(dataset.tensor_frame.feat_dict[stype.numerical],
