@@ -35,7 +35,7 @@ class CatToNumTransform(FittableBaseTransform):
                 "The input TensorFrame does not contain any categorical "
                 "columns. No fitting will be performed.")
             self._transformed_stats = col_stats
-
+            return
         tensor = self._replace_nans(tf_train.feat_dict[stype.categorical],
                                     NAStrategy.MOST_FREQUENT)
         self.col_stats = col_stats
