@@ -68,6 +68,7 @@ class CatToNumTransform(FittableBaseTransform):
                                    self.train_data_size + 1)
             columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
 
+        self.new_columns = columns
         transformed_df = pd.DataFrame(transformed_tensor.cpu().numpy(),
                                       columns=columns)
 
@@ -88,7 +89,6 @@ class CatToNumTransform(FittableBaseTransform):
             return tf
         tensor = self._replace_nans(tf.feat_dict[stype.categorical],
                                     NAStrategy.MOST_FREQUENT)
-        columns = []
         if tf.y.dtype == torch.long and tf.y.max() > 1:
             num_classes = tf.y.max() + 1
             shape = tf.feat_dict[stype.categorical].shape
@@ -107,17 +107,16 @@ class CatToNumTransform(FittableBaseTransform):
             transformed_tensor[:, i * (num_classes - 1):(i + 1) *
                                (num_classes - 1)] = (v + self.target_mean) / (
                                    self.train_data_size + 1)
-            columns += [col_name + f"_{i}" for i in range(num_classes - 1)]
 
         # turn the categorical features into numerical features
         if stype.numerical in tf.feat_dict:
             tf.feat_dict[stype.numerical] = torch.cat(
                 (tf.feat_dict[stype.numerical], transformed_tensor), dim=1)
-            tf.col_names_dict[
-                stype.numerical] = tf.col_names_dict[stype.numerical] + columns
+            tf.col_names_dict[stype.numerical] = tf.col_names_dict[
+                stype.numerical] + self.new_columns
         else:
             tf.feat_dict[stype.numerical] = transformed_tensor
-            tf.col_names_dict[stype.numerical] = columns
+            tf.col_names_dict[stype.numerical] = self.new_columns
         # delete the categorical features
         tf.col_names_dict.pop(stype.categorical)
         tf.feat_dict.pop(stype.categorical)
