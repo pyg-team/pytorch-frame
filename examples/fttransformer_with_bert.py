@@ -4,9 +4,9 @@ from typing import List
 
 import torch
 import torch.nn.functional as F
+from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm
-from transformers import AutoTokenizer, BertModel
 
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
@@ -20,25 +20,18 @@ from torch_frame.nn import (
 )
 
 # Text embedded:
-# Best Val Acc: 0.7137, Best Test Acc: 0.7056
+# Best Val Acc: 0.7946, Best Test Acc: 0.7878
 
 
-class PretrainedBERTEncoder:
+class PretrainedTextEncoder:
     def __init__(self, device: torch.device):
         self.device = device
-        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-        self.model = BertModel.from_pretrained("bert-base-uncased").to(device)
+        self.model = SentenceTransformer('all-distilroberta-v1')
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        embeddings = []
-        for i, sentence in enumerate(sentences):
-            inputs = self.tokenizer(sentence, return_tensors="pt").to(device)
-            # CLS embedding
-            embedding = self.model(**inputs).last_hidden_state[:, 0]
-            embeddings.append(embedding.detach())
-            if i % 1000 == 0:
-                print(f"Encoded {i} sentences")
-        return torch.concat(embeddings, dim=0)
+        embeddings = self.model.encode(sentences, convert_to_numpy=False,
+                                       convert_to_tensor=True)
+        return embeddings.to(self.device)
 
 
 parser = argparse.ArgumentParser()
@@ -57,12 +50,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-bert_encoder = PretrainedBERTEncoder(device=device)
+text_encoder = PretrainedTextEncoder(device=device)
 dataset = MultimodalTextBenchmark(
     root=path,
     name=args.dataset,
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=bert_encoder,
-                                         batch_size=None),
+    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
+                                         batch_size=5),
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
