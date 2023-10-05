@@ -44,8 +44,9 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     out = transform(tensor_frame)
     assert torch.allclose(
         out.feat_dict[stype.numerical][:, 0].float(),
-        torch.tensor((num_rows + dataset.tensor_frame.y.mean()) /
-                     (num_rows + 1)).repeat(num_rows))
+        torch.tensor(
+            (num_rows + dataset.tensor_frame.y.mean()) / (num_rows + 1),
+            device=out.device).repeat(num_rows))
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
     assert (stype.categorical not in out.feat_dict)
