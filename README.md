@@ -6,7 +6,7 @@
 [slack-url]: https://data.pyg.org/slack.html
 
 <p align="center">
-  <img height="150" src="https://raw.githubusercontent.com/pyg-team/pytorch_frame/master/pyg_sphinx_theme/static/img/pyg_logo_text.svg?sanitize=true" />
+  <img height="150" src="https://raw.githubusercontent.com/pyg-team/pytorch_frame/master/docs/source/_figures/pytorch_frame_logo_text.svg?sanitize=true" />
 </p>
 
 --------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ PyTorch Frame is a library built upon :pytorch:`null` `PyTorch <https://pytorch.
 
 It consists of various methods for deep learning on tables from a variety of published papers. In addition, it consists of easy-to-use mini-batch loaders and a large number of common benchmark datasets. Plus, it features straightforward interfaces for those looking to load their own datasets.
 
-With PyTorch Frame, we aim to democratize the deep learning experience for tabular data. Whether you're an experienced deep learning researcher, a novice delving into machine learning, or a Kaggle enthusiast, our library makes experimenting with different architectures a breeze.
+With PyTorch Frame, we aim to democratize the deep learning experience for tabular data. Whether you're an experienced deep learning researcher, a novice delving into machine learning, or a Kaggle enthusiast, PyTorch Frame makes experimenting with different architectures a breeze.
 
 Our goal is to advance deep learning research for tabular data. Historically, tree-based models have superior performance on tabular datasets. However recent research shows that some deep learning models have comparable, if not better, performance on larger datasets, not to say the benefits on training efficiency on large scale data.
 
