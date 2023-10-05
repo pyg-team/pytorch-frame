@@ -6,9 +6,8 @@
 [slack-url]: https://data.pyg.org/slack.html
 
 <p align="center">
-  <img height="200" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
+  <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
 </p>
-
 --------------------------------------------------------------------------------
 
 [![Testing Status][testing-image]][testing-url]
@@ -17,13 +16,17 @@
 
 **[Documentation](https://pyg-team-pytorch-frame.readthedocs-hosted.com)**
 
-PyTorch Frame is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
+PyTorch Frame is a library built upon [PyTorch](https://pytorch.org/) to easily write and train deep learning models on multimodal data tables.
 
 It consists of various methods for deep learning on tables from a variety of published papers. In addition, it consists of easy-to-use mini-batch loaders and a large number of common benchmark datasets. Plus, it features straightforward interfaces for those looking to load their own datasets.
 
 With PyTorch Frame, we aim to democratize the deep learning experience for tabular data. Whether you're an experienced deep learning researcher, a novice delving into machine learning, or a Kaggle enthusiast, PyTorch Frame makes experimenting with different architectures a breeze.
 
-Our goal is to advance deep learning research for tabular data. Historically, tree-based models have superior performance on tabular datasets. However recent research shows that some deep learning models have comparable, if not better, performance on larger datasets, not to say the benefits on training efficiency on large scale data.
+We have two main goals for PyTorch Frame.
+
+One is advance deep learning research for tabular data. Historically, tree-based models have superior performance on tabular datasets. However recent research shows that some deep learning models have comparable, if not better, performance on larger datasets, not to say the benefits of training efficiency on large scale data.
+
+We also want to extend the scope of PyTorch Frame in two dimensions. One is to support more semantic types e.g. time, sequence, SMILES(Simplified Molecular Input Line Entry System) strings. The other is integration with existing technologies like PyG and large language models.
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
@@ -31,13 +34,12 @@ Our goal is to advance deep learning research for tabular data. Historically, tr
 
 ## Library Highlights
 
-Whether you are a machine learning researcher or first-time user of machine learning toolkits, here are some reasons to use PyTorchFrame for deep learning on tabular dataset.
+PyTorch Frame emphasizes a tensor-centric API and maintains design elements similar to vanilla PyTorch. For those acquainted with PyTorch, adapting to PyTorch Frame is a seamless process.
 
-* **Easy-to-use and unified API**:
-  PyG is *PyTorch-on-the-rocks*: It utilizes a tensor-centric API and keeps design principles close to vanilla PyTorch.
-  If you are already familiar with PyTorch, utilizing PyTorch Frame is straightforward.
+* **Easy-to-use on Structured Data with Different Semantic Types**:
+  PyTorch Frame provides inhouse support for multimodal learning on a variety of semantic types.
 * **Comprehensive and well-maintained Deep Tabular Models**:
-  Most of the state-of-the-art Deep Tabular architectures have been implemented by library developers and are ready to be applied.
+  Most of the state-of-the-art deep learning models for tabular data have been implemented by library developers and are ready to be applied.
 * **PyG Integration**:
   Pytorch Frame can be integrated with PyG. Node feature can be represented with `TensorFrame`, which can include a variety of semantic types, including numerical features, categorical features, text, etc.
 
@@ -48,6 +50,8 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 <p align="center">
   <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png?sanitize=true" />
 </p>
+
+In summary, a tabular dataset is first converted to `TensorFrame`, and then
 
 ## Implemented Deep Tabular Models
 
