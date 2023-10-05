@@ -73,10 +73,6 @@ class TabularBenchmark(torch_frame.data.Dataset):
     # Dedicated URLs for large datasets
     base_url_large = 'https://huggingface.co/datasets/inria-soda/tabular-benchmark/resolve/main/'  # noqa
 
-    # TODO: Add regression datasets
-    # https://huggingface.co/datasets/inria-soda/tabular-benchmark/tree/main/reg_cat
-    # https://huggingface.co/datasets/inria-soda/tabular-benchmark/tree/main/reg_num
-
     def __init__(self, root: str, name: str):
         if name not in self.name_to_task_category:
             raise ValueError(
