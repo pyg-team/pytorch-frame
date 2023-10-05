@@ -24,7 +24,7 @@ Our goal is to advance deep learning research for tabular data. Historically, tr
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
-* [Implemented Deep Tabular Models](#implemented-gnn-models)
+* [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
 
 ## Library Highlights
 
