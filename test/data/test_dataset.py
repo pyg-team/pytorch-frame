@@ -7,6 +7,7 @@ import torch_frame
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
+from torch_frame.typing import TaskType
 
 
 def test_index_select():
@@ -93,3 +94,28 @@ def test_converter():
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
     assert len(tf) == len(dataset)
+
+
+@pytest.mark.parametrize('with_nan', [True, False])
+def test_num_classes(with_nan):
+    num_classes = 10
+    target = np.arange(10)
+    task_type = TaskType.MULTICLASS_CLASSIFICATION
+    x = np.random.randn(10)
+    if with_nan:
+        target = target.astype(np.float32)
+        num_classes_with_nan = 2
+        target[num_classes_with_nan:] = np.nan
+        num_classes = num_classes_with_nan
+        task_type = TaskType.BINARY_CLASSIFICATION
+    df = pd.DataFrame({"target": target, "x": x})
+    dataset = Dataset(
+        df,
+        col_to_stype={
+            "target": torch_frame.stype.categorical,
+            "x": torch_frame.stype.numerical
+        },
+        target_col="target",
+    ).materialize()
+    assert dataset.num_classes == num_classes
+    assert dataset.task_type == task_type

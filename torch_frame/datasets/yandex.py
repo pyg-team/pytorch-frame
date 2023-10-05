@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 import torch_frame
-from torch_frame import TaskType
 
 
 def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
@@ -123,18 +122,3 @@ class Yandex(torch_frame.data.Dataset):
             col_to_stype['label'] = torch_frame.categorical
         super().__init__(df, col_to_stype, target_col='label',
                          split_col='split')
-
-    @property
-    def task_type(self) -> TaskType:
-        r"""
-        Returns:
-            task_type (TaskType): The task type of the current dataset.
-        """
-        if self.name in self.regression_datasets:
-            task_type = TaskType.REGRESSION
-        else:
-            if self.num_classes > 2:
-                task_type = TaskType.MULTICLASS_CLASSIFICATION
-            else:
-                task_type = TaskType.BINARY_CLASSIFICATION
-        return task_type
