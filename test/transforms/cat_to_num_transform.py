@@ -1,5 +1,6 @@
 import pytest
 import torch
+import torch.nn.functional as F
 
 from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.data import Dataset
@@ -12,9 +13,9 @@ from torch_frame.transforms import CatToNumTransform
 def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
         with_nan):
     num_rows = 10
-    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=with_nan,
-                                   stypes=[stype.categorical],
-                                   create_split=True)
+    dataset: Dataset = FakeDataset(
+        num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
+        task_type=TaskType.MULTICLASS_CLASSIFICATION, create_split=True)
     dataset.df['x'] = 0
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
@@ -22,7 +23,8 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
         stype.categorical]
     # the dataset only contains categorical features
     assert (total_cols == len(categorical_features))
-
+    target = F.one_hot(dataset.tensor_frame.y, 3)
+    target_mean = target.float().mean(dim=0)
     tensor_frame: TensorFrame = dataset.tensor_frame
     for col in dataset.feat_cols:
         col_stats = dataset.col_stats[col]
@@ -42,17 +44,20 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat not in transformed_col_stats[col])
     out = transform(tensor_frame)
+
+    # assert that the numerical features are calculated correctly
     assert torch.allclose(
         out.feat_dict[stype.numerical][:, 0].float(),
-        torch.tensor(
-            (num_rows + dataset.tensor_frame.y.mean()) / (num_rows + 1),
-            device=out.device).repeat(num_rows))
+        torch.tensor((num_rows + target_mean[0]) / (num_rows + 1),
+                     device=out.device).repeat(num_rows))
+
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
     assert (stype.categorical not in out.feat_dict)
 
-    # assert that all features are numerical
-    assert (len(out.col_names_dict[stype.numerical]) == total_cols)
+    assert (len(
+        out.col_names_dict[stype.numerical]) == ((dataset.num_classes - 1) *
+                                                 total_cols))
 
 
 @pytest.mark.parametrize('task_type', [
@@ -60,17 +65,18 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     TaskType.BINARY_CLASSIFICATION
 ])
 def test_ordered_target_statistics_encoder(task_type):
-    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
+    num_rows = 10
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)
+    dataset.df['x'] = 0
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     total_numerical_cols = len(
         dataset.tensor_frame.col_names_dict[stype.numerical])
     tensor_frame: TensorFrame = dataset.tensor_frame
-    train_dataset = dataset.get_split_dataset('train')
     transform = CatToNumTransform()
-    transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    transform.fit(dataset.tensor_frame, dataset.col_stats)
     transformed_col_stats = transform.transformed_stats
     for col in transformed_col_stats:
         # ensure that the transformed col stats contain
@@ -90,6 +96,12 @@ def test_ordered_target_statistics_encoder(task_type):
         assert (len(
             dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
                 out.col_names_dict[stype.numerical][total_numerical_cols:]))
+
+        # assert that the numerical features are calculated correctly
+        assert torch.allclose(
+            out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
+            torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
+                         (num_rows + 1), device=out.device).repeat(num_rows))
     else:
         # when the task is multiclass classification, the number of
         # columns changes.
