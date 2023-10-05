@@ -11,9 +11,11 @@ from torch_frame.transforms import CatToNumTransform
 @pytest.mark.parametrize('with_nan', [True, False])
 def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
         with_nan):
-    dataset: Dataset = FakeDataset(num_rows=10, with_nan=with_nan,
+    num_rows = 10
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=with_nan,
                                    stypes=[stype.categorical],
                                    create_split=True)
+    dataset.df['x'] = 0
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     categorical_features = dataset.tensor_frame.col_names_dict[
@@ -22,16 +24,15 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     assert (total_cols == len(categorical_features))
 
     tensor_frame: TensorFrame = dataset.tensor_frame
-    train_dataset = dataset.get_split_dataset('train')
     for col in dataset.feat_cols:
-        col_stats = train_dataset.col_stats[col]
+        col_stats = dataset.col_stats[col]
         # all the original columns are categorical
         for stat in StatType.stats_for_stype(stype.numerical):
             assert (stat not in col_stats)
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat in col_stats)
     transform = CatToNumTransform()
-    transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
+    transform.fit(dataset.tensor_frame, dataset.col_stats)
     transformed_col_stats = transform.transformed_stats
     for col in transformed_col_stats:
         # ensure that the transformed col stats contain
@@ -41,15 +42,16 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat not in transformed_col_stats[col])
     out = transform(tensor_frame)
+    assert torch.allclose(
+        out.feat_dict[stype.numerical][:, 0].float(),
+        torch.tensor((num_rows + dataset.tensor_frame.y.mean()) /
+                     (num_rows + 1)).repeat(num_rows))
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
     assert (stype.categorical not in out.feat_dict)
 
     # assert that all features are numerical
     assert (len(out.col_names_dict[stype.numerical]) == total_cols)
-
-    # assert that all categorical features are turned into numerical features
-    assert (out.col_names_dict[stype.numerical] == categorical_features)
 
 
 @pytest.mark.parametrize('task_type', [
