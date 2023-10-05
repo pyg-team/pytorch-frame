@@ -30,6 +30,31 @@ class TabularBenchmark(torch_frame.data.Dataset):
         'house_16H': 'clf_num',
         'jannis': 'clf_num',
         'pol': 'clf_num',
+        'analcatdata_supreme': 'reg_cat',
+        'Airlines_DepDelay_1M': 'reg_cat',
+        'Allstate_Claims_Severity': 'reg_cat',
+        'Bike_Sharing_Demand': 'reg_cat',
+        'Brazilian_houses': 'reg_cat',
+        'Mercedes_Benz_Greener_Manufacturing': 'reg_cat',
+        'SGEMM_GPU_kernel_performance': 'reg_cat',
+        'diamonds': 'reg_cat',
+        'house_sales': 'reg_cat',
+        'medical_charges': 'reg_cat',
+        'particulate-matter-ukair-2017': 'reg_cat',
+        'seattlecrime6': 'reg_cat',
+        'topo_2_1': 'reg_cat',
+        'visualizing_soil': 'reg_cat',
+        'cpu_act': 'reg_num',
+        'elevators': 'reg_num',
+        'houses': 'reg_num',
+        'cpu_act': 'reg_num',
+        'delays_zurich_transport': 'reg_num',
+        'elevators': 'reg_num',
+        'nyc-taxi-green-dec-2016': 'reg_num',
+        'sulfur': 'reg_num',
+        'superconduct': 'reg_num',
+        'wine_quality': 'reg_num',
+        'yprop_4_1': 'reg_num',
     }
 
     large_datasets = {
@@ -38,6 +63,10 @@ class TabularBenchmark(torch_frame.data.Dataset):
         'Higgs',
         'MiniBooNE',
         'jannis',
+        'delays_zurich_transport',
+        'particulate-matter-ukair-2017',
+        'nyc-taxi-green-dec-2016',
+        'SGEMM_GPU_kernel_performance',
     }
 
     base_url = 'https://huggingface.co/datasets/inria-soda/tabular-benchmark/raw/main/'  # noqa
