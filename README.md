@@ -5,7 +5,9 @@
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
 
-# PyTorch Frame
+<p align="center">
+  <img height="150" src="https://raw.githubusercontent.com/pyg-team/pytorch_frame/master/pyg_sphinx_theme/static/img/pyg_logo_text.svg?sanitize=true" />
+</p>
 
 --------------------------------------------------------------------------------
 
