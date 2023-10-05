@@ -44,6 +44,7 @@ else:
     raise ValueError(f"Unsupported dataset called {args.dataset}")
 
 dataset.materialize()
+assert dataset.task_type.is_classification
 dataset = dataset.shuffle()
 # Split ratio is set to 80% / 10% / 10% (no clear mentioning of split in the
 # original TabNet paper)

@@ -50,6 +50,7 @@ elif args.dataset == "dota2":
 else:
     raise ValueError(f"Unsupported dataset called {args.dataset}")
 dataset.materialize()
+assert dataset.task_type.is_classification
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2012.06678
 # 65% is used for training. 15% of is used for validation.
