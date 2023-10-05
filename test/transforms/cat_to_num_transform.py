@@ -45,7 +45,11 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
             assert (stat not in transformed_col_stats[col])
     out = transform(tensor_frame)
 
-    # assert that the numerical features are calculated correctly
+    # The first categorical column, x, is changed to all 0's initially.
+    # This assert statement makes sure that transform is correct.
+    # The transform uses m-target estimation, where each categorical
+    # feature is transformed to (num_count + target_mean)/(num_rows + 1).
+    # This test tests the correctness in multiclass classification task.
     assert torch.allclose(
         out.feat_dict[stype.numerical][:, 0].float(),
         torch.tensor((num_rows + target_mean[0]) / (num_rows + 1),
@@ -97,7 +101,11 @@ def test_ordered_target_statistics_encoder(task_type):
             dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
                 out.col_names_dict[stype.numerical][total_numerical_cols:]))
 
-        # assert that the numerical features are calculated correctly
+        # The first categorical column, x, is changed to all 0's initially.
+        # This assert statement makes sure that transform is correct.
+        # The transform uses m-target estimation, where each categorical
+        # feature is transformed to (num_count + target_mean)/(num_rows + 1).
+        # This test tests the correctness in multiclass classification task.
         assert torch.allclose(
             out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
             torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
