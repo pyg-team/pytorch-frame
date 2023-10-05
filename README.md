@@ -14,6 +14,8 @@
 [![Slack][slack-image]][slack-url]
 
 **[Documentation](https://pyg-team-pytorch-frame.readthedocs-hosted.com)**
+
+
 PyTorch Frame is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
 
 It consists of various methods for deep learning on tables from a variety of published papers. In addition, it consists of easy-to-use mini-batch loaders and a large number of common benchmark datasets. Plus, it features straightforward interfaces for those looking to load their own datasets.
