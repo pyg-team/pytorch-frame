@@ -65,7 +65,8 @@ def test_ordered_target_statistics_encoder(task_type):
                                    task_type=task_type, create_split=True)
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
-    total_num_cols = len(dataset.tensor_frame.col_names_dict[stype.numerical])
+    total_numerical_cols = len(
+        dataset.tensor_frame.col_names_dict[stype.numerical])
     tensor_frame: TensorFrame = dataset.tensor_frame
     train_dataset = dataset.get_split_dataset('train')
     transform = CatToNumTransform()
@@ -88,15 +89,17 @@ def test_ordered_target_statistics_encoder(task_type):
         assert (len(out.col_names_dict[stype.numerical]) == total_cols)
         assert (len(
             dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
-                out.col_names_dict[stype.numerical][total_num_cols:]))
+                out.col_names_dict[stype.numerical][total_numerical_cols:]))
     else:
         # when the task is multiclass classification, the number of
         # columns changes.
-        assert (len(out.col_names_dict[stype.numerical]) == total_num_cols +
-                (dataset.num_classes - 1) * (total_cols - total_num_cols))
+        assert (len(out.col_names_dict[stype.numerical]) == (
+            total_numerical_cols + (dataset.num_classes - 1) *
+            (total_cols - total_numerical_cols)))
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(dataset.tensor_frame.feat_dict[stype.numerical],
-                     out.feat_dict[stype.numerical][:, :total_num_cols]).all())
+    assert (torch.eq(
+        dataset.tensor_frame.feat_dict[stype.numerical],
+        out.feat_dict[stype.numerical][:, :total_numerical_cols]).all())
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
-            out.col_names_dict[stype.numerical][:total_num_cols])
+            out.col_names_dict[stype.numerical][:total_numerical_cols])
