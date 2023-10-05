@@ -16,7 +16,27 @@
 **[Documentation](https://pyg-team-pytorch-frame.readthedocs-hosted.com)**
 PyTorch Frame is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
 
-It consists of various methods for deep learning on tables from a variety of published papers. In addition, it consists of easy-to-use mini-batch loaders and a large number of common benchmark datasets (based on simple interfaces to create your own), and helpful transforms.
+It consists of various methods for deep learning on tables from a variety of published papers. In addition, it consists of easy-to-use mini-batch loaders and a large number of common benchmark datasets. Plus, it features straightforward interfaces for those looking to load their own datasets.
+
+With PyTorch Frame, we aim to democratize the deep learning experience for tabular data. Whether you're an experienced deep learning researcher, a novice delving into machine learning, or a Kaggle enthusiast, our library makes experimenting with different architectures a breeze.
+
+Our goal is to advance deep learning research for tabular data. Historically, tree-based models have superior performance on tabular datasets. However recent research shows that some deep learning models have comparable, if not better, performance on larger datasets, not to say the benefits on training efficiency on large scale data.
+
+* [Library Highlights](#library-highlights)
+* [Architecture Overview](#architecture-overview)
+* [Implemented Deep Tabular Models](#implemented-gnn-models)
+
+## Library Highlights
+
+Whether you are a machine learning researcher or first-time user of machine learning toolkits, here are some reasons to use PyTorchFrame for deep learning on tabular dataset.
+
+* **Easy-to-use and unified API**:
+  PyG is *PyTorch-on-the-rocks*: It utilizes a tensor-centric API and keeps design principles close to vanilla PyTorch.
+  If you are already familiar with PyTorch, utilizing PyTorch Frame is straightforward.
+* **Comprehensive and well-maintained Deep Tabular Models**:
+  Most of the state-of-the-art Deep Tabular architectures have been implemented by library developers and are ready to be applied.
+* **PyG Integration**:
+  Pytorch Frame can be integrated with PyG. Node feature can be represented with `TensorFrame`, which can include a variety of semantic types, including numerical features, categorical features, text, etc.
 
 ## Architecture Overview
 
@@ -28,7 +48,7 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 ## Implemented Deep Tabular Models
 
-We list currently supported models according to category:
+We list currently supported deep tabular models:
 
 **Models:**
 
