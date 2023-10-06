@@ -110,9 +110,14 @@ def test_equal_tensor_frame(get_fake_tensor_frame):
     assert tf1 != tf2
     assert tf2 != tf1
 
-    # Test difference in y
+    # Test difference in y (Tensor versus None)
     tf2 = copy.copy(tf1)
     tf2.y = None
+    assert tf1 != tf2
+    assert tf2 != tf1
+
+    # Test difference in y (Tensor versus Tensor)
+    tf2.y = torch.randn(tf1.y.shape)
     assert tf1 != tf2
     assert tf2 != tf1
 
