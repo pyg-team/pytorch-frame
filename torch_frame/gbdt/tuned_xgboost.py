@@ -157,7 +157,7 @@ class XGBoost(GBDT):
                               callbacks=[pruning_callback])
         pred = boost.predict(dvalid)
         score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
-                                    torch.from_numpy(pred))
+                                    torch.from_numpy(pred))[self.metric]
         return score
 
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,

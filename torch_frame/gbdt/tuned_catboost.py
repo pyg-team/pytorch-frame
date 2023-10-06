@@ -58,6 +58,39 @@ class CatBoost(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
         return df, y.numpy(), cat_features
 
+    def _predict_helper(
+        self,
+        model: catboost.CatBoost,
+        x: DataFrame,
+    ) -> np.ndarray:
+        r"""A helper function that applies the catboost model on DataFrame
+        :obj:`x`.
+
+        Args:
+            model (catboost.CatBoost): The catboost model.
+            x (DataFrame): The input`DataFrame.
+
+        Returns:
+            pred (np.nparray): The prediction output.
+        """
+        if self.task_type == TaskType.BINARY_CLASSIFICATION:
+            prediction_type = "Probability"
+        elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            prediction_type = "Class"
+        else:
+            prediction_type = "RawFormulaVal"
+
+        pred = model.predict(x, prediction_type=prediction_type)
+
+        if self.task_type == TaskType.BINARY_CLASSIFICATION:
+            # Get the positive probability
+            pred = pred[:, 1]
+        elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            # Flatten (num_data, 1) into (num_data,)
+            pred = pred.flatten()
+
+        return pred
+
     def objective(self, trial, tf_train: TensorFrame, tf_val: TensorFrame,
                   num_boost_round: int):
         r""" Objective function to be optimized.
@@ -92,17 +125,15 @@ class CatBoost(GBDT):
         }
         if self.task_type == TaskType.REGRESSION:
             self.params["objective"] = trial.suggest_categorical(
-                "objective", ["RMSE", "MAE", "MAPE"])
-            self.params["eval_metric"] = trial.suggest_categorical(
-                "eval_metric", ["RMSE", "MAE", "MAPE"])
+                "objective", ["RMSE", "MAE"])
+            self.params["eval_metric"] = "RMSE"
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
             self.params["objective"] = trial.suggest_categorical(
-                "objective", ["Logloss", "CrossEntropy"])
-            self.params["eval_metric"] = trial.suggest_categorical(
-                "eval_metric", ["Logloss", "CrossEntropy"])
+                "objective", ["CrossEntropy", "Logloss"])
+            self.params["eval_metric"] = "AUC"
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "MultiClass"
-            self.params["eval_metric"] = "MultiClass"
+            self.params["eval_metric"] = "Accuracy"
             self.params["classes_count"] = self._num_classes or len(
                 np.unique(tf_train.y.cpu().numpy()))
         else:
@@ -114,13 +145,9 @@ class CatBoost(GBDT):
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
                           eval_set=[(eval_x, eval_y)],
                           early_stopping_rounds=50, logging_level="Silent")
-        pred = boost.predict(
-            eval_x, prediction_type="Class" if self.task_type in [
-                TaskType.BINARY_CLASSIFICATION,
-                TaskType.MULTICLASS_CLASSIFICATION
-            ] else "RawFormulaVal")
+        pred = self._predict_helper(boost, eval_x)
         score = self.compute_metric(torch.from_numpy(eval_y),
-                                    torch.from_numpy(pred))
+                                    torch.from_numpy(pred))[self.metric]
         return score
 
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
@@ -143,9 +170,5 @@ class CatBoost(GBDT):
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
         test_x, _, _ = self._to_catboost_input(tf_test)
-        pred = self.model.predict(
-            test_x, prediction_type="Class" if self.task_type in [
-                TaskType.BINARY_CLASSIFICATION,
-                TaskType.MULTICLASS_CLASSIFICATION
-            ] else "RawFormulaVal")
+        pred = self._predict_helper(self.model, test_x)
         return torch.from_numpy(pred).to(device)
