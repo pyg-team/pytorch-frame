@@ -27,7 +27,7 @@ Our aspirations for PyTorch Frame are twofold:
 
 1. **To Propel Deep Learning Research for Tabular Data:** Historically, tree-based models have superior performance on tabular datasets. However recent research shows that some deep learning models have comparable, if not better, performance on larger datasets. This is not to mention the advantages in training efficiency with massive data scales.
 
-2. **To Support Enhanced Semantic Types and Model Architectures** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences and SMILES(Simplified Molecular Input Line Entry System) strings. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
+2. **To Support Enhanced Semantic Types and Model Architectures:** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences and SMILES(Simplified Molecular Input Line Entry System) strings. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
