@@ -100,6 +100,35 @@ class TensorFrame:
     def __len__(self) -> int:
         return self.num_rows
 
+    def __eq__(self, other: 'TensorFrame') -> bool:
+        # Match instance type
+        if not isinstance(other, TensorFrame):
+            return False
+        # Match length
+        if len(self) != len(other):
+            return False
+        # Match target
+        if self.y is not None:
+            if other.y is None:
+                return False
+            elif not torch.allclose(other.y, self.y):
+                return False
+        else:
+            if other.y is not None:
+                return False
+        # Match col_names_dict
+        if self.col_names_dict != other.col_names_dict:
+            return False
+        # Match feat_dict
+        for stype_name in self.feat_dict.keys():
+            if not torch.allclose(self.feat_dict[stype_name],
+                                  other.feat_dict[stype_name]):
+                return False
+        return True
+
+    def __neq__(self, other: 'TensorFrame') -> bool:
+        return not self.__eq__(other)
+
     def __repr__(self) -> str:
         stype_repr = '\n'.join([
             f'  {stype.value} ({len(col_names)}): {col_names},'

@@ -246,12 +246,12 @@ class Dataset(ABC):
     def task_type(self) -> TaskType:
         r"""The task type of the dataset."""
         assert self.target_col is not None
-        if self.col_to_stype[self.target_col] == torch_frame.stype.categorical:
+        if self.col_to_stype[self.target_col] == torch_frame.categorical:
             if self.num_classes == 2:
                 return TaskType.BINARY_CLASSIFICATION
             else:
                 return TaskType.MULTICLASS_CLASSIFICATION
-        elif self.col_to_stype[self.target_col] == torch_frame.stype.numerical:
+        elif self.col_to_stype[self.target_col] == torch_frame.numerical:
             return TaskType.REGRESSION
         else:
             raise ValueError("Task type cannot be inferred.")

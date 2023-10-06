@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import torch
 
@@ -91,3 +93,37 @@ def test_empty_tensor_frame():
     }
     with pytest.raises(RuntimeError, match='The keys of feat_dict'):
         TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
+
+
+def test_equal_tensor_frame(get_fake_tensor_frame):
+    tf1 = get_fake_tensor_frame(num_rows=10)
+
+    # Test equal
+    tf2 = copy.copy(tf1)
+    assert tf1 == tf2
+    assert tf2 == tf1
+
+    # Test difference in col_names_dict
+    tf2.col_names_dict[torch_frame.numerical] = [
+        name + '_' for name in tf1.col_names_dict[torch_frame.numerical]
+    ]
+    assert tf1 != tf2
+    assert tf2 != tf1
+
+    # Test difference in y
+    tf2 = copy.copy(tf1)
+    tf2.y = None
+    assert tf1 != tf2
+    assert tf2 != tf1
+
+    # Test difference in feat_dict
+    tf2 = copy.copy(tf1)
+    tf2.feat_dict[torch_frame.numerical] = torch.randn(
+        tf2.feat_dict[torch_frame.numerical].shape)
+    assert tf1 != tf2
+    assert tf2 != tf1
+
+    # Test difference in length
+    tf2 = get_fake_tensor_frame(num_rows=11)
+    assert tf1 != tf2
+    assert tf2 != tf1

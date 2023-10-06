@@ -112,8 +112,8 @@ def test_num_classes(with_nan):
     dataset = Dataset(
         df,
         col_to_stype={
-            "target": torch_frame.stype.categorical,
-            "x": torch_frame.stype.numerical
+            "target": torch_frame.categorical,
+            "x": torch_frame.numerical
         },
         target_col="target",
     ).materialize()
