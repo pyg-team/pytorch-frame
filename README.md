@@ -8,6 +8,7 @@
 <p align="center">
   <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
 </p>
+
 **The Deep Learning framework to build moular architectures on multimodal heterogeneous data.**
 
 --------------------------------------------------------------------------------
