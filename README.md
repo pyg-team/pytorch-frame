@@ -4,10 +4,12 @@
 [contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
+<div align="center">
 
-<p align="center">
-  <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
-</p>
+<img width="800px" style="max-width: 100%;" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
+
+<br/>
+<br/>
 
 **The Deep Learning framework to build moular architectures on multimodal heterogeneous data.**
 
@@ -16,6 +18,8 @@
 [![Testing Status][testing-image]][testing-url]
 [![Contributing][contributing-image]][contributing-url]
 [![Slack][slack-image]][slack-url]
+
+</div>
 
 **[Documentation](https://pyg-team-pytorch-frame.readthedocs-hosted.com)**
 
