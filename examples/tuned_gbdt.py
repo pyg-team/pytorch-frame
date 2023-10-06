@@ -85,5 +85,6 @@ gbdt = gbdt_cls_dict[args.gbdt_type](task_type=task_type,
 gbdt.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
           num_trials=20)
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
-score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
-print(score)
+metric = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
+# metric in the form of e.g., {'acc': 0.75} or {'rocauc': 0.75}
+print(metric)
