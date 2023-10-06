@@ -95,12 +95,13 @@ class GBDT:
 
     @torch.no_grad()
     def compute_metric(self, target: Tensor, pred: Tensor) -> Dict[str, float]:
-        r"""Compute evaluation metric given test target labels :obj:`Tensor`
-        and pred :obj:`Tensor`. Target contains the target values or labels;
-        pred contains the prediction output from calling `predict()` function.
+        r"""Compute evaluation metric given target labels :obj:`Tensor` and
+        pred :obj:`Tensor`. Target contains the target values or labels; pred
+        contains the prediction output from calling `predict()` function.
 
         Returns:
-            metric (Dict[str, float]): The metric name and value on test data.
+            metric (Dict[str, float]): A dictionary containing the metric name
+                and the metric value.
         """
         if self.metric == 'rmse':
             metric = {
