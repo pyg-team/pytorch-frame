@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Dict, List
 
 import torch
@@ -7,7 +8,7 @@ import torch_frame
 from torch_frame import TensorFrame
 
 
-def cat_tf(tf_list: List[TensorFrame], along: str) -> TensorFrame:
+def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:
     r"""Concatenates a list of :class:`TensorFrame` objects along a specified
     axis (:obj:`row` or :obj:`col`). If set to :obj:`row`, this will
     concatenate the tensor frames along the rows, keeping columns unchanced.
@@ -26,21 +27,36 @@ def cat_tf(tf_list: List[TensorFrame], along: str) -> TensorFrame:
         raise RuntimeError(
             "Cannot concatenate an empty list of tensor frames.")
     if along == 'row':
-        return _cat_tf_row(tf_list)
+        return _cat_row(tf_list)
     elif along == 'col':
-        return _cat_tf_col(tf_list)
+        return _cat_col(tf_list)
     else:
         raise ValueError(
             f"'along' must be either 'row' or 'col' (got {along}).")
 
 
-def _cat_tf_row(tf_list: List[TensorFrame]) -> TensorFrame:
+def _cat_row(tf_list: List[TensorFrame]) -> TensorFrame:
+    col_names_dict = tf_list[0].col_names_dict
+    for tf in tf_list[1:]:
+        if tf.col_names_dict != col_names_dict:
+            raise RuntimeError(
+                "Cannot perform cat(..., along='row') since col_names_dict of "
+                "given tensor frames do not match.")
+    if tf_list[0].y is None:
+        if not all([tf.y is None for tf in tf_list]):
+            raise RuntimeError(
+                "Cannot perform cat(..., along='row') since 'y' attribute of "
+                "given tensor frames much match (expect `None`)")
+    else:
+        if not all([tf.y is not None for tf in tf_list]):
+            raise RuntimeError(
+                "Cannot perform cat(..., along='row') since 'y' attribute of "
+                "given tensor frames much match (expect `Tensor`)")
+
     feat_dict: Dict[torch_frame.stype, List[Tensor]] = {}
-    for stype in tf_list[0].feat_dict.keys():
-        feat_dict[stype] = torch.cat(
-            [tf.feat_dict[stype] for tf in tf_list],
-            dim=0,
-        )
+    for stype in col_names_dict.keys():
+        feat_dict[stype] = torch.cat([tf.feat_dict[stype] for tf in tf_list],
+                                     dim=0)
     y = None
     if tf_list[0].y is not None:
         y = torch.cat([tf.y for tf in tf_list], dim=0)
@@ -48,37 +64,33 @@ def _cat_tf_row(tf_list: List[TensorFrame]) -> TensorFrame:
                        col_names_dict=tf_list[0].col_names_dict, y=y)
 
 
-def _raise_on_non_matching_y(tf_list: List[TensorFrame]):
-    msg = "torch.cat_tf(along = 'col') requires y's in tensor frames to match."
-    y = tf_list[0].y
-    for tf in tf_list[1:]:
-        if y is None:
-            if tf.y is not None:
-                raise RuntimeError(msg)
-        else:
-            if tf.y is None:
-                raise RuntimeError(msg)
-            elif not torch.allclose(y, tf.y):
-                raise RuntimeError(msg)
+def _cat_col(tf_list: List[TensorFrame]) -> TensorFrame:
+    idx_with_non_nan_y = []
+    for i, tf in enumerate(tf_list):
+        if tf.y is not None:
+            idx_with_non_nan_y.append(i)
+    if len(idx_with_non_nan_y) == 0:
+        y = None
+    elif len(idx_with_non_nan_y) == 1:
+        y = tf_list[idx_with_non_nan_y[0]].y
+    else:
+        raise RuntimeError(
+            "Cannot perform cat(..., along='col') since given tensor frames "
+            "contain more than one tensor frame with non-None y attribute.")
 
-
-def _cat_tf_col(tf_list: List[TensorFrame]) -> TensorFrame:
-    _raise_on_non_matching_y(tf_list)
-    y = tf_list[0].y
     # Gather all stypes
-    stypes = set().union(*[tf.col_names_dict.keys() for tf in tf_list])
-    feat_list_dict: Dict[torch_frame.stype, List[Tensor]] = {
-        stype: []
-        for stype in stypes
-    }
-    col_names_dict: Dict[torch_frame.stype, List[str]] = {
-        stype: []
-        for stype in stypes
-    }
+    feat_list_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+    col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
     for tf in tf_list:
         for stype in tf.col_names_dict.keys():
             feat_list_dict[stype].append(tf.feat_dict[stype])
             col_names_dict[stype].extend(tf.col_names_dict[stype])
+    # Check duplicates in col_names_dict
+    for stype, col_names in col_names_dict.items():
+        if len(col_names) != len(set(col_names)):
+            raise RuntimeError(
+                f"Cannot perform cat(..., along='col') since {stype} contains "
+                f"duplicated column names.")
     feat_dict = {
         stype: torch.cat(feat_list, dim=1)
         for stype, feat_list in feat_list_dict.items()

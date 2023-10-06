@@ -1,7 +1,7 @@
 from .stype import stype, numerical, categorical, text_embedded
 from .data import TensorFrame
 from .typing import TaskType, DataFrame, NAStrategy
-from torch_frame.utils import save_tf, load_tf, cat_tf  # noqa
+from torch_frame.utils import save_tf, load_tf, cat  # noqa
 import torch_frame.data  # noqa
 import torch_frame.datasets  # noqa
 import torch_frame.nn  # noqa
@@ -20,6 +20,6 @@ __all__ = [
     'TensorFrame',
     'save_tf',
     'load_tf',
-    'cat_tf',
+    'cat',
     '__version__',
 ]

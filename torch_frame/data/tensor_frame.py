@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 from torch import Tensor
@@ -100,7 +100,7 @@ class TensorFrame:
     def __len__(self) -> int:
         return self.num_rows
 
-    def __eq__(self, other: 'TensorFrame') -> bool:
+    def __eq__(self, other: Any) -> bool:
         # Match instance type
         if not isinstance(other, TensorFrame):
             return False
@@ -129,7 +129,7 @@ class TensorFrame:
                 return False
         return True
 
-    def __neq__(self, other: 'TensorFrame') -> bool:
+    def __neq__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
