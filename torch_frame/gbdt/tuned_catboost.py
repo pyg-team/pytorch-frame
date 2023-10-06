@@ -110,7 +110,8 @@ class CatBoost(GBDT):
             trial.suggest_float("eta", 1e-6, 1.0, log=True),
         }
         if self.task_type == TaskType.REGRESSION:
-            self.params["objective"] = "RMSE"
+            self.params["objective"] = trial.suggest_categorical(
+                "objective", ["RMSE", "MAE"])
             self.params["eval_metric"] = "RMSE"
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
             self.params["objective"] = trial.suggest_categorical(
