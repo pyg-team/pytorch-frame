@@ -48,6 +48,8 @@ dataset = Yandex(root=path, name=args.dataset)
 # `TensorFrame` stores `DataFrame` features as PyTorch tensors organized by
 # their stype (semantic type), e.g., categorical, numerical.
 dataset.materialize()
+# This tutorial only supports training/eval for classification.
+assert dataset.task_type.is_classification
 
 # Get pre-defined split
 train_dataset = dataset.get_split_dataset('train')
