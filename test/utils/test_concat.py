@@ -2,7 +2,7 @@ import torch_frame
 from torch_frame import TensorFrame
 
 
-def test_cat_df_along_row(get_fake_tensor_frame):
+def test_cat_tensor_frames_along_row(get_fake_tensor_frame):
     num_rows = 10
     num_repeats = 5
     tf = get_fake_tensor_frame(num_rows=num_rows)
@@ -13,7 +13,7 @@ def test_cat_df_along_row(get_fake_tensor_frame):
         assert tf_mini == tf
 
 
-def test_cat_df_along_col(get_fake_tensor_frame):
+def test_cat_tensor_frames_along_col(get_fake_tensor_frame):
     num_rows = 10
     tf = get_fake_tensor_frame(num_rows=num_rows)
     stypes = list(tf.col_names_dict.keys())
