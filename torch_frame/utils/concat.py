@@ -9,10 +9,10 @@ from torch_frame import TensorFrame
 
 def cat_tf(tf_list: List[TensorFrame], along: str) -> TensorFrame:
     r"""Concatenates a list of :class:`TensorFrame` objects along a specified
-    axis (:obj:`row` or :obj:`col`). If set to :obj:`row`, we will concatenate
-    the tensor frames along the rows, keeping columns unchanced. If set to
-    :obj:`col`, we will concatenate the tensor frames along the columns,
-    which increases the columns while keeping the rows unchanced.
+    axis (:obj:`row` or :obj:`col`). If set to :obj:`row`, this will
+    concatenate the tensor frames along the rows, keeping columns unchanced.
+    If set to :obj:`col`, this will concatenate the tensor frames along the
+    columns, which increases the columns while keeping the rows unchanced.
 
     Args:
         tf_list (List[TensorFrame]): A list of tensor frames to concatenate.
