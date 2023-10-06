@@ -121,8 +121,11 @@ class TensorFrame:
             return False
         # Match feat_dict
         for stype_name in self.feat_dict.keys():
-            if not torch.allclose(self.feat_dict[stype_name],
-                                  other.feat_dict[stype_name]):
+            self_feat = self.feat_dict[stype_name]
+            other_feat = other.feat_dict[stype_name]
+            if self_feat.shape != other_feat.shape:
+                return False
+            if not torch.allclose(self_feat, other_feat):
                 return False
         return True
 
