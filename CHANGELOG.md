@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added Github front page ([#93]https://github.com/pyg-team/pytorch-frame/pull/93)
 - Infer `task_type` in dataset ([#97](https://github.com/pyg-team/pytorch-frame/pull/97)).
 - Added `text_embedded` example. ([#95](https://github.com/pyg-team/pytorch-frame/pull/95))
 - Added multimodal tabular text benchmark datasets. ([#92](https://github.com/pyg-team/pytorch-frame/pull/92))
