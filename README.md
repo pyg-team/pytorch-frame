@@ -11,7 +11,7 @@
 <br/>
 <br/>
 
-**The Deep Learning framework to build moular architectures on multimodal heterogeneous data.**
+**A modular deep learning framework for building neural network models on heterogeneous tabular data.**
 
 --------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ With PyTorch Frame, we aim to democratize the deep learning research for tabular
 
 Our aspirations for PyTorch Frame are twofold:
 
-1. **To Propel Deep Learning Research for Tabular Data:** Historically, tree-based models have superior performance on tabular datasets. However, tree-based models have many limitations, for example, they cannot be trained with downstream models like GNNs, hence ahrd to be integrated into larger systems. Tree-based models also cannot handle diverse column types, like text or sequences. Recent research shows that some deep learning models have comparable, if not better, performance on larger datasets. This is not to mention the advantages in training efficiency with massive data scales.
+1. **To Propel Deep Learning Research for Tabular Data:** Historically, tree-based models have superior performance on tabular datasets. However, tree-based models have many limitations, for example, they cannot be trained with downstream models like GNNs, RNNs and Transformers, hence hard to be integrated into larger systems. Tree-based models also cannot handle diverse column types, like text or sequences. Recent research shows that some deep learning models have comparable, if not better, performance on larger datasets. This is not to mention the advantages in training efficiency with massive data scales.
 
 2. **To Support Enhanced Semantic Types and Model Architectures:** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
 
@@ -45,8 +45,8 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
 
 * **Versitility with Tabular Data**:
   PyTorch Frame provides inhouse support for multimodal learning on a variety of semantic types, including categories, numbers and text.
-* **Extensive Deep Tabular Models**:
-  Most of the state-of-the-art deep learning models for tabular data have been implemented by library developers and are ready to be applied.
+* **Modular Implementation of Diverse Models**:
+  Many existing deep learning models are implemented in a modular way. See next section for [more details](#architecture-overview).
 * **Empowerment through Multimodal Learning**:
   PyTorch Frame can mesh with large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
 * **PyG Integration**:
@@ -60,11 +60,12 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
   <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/modular.png" />
 </p>
 
-In essence, this modular setup empowers users to effortlessly experiment with myriad architectures.
-The `materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
-The `FeatureEncoder` encodes different semantic types into hidden embeddings.
-The `TableConv` handles column-wise interactions between different semantic types.
-The `Decoder` summaries the embeddings and generates the prediction outputs.
+In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
+
+* `materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `FeatureEncoder` encodes different semantic types into hidden embeddings.
+* `TableConv` handles column-wise interactions between different semantic types.
+* `Decoder` summaries the embeddings and generates the prediction outputs.
 
 ## Implemented Deep Tabular Models
 
