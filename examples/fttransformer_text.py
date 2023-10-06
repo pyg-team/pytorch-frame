@@ -20,6 +20,7 @@ from torch_frame.nn import (
 )
 
 # Text embedded:
+# ============== wine_reviews ===============
 # Best Val Acc: 0.7946, Best Test Acc: 0.7878
 
 
@@ -60,6 +61,8 @@ dataset = MultimodalTextBenchmark(
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
 
+is_classification = dataset.task_type.is_classification
+
 train_dataset = dataset.get_split_dataset('train')[:0.9]
 val_dataset = dataset.get_split_dataset('train')[0.9:]
 test_dataset = dataset.get_split_dataset('test')
@@ -97,7 +100,10 @@ def train(epoch: int) -> float:
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         pred = model(tf)
-        loss = F.cross_entropy(pred, tf.y)
+        if is_classification:
+            loss = F.cross_entropy(pred, tf.y)
+        else:
+            loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss) * len(tf.y)
@@ -113,17 +119,30 @@ def test(loader: DataLoader) -> float:
 
     for tf in loader:
         pred = model(tf)
-        pred_class = pred.argmax(dim=-1)
-        accum += float((tf.y == pred_class).sum())
+        if is_classification:
+            pred_class = pred.argmax(dim=-1)
+            accum += float((tf.y == pred_class).sum())
+        else:
+            accum += float(
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
         total_count += len(tf.y)
 
-    accuracy = accum / total_count
-    return accuracy
+    if is_classification:
+        accuracy = accum / total_count
+        return accuracy
+    else:
+        rmse = (accum / total_count)**0.5
+        return rmse
 
 
-metric = 'Acc'
-best_val_metric = 0
-best_test_metric = 0
+if is_classification:
+    metric = 'Acc'
+    best_val_metric = 0
+    best_test_metric = 0
+else:
+    metric = 'RMSE'
+    best_val_metric = float('inf')
+    best_test_metric = float('inf')
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
@@ -131,8 +150,12 @@ for epoch in range(1, args.epochs + 1):
     val_metric = test(val_loader)
     test_metric = test(test_loader)
 
-    best_val_metric = val_metric
-    best_test_metric = test_metric
+    if is_classification and val_metric > best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+    elif not is_classification and val_metric < best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
