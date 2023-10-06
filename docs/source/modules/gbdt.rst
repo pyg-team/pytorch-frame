@@ -7,7 +7,7 @@ torch_frame.gbdt
 .. currentmodule:: torch_frame.gbdt
 
 Gradient Boosted Decision Trees
---------
+-------------------------------
 
 .. autosummary::
    :nosignatures:
