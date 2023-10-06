@@ -27,8 +27,11 @@ def test_catboost(gbdt_cls, task_type):
     pred = gbdt.predict(tf_test=dataset.tensor_frame)
     score = gbdt.compute_metric(dataset.tensor_frame.y, pred)[gbdt.metric]
     if task_type == TaskType.REGRESSION:
-        # score is root mean squared error
+        assert gbdt.metric == 'rmse'
         assert (score >= 0)
-    else:
-        # score is accuracy
+    elif task_type == TaskType.BINARY_CLASSIFICATION:
+        assert gbdt.metric == 'rocauc'
+        assert (0 <= score <= 1)
+    elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
+        assert gbdt.metric == 'acc'
         assert (0 <= score <= 1)
