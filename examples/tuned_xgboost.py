@@ -53,4 +53,4 @@ xgb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
          num_trials=10)
 pred = xgb.predict(tf_test=test_dataset.tensor_frame)
 score = xgb.compute_metric(test_dataset.tensor_frame.y, pred)
-print(f'Test acc: {score}')
+print(score)

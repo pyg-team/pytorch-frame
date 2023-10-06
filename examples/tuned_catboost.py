@@ -53,4 +53,4 @@ cb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
         num_trials=20)
 pred = cb.predict(tf_test=test_dataset.tensor_frame)
 score = cb.compute_metric(test_dataset.tensor_frame.y, pred)
-print(f'Test acc: {score}')
+print(score)

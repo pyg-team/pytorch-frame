@@ -1,7 +1,8 @@
 from abc import abstractmethod
-from typing import Optional
+from typing import Dict, Optional
 
 import torch
+from sklearn.metrics import roc_auc_score
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame
@@ -63,25 +64,47 @@ class GBDT:
         """
         if not self.is_fitted:
             raise RuntimeError(
-                f"{self.__class__.__name__}' is not yet fitted. "
-                "Please run `tune()` first before attempting "
-                "to predict.")
-        return self._predict(tf_test)
+                f"{self.__class__.__name__}' is not yet fitted. Please run "
+                f"`tune()` first before attempting to predict.")
+        pred = self._predict(tf_test)
+        if self.task_type == TaskType.MULTILABEL_CLASSIFICATION:
+            assert pred.ndim == 2
+        else:
+            assert pred.ndim == 1
+        assert len(pred) == len(tf_test)
+        return pred
+
+    @property
+    def metric(self) -> str:
+        r"""Metric to compute for different tasks. root mean squared error for
+        regression, ROC-AUC for binary classification, and accuracy for
+        multi-label classification task."""
+        if self.task_type == TaskType.REGRESSION:
+            return 'rmse'
+        elif self.task_type == TaskType.BINARY_CLASSIFICATION:
+            return 'rocauc'
+        elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            return 'acc'
+        else:
+            raise ValueError(f"metric is not defined for {self.task_type}")
 
     @torch.no_grad()
-    def compute_metric(self, target: Tensor, pred: Tensor) -> float:
+    def compute_metric(self, target: Tensor, pred: Tensor) -> Dict[str, float]:
         r"""Compute evaluation metric given test target labels :obj:`Tensor`
         and pred :obj:`Tensor`. Target contains the target values or labels;
         pred contains the prediction output from calling `predict()` function.
 
         Returns:
-            metric (float): The metric on test data, root mean squared error
-                for regression task and accuracy for classification task.
+            metric (Dict[str, float]): The metric name and value on test data.
         """
-        if self.task_type == TaskType.REGRESSION:
-            metric_score = (pred - target).square().mean().sqrt().item()
-        else:
+        if self.metric == 'rmse':
+            metric = {
+                self.metric: (pred - target).square().mean().sqrt().item()
+            }
+        elif self.metric == 'rocauc':
+            metric = {self.metric: roc_auc_score(target.cpu(), pred.cpu())}
+        elif self.metric == 'acc':
             total_correct = (target == pred).sum().item()
             test_size = len(target)
-            metric_score = total_correct / test_size
-        return metric_score
+            metric = {self.metric: total_correct / test_size}
+        return metric
