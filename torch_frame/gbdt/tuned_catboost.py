@@ -63,18 +63,32 @@ class CatBoost(GBDT):
         model: catboost.CatBoost,
         x: DataFrame,
     ) -> np.ndarray:
+        r"""A helper function that applies the catboost model on DataFrame
+        :obj:`x`.
+
+        Args:
+            model (catboost.CatBoost): The catboost model.
+            x (DataFrame): The input`DataFrame.
+
+        Returns:
+            pred (np.nparray): The prediction output.
+        """
         if self.task_type == TaskType.BINARY_CLASSIFICATION:
             prediction_type = "Probability"
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             prediction_type = "Class"
         else:
             prediction_type = "RawFormulaVal"
+
         pred = model.predict(x, prediction_type=prediction_type)
+
         if self.task_type == TaskType.BINARY_CLASSIFICATION:
             # Get the positive probability
             pred = pred[:, 1]
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            # Flatten (num_data, 1) into (num_data,)
             pred = pred.flatten()
+
         return pred
 
     def objective(self, trial, tf_train: TensorFrame, tf_val: TensorFrame,
