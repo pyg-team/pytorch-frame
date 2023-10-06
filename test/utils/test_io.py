@@ -5,7 +5,7 @@ import tempfile
 import torch
 
 import torch_frame
-from torch_frame import load_tf, save_tf
+from torch_frame import load, save
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import TensorFrame
 from torch_frame.datasets import FakeDataset
@@ -13,7 +13,7 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
 
 TEST_DIR = tempfile.TemporaryDirectory()
 TEST_DATASET_NAME = 'test_dataset_tf.pt'
-TEST_SAVE_LOAD_NAME = 'test_save_load_tf.pt'
+TEST_SAVE_LOAD_NAME = 'tf.pt'
 
 
 def teardown_module():
@@ -69,7 +69,7 @@ def test_dataset_cache():
     compare_tfs(dataset.tensor_frame, tf)
 
 
-def test_save_load_tf():
+def test_save_load_tensor_frame():
     num_rows = 10
     out_channels = 8
     text_embedder_cfg = TextEmbedderConfig(
@@ -78,8 +78,8 @@ def test_save_load_tf():
     dataset.materialize()
 
     path = osp.join(TEST_DIR.name, TEST_SAVE_LOAD_NAME)
-    save_tf(dataset.tensor_frame, dataset.col_stats, path)
+    save(dataset.tensor_frame, dataset.col_stats, path)
 
-    tf, col_stats = load_tf(path)
+    tf, col_stats = load(path)
     assert dataset.col_stats == col_stats
     compare_tfs(dataset.tensor_frame, tf)

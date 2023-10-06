@@ -291,7 +291,7 @@ class Dataset(ABC):
 
         if path is not None and osp.isfile(path):
             # Load tensor_frame and col_stats
-            self._tensor_frame, self._col_stats = torch_frame.load_tf(
+            self._tensor_frame, self._col_stats = torch_frame.load(
                 path, device)
             # Instantiate the converter
             self._to_tensor_frame_converter = self._get_tensorframe_converter()
@@ -321,7 +321,7 @@ class Dataset(ABC):
 
         if path is not None:
             # Cache the dataset if user specifies the path
-            torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
+            torch_frame.save(self._tensor_frame, self._col_stats, path)
 
         return self
 
