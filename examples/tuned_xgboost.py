@@ -17,7 +17,6 @@ import random
 import numpy as np
 import torch
 
-from torch_frame import TaskType
 from torch_frame.datasets import TabularBenchmark
 from torch_frame.gbdt import XGBoost
 
@@ -45,8 +44,11 @@ dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
-xgb = XGBoost(task_type=TaskType.MULTICLASS_CLASSIFICATION,
-              num_classes=dataset.num_classes)
+if dataset.task_type.is_classification:
+    num_classes = dataset.num_classes
+else:
+    num_classes = None
+xgb = XGBoost(task_type=dataset.task_type, num_classes=num_classes)
 xgb.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
          num_trials=10)
 pred = xgb.predict(tf_test=test_dataset.tensor_frame)
