@@ -245,7 +245,16 @@ class Dataset(ABC):
     @property
     def task_type(self) -> TaskType:
         r"""The task type of the dataset."""
-        raise NotImplementedError
+        assert self.target_col is not None
+        if self.col_to_stype[self.target_col] == torch_frame.stype.categorical:
+            if self.num_classes == 2:
+                return TaskType.BINARY_CLASSIFICATION
+            else:
+                return TaskType.MULTICLASS_CLASSIFICATION
+        elif self.col_to_stype[self.target_col] == torch_frame.stype.numerical:
+            return TaskType.REGRESSION
+        else:
+            raise ValueError("Task type cannot be inferred.")
 
     @property
     @requires_post_materialization
@@ -256,7 +265,9 @@ class Dataset(ABC):
                 f"column ({self.target_col}) stats contains StatType.COUNT, "
                 f"but only the following target column stats are calculated: "
                 f"{list(self.col_stats[self.target_col].keys())}.")
-        return len(self.col_stats[self.target_col][StatType.COUNT][0])
+        num_classes = len(self.col_stats[self.target_col][StatType.COUNT][0])
+        assert num_classes > 1
+        return num_classes
 
     # Materialization #########################################################
 

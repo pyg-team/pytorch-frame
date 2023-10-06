@@ -47,6 +47,9 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = TabularBenchmark(root=path, name=args.dataset)
 dataset.materialize()
+# Only support classification training/eval for now.
+# TODO: support regression tasks.
+assert dataset.task_type.is_classification
 dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2207.08815
 # 70% is used for training. 30% of the remaining is used for validation.
