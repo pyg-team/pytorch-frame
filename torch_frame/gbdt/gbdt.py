@@ -60,7 +60,12 @@ class GBDT:
 
         Returns:
             pred (Tensor): The prediction output :obj:`Tensor` on the fitted
-                model.
+                model. pred depends on the task type.
+                - If regression, pred contains numerical value prediction.
+                - If binary classification, pred contains the probability of
+                  being positive.
+                - If multi-class classification, pred contains the class label
+                  predictions.
         """
         if not self.is_fitted:
             raise RuntimeError(
