@@ -8,7 +8,27 @@ class Titanic(torch_frame.data.Dataset):
     <https://www.kaggle.com/competitions/titanic>`_.
     The Titanic dataset is known as the MNIST equivalent for tabular learning.
     The goal is to predict which passenger survived using passenger data
-    (*i.e.* gender, age, etc)."""
+    (*i.e.* gender, age, etc).
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+        - #cols (nume)
+        - #cols (categ)
+        - #classes
+        - task
+        - missing value
+        * - 891
+        - 4
+        - 3
+        - 2
+        - binary_classification
+        - True
+    """
 
     url = 'https://github.com/datasciencedojo/datasets/raw/master/titanic.csv'
 
