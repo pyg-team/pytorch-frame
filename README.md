@@ -36,8 +36,10 @@ Our aspirations for PyTorch Frame are twofold:
 2. **To Support Enhanced Semantic Types and Model Architectures:** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
 
 * [Library Highlights](#library-highlights)
+* [Quick Tour](#quick-tour)
 * [Architecture Overview](#architecture-overview)
 * [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
+* [Installation](#installation)
 
 ## Library Highlights
 
@@ -52,6 +54,93 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
 * **PyG Integration**:
   PyTorch Frame synergizes seamlessly with PyG, enabling `TensorFrame` representation of node features, inclusive of numeric, categorical, textual attributes, and beyond.
 
+## Quick Tour
+
+In this quick tour, we showcase the ease of creating and training a deep tabular model with only a few lines of code.
+
+### Build your own deep tabular model
+
+```python
+from typing import Any, Dict, List
+
+from torch import Tensor
+from torch.nn import Linear, Module, ModuleList
+
+import torch_frame
+from torch_frame import TensorFrame, stype
+from torch_frame.data.stats import StatType
+from torch_frame.nn.conv import TabTransformerConv
+from torch_frame.nn.encoder import (
+    EmbeddingEncoder,
+    LinearEncoder,
+    StypeWiseFeatureEncoder,
+)
+
+
+class ExampleTransformer(Module):
+    def __init__(
+        self,
+        channels: int,
+        out_channels: int,
+        num_layers: int,
+        num_heads: int,
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+    ):
+        super().__init__()
+        self.encoder = StypeWiseFeatureEncoder(
+            out_channels=channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict={
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder()
+            },
+        )
+        self.tab_transformer_convs = ModuleList([
+            TabTransformerConv(
+                channels=channels,
+                num_heads=num_heads,
+            ) for _ in range(num_layers)
+        ])
+        self.decoder = Linear(channels, out_channels)
+
+    def forward(self, tf: TensorFrame) -> Tensor:
+        B, _ = tf.feat_dict[stype.categorical].shape
+        x, _ = self.encoder(tf)
+        for tab_transformer_conv in self.tab_transformer_convs:
+            x = tab_transformer_conv(x)
+        out = self.decoder(feat.mean(dim=1))
+        return out
+```
+
+<details>
+<summary>We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.</summary>
+
+```python
+import torch
+import torch.nn.functional as F
+from tqdm import tqdm
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = ExampleTransformer(
+    channels=32,
+    out_channels=dataset.num_classes,
+    num_layers=2,
+    num_heads=8,
+    col_stats=train_dataset.col_stats,
+    col_names_dict=train_dataset.tensor_frame.col_names_dict,
+).to(device)
+
+optimizer = torch.optim.Adam(model.parameters())
+
+for epoch in range(50):
+    for tf in tqdm(train_loader):
+        pred = model.forward(tf)
+        loss = F.cross_entropy(pred, tf.y)
+        optimizer.zero_grad()
+        loss.backward()
+```
 ## Architecture Overview
 
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
@@ -62,7 +151,7 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
-* `materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `Materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
 * `TableConv` handles column-wise interactions between different semantic types.
 * `Decoder` summaries the embeddings and generates the prediction outputs.
@@ -76,4 +165,8 @@ We list currently supported deep tabular models:
 * **[ResNet](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.ResNet.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/revisiting.py)]
 * **[TabNet](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabnet.py)]
 * **[ExcelFormer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)]
-* **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Arık *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+* **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+
+## Installation
+
+To be added when we cut the first release version.
