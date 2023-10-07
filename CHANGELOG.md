@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add concat and equal ops for `TensorFrame` ([#100](https://github.com/pyg-team/pytorch-frame/pull/100)).
 - Use ROC-AUC for binary classification in GBDT ([#98](https://github.com/pyg-team/pytorch-frame/pull/98)).
 - Added Github front page ([#93]https://github.com/pyg-team/pytorch-frame/pull/93)
 - Infer `task_type` in dataset ([#97](https://github.com/pyg-team/pytorch-frame/pull/97)).

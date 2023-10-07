@@ -246,12 +246,12 @@ class Dataset(ABC):
     def task_type(self) -> TaskType:
         r"""The task type of the dataset."""
         assert self.target_col is not None
-        if self.col_to_stype[self.target_col] == torch_frame.stype.categorical:
+        if self.col_to_stype[self.target_col] == torch_frame.categorical:
             if self.num_classes == 2:
                 return TaskType.BINARY_CLASSIFICATION
             else:
                 return TaskType.MULTICLASS_CLASSIFICATION
-        elif self.col_to_stype[self.target_col] == torch_frame.stype.numerical:
+        elif self.col_to_stype[self.target_col] == torch_frame.numerical:
             return TaskType.REGRESSION
         else:
             raise ValueError("Task type cannot be inferred.")
@@ -291,7 +291,7 @@ class Dataset(ABC):
 
         if path is not None and osp.isfile(path):
             # Load tensor_frame and col_stats
-            self._tensor_frame, self._col_stats = torch_frame.load_tf(
+            self._tensor_frame, self._col_stats = torch_frame.load(
                 path, device)
             # Instantiate the converter
             self._to_tensor_frame_converter = self._get_tensorframe_converter()
@@ -321,7 +321,7 @@ class Dataset(ABC):
 
         if path is not None:
             # Cache the dataset if user specifies the path
-            torch_frame.save_tf(self._tensor_frame, self._col_stats, path)
+            torch_frame.save(self._tensor_frame, self._col_stats, path)
 
         return self
 

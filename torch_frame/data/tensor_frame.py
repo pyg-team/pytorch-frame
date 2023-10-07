@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 from torch import Tensor
@@ -99,6 +99,38 @@ class TensorFrame:
 
     def __len__(self) -> int:
         return self.num_rows
+
+    def __eq__(self, other: Any) -> bool:
+        # Match instance type
+        if not isinstance(other, TensorFrame):
+            return False
+        # Match length
+        if len(self) != len(other):
+            return False
+        # Match target
+        if self.y is not None:
+            if other.y is None:
+                return False
+            elif not torch.allclose(other.y, self.y):
+                return False
+        else:
+            if other.y is not None:
+                return False
+        # Match col_names_dict
+        if self.col_names_dict != other.col_names_dict:
+            return False
+        # Match feat_dict
+        for stype_name in self.feat_dict.keys():
+            self_feat = self.feat_dict[stype_name]
+            other_feat = other.feat_dict[stype_name]
+            if self_feat.shape != other_feat.shape:
+                return False
+            if not torch.allclose(self_feat, other_feat):
+                return False
+        return True
+
+    def __neq__(self, other: Any) -> bool:
+        return not self.__eq__(other)
 
     def __repr__(self) -> str:
         stype_repr = '\n'.join([

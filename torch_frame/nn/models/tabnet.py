@@ -65,7 +65,7 @@ class TabNet(Module):
 
         num_cols = sum([len(v) for v in col_names_dict.values()])
         # if there is no categorical feature, we just set cat_emb_channels to 1
-        cat_emb_channels = (cat_emb_channels if torch_frame.stype.categorical
+        cat_emb_channels = (cat_emb_channels if torch_frame.categorical
                             in col_names_dict else 1)
         in_channels = cat_emb_channels * num_cols
         # Map input tensor frame into (batch_size, num_cols, cat_emb_channels),
