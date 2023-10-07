@@ -17,17 +17,17 @@ class Titanic(torch_frame.data.Dataset):
         :header-rows: 1
 
         * - #rows
-        - #cols (nume)
-        - #cols (categ)
-        - #classes
-        - task
-        - missing value
+          - #cols (nume)
+          - #cols (categ)
+          - #classes
+          - task
+          - missing value
         * - 891
-        - 4
-        - 3
-        - 2
-        - binary_classification
-        - True
+          - 4
+          - 3
+          - 2
+          - binary_classification
+          - True
     """
 
     url = 'https://github.com/datasciencedojo/datasets/raw/master/titanic.csv'
