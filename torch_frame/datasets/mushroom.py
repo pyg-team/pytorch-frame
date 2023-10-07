@@ -10,7 +10,27 @@ class Mushroom(torch_frame.data.Dataset):
     r"""The `Mushroom
     <https://www.kaggle.com/datasets/uciml/mushroom-classification>`_
     dataset. It's a task to predict whether a mushroom is edible
-    or poisonous."""
+    or poisonous.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 8,124
+          - 0
+          - 22
+          - 2
+          - binary_classification
+          - 0.0%
+    """
 
     url = 'http://archive.ics.uci.edu/static/public/73/mushroom.zip'
 

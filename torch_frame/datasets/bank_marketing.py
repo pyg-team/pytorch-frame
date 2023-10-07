@@ -1,6 +1,7 @@
 import os.path as osp
-import pandas as pd
 import zipfile
+
+import pandas as pd
 
 import torch_frame
 
@@ -15,6 +16,25 @@ class BankMarketing(torch_frame.data.Dataset):
     product (bank term deposit) would be (or not) subscribed.
     The classification goal is to predict if the client will
     subscribe a term deposit.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 45,211
+          - 7
+          - 9
+          - 2
+          - binary_classification
+          - 0.0%
     """
 
     url = 'https://archive.ics.uci.edu/static/public/222/bank+marketing.zip'  # noqa
@@ -28,7 +48,8 @@ class BankMarketing(torch_frame.data.Dataset):
         data_subfolder_path = osp.join(folder_path, 'bank')
         with zipfile.ZipFile(data_path, 'r') as zip_ref:
             zip_ref.extractall(data_subfolder_path)
-        df = pd.read_csv(osp.join(data_subfolder_path, 'bank-full.csv'), sep=';')
+        df = pd.read_csv(osp.join(data_subfolder_path, 'bank-full.csv'),
+                         sep=';')
 
         col_to_stype = {
             'age': torch_frame.numerical,

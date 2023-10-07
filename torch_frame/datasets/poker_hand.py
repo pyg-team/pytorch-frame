@@ -9,7 +9,27 @@ import torch_frame
 class PokerHand(torch_frame.data.Dataset):
     r"""The `Poker Hand
     <https://archive.ics.uci.edu/dataset/158/poker+hand>`_
-    dataset. It's a task to predict 5-card poker hand."""
+    dataset. It's a task to predict 5-card poker hand.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 1,025,010
+          - 5
+          - 5
+          - 10
+          - multiclass_classification
+          - 0.0%
+    """
 
     url = 'https://archive.ics.uci.edu/static/public/158/poker+hand.zip'
 

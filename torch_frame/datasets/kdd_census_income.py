@@ -14,7 +14,27 @@ class KDDCensusIncome(torch_frame.data.Dataset):
     r"""The `KDD Census Income
     <https://archive.ics.uci.edu/dataset/117/census+income+kdd>`_
     dataset. It's a task of forest cover type classification
-    based on attributes such as elevation, slop and soil type etc."""
+    based on attributes such as elevation, slop and soil type etc.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 199,523
+          - 7
+          - 34
+          - 2
+          - binary_classification
+          - 0.0%
+    """
 
     url = 'https://archive.ics.uci.edu/static/public/117/census+income+kdd.zip'
 

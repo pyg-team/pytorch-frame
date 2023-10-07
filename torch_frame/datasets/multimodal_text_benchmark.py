@@ -17,6 +17,23 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         name (str): The name of the dataset to download.
         text_stype (torch_frame.stype): Text stype to use for text columns
             in the dataset. (default: :obj:`torch_frame.text_embedded`)
+
+    **STATS:**
+
+    (TODO) To be added by zecheng.
+
+    .. list-table::
+        :widths: 20 10 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - Name
+          - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #cols (text)
+          - #classes
+          - Task
+          - Missing value ratio
     """
     base_url = 'https://automl-mm-bench.s3.amazonaws.com'
 

@@ -7,7 +7,27 @@ class AdultCensusIncome(torch_frame.data.Dataset):
     r"""The `Adult Census Income
     <https://www.kaggle.com/datasets/uciml/adult-census-income>`_
     dataset. It's extracted from census bureau database and the task
-    is to predict whether a person's income exceeds $50K/year."""
+    is to predict whether a person's income exceeds $50K/year.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 32,561
+          - 4
+          - 8
+          - 2
+          - binary_classification
+          - 0.0%
+    """
 
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data'  # noqa
 
