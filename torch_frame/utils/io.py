@@ -7,8 +7,8 @@ from torch_frame.data import TensorFrame
 from torch_frame.data.stats import StatType
 
 
-def save_tf(tensor_frame: TensorFrame,
-            col_stats: Optional[Dict[str, Dict[StatType, Any]]], path: str):
+def save(tensor_frame: TensorFrame,
+         col_stats: Optional[Dict[str, Dict[StatType, Any]]], path: str):
     r"""Save a :obj:`TensorFrame` object and optional :obj:`col_stats`
     to specified path.
 
@@ -24,7 +24,7 @@ def save_tf(tensor_frame: TensorFrame,
     torch.save((tf_dict, col_stats), path)
 
 
-def load_tf(
+def load(
     path: str, device: Optional[torch.device] = None
 ) -> Tuple[TensorFrame, Optional[Dict[str, Dict[StatType, Any]]]]:
     r"""Load saved :obj:`TensorFrame` object and optional :obj:`col_stats`
