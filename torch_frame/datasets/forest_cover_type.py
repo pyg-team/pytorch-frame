@@ -10,7 +10,27 @@ class ForestCoverType(torch_frame.data.Dataset):
     r"""The `Forest Cover Type
     <https://www.kaggle.com/datasets/uciml/forest-cover-type-dataset>`_
     dataset. It's a task of forest cover type classification
-    based on attributes such as elevation, slop and soil type etc."""
+    based on attributes such as elevation, slop and soil type etc.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 581,012
+          - 10
+          - 44
+          - 7
+          - multiclass_classification
+          - 0.0%
+    """
 
     url = 'http://archive.ics.uci.edu/static/public/31/covertype.zip'
 

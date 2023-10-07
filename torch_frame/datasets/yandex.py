@@ -101,6 +101,90 @@ class Yandex(torch_frame.data.Dataset):
     r"""The Yandex dataset collections used by https://arxiv.org/abs/2106.11959
     Originally downloaded from
     https://github.com/yandex-research/tabular-dl-revisiting-models
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 20 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - Name
+          - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - adult
+          - 48,842
+          - 6
+          - 8
+          - 2
+          - binary_classification
+          - 0.0%
+        * - aloi
+          - 108,000
+          - 128
+          - 0
+          - 1,000
+          - multiclass_classification
+          - 0.0%
+        * - covtype
+          - 581,012
+          - 54
+          - 0
+          - 7
+          - multiclass_classification
+          - 0.0%
+        * - helena
+          - 65,196
+          - 27
+          - 0
+          - 100
+          - multiclass_classification
+          - 0.0%
+        * - higgs_small
+          - 98,050
+          - 28
+          - 0
+          - 2
+          - binary_classification
+          - 0.0%
+        * - jannis
+          - 83,733
+          - 54
+          - 0
+          - 4
+          - multiclass_classification
+          - 0.0%
+        * - california_housing
+          - 20,640
+          - 8
+          - 0
+          - 1
+          - regression
+          - 0.0%
+        * - microsoft
+          - 1,200,192
+          - 136
+          - 0
+          - 1
+          - regression
+          - 0.0%
+        * - yahoo
+          - 709,877
+          - 699
+          - 0
+          - 1
+          - regression
+          - 0.0%
+        * - year
+          - 515,345
+          - 90
+          - 0
+          - 1
+          - regression
+          - 0.0%
     """
 
     base_url = 'https://data.pyg.org/datasets/tables/revisiting_data/'

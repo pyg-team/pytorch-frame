@@ -15,6 +15,25 @@ class Dota2(torch_frame.data.Dataset):
     as only 10 of 113 possible heroes are chosen in a given game. All
     games were played in a space of 2 hours on the 13th of August 2016.
     The classification goal is to predict the winning team.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 92,650
+          - 0
+          - 116
+          - 2
+          - binary_classification
+          - 0.0%
     """
 
     url = 'https://archive.ics.uci.edu/static/public/367/dota2+games+results.zip'  # noqa
