@@ -146,6 +146,8 @@ for epoch in range(50):
         optimizer.zero_grad()
         loss.backward()
 ```
+</details>
+
 ## Architecture Overview
 
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
@@ -156,7 +158,7 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
-* `Materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
 * `TableConv` handles column-wise interactions between different semantic types.
 * `Decoder` summaries the embeddings and generates the prediction outputs.
@@ -171,6 +173,9 @@ We list currently supported deep tabular models:
 * **[TabNet](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabnet.py)]
 * **[ExcelFormer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)]
 * **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+
+In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
+
 
 ## Installation
 
