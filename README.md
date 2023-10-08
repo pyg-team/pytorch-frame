@@ -60,6 +60,11 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 ### Build your own deep tabular model
 
+In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame.
+We specify `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features.
+Then we create a two layer model using pre-defined `TabTransformerConv`.
+Finally, we use a linear decoder to produce the output.
+
 ```python
 from typing import Any, Dict, List
 
