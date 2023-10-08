@@ -106,8 +106,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
     }
 
     _dataset_splits = {
-        'product_sentiment_machine_hack': ['train', 'dev', 'test'],
-        'data_scientist_salary': ['train', 'test', 'competition'],
+        'product_sentiment_machine_hack': ['train', 'dev'],
+        'data_scientist_salary': ['train', 'test'],
         'melbourne_airbnb': ['train', 'test'],
         'news_channel': ['train', 'test'],
         'wine_reviews': ['train', 'test'],
@@ -115,7 +115,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         'fake_job_postings2': ['train', 'test'],
         'kick_starter_funding': ['train', 'test'],
         'jigsaw_unintended_bias100K': ['train', 'test'],
-        'google_qa_answer_type_reason_explanation': ['train', 'dev', 'test'],
+        'google_qa_answer_type_reason_explanation': ['train', 'dev'],
         'google_qa_question_type_reason_explanation': ['train', 'dev', 'test'],
         'bookprice_prediction': ['train', 'test', 'competition'],
         'jc_penney_products': ['train', 'test'],
