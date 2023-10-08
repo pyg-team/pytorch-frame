@@ -46,7 +46,7 @@ Our aspirations for PyTorch Frame are twofold:
 PyTorch Frame emphasizes a tensor-centric API and maintains design elements similar to vanilla PyTorch. For those acquainted with PyTorch, adapting to PyTorch Frame is a seamless process. Here are our major library highlights:
 
 * **Versitility with Tabular Data**:
-  PyTorch Frame provides inhouse support for multimodal learning on a variety of semantic types, including categories, numbers and text. Extension to other types including but not limited to sequence, multicategoricies, images, time is on our road map.
+  PyTorch Frame provides in-house support for multimodal learning on a variety of semantic types, including categories, numbers and texts. Extensions to other types, including but not limited to sequences, multicategoricies, images, time are on our road map.
 * **Modular Implementation of Diverse Models**:
   We provide a framework for users to implement deep learning models in a modular way, enhancing module reusability, code clarity and ease of experimentation. See next section for [more details](#architecture-overview).
 * **Empowerment through Multimodal Learning**:
