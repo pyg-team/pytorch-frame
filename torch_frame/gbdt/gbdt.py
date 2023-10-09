@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Dict, Optional
 
 import torch
-from sklearn.metrics import roc_auc_score
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame
@@ -108,6 +107,7 @@ class GBDT:
                 self.metric: (pred - target).square().mean().sqrt().item()
             }
         elif self.metric == 'rocauc':
+            from sklearn.metrics import roc_auc_score
             metric = {self.metric: roc_auc_score(target.cpu(), pred.cpu())}
         elif self.metric == 'acc':
             total_correct = (target == pred).sum().item()

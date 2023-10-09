@@ -2,10 +2,6 @@ from typing import Any, Dict
 
 import numpy as np
 import torch
-from sklearn.feature_selection import (
-    mutual_info_classif,
-    mutual_info_regression,
-)
 
 from torch_frame import NAStrategy, TaskType, TensorFrame, stype
 from torch_frame.data.stats import StatType
@@ -24,6 +20,11 @@ class MutualInformationSort(FittableBaseTransform):
     def __init__(self, task_type: TaskType,
                  na_strategy: NAStrategy = NAStrategy.MEAN):
         super().__init__()
+
+        from sklearn.feature_selection import (
+            mutual_info_classif,
+            mutual_info_regression,
+        )
 
         if task_type in [
                 TaskType.MULTICLASS_CLASSIFICATION,
