@@ -64,7 +64,7 @@ In the first example, we implement a simple `ExampleTransformer` following the m
 
 * `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
 * `self.convs`: The convolution handles column-wise interactions. In the example we create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model.
-* `self.decoder`: The decoder converts embeddings to prediction outputs. In the example, we use a mean-based decoder that maps the dimension back to `out_channels`.
+* `self.decoder`: The decoder converts embeddings to prediction outputs. In the example, we use a mean-based decoder that maps the dimension of the embedding back to `[batch_size, out_channels]`.
 
 ```python
 from typing import Any, Dict, List
