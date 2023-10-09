@@ -60,10 +60,11 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 ### Build your own deep tabular model
 
-In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame.
-We specify `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features.
-Then we create a two layer model using pre-defined `TabTransformerConv`.
-Finally, we use a linear decoder to produce the output.
+In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
+
+* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
+* `self.convs`: The convolution handles column-wise interactions. In the example we create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model.
+* `self.decoder`: The decoder converts embeddings to prediction outputs. In the example, we use a mean-based decoder that maps the dimension back to `out_channels`.
 
 ```python
 from typing import Any, Dict, List
@@ -111,11 +112,10 @@ class ExampleTransformer(Module):
         self.decoder = Linear(channels, out_channels)
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        B, _ = tf.feat_dict[stype.categorical].shape
         x, _ = self.encoder(tf)
         for tab_transformer_conv in self.tab_transformer_convs:
             x = tab_transformer_conv(x)
-        out = self.decoder(feat.mean(dim=1))
+        out = self.decoder(x.mean(dim=1))
         return out
 ```
 
@@ -161,7 +161,7 @@ In essence, this modular setup empowers users to effortlessly experiment with my
 * `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
 * `TableConv` handles column-wise interactions between different semantic types.
-* `Decoder` summaries the embeddings and generates the prediction outputs.
+* `Decoder` summarizes the embeddings and generates the prediction outputs.
 
 ## Implemented Deep Tabular Models
 

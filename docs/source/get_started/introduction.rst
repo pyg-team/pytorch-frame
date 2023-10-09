@@ -242,11 +242,10 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
             self.decoder = Linear(channels, out_channels)
 
         def forward(self, tf: TensorFrame) -> Tensor:
-            B, _ = tf.feat_dict[stype.categorical].shape
             x, _ = self.encoder(tf)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x = tab_transformer_conv(x)
-            out = self.decoder(feat.mean(dim=1))
+            out = self.decoder(x.mean(dim=1))
             return out
 
 
