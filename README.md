@@ -79,8 +79,8 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
 * `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list of encoders, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
-* `self.convs`: In the example we create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model. Each `TabTransformerConv` module takes in an embedding of size `[batch_size, num_cols, channels]` and outputs an embedding of the same size.
-* `self.decoder`: In the example, we use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
+* `self.convs`: We create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model. Each `TabTransformerConv` module takes in an embedding of size `[batch_size, num_cols, channels]` and outputs an embedding of the same size.
+* `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 ```python
 from typing import Any, Dict, List
