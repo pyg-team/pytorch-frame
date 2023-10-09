@@ -140,6 +140,7 @@ class ExampleTransformer(Module):
 
 ```python
     from torch_frame.datasets import Yandex
+
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
     train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
