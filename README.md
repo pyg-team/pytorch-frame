@@ -136,7 +136,7 @@ class ExampleTransformer(Module):
 ```
 
 <details>
-<summary>Once we decide the model, we can load the `Adult Census Income` dataset and create a train dataloader.</a>.</summary>
+<summary>Once we decide the model, we can load the Adult Census Income dataset and create a train dataloader.</a>.</summary>
 ```python
     from torch_frame.datasets import Yandex
     dataset = Yandex(root='/tmp/adult', name='adult')
