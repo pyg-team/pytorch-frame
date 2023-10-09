@@ -1,5 +1,5 @@
 import copy
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -87,7 +87,13 @@ class XGBoost(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
         return feat.numpy(), y.numpy(), feature_types
 
-    def objective(self, trial, dtrain, dvalid, num_boost_round: int) -> float:
+    def objective(
+        self,
+        trial: Any,  # optuna.trial.Trial
+        dtrain: Any,  # xgboost.DMatrix
+        dvalid: Any,  # xgboost.DMatrix
+        num_boost_round: int,
+    ) -> float:
         r""" Objective function to be optimized.
 
         Args:
