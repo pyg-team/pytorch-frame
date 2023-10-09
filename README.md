@@ -36,8 +36,8 @@ Our aspirations for PyTorch Frame are twofold:
 2. **To Support Enhanced Semantic Types and Model Architectures:** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
 
 * [Library Highlights](#library-highlights)
-* [Quick Tour](#quick-tour)
 * [Architecture Overview](#architecture-overview)
+* [Quick Tour](#quick-tour)
 * [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
 * [Installation](#installation)
 
@@ -54,6 +54,22 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
 * **PyG Integration**:
   PyTorch Frame synergizes seamlessly with PyG, enabling `TensorFrame` representation of node features, inclusive of numeric, categorical, textual attributes, and beyond.
 
+## Architecture Overview
+
+Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
+
+<p align="center">
+  <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/modular.png" />
+</p>
+
+In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
+
+* `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `FeatureEncoder` encodes different semantic types into hidden embeddings.
+* `TableConv` handles column-wise interactions between different semantic types.
+* `Decoder` summarizes the embeddings and generates the prediction outputs.
+
+
 ## Quick Tour
 
 In this quick tour, we showcase the ease of creating and training a deep tabular model with only a few lines of code.
@@ -62,9 +78,9 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
-* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
-* `self.convs`: The convolution handles column-wise interactions. In the example we create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model.
-* `self.decoder`: The decoder converts embeddings to prediction outputs. In the example, we use a mean-based decoder that maps the dimension of the embedding back to `[batch_size, out_channels]`.
+* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list of encoders, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
+* `self.convs`: In the example we create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model. Each `TabTransformerConv` module takes in an embedding of size `[batch_size, num_cols, channels]` and outputs an embedding of the same size.
+* `self.decoder`: In the example, we use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 ```python
 from typing import Any, Dict, List
@@ -147,21 +163,6 @@ for epoch in range(50):
         loss.backward()
 ```
 </details>
-
-## Architecture Overview
-
-Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
-
-<p align="center">
-  <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/modular.png" />
-</p>
-
-In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
-
-* `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
-* `FeatureEncoder` encodes different semantic types into hidden embeddings.
-* `TableConv` handles column-wise interactions between different semantic types.
-* `Decoder` summarizes the embeddings and generates the prediction outputs.
 
 ## Implemented Deep Tabular Models
 
