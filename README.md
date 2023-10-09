@@ -136,6 +136,18 @@ class ExampleTransformer(Module):
 ```
 
 <details>
+<summary>Once we decide the model, we can load the `Adult Census Income` dataset and create a train dataloader.</a>.</summary>
+```python
+    from torch_frame.datasets import Yandex
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset.materialize()
+    train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
+    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
+                            shuffle=True)
+```
+</details>
+
+<details>
 <summary>We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.</summary>
 
 ```python
