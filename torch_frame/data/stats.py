@@ -57,10 +57,9 @@ def compute_col_stats(
 ) -> Dict[StatType, Any]:
 
     if stype == torch_frame.numerical:
-        with pd.option_context('mode.use_inf_as_na', True):
-            ser = ser.dropna()
-    else:
-        ser = ser.dropna()
+        ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
+
+    ser = ser.dropna()
 
     return {
         stat_type: stat_type.compute(ser)
