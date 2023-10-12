@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -386,7 +387,15 @@ class TabularBenchmark(torch_frame.data.Dataset):
     # Dedicated URLs for large datasets
     base_url_large = 'https://huggingface.co/datasets/inria-soda/tabular-benchmark/resolve/main/'  # noqa
 
+    @classmethod
+    @property
+    def name_list(cls) -> List[str]:
+        r"List of dataset names available."
+        return sorted(list(cls.name_to_task_category.keys()))
+
     def __init__(self, root: str, name: str):
+        self.root = root
+        self.name = name
         if name not in self.name_to_task_category:
             raise ValueError(
                 f"The given dataset name ('{name}') is not available. It "
@@ -423,3 +432,8 @@ class TabularBenchmark(torch_frame.data.Dataset):
                 else:
                     col_to_stype[col] = torch_frame.categorical
         super().__init__(df, col_to_stype, target_col=target_col)
+
+    def __repr__(self) -> str:
+        return (f'{self.__class__.__name__}(\n'
+                f'  name={self.name},\n'
+                f')')

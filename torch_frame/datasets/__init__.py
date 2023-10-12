@@ -12,6 +12,7 @@ from .yandex import Yandex
 from .dota2 import Dota2
 from .kdd_census_income import KDDCensusIncome
 from .multimodal_text_benchmark import MultimodalTextBenchmark
+from .torch_frame_datasets import DataFrameBenchmark
 
 real_world_datasets = [
     'Titanic',
@@ -25,6 +26,7 @@ real_world_datasets = [
     'Yandex',
     'KDDCensusIncome',
     'MultimodalTextBenchmark',
+    'DataFrameBenchmark',
 ]
 
 synthetic_datasets = [

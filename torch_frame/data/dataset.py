@@ -257,6 +257,11 @@ class Dataset(ABC):
             raise ValueError("Task type cannot be inferred.")
 
     @property
+    def num_rows(self):
+        r"""Number of rows."""
+        return len(self.df)
+
+    @property
     @requires_post_materialization
     def num_classes(self) -> int:
         if StatType.COUNT not in self.col_stats[self.target_col]:

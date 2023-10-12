@@ -193,6 +193,13 @@ class Yandex(torch_frame.data.Dataset):
     }
     regression_datasets = {'california_housing', 'microsoft', 'yahoo', 'year'}
 
+    @classmethod
+    @property
+    def name_list(cls) -> List[str]:
+        r"List of dataset names available."
+        return sorted(
+            list(cls.classification_datasets) + list(cls.regression_datasets))
+
     def __init__(self, root: str, name: str):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -206,3 +213,8 @@ class Yandex(torch_frame.data.Dataset):
             col_to_stype['label'] = torch_frame.categorical
         super().__init__(df, col_to_stype, target_col='label',
                          split_col='split')
+
+    def __repr__(self) -> str:
+        return (f'{self.__class__.__name__}(\n'
+                f'  name={self.name},\n'
+                f')')
