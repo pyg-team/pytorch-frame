@@ -14,14 +14,13 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
 
     Args:
         root (str): Root directory.
-        task_type (TaskType): The task type.
-            * :obj:`TaskType.BINARY_CLASSIFICATION`
-            * :obj:`TaskType.MULTICLASS_CLASSIFICATION`
-            * :obj:`TaskType.REGRESSION`
-        scale (str): The scale of the dataset.
-            * :obj:`small`: 5K to 50K rows.
-            * :obj:`medium`: 50K to 500K rows.
-            * :obj:`large`: More than 500K rows.
+        task_type (TaskType): The task type. Either
+            :obj:`TaskType.BINARY_CLASSIFICATION`,
+            :obj:`TaskType.MULTICLASS_CLASSIFICATION`, or
+            :obj:`TaskType.REGRESSION`
+        scale (str): The scale of the dataset. :obj:`small` means 5K to 50K
+            rows. :obj:`medium` means 50K to 500K rows. :obj:`large` means more
+            than 500K rows.
         idx (int): The integer
 
     **STATS:**
