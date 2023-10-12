@@ -73,7 +73,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 10
           - 0
           - 2
-          - TabularBenchmark(name=MagicTelescope)
+          - TabularBenchmark(name='MagicTelescope')
           - 0.0%
         * - binary_classification
           - small
@@ -82,7 +82,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 7
           - 0
           - 2
-          - TabularBenchmark(name=bank-marketing)
+          - TabularBenchmark(name='bank-marketing')
           - 0.0%
         * - binary_classification
           - small
@@ -91,7 +91,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 8
           - 0
           - 2
-          - TabularBenchmark(name=california)
+          - TabularBenchmark(name='california')
           - 0.0%
         * - binary_classification
           - small
@@ -100,7 +100,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 10
           - 0
           - 2
-          - TabularBenchmark(name=credit)
+          - TabularBenchmark(name='credit')
           - 0.0%
         * - binary_classification
           - small
@@ -109,7 +109,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 20
           - 1
           - 2
-          - TabularBenchmark(name=default-of-credit-card-clients)
+          - TabularBenchmark(name='default-of-credit-card-clients')
           - 0.0%
         * - binary_classification
           - small
@@ -118,7 +118,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 7
           - 1
           - 2
-          - TabularBenchmark(name=electricity)
+          - TabularBenchmark(name='electricity')
           - 0.0%
         * - binary_classification
           - small
@@ -127,7 +127,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 18
           - 5
           - 2
-          - TabularBenchmark(name=eye_movements)
+          - TabularBenchmark(name='eye_movements')
           - 0.0%
         * - binary_classification
           - small
@@ -136,7 +136,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 22
           - 0
           - 2
-          - TabularBenchmark(name=heloc)
+          - TabularBenchmark(name='heloc')
           - 0.0%
         * - binary_classification
           - small
@@ -145,7 +145,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 16
           - 0
           - 2
-          - TabularBenchmark(name=house_16H)
+          - TabularBenchmark(name='house_16H')
           - 0.0%
         * - binary_classification
           - small
@@ -154,7 +154,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 26
           - 0
           - 2
-          - TabularBenchmark(name=pol)
+          - TabularBenchmark(name='pol')
           - 0.0%
         * - binary_classification
           - small
@@ -163,7 +163,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 6
           - 8
           - 2
-          - Yandex(name=adult)
+          - Yandex(name='adult')
           - 0.0%
         * - binary_classification
           - medium
@@ -190,7 +190,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 7
           - 0
           - 2
-          - TabularBenchmark(name=Diabetes130US)
+          - TabularBenchmark(name='Diabetes130US')
           - 0.0%
         * - binary_classification
           - medium
@@ -199,7 +199,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 50
           - 0
           - 2
-          - TabularBenchmark(name=MiniBooNE)
+          - TabularBenchmark(name='MiniBooNE')
           - 0.0%
         * - binary_classification
           - medium
@@ -208,7 +208,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 23
           - 8
           - 2
-          - TabularBenchmark(name=albert)
+          - TabularBenchmark(name='albert')
           - 0.0%
         * - binary_classification
           - medium
@@ -217,7 +217,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 10
           - 44
           - 2
-          - TabularBenchmark(name=covertype)
+          - TabularBenchmark(name='covertype')
           - 0.0%
         * - binary_classification
           - medium
@@ -226,7 +226,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 54
           - 0
           - 2
-          - TabularBenchmark(name=jannis)
+          - TabularBenchmark(name='jannis')
           - 0.0%
         * - binary_classification
           - medium
@@ -235,7 +235,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 24
           - 8
           - 2
-          - TabularBenchmark(name=road-safety)
+          - TabularBenchmark(name='road-safety')
           - 0.0%
         * - binary_classification
           - medium
@@ -244,7 +244,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 28
           - 0
           - 2
-          - Yandex(name=higgs_small)
+          - Yandex(name='higgs_small')
           - 0.0%
         * - binary_classification
           - large
@@ -253,7 +253,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 24
           - 0
           - 2
-          - TabularBenchmark(name=Higgs)
+          - TabularBenchmark(name='Higgs')
           - 0.0%
         * - multiclass_classification
           - medium
@@ -262,7 +262,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 128
           - 0
           - 1,000
-          - Yandex(name=aloi)
+          - Yandex(name='aloi')
           - 0.0%
         * - multiclass_classification
           - medium
@@ -271,7 +271,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 27
           - 0
           - 100
-          - Yandex(name=helena)
+          - Yandex(name='helena')
           - 0.0%
         * - multiclass_classification
           - medium
@@ -280,7 +280,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 54
           - 0
           - 4
-          - Yandex(name=jannis)
+          - Yandex(name='jannis')
           - 0.0%
         * - multiclass_classification
           - large
@@ -307,7 +307,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 54
           - 0
           - 7
-          - Yandex(name=covtype)
+          - Yandex(name='covtype')
           - 0.0%
         * - regression
           - small
@@ -316,7 +316,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 6
           - 5
           - 1
-          - TabularBenchmark(name=Bike_Sharing_Demand)
+          - TabularBenchmark(name='Bike_Sharing_Demand')
           - 0.0%
         * - regression
           - small
@@ -325,7 +325,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 7
           - 4
           - 1
-          - TabularBenchmark(name=Brazilian_houses)
+          - TabularBenchmark(name='Brazilian_houses')
           - 0.0%
         * - regression
           - small
@@ -334,7 +334,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 21
           - 0
           - 1
-          - TabularBenchmark(name=cpu_act)
+          - TabularBenchmark(name='cpu_act')
           - 0.0%
         * - regression
           - small
@@ -343,7 +343,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 16
           - 0
           - 1
-          - TabularBenchmark(name=elevators)
+          - TabularBenchmark(name='elevators')
           - 0.0%
         * - regression
           - small
@@ -352,7 +352,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 15
           - 2
           - 1
-          - TabularBenchmark(name=house_sales)
+          - TabularBenchmark(name='house_sales')
           - 0.0%
         * - regression
           - small
@@ -361,7 +361,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 8
           - 0
           - 1
-          - TabularBenchmark(name=houses)
+          - TabularBenchmark(name='houses')
           - 0.0%
         * - regression
           - small
@@ -370,7 +370,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 6
           - 0
           - 1
-          - TabularBenchmark(name=sulfur)
+          - TabularBenchmark(name='sulfur')
           - 0.0%
         * - regression
           - small
@@ -379,7 +379,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 79
           - 0
           - 1
-          - TabularBenchmark(name=superconduct)
+          - TabularBenchmark(name='superconduct')
           - 0.0%
         * - regression
           - small
@@ -388,7 +388,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 252
           - 3
           - 1
-          - TabularBenchmark(name=topo_2_1)
+          - TabularBenchmark(name='topo_2_1')
           - 0.0%
         * - regression
           - small
@@ -397,7 +397,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 3
           - 1
           - 1
-          - TabularBenchmark(name=visualizing_soil)
+          - TabularBenchmark(name='visualizing_soil')
           - 0.0%
         * - regression
           - small
@@ -406,7 +406,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 11
           - 0
           - 1
-          - TabularBenchmark(name=wine_quality)
+          - TabularBenchmark(name='wine_quality')
           - 0.0%
         * - regression
           - small
@@ -415,7 +415,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 42
           - 0
           - 1
-          - TabularBenchmark(name=yprop_4_1)
+          - TabularBenchmark(name='yprop_4_1')
           - 0.0%
         * - regression
           - small
@@ -424,7 +424,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 8
           - 0
           - 1
-          - Yandex(name=california_housing)
+          - Yandex(name='california_housing')
           - 0.0%
         * - regression
           - medium
@@ -433,7 +433,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 25
           - 99
           - 1
-          - TabularBenchmark(name=Allstate_Claims_Severity)
+          - TabularBenchmark(name='Allstate_Claims_Severity')
           - 0.0%
         * - regression
           - medium
@@ -442,7 +442,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 3
           - 6
           - 1
-          - TabularBenchmark(name=SGEMM_GPU_kernel_performance)
+          - TabularBenchmark(name='SGEMM_GPU_kernel_performance')
           - 0.0%
         * - regression
           - medium
@@ -451,7 +451,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 6
           - 3
           - 1
-          - TabularBenchmark(name=diamonds)
+          - TabularBenchmark(name='diamonds')
           - 0.0%
         * - regression
           - medium
@@ -460,7 +460,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 3
           - 0
           - 1
-          - TabularBenchmark(name=medical_charges)
+          - TabularBenchmark(name='medical_charges')
           - 0.0%
         * - regression
           - medium
@@ -469,7 +469,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 4
           - 2
           - 1
-          - TabularBenchmark(name=particulate-matter-ukair-2017)
+          - TabularBenchmark(name='particulate-matter-ukair-2017')
           - 0.0%
         * - regression
           - medium
@@ -478,7 +478,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 3
           - 1
           - 1
-          - TabularBenchmark(name=seattlecrime6)
+          - TabularBenchmark(name='seattlecrime6')
           - 0.0%
         * - regression
           - large
@@ -487,7 +487,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 5
           - 0
           - 1
-          - TabularBenchmark(name=Airlines_DepDelay_1M)
+          - TabularBenchmark(name='Airlines_DepDelay_1M')
           - 0.0%
         * - regression
           - large
@@ -496,7 +496,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 8
           - 0
           - 1
-          - TabularBenchmark(name=delays_zurich_transport)
+          - TabularBenchmark(name='delays_zurich_transport')
           - 0.0%
         * - regression
           - large
@@ -505,7 +505,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 9
           - 0
           - 1
-          - TabularBenchmark(name=nyc-taxi-green-dec-2016)
+          - TabularBenchmark(name='nyc-taxi-green-dec-2016')
           - 0.0%
         * - regression
           - large
@@ -514,7 +514,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 136
           - 0
           - 1
-          - Yandex(name=microsoft)
+          - Yandex(name='microsoft')
           - 0.0%
         * - regression
           - large
@@ -523,7 +523,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 699
           - 0
           - 1
-          - Yandex(name=yahoo)
+          - Yandex(name='yahoo')
           - 0.0%
         * - regression
           - large
@@ -532,7 +532,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - 90
           - 0
           - 1
-          - Yandex(name=year)
+          - Yandex(name='year')
           - 0.0%
     """
     dataset_categorization_dict = {

@@ -216,6 +216,6 @@ class Yandex(torch_frame.data.Dataset):
                          split_col='split')
 
     def __repr__(self) -> str:
-        return (f'{self.__class__.__name__}(\n'
-                f'  name={self.name},\n'
-                f')')
+        return (f"{self.__class__.__name__}(\n"
+                f"  name='{self.name}',\n"
+                f")")
