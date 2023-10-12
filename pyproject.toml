@@ -72,7 +72,11 @@ skip = [".gitignore", "__init__.py"]
 ignore = ["F811", "W503", "W504"]
 
 [tool.pytest.ini_options]
-addopts = "--capture=no"
+addopts = [
+    "--capture=no",
+    "--color=yes",
+    "-vv",
+]
 
 [tool.coverage.report]
 exclude_lines = [
