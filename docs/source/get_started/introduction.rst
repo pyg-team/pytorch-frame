@@ -72,7 +72,7 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
 Creating a :class:`torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
-Materialization converts raw data in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`:
+:meth:`~torch_frame.data.Dataset.materialize` converts raw data in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`:
 
 .. code-block:: python
 
@@ -126,11 +126,12 @@ A :class:`~torch_frame.TensorFrame` contains the following basic properties:
     >>> device(type='cpu')
 
 
-We support transferring the data in a :class:`~torch_frame.TensorFrame` across devices.
+We support transferring the data in a :class:`~torch_frame.TensorFrame` to devices supported by :pytorch:`PyTorch`.
 
 .. code-block:: python
 
     tensor_frame.to("cpu")
+
     tensor_frame.to("cuda")
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
@@ -145,7 +146,7 @@ For numerical features,
 
 - :class:`StatType.MEAN` denotes the mean value of the numerical feature,
 - :class:`StatType.STD` denotes the standard deviation,
-- :class:`StatType.QUANTILES` contains a list containing minimum value, first quartile(25th percentile), median(50th percentile), thrid quartile(75th percentile) and maximum value of the column.
+- :class:`StatType.QUANTILES` contains a list containing minimum value, first quartile (25th percentile), median (50th percentile), thrid quartile (75th percentile) and maximum value of the column.
 
 .. code-block:: python
 
@@ -160,7 +161,7 @@ For numerical features,
 
 Mini-batches
 ------------
-Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
+Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini-batches.
 
 .. code-block:: python
 
@@ -174,23 +175,16 @@ Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame
         >>> TensorFrame(
                 num_cols=7,
                 num_rows=32,
-                categorical (3): ['Pclass', 'Sex', 'Embarked'],
-                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
+                categorical (3): ['Pclass', 'Sex', 'Embarked'],  #???
+                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],  #???
                 has_target=True,
-                device=cpu,
+                device='cpu',  # TODO change code
             )
 
 Learning Methods on Tabular Data
 --------------------------------
 
 After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`, it’s time to implement our first model!
-
-.. code-block:: python
-
-    from torch_frame.datasets import Yandex
-
-    dataset = Yandex(root='/tmp/adult', name='adult')
-    dataset.materialize()
 
 Now let’s implement a model called :obj:`ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
 Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
@@ -258,23 +252,25 @@ Let's create train-test split and create data loaders.
 
 .. code-block:: python
 
+    from torch_frame.datasets import Yandex
     from torch_frame.data import DataLoader
 
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset.materialize()
     dataset.shuffle()
     train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
     train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
     test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128,
-                            shuffle=True)
+                            shuffle=False)
 
 
-Let’s train this model on the training nodes for 50 epochs:
+Let’s train this model on the training nodes (?) for 50 epochs:
 
 .. code-block:: python
 
     import torch
     import torch.nn.functional as F
-    from tqdm import tqdm
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ExampleTransformer(
@@ -289,7 +285,8 @@ Let’s train this model on the training nodes for 50 epochs:
     optimizer = torch.optim.Adam(model.parameters())
 
     for epoch in range(50):
-        for tf in tqdm(train_loader):
+        for tf in train_loader:
+            tf = tf.to(device)
             pred = model.forward(tf)
             loss = F.cross_entropy(pred, tf.y)
             optimizer.zero_grad()
@@ -300,10 +297,13 @@ Finally, we can evaluate our model on the test split:
 .. code-block:: python
 
     model.eval()
-    pred = model(test_dataset.tensor_frame).argmax(dim=1)
-    pred_class = pred.argmax(dim=-1)
-    correct = float((tf.y == pred_class).sum())
-    acc = int(correct) / len(tf.y)
+    correct = 0
+    for tf in test_loader:
+        tf = tf.to(device)
+        pred = model(tf).argmax(dim=1)
+        pred_class = pred.argmax(dim=-1)
+        correct += (tf.y == pred_class).sum()
+    acc = int(correct) / len(test_dataset)
     print(f'Accuracy: {acc:.4f}')
     >>> Accuracy: 0.7941
 
