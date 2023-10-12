@@ -3,13 +3,13 @@ Introduction by Example
 
 :pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
 Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
-The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
+The goal of :pyg:`PyTorch Frame` is to build a deep learning framework to perform effective machine learning on such complex data.
 
 Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
 :pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
-In this doc, we shortly introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
+In this doc, we introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
 
 At its core, :pyg:`PyTorch Frame` provides the following main features:
 
@@ -18,7 +18,8 @@ At its core, :pyg:`PyTorch Frame` provides the following main features:
 
 Common Benchmark Datasets
 -------------------------
-:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
+:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from
+`Revisiting Deep Learning Models for Tabular Data (NeurIPS 2021) <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
 Initializing datasets is straightforward in :pyg:`PyTorch Frame`.
@@ -70,8 +71,8 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
     The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
-Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
-We show a simple example.
+Creating a :class:`torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
+Materialization converts raw data in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`:
 
 .. code-block:: python
 
@@ -129,9 +130,8 @@ We support transferring the data in a :class:`~torch_frame.TensorFrame` across d
 
 .. code-block:: python
 
-    tensor_frame.cpu()
-
-    tensor_frame.cuda()
+    tensor_frame.to("cpu")
+    tensor_frame.to("cuda")
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
 
