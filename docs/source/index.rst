@@ -10,6 +10,7 @@ PyTorch Frame Documentation
    :maxdepth: 1
    :caption: Get Started
 
+   get_started/installation
    get_started/introduction
    get_started/modular_design
 
