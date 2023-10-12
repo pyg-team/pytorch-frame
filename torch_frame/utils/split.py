@@ -13,7 +13,7 @@ def generate_random_split(length: int, seed: int, train_ratio: float = 0.8,
     historically the case."""
     assert train_ratio + val_ratio < 1
     assert train_ratio > 0
-    assert train_ratio > 0
+    assert val_ratio > 0
     train_num = int(length * train_ratio)
     val_num = int(length * val_ratio)
     test_num = length - train_num - val_num
