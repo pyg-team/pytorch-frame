@@ -126,7 +126,7 @@ def test_dataframe_benchmark_object(tmp_path):
                             "  task_type=binary_classification,\n"
                             "  scale=small,\n"
                             "  idx=1,\n"
-                            "  cls=Mushroom(root)\n"
+                            "  cls=Mushroom()\n"
                             ")")
     assert dataset.num_rows == 8124
     dataset.materialize()

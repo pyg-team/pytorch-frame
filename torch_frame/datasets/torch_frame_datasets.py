@@ -220,10 +220,9 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                 f"{task_type.value} and scale: {scale} (got idx: {idx}).")
 
         class_name, kwargs = self.datasets_available(task_type, scale)[idx]
-        self.class_name = class_name
-        self.kwargs = kwargs
         dataset = getattr(torch_frame.datasets, class_name)(root=root,
                                                             **kwargs)
+        self.cls_str = str(dataset)
 
         # check the scale
         if dataset.num_rows < 5000:
@@ -240,22 +239,11 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         del dataset
 
     def __repr__(self) -> str:
-        if len(self.kwargs) > 0:
-            kwarg_list = []
-            for k, v in self.kwargs.items():
-                if isinstance(v, str):
-                    v = f"'{v}'"
-                kwarg_list.append(f'{k}={v}')
-            kwargs_str = ', '.join(kwarg_list)
-            cls_str = f"{self.class_name}(root, {kwargs_str})"
-        else:
-            cls_str = f"{self.class_name}(root)"
-
         return (f'{self.__class__.__name__}(\n'
                 f'  task_type={self._task_type.value},\n'
                 f'  scale={self.scale},\n'
                 f'  idx={self.idx},\n'
-                f'  cls={cls_str}\n'
+                f'  cls={self.cls_str}\n'
                 f')')
 
     def materialize(self):
