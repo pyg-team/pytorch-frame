@@ -81,7 +81,7 @@ class FTTransformer(Module):
             x (Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): Output. The shape is [batch_size, out_channels].
+            Tensor: Output. The shape is [batch_size, out_channels].
         """
         x, _ = self.encoder(tf)
         x, x_cls = self.backbone(x)

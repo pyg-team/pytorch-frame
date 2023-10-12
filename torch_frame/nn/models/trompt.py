@@ -92,7 +92,7 @@ class Trompt(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            stacked_out (Tensor): Output predictions stacked across layers. The
+            Tensor: Output predictions stacked across layers. The
                 shape is [batch_size, num_layers, out_channels].
         """
         batch_size = len(tf)

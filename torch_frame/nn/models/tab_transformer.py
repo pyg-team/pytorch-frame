@@ -110,7 +110,7 @@ class TabTransformer(Module):
             x (Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): Output. The shape is [batch_size, out_channels].
+            Tensor: Output. The shape is [batch_size, out_channels].
         """
         xs = []
         if stype.categorical in tf.feat_dict:
