@@ -25,6 +25,7 @@ from torch_frame.typing import (
     IndexSelectType,
     TaskType,
 )
+from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 def requires_pre_materialization(func):
@@ -152,8 +153,8 @@ class Dataset(ABC):
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
         split_col (str, optional): The column that stores the pre-defined split
-            information. The column should only contain 'train', 'val', or
-            'test'. (default: :obj:`None`).
+            information. The column should only contain :obj:`0`, :obj:`1`, or
+            :obj:`2`. (default: :obj:`None`).
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             config specifying :obj:`text_embedder` that maps sentences into
             PyTorch embeddings and :obj:`batch_size` that specifies the
@@ -179,10 +180,10 @@ class Dataset(ABC):
                 raise ValueError(
                     f"col_to_stype should not contain the split_col "
                     f"({col_to_stype}).")
-            if not set(df[split_col]).issubset({'train', 'val', 'test'}):
+            if not set(df[split_col]).issubset(set(SPLIT_TO_NUM.values())):
                 raise ValueError(
-                    "split_col must only contain either 'train', 'val', or "
-                    "'test'.")
+                    f"split_col must only contain {set(SPLIT_TO_NUM.values())}"
+                )
         self.split_col = split_col
         self.col_to_stype = col_to_stype
 
@@ -419,7 +420,8 @@ class Dataset(ABC):
         if split not in ['train', 'val', 'test']:
             raise ValueError(f"The split named {split} is not available. "
                              f"Needs to either 'train', 'val', or 'test'.")
-        indices = self.df.index[self.df[self.split_col] == split].tolist()
+        indices = self.df.index[self.df[self.split_col] ==
+                                SPLIT_TO_NUM[split]].tolist()
         return self[indices]
 
     @property

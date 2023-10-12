@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 import torch_frame
+from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
@@ -89,7 +90,7 @@ def get_df_and_col_to_stype(
                 df[n_col] = df[n_col].astype('float64')
         df['label'] = labels
         # Stores the split information in "split" column.
-        df['split'] = split
+        df['split'] = SPLIT_TO_NUM[split]
         dataframes.append(df)
 
     df = pd.concat(dataframes, ignore_index=True)

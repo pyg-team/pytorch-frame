@@ -2,6 +2,9 @@ from typing import Any, Dict, List, Tuple
 
 import torch_frame
 from torch_frame.typing import TaskType
+from torch_frame.utils import generate_random_split
+
+SPLIT_COL = 'split'
 
 
 class DataFrameBenchmark(torch_frame.data.Dataset):
@@ -206,7 +209,14 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
     def num_datasets_available(cls, task_type: TaskType, scale: str):
         return len(cls.datasets_available(task_type, scale))
 
-    def __init__(self, root: str, task_type: TaskType, scale: str, idx: int):
+    def __init__(
+        self,
+        root: str,
+        task_type: TaskType,
+        scale: str,
+        idx: int,
+        split_random_state: int = 42,
+    ):
         self.root = root
         self._task_type = task_type
         self.scale = scale
@@ -224,6 +234,14 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                                                             **kwargs)
         self.cls_str = str(dataset)
 
+        # Add split col
+        df = dataset.df
+        if SPLIT_COL in df.columns:
+            df.drop(columns=[SPLIT_COL], in_place=True)
+        df[SPLIT_COL] = generate_random_split(length=len(df),
+                                              seed=split_random_state,
+                                              train_ratio=0.8, val_ratio=0.1)
+
         # check the scale
         if dataset.num_rows < 5000:
             assert False
@@ -234,8 +252,8 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         else:
             assert scale == "large"
 
-        super().__init__(df=dataset.df, col_to_stype=dataset.col_to_stype,
-                         target_col=dataset.target_col)
+        super().__init__(df=df, col_to_stype=dataset.col_to_stype,
+                         target_col=dataset.target_col, split_col=SPLIT_COL)
         del dataset
 
     def __repr__(self) -> str:
