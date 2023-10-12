@@ -2,7 +2,7 @@
 
 PyTorch Frame Documentation
 ===========================
-:pyg:`null` **PyTorch Frame** is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
+:pyf:`null` **PyTorch Frame** is a library built upon :pytorch:`null` `PyTorch <https://pytorch.org>`_ to easily write and train tabular deep learning models.
 
 .. slack_button::
 
