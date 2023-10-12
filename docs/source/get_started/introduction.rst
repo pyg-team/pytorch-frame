@@ -287,10 +287,11 @@ Let’s train this model for 50 epochs:
     for epoch in range(50):
         for tf in train_loader:
             tf = tf.to(device)
-            pred = model.forward(tf)
+            pred = model(tf)
             loss = F.cross_entropy(pred, tf.y)
             optimizer.zero_grad()
             loss.backward()
+            optimizer.step()
 
 Finally, we can evaluate our model on the test split:
 
@@ -300,12 +301,12 @@ Finally, we can evaluate our model on the test split:
     correct = 0
     for tf in test_loader:
         tf = tf.to(device)
-        pred = model(tf).argmax(dim=1)
+        pred = model(tf)
         pred_class = pred.argmax(dim=-1)
         correct += (tf.y == pred_class).sum()
     acc = int(correct) / len(test_dataset)
     print(f'Accuracy: {acc:.4f}')
-    >>> Accuracy: 0.7941
+    >>> Accuracy: 0.8447
 
 
 This is all it takes to implement your first deep tabular network.
