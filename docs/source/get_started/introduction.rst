@@ -265,7 +265,7 @@ Let's create train-test split and create data loaders.
                             shuffle=False)
 
 
-Let’s train this model on the training nodes (?) for 50 epochs:
+Let’s train this model for 50 epochs:
 
 .. code-block:: python
 
