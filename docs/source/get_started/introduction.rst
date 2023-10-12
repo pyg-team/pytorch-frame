@@ -175,10 +175,10 @@ Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame
         >>> TensorFrame(
                 num_cols=7,
                 num_rows=32,
-                categorical (3): ['Pclass', 'Sex', 'Embarked'],  #???
-                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],  #???
+                categorical (3): ['Pclass', 'Sex', 'Embarked'],
+                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
                 has_target=True,
-                device='cpu',  # TODO change code
+                device='cpu',
             )
 
 Learning Methods on Tabular Data
