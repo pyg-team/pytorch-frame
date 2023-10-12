@@ -744,7 +744,9 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         class_name, kwargs = self.datasets_available(task_type, scale)[idx]
         dataset = getattr(torch_frame.datasets, class_name)(root=root,
                                                             **kwargs)
-        self.cls_str = str(dataset)
+        # Make class name string more compact
+        self.compact_cls_str = str(dataset).replace('\n', '').replace(
+            ' ', '').replace(',)', ')')
 
         # Add split col
         df = dataset.df
@@ -773,7 +775,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                 f'  task_type={self._task_type.value},\n'
                 f'  scale={self.scale},\n'
                 f'  idx={self.idx},\n'
-                f'  cls={self.cls_str}\n'
+                f'  cls={self.compact_cls_str}\n'
                 f')')
 
     def materialize(self):
