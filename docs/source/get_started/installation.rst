@@ -8,10 +8,10 @@ Installation via PyPi
 
 .. code-block:: none
 
-   pip install torch_frame
+   pip install pytorch_frame
 
    # Install with optional dependencies
-   pip install torch_frame[full]
+   pip install pytorch_frame[full]
 
 
 Installation from master

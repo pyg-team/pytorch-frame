@@ -197,7 +197,7 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 PyTorch is available for Python 3.8 to Python 3.11.
 
 ```
-pip install torch_frame
+pip install pytorch_frame
 ```
 
 See [the installation guide](https://pyg-team-pytorch-frame.readthedocs.build/en/latest/get_started/installation.html) for other options.
