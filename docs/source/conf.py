@@ -20,7 +20,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    'pyf',
+    'pyg',
 ]
 
 html_theme = 'pyg_sphinx_theme'
