@@ -31,10 +31,6 @@ dependencies=[
     "numpy",
     "pandas",
     "torch",
-    "scikit-learn",
-    "xgboost>=1.7.0, <2.0.0",
-    "optuna>=3.0.0",
-    "catboost",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +41,12 @@ test=[
 dev=[
     "torch_frame[test]",
     "pre-commit",
+]
+full=[
+    "scikit-learn",
+    "xgboost>=1.7.0, <2.0.0",
+    "optuna>=3.0.0",
+    "catboost",
 ]
 
 [project.urls]
