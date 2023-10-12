@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
+import pandas as pd
+
 import torch_frame
 from torch_frame.typing import TaskType
 from torch_frame.utils import generate_random_split
@@ -743,17 +745,18 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         class_name, kwargs = self.datasets_available(task_type, scale)[idx]
         dataset = getattr(torch_frame.datasets, class_name)(root=root,
                                                             **kwargs)
-        # Make class name string more compact
-        self.compact_cls_str = str(dataset).replace('\n', '').replace(
-            ' ', '').replace(',)', ')')
+        self.cls_str = str(dataset)
 
         # Add split col
         df = dataset.df
         if SPLIT_COL in df.columns:
             df.drop(columns=[SPLIT_COL], inplace=True)
-        df[SPLIT_COL] = generate_random_split(length=len(df),
-                                              seed=split_random_state,
-                                              train_ratio=0.8, val_ratio=0.1)
+        split_df = pd.DataFrame({
+            SPLIT_COL:
+            generate_random_split(length=len(df), seed=split_random_state,
+                                  train_ratio=0.8, val_ratio=0.1)
+        })
+        df = pd.concat([df, split_df], axis=1)
 
         # check the scale
         if dataset.num_rows < 5000:
@@ -774,7 +777,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                 f'  task_type={self._task_type.value},\n'
                 f'  scale={self.scale},\n'
                 f'  idx={self.idx},\n'
-                f'  cls={self.compact_cls_str}\n'
+                f'  cls={self.cls_str}\n'
                 f')')
 
     def materialize(self):
