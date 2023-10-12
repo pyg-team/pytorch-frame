@@ -9,7 +9,7 @@ from torch_frame.typing import TaskType
     TaskType.BINARY_CLASSIFICATION, TaskType.MULTICLASS_CLASSIFICATION,
     TaskType.REGRESSION
 ])
-def test_dataframe_benchmark_match(task_type, scale):
+def test_data_frame_benchmark_match(task_type, scale):
     # Make sure task_type, scale, idx triple map to the fixed underlying
     # dataset. New dataset can be appeneded, but the existing mapping needes to
     # be preserved.
@@ -121,7 +121,7 @@ def test_dataframe_benchmark_match(task_type, scale):
             assert datasets[5] == ('Yandex', {'name': 'year'})
 
 
-def test_dataframe_benchmark_object(tmp_path):
+def test_data_frame_benchmark_object(tmp_path):
     dataset = DataFrameBenchmark(tmp_path, TaskType.BINARY_CLASSIFICATION,
                                  'small', 1)
     assert str(dataset) == ("DataFrameBenchmark(\n"

@@ -122,7 +122,8 @@ class DataFrameToTensorFrameConverter:
         df: DataFrame,
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
-        r"""Convert a given dataframe into :obj:`TensorFrame`."""
+        r"""Convert a given :obj:`DataFrame` object into :obj:`TensorFrame`
+        object."""
 
         xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
 
