@@ -24,10 +24,10 @@ extensions = [
 ]
 
 html_theme = 'pyg_sphinx_theme'
-html_logo = ('https://github.com/pyg-team/pytorch-frame/'
-             'blob/master/docs/source/_figures/pytorch_frame_logo.JPG')
+html_logo = ('https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/'
+             'master/pyg_sphinx_theme/static/img/pytorch_frame_logo.png')
 html_favicon = ('https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/'
-                'master/pyg_sphinx_theme/static/img/favicon.png')
+                'master/pyg_sphinx_theme/static/img/pytorch_frame_favicon.png')
 html_static_path = ['_static']
 templates_path = ['_templates']
 

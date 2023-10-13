@@ -17,7 +17,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
                        "  categorical (3): ['a', 'b', 'c'],\n"
                        "  numerical (2): ['x', 'y'],\n"
                        "  has_target=True,\n"
-                       "  device=cpu,\n"
+                       "  device='cpu',\n"
                        ")")
 
 
