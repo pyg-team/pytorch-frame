@@ -18,9 +18,10 @@ PyTorch Frame Documentation
    :maxdepth: 1
    :caption: Package Reference
 
+   modules/root
    modules/data
-   modules/nn
    modules/datasets
+   modules/nn
    modules/gbdt
    modules/transforms
    modules/utils
