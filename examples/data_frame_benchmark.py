@@ -13,9 +13,18 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torchmetrics import AUROC, Accuracy, MeanSquaredError
 from tqdm import tqdm
 
+from torch_frame import stype
 from torch_frame.data import DataLoader
 from torch_frame.datasets import DataFrameBenchmark
-from torch_frame.nn.models import ExcelFormer, FTTransformer, TabNet
+from torch_frame.nn.encoder import EmbeddingEncoder, LinearBucketEncoder
+from torch_frame.nn.models import (
+    ExcelFormer,
+    FTTransformer,
+    ResNet,
+    TabNet,
+    TabTransformer,
+    Trompt,
+)
 from torch_frame.typing import TaskType
 
 TRAIN_CONFIG_KEYS = ["batch_size", "gamma_rate", "base_lr"]
@@ -117,7 +126,74 @@ elif args.model_type == 'FTTransformer':
     }
     model_cls = FTTransformer
     col_stats = dataset.col_stats
+elif args.model_type == 'FTTransformerBucket':
+    stype_encoder_dict = {
+        stype.categorical: EmbeddingEncoder(),
+        stype.numerical: LinearBucketEncoder(),
+    }
+    model_search_space = {
+        'channels': [128, 256],
+        'num_layers': [4, 6, 8],
+    }
+    train_search_space = {
+        'batch_size': [256, 512],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.8, 0.9, 0.95],
+    }
 
+    def model_cls(
+        channels,
+        out_channels,
+        num_layers,
+        col_stats,
+        col_names_dict,
+    ) -> FTTransformer:
+        return FTTransformer(channels, out_channels, num_layers, col_stats,
+                             col_names_dict,
+                             stype_encoder_dict=stype_encoder_dict)
+
+    col_stats = dataset.col_stats
+elif args.model_type == 'ResNet':
+    model_search_space = {
+        'channels': [128, 256],
+        'num_layers': [4, 6, 8],
+    }
+    train_search_space = {
+        'batch_size': [256, 512],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.8, 0.9, 0.95],
+    }
+    model_cls = ResNet
+    col_stats = dataset.col_stats
+elif args.model_type == 'TabTransformer':
+    model_search_space = {
+        'channels': [32, 64, 128],
+        'num_layers': [4, 6, 8],
+        'num_heads': [2, 4, 8],
+        'encoder_pad_size': [2],
+        'attn_dropout': [0, 0.2],
+        'ffn_dropout': [0, 0.2],
+    }
+    train_search_space = {
+        'batch_size': [128, 256],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.8, 0.9, 0.95],
+    }
+    model_cls = TabTransformer
+    col_stats = dataset.col_stats
+elif args.model_type == 'Trompt':
+    model_search_space = {
+        'channels': [64, 128],
+        'num_layers': [4, 6, 8],
+        'num_prompts': [64, 128],
+    }
+    train_search_space = {
+        'batch_size': [128, 256],
+        'base_lr': [0.001],
+        'gamma_rate': [0.8, 0.9, 0.95],
+    }
+    model_cls = Trompt
+    col_stats = dataset.col_stats
 elif args.model_type == 'ExcelFormer':
     from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
@@ -173,6 +249,13 @@ def train(
             pred, y = model.forward_mixup(tf)
         else:
             pred = model.forward(tf)
+            if isinstance(model, Trompt):
+                # Trompt uses the layer-wise loss
+                num_layers = pred.size(1)
+                # [batch_size * num_layers, num_classes]
+                pred = pred.view(-1, out_channels)
+                y = tf.y.repeat_interleave(num_layers)
+
         if pred.size(1) == 1:
             pred = pred.view(-1, )
         if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
@@ -195,6 +278,8 @@ def test(
     metric_computer.reset()
     for tf in loader:
         pred = model(tf)
+        if isinstance(model, Trompt):
+            pred = pred.mean(dim=1)  # [batch_size, out_channels]
         if dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             pred = pred.argmax(dim=-1)
         elif dataset.task_type == TaskType.REGRESSION:
