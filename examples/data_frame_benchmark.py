@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from torch_frame.data import DataLoader
 from torch_frame.datasets import DataFrameBenchmark
+from torch_frame.nn.models import ExcelFormer, FTTransformer, TabNet
 from torch_frame.typing import TaskType
 
 TRAIN_CONFIG_KEYS = ["batch_size", "gamma_rate", "base_lr"]
@@ -91,7 +92,6 @@ col_stats = None
 
 # Set up model specific search space
 if args.model_type == 'TabNet':
-    from torch_frame.nn.models import TabNet
     model_search_space = {
         'split_attention_channels': [64, 128],
         'split_feature_channels': [64, 128],
@@ -105,8 +105,20 @@ if args.model_type == 'TabNet':
     }
     model_cls = TabNet
     col_stats = dataset.col_stats
+elif args.model_type == 'FTTransformer':
+    model_search_space = {
+        'channels': [128, 256],
+        'num_layers': [4, 6, 8],
+    }
+    train_search_space = {
+        'batch_size': [256, 512],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.8, 0.9, 0.95],
+    }
+    model_cls = FTTransformer
+    col_stats = dataset.col_stats
+
 elif args.model_type == 'ExcelFormer':
-    from torch_frame.nn.models import ExcelFormer
     from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
     categorical_transform = CatToNumTransform()
