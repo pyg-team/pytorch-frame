@@ -1,28 +1,28 @@
 Introduction by Example
 =======================
 
-:pyg:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
+:pyf:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
 Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
 The goal of :pyg:`PyTorch Frame` is to build a deep learning framework to perform effective machine learning on such complex data.
 
 Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
-:pyg:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
+:pyf:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
-In this doc, we introduce the fundamental concepts of :pyg:`PyTorch Frame` through self-contained examples.
+In this doc, we introduce the fundamental concepts of :pyf:`PyTorch Frame` through self-contained examples.
 
-At its core, :pyg:`PyTorch Frame` provides the following main features:
+At its core, :pyf:`PyTorch Frame` provides the following main features:
 
 .. contents::
     :local:
 
 Common Benchmark Datasets
 -------------------------
-:pyg:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from
+:pyf:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from
 `Revisiting Deep Learning Models for Tabular Data (NeurIPS 2021) <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
-Initializing datasets is straightforward in :pyg:`PyTorch Frame`.
+Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
 An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the `Adult Census Income` dataset, type:
 
 .. code-block:: python
@@ -54,13 +54,13 @@ An initialization of a dataset will automatically download its raw files and pro
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
-Currently :pyg:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
+Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
 
 - :class:`~torch_frame.stype.categorical` denotes categorical columns.
 - :obj:`~torch_frame.stype.numerical` denotes numerical columns.
 - :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some sentence encoder.
 
-A table in :pyg:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
+A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :class:`~torch_frame.stype`.
 - :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :class:`~torch_frame.stype`'s.
@@ -161,7 +161,7 @@ For numerical features,
 
 Mini-batches
 ------------
-Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini-batches.
+Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
 
 .. code-block:: python
 
@@ -184,7 +184,7 @@ Neural networks are usually trained in a mini-batch fashion. :pyg:`PyTorch Frame
 Learning Methods on Tabular Data
 --------------------------------
 
-After learning about data handling, datasets and loader in :pyg:`PyTorch Frame`, it’s time to implement our first model!
+After learning about data handling, datasets and loader in :pyf:`PyTorch Frame`, it’s time to implement our first model!
 
 Now let’s implement a model called :obj:`ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
 Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
