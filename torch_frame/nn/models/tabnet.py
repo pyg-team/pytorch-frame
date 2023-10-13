@@ -29,8 +29,7 @@ class TabNet(Module):
         split_attention_channels (int): Dimensionality of attention channels.
         gamma (float): The gamma value for updating the prior for the attention
             mask.
-        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
-            Any]]):
+        col_stats (Dict[str,Dict[:obj:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A

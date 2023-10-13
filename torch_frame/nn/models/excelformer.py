@@ -84,8 +84,7 @@ class ExcelFormer(Module):
         num_cols (int): Number of columns
         num_layers (int): Number of :class:`ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
-        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
-            Any]]):
+        col_stats (Dict[str,Dict[:obj:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A

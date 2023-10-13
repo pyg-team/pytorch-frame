@@ -25,8 +25,7 @@ class FTTransformer(Module):
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.  (default: 3)
-        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
-            Any]]):
+        col_stats (Dict[str,Dict[:obj:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A

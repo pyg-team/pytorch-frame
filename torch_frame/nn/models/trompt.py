@@ -28,8 +28,7 @@ class Trompt(Module):
         num_prompts (int): Number of prompt columns.
         num_layers (int, optional): Number of :class:`TromptConv` layers.
             (default: :obj:`6`)
-        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
-            Any]]):
+        col_stats (Dict[str,Dict[:obj:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
