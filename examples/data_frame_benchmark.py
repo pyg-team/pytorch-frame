@@ -40,8 +40,8 @@ parser.add_argument('--scale', type=str, choices=['small', 'medium', 'large'],
                     default='small')
 parser.add_argument('--idx', type=int, default=0,
                     help='The index of the dataset within DataFrameBenchmark')
-parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--num_trials', type=int, default=20,
+parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--num_trials', type=int, default=10,
                     help='Number of Optuna-based hyper-parameter tuning.')
 parser.add_argument(
     '--num_repeats', type=int, default=5,
@@ -73,26 +73,25 @@ train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
 
-# Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 
 if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
     out_channels = 1
     loss_fun = BCEWithLogitsLoss()
-    metric_computer = AUROC(task='binary')
+    metric_computer = AUROC(task='binary').to(device)
     higher_is_better = True
 elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
     out_channels = dataset.num_classes
     loss_fun = CrossEntropyLoss()
     metric_computer = Accuracy(task='multiclass',
-                               num_classes=dataset.num_classes)
+                               num_classes=dataset.num_classes).to(device)
     higher_is_better = True
 elif dataset.task_type == TaskType.REGRESSION:
     out_channels = 1
     loss_fun = MSELoss()
-    metric_computer = MeanSquaredError(squared=False)
+    metric_computer = MeanSquaredError(squared=False).to(device)
     higher_is_better = False
 
 # To be set for each model
@@ -127,10 +126,6 @@ elif args.model_type == 'FTTransformer':
     model_cls = FTTransformer
     col_stats = dataset.col_stats
 elif args.model_type == 'FTTransformerBucket':
-    stype_encoder_dict = {
-        stype.categorical: EmbeddingEncoder(),
-        stype.numerical: LinearBucketEncoder(),
-    }
     model_search_space = {
         'channels': [128, 256],
         'num_layers': [4, 6, 8],
@@ -140,17 +135,7 @@ elif args.model_type == 'FTTransformerBucket':
         'base_lr': [0.0001, 0.001],
         'gamma_rate': [0.8, 0.9, 0.95],
     }
-
-    def model_cls(
-        channels,
-        out_channels,
-        num_layers,
-        col_stats,
-        col_names_dict,
-    ) -> FTTransformer:
-        return FTTransformer(channels, out_channels, num_layers, col_stats,
-                             col_names_dict,
-                             stype_encoder_dict=stype_encoder_dict)
+    model_cls = FTTransformer
 
     col_stats = dataset.col_stats
 elif args.model_type == 'ResNet':
@@ -244,6 +229,7 @@ def train(
     loss_accum = total_count = 0
 
     for tf in tqdm(loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         y = tf.y
         if isinstance(model, ExcelFormer):
             pred, y = model.forward_mixup(tf)
@@ -277,6 +263,7 @@ def test(
     model.eval()
     metric_computer.reset()
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         if isinstance(model, Trompt):
             pred = pred.mean(dim=1)  # [batch_size, out_channels]
@@ -294,6 +281,13 @@ def train_and_eval_with_cfg(
     trial: Optional[optuna.trial.Trial] = None,
 ) -> Tuple[float, float]:
     # Use model_cfg to set up training procedure
+    if args.model_type == 'FTTransformerBucket':
+        # Use LinearBucketEncoder instead
+        stype_encoder_dict = {
+            stype.categorical: EmbeddingEncoder(),
+            stype.numerical: LinearBucketEncoder(),
+        }
+        model_cfg['stype_encoder_dict'] = stype_encoder_dict
     model = model_cls(
         **model_cfg,
         out_channels=out_channels,
@@ -356,6 +350,7 @@ def objective(trial: optuna.trial.Trial) -> float:
 
 def main():
     # Hyper-parameter optimization with Optuna
+    print("Hyper-parameter search via Optuna")
     start_time = time.time()
     study = optuna.create_study(
         pruner=optuna.pruners.MedianPruner(),
@@ -364,16 +359,16 @@ def main():
     study.optimize(objective, n_trials=args.num_trials)
     end_time = time.time()
     search_time = end_time - start_time
-
-    # Get the best hyper-parameter
+    print("Hyper-parameter search done. Found the best config.")
     params = study.best_params
     best_train_cfg = {}
     for train_cfg_key in TRAIN_CONFIG_KEYS:
         best_train_cfg[train_cfg_key] = params.pop(train_cfg_key)
     best_model_cfg = params
 
+    print(f"Repeat experiments {args.num_repeats} times with the best train "
+          f"config {best_train_cfg} and model config {best_model_cfg}.")
     start_time = time.time()
-    # Repeat the experiments with the best hyper-parameter
     best_val_metrics = []
     best_test_metrics = []
     for _ in range(args.num_repeats):
