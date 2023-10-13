@@ -115,8 +115,9 @@ class ResNet(Module):
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
-        stype_encoder_dict (Optional[Dict[:class:`torch_frame.stype`,
-            StypeEncoder]):
+        stype_encoder_dict
+            (Optional[Dict[:class:`torch_frame.stype`,
+            `torch_frame.nn.encoder.StypeEncoder`]):
             Dictionary containing encoder type per column statistics
             (default: :obj:`None`, :obj:`EmbeddingEncoder()` for categorial
             feature and :obj:`LinearEncoder()` for numerical feature)
