@@ -1,6 +1,11 @@
 Modular Design of Deep Tabular Models
 =====================================
-Our key observation is that many tabular deep learning models all follow a modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`,
+Our key observation is that many tabular deep learning models all follow a modular design of three components:
+
+- :obj:`FeatureEncoder`
+- :obj:`TableConv`
+- :obj:`Decoder`
+
 as shown in the figure below.
 
 .. figure:: ../_figures/modular.png
@@ -8,14 +13,14 @@ as shown in the figure below.
   :width: 100%
 
 
-- First, the input :obj:`DataFrame` with different columns is converted to :class:`TensorFrame`, where the columns are organized according to their `stype` (semantic types).
+- First, the input :obj:`DataFrame` with different columns is converted to :class:`TensorFrame`, where the columns are organized according to their :obj:`stype` (semantic types such as categorical and numerical).
 - Then, the :class:`~torch_frame.TensorFrame` is fed into :class:`~torch_frame.nn.encoder.FeatureEncoder` which converts each `stype` feature into a 3-dimensional :obj:`Tensor`.
 - The :obj:`Tensor`'s across different `stypes` are then concatenated into a single :obj:`Tensor` :obj:`x` of shape [`batch_size`, `num_cols`, `num_channels`].
 - The :obj:`Tensor` :obj:`x` is then updated iteratively via :class:`TableConv`'s.
 - The updated :obj:`Tensor` :obj:`x` is inputed into :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
 :class:`FeatureEncoder`
---------------------------------------
+-----------------------
 
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into 3-dimensional :obj:`Tensor` :obj:`x`.
 This class can contain learnable parameters and `NaN` (missing value) handling.
@@ -38,10 +43,8 @@ It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.ca
     )
 
     stype_encoder_dict = {
-        stype.categorical:
-        EmbeddingEncoder(),
-        stype.numerical:
-        LinearEncoder(),
+        stype.categorical: EmbeddingEncoder(),
+        stype.numerical: LinearEncoder(),
     }
 
     encoder = StypeWiseFeatureEncoder(
