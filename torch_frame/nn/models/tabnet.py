@@ -44,9 +44,9 @@ class TabNet(Module):
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         num_shared_glu_layers (int): Number of GLU layers shared across the
-            TabNet layers. (default: `2`)
+            TabNet layers. (default: :obj:`2`)
         num_dependent_gpu_layers (int): Number of GLU layers specific to each
-            TabNet layer. (default: `2`)
+            TabNet layer. (default: :obj:`2`)
         cat_emb_channels (int): The categorical embedding dimensionality.
     """
     def __init__(
@@ -134,10 +134,9 @@ class TabNet(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            x (torch.Tensor): The output embeddings of size
-                [batch_size, out_channels].
-            y (torch.Tensor): If :obj:`return_reg` is :obj:`True`, return the
-                entropy regularization as well.
+            Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
+            embeddings of size [batch_size, out_channels]. If :obj:`return_reg`
+            is :obj:`True`, return the entropy regularization as well.
         """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
