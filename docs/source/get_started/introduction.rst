@@ -3,13 +3,13 @@ Introduction by Example
 
 :pyf:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
 Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, texts (e.g., descriptions), images (e.g., pictures) etc.
-The goal of Pytorch Frame is to build a deep learning framework to perform effective machine learning on such a complex data.
+The goal of :pyg:`PyTorch Frame` is to build a deep learning framework to perform effective machine learning on such complex data.
 
 Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
 :pyf:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
-In this doc, we shortly introduce the fundamental concepts of :pyf:`PyTorch Frame` through self-contained examples.
+In this doc, we introduce the fundamental concepts of :pyf:`PyTorch Frame` through self-contained examples.
 
 At its core, :pyf:`PyTorch Frame` provides the following main features:
 
@@ -18,7 +18,8 @@ At its core, :pyf:`PyTorch Frame` provides the following main features:
 
 Common Benchmark Datasets
 -------------------------
-:pyf:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from `https://github.com/yandex-research/tabular-dl-revisiting-models <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
+:pyf:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from
+`Revisiting Deep Learning Models for Tabular Data (NeurIPS 2021) <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
@@ -70,8 +71,10 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
     The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
-Converting a :class:`torch_frame.dataset.Dataset` into a :class:`~torch_frame.TensorFrame` instance refers to a materialization stage from raw data into compact :obj:`Tensor` representations.
-We show a simple example.
+Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
+:meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`.
+
+The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In Pytorch Frame, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
 
 .. code-block:: python
 
@@ -125,13 +128,13 @@ A :class:`~torch_frame.TensorFrame` contains the following basic properties:
     >>> device(type='cpu')
 
 
-We support transferring the data in a :class:`~torch_frame.TensorFrame` across devices.
+We support transferring the data in a :class:`~torch_frame.TensorFrame` to devices supported by :pytorch:`PyTorch`.
 
 .. code-block:: python
 
-    tensor_frame.cpu()
+    tensor_frame.to("cpu")
 
-    tensor_frame.cuda()
+    tensor_frame.to("cuda")
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
 
@@ -145,7 +148,7 @@ For numerical features,
 
 - :class:`StatType.MEAN` denotes the mean value of the numerical feature,
 - :class:`StatType.STD` denotes the standard deviation,
-- :class:`StatType.QUANTILES` contains a list containing minimum value, first quartile(25th percentile), median(50th percentile), thrid quartile(75th percentile) and maximum value of the column.
+- :class:`StatType.QUANTILES` contains a list containing minimum value, first quartile (25th percentile), median (50th percentile), thrid quartile (75th percentile) and maximum value of the column.
 
 .. code-block:: python
 
@@ -177,20 +180,13 @@ Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame
                 categorical (3): ['Pclass', 'Sex', 'Embarked'],
                 numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
                 has_target=True,
-                device=cpu,
+                device='cpu',
             )
 
 Learning Methods on Tabular Data
 --------------------------------
 
 After learning about data handling, datasets and loader in :pyf:`PyTorch Frame`, it’s time to implement our first model!
-
-.. code-block:: python
-
-    from torch_frame.datasets import Yandex
-
-    dataset = Yandex(root='/tmp/adult', name='adult')
-    dataset.materialize()
 
 Now let’s implement a model called :obj:`ExampleTransformer`. It uses :class:`~torch_frame.nn.conv.TabTransformerConv` as its convolution layer.
 Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires :obj:`col_stats` and :obj:`col_names_dict`, we can directly get them as properties of any materialized dataset.
@@ -258,23 +254,25 @@ Let's create train-test split and create data loaders.
 
 .. code-block:: python
 
+    from torch_frame.datasets import Yandex
     from torch_frame.data import DataLoader
 
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset.materialize()
     dataset.shuffle()
     train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
     train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
     test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128,
-                            shuffle=True)
+                            shuffle=False)
 
 
-Let’s train this model on the training nodes for 50 epochs:
+Let’s train this model for 50 epochs:
 
 .. code-block:: python
 
     import torch
     import torch.nn.functional as F
-    from tqdm import tqdm
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ExampleTransformer(
@@ -289,23 +287,28 @@ Let’s train this model on the training nodes for 50 epochs:
     optimizer = torch.optim.Adam(model.parameters())
 
     for epoch in range(50):
-        for tf in tqdm(train_loader):
-            pred = model.forward(tf)
+        for tf in train_loader:
+            tf = tf.to(device)
+            pred = model(tf)
             loss = F.cross_entropy(pred, tf.y)
             optimizer.zero_grad()
             loss.backward()
+            optimizer.step()
 
 Finally, we can evaluate our model on the test split:
 
 .. code-block:: python
 
     model.eval()
-    pred = model(test_dataset.tensor_frame).argmax(dim=1)
-    pred_class = pred.argmax(dim=-1)
-    correct = float((tf.y == pred_class).sum())
-    acc = int(correct) / len(tf.y)
+    correct = 0
+    for tf in test_loader:
+        tf = tf.to(device)
+        pred = model(tf)
+        pred_class = pred.argmax(dim=-1)
+        correct += (tf.y == pred_class).sum()
+    acc = int(correct) / len(test_dataset)
     print(f'Accuracy: {acc:.4f}')
-    >>> Accuracy: 0.7941
+    >>> Accuracy: 0.8447
 
 
 This is all it takes to implement your first deep tabular network.
