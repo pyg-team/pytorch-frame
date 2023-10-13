@@ -322,21 +322,19 @@ class LinearBucketEncoder(StypeEncoder):
             feat_i = feat[:, i].contiguous()
             bucket_indices = torch.bucketize(feat_i, self.boundaries[i, 1:-1])
 
-            # Create a mask for the one-hot encoding based on bucket indices
-            one_hot_mask = torch.nn.functional.one_hot(
-                bucket_indices,
-                len(self.boundaries[i]) - 1).float()
-
-            # Create a mask for values that are greater than upper bounds
-            greater_mask = (feat[:, i:i + 1] > self.boundaries[i, :-1]).float()
-
             # Combine the masks to create encoded_values
             # [batch_size, num_buckets]
-            encoded_value = (one_hot_mask * feat[:, i:i + 1] - one_hot_mask *
-                             self.boundaries[i, :-1].unsqueeze(0)) / (
-                                 self.interval[i].unsqueeze(0) + greater_mask *
-                                 (1 - one_hot_mask))
-            encoded_values.append(encoded_value)
+            boundary_start = self.boundaries[i, bucket_indices]
+            boundary_end = self.boundaries[i, bucket_indices + 1]
+            frac = (feat_i - boundary_start) / (boundary_end - boundary_start +
+                                                1e-8)
+            # Create a mask for values that are greater than upper bounds
+            greater_mask = (feat_i.view(-1, 1)
+                            > self.boundaries[i, :-1]).float()
+            greater_mask[
+                torch.arange(len(bucket_indices), device=greater_mask.device),
+                bucket_indices] = frac
+            encoded_values.append(greater_mask)
         # Apply column-wise linear transformation
         out = torch.stack(encoded_values, dim=1)
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
