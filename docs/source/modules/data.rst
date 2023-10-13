@@ -18,6 +18,18 @@ Data Objects
      {{ name }}
    {% endfor %}
 
+Stats
+-----
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   {% for name in torch_frame.data.stats_classes %}
+     {{ name }}
+   {% endfor %}
+
 Data Loaders
 ------------
 
