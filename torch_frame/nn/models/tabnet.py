@@ -123,9 +123,9 @@ class TabNet(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): The output embeddings of size
+            Tensor: The output embeddings of size
                 [batch_size, out_channels].
-            reg (Tensor): If :obj:`return_reg` is :obj:`True`, return the
+            Tensor: If :obj:`return_reg` is :obj:`True`, return the
                 entropy regularization as well.
         """
         # [batch_size, num_cols, cat_emb_channels]

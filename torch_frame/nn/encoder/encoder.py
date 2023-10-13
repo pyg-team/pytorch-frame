@@ -20,9 +20,9 @@ class FeatureEncoder(Module, ABC):
             df (TensorFrame): Input TensorFrame
 
         Returns:
-            x (Tensor): Output column-wise pytorch tensor of shape
+            Tensor: Output column-wise pytorch tensor of shape
                 :obj:`[batch_size, num_cols, hidden_channels]`.
-            col_names (List[str]): Column names of  :obj:`x`. The length needs
+            List[str]: List of column names of  :obj:`x`. The length needs
                 to be :obj:`num_cols`.
         """
         raise NotImplementedError

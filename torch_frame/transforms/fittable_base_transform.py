@@ -4,7 +4,8 @@ from typing import Any, Dict
 
 import torch
 from torch import Tensor
-from torch_frame import TensorFrame, NAStrategy
+
+from torch_frame import NAStrategy, TensorFrame
 from torch_frame.data.stats import StatType
 from torch_frame.transforms import BaseTransform
 
@@ -26,7 +27,7 @@ class FittableBaseTransform(BaseTransform):
     def is_fitted(self) -> bool:
         r"""Whether the transform is already fitted."""
         return self._is_fitted
-    
+
     def _replace_nans(self, x: Tensor, na_strategy: NAStrategy):
         r"""Replace NaNs based on NAStrategy.
 
@@ -36,7 +37,7 @@ class FittableBaseTransform(BaseTransform):
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.
         Returns:
-            tf (Tensor): Output :obj:`TensorFrame` with NaN values replaced.
+            Tensor: Output :obj:`TensorFrame` with NaN values replaced.
         """
         x = x.clone()
         for col in range(x.size(1)):

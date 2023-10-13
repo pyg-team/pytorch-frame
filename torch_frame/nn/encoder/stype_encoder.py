@@ -116,7 +116,7 @@ class StypeEncoder(Module, ABC):
             feat (Tensor): Input :obj:`Tensor`.
 
         Returns:
-            x (Tensor): Output :obj:`Tensor` with NaNs replaced given
+            Tensor: Output :obj:`Tensor` with NaNs replaced given
                 :obj:`na_strategy`.
         """
         if self.na_strategy is None:

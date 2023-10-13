@@ -133,7 +133,7 @@ class ExcelFormer(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): The output embeddings of size
+            Tensor: The output embeddings of size
                 [batch_size, out_channels].
         """
         if stype.numerical not in tf.feat_dict or len(
@@ -163,9 +163,9 @@ class ExcelFormer(Module):
                 true. (default: 0.5)
 
         Returns:
-            out_mixedup (Tensor): The mixed up output embeddings of size
+            Tensor: The mixed up output embeddings of size
                 [batch_size, out_channels].
-            y_mixedup (Tensor): Output :obj:`Tensor` y_mixedup will be
+            Tensor: Output :obj:`Tensor` y_mixedup will be
                 returned only when mixup is set to true. The size is
                 [batch_size, num_classes] for classification and
                 [batch_size, 1] for regression.

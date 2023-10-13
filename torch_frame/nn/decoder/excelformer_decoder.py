@@ -36,7 +36,7 @@ class ExcelFormerDecoder(Decoder):
                 [batch_size, num_cols, in_channels]
 
         Returns:
-            x (Tensor): [batch_size, out_channels].
+            Tensor: [batch_size, out_channels].
         """
         x = x.transpose(1, 2)
         x = self.lin_f(x)

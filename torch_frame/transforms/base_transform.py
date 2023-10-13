@@ -25,7 +25,7 @@ class BaseTransform(ABC):
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame`.
         Returns:
-            tf (TensorFrame): Input :obj:`TensorFrame` after transform.
+            TensorFrame: Input :obj:`TensorFrame` after transform.
         """
         return tf
 

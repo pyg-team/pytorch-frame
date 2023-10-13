@@ -166,6 +166,14 @@ class ResNet(Module):
         self.decoder[-1].reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
+        r"""Transforming :obj:`TensorFrame` object into output prediction.
+
+        Args:
+            x (Tensor): Input :obj:`TensorFrame` object.
+
+        Returns:
+            Tensor: Output. The shape is [batch_size, out_channels].
+        """
         x, _ = self.encoder(tf)
 
         # Flattening the encoder output
