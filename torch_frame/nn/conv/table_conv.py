@@ -14,7 +14,7 @@ class TableConv(Module, ABC):
         3-dimensional tensor.
 
         Args:
-            x (Tensor): Input column-wise tensor of shape
+            x (torch.Tensor): Input column-wise tensor of shape
                 :obj:`[batch_size, num_cols, hidden_channels]`.
             args (Any): Extra arguments.
             kwargs (Any): Extra keyward arguments.

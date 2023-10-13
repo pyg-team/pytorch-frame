@@ -93,9 +93,10 @@ class ExcelFormer(Module):
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
-        diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
-        aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
-        residual_dropout (float, optional): residual dropout (default: `0.0`)
+        diam_dropout (float, optional): diam_dropout. (default: :obj:`0.0`)
+        aium_dropout (float, optional): aium_dropout. (default: :obj:`0.0`)
+        residual_dropout (float, optional): residual dropout.
+            (default: :obj:`0.0`)
     """
     def __init__(
         self,
@@ -177,15 +178,14 @@ class ExcelFormer(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
             beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when mixup is
-                true. (default: 0.5)
+                true. (default: :obj:`0.5`)
 
         Returns:
-            torch.Tensor: The mixed up output embeddings of size
-                [batch_size, out_channels].
-            torch.Tensor: Output :obj:`Tensor` y_mixedup will be
-                returned only when mixup is set to true. The size is
-                [batch_size, num_classes] for classification and
-                [batch_size, 1] for regression.
+            (torch.Tensor, torch.Tensor): The first :obj:`Tensor` is the mixed
+            up output embeddings of size [batch_size, out_channels].
+            The second :obj:`Tensor` y_mixedup will be returned only when
+            mixup is set to true. The size is [batch_size, num_classes] for
+            classification and [batch_size, 1] for regression.
         """
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(

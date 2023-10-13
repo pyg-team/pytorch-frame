@@ -91,7 +91,7 @@ class FTTransformer(Module):
         r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (Tensor): Input :obj:`TensorFrame` object.
+            x (torch.Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output of shape [batch_size, out_channels].
