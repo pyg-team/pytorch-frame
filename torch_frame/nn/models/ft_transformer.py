@@ -30,20 +30,21 @@ class FTTransformer(Module):
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_layers (int): Numner of layers.  (default: 3)
-        col_stats (Dict[str,Dict[:class:`StatType`,Any]]):
+        num_layers (int): Numner of layers.  (default: :obj:`3`)
+        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
-             Available as :class:`dataset.col_stats`.
-        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict
-            (Optional[Dict[torch_frame.stype, torch_frame.nn.StypeEncoder]) :
+            (Optional[Dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`]):
             Dictionary containing encoder type per column statistics (default:
-            :obj:None, will call EmbeddingEncoder() for categorial feature and
-            LinearEncoder() for numerical feature)
+            :obj:`None`, will call EmbeddingEncoder() for categorial feature
+            and LinearEncoder() for numerical feature)
     """
     def __init__(
         self,

@@ -107,7 +107,7 @@ class ResNet(Module):
         channels (int): The number of channels in the backbone layers.
         out_channels (int): The number of output channels in the decoder.
         num_layers (int): The number of layers in the backbone.
-        col_stats (Dict[str,Dict[:class:`StatType`,Any]]):
+        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
         col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
