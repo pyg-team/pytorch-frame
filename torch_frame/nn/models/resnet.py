@@ -30,8 +30,8 @@ class FCResidualBlock(Module):
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
-            (default: :obj:`layernorm`)
+            :obj:`batchnorm`, :class:`torch.nn.LayerNorm`, or :obj:`None`.
+            (default: :class:`torch.nn.LayerNorm`)
         dropout_prob (float): The dropout probability (default: `0.0`, i.e.,
             no dropout).
     """
@@ -183,7 +183,8 @@ class ResNet(Module):
         r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (torch.Tensor): Input :obj:`TensorFrame` object.
+            x (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output of shape [batch_size, out_channels].

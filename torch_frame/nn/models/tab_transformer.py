@@ -119,7 +119,8 @@ class TabTransformer(Module):
         r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (torch_frame.TensorFrame): Input :obj:`TensorFrame` object.
+            x (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output of shape [batch_size, out_channels].

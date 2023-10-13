@@ -99,7 +99,8 @@ class Trompt(Module):
         predictions at each layer.
 
         Args:
-            tf (torch_frame.TensorFrame): Input :obj:`TensorFrame` object.
+            tf (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output predictions stacked across layers. The

@@ -148,7 +148,8 @@ class ExcelFormer(Module):
         r"""Transform :obj:`TensorFrame` object into output embeddings.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            tf (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
             torch.Tensor: The output embeddings of size
