@@ -758,6 +758,11 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         })
         df = pd.concat([df, split_df], axis=1)
 
+        # For regression task, we normalize the target.
+        if task_type == TaskType.REGRESSION:
+            ser = df[dataset.target_col]
+            df[dataset.target_col] = (ser - ser.mean()) / ser.std()
+
         # check the scale
         if dataset.num_rows < 5000:
             assert False

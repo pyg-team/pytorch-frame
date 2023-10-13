@@ -133,6 +133,7 @@ for epoch in range(1, args.epochs + 1):
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val {metric}: {best_val_metric:.4f}, '
       f'Best Test {metric}: {best_test_metric:.4f}')

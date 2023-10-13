@@ -98,7 +98,6 @@ def train(epoch: int) -> float:
         loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
         optimizer.step()
-    lr_scheduler.step()
     return loss_accum / total_count
 
 
@@ -130,5 +129,6 @@ for epoch in range(1, args.epochs + 1):
         best_test_acc = test_acc
     print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
           f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')

@@ -19,7 +19,7 @@ from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 def feature_mixup(
     x: Tensor,
     y: Tensor,
-    num_classes: Optional[int] = None,
+    num_classes: int,
     beta: int = 0.5,
 ) -> TensorFrame:
     r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
@@ -30,16 +30,16 @@ def feature_mixup(
     Args:
         x (Tensor): The input numerical feature.
         y (Tensor): The target.
-        num_classes (int, optional): Number of classes. Needs to be given in
-            the case of classification tasks. (default: :obj:`None`)
+        num_classes (int): Number of classes.
         beta (float): The concentration parameter of the Beta distribution.
 
     Returns:
         x_mixedup (Tensor): The mixedup numerical feature.
-        y_mixedup (Tensor): Transformed target.
-            [batch_size, num_classes] for classification and
-            [batch_size, 1] for regression.
+        y_mixedup (Tensor): Transformed target of size
+            [batch_size, num_classes]
     """
+    assert num_classes > 0
+
     beta = torch.tensor(beta, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
     shuffle_rates = beta_distribution.sample((len(x), 1))
@@ -48,13 +48,12 @@ def feature_mixup(
     x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
 
     y_shuffled = y[shuffled_idx]
-    if y.is_floating_point():
-        # Regression task
+    if num_classes == 1:
+        # Regression task or binary classification
         shuffle_rates = shuffle_rates.view(-1, )
         y_mixedup = shuffle_rates * y + (1 - shuffle_rates) * y_shuffled
     else:
         # Classification task
-        assert num_classes is not None
         one_hot_y = F.one_hot(y, num_classes=num_classes)
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
         y_mixedup = (shuffle_rates * one_hot_y +
