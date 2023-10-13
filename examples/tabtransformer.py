@@ -59,9 +59,9 @@ train_dataset, val_dataset, test_dataset = dataset[:0.65], dataset[
     0.65:0.80], dataset[0.80:]
 
 # Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -89,6 +89,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred = model.forward(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
@@ -105,6 +106,7 @@ def test(loader: DataLoader) -> float:
     all_preds = []
     all_labels = []
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
 

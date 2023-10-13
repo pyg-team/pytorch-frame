@@ -301,11 +301,9 @@ class LinearBucketEncoder(StypeEncoder):
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         boundaries = torch.tensor(quantiles)
         self.register_buffer('boundaries', boundaries)
-        self.register_buffer('interval',
-                             boundaries[:, 1:] - boundaries[:, :-1] + 1e-8)
         num_cols = len(self.stats_list)
         self.weight = Parameter(
-            torch.empty(num_cols, self.interval.shape[-1], self.out_channels))
+            torch.empty(num_cols, boundaries.shape[1] - 1, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
 

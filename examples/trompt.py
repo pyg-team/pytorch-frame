@@ -58,9 +58,9 @@ train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
 # Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -85,6 +85,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         # [batch_size, num_layers, num_classes]
         out = model(tf)
         num_layers = out.size(1)
@@ -107,6 +108,7 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
+        tf = tf.to(device)
         out = model(tf)  # [batch_size, num_layers, num_classes]
         # Mean pooling across layers:
         pred = out.mean(dim=1)  # [batch_size, num_classes]

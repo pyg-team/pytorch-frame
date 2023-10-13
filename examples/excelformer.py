@@ -46,9 +46,9 @@ dataset.materialize()
 train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 
 # CategoricalCatBoostEncoder encodes the categorical features
 # into numerical features with CatBoostEncoder.
@@ -102,6 +102,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred_mixedup, y_mixedup = model.forward_mixup(tf)
         if is_classification:
             loss = F.cross_entropy(pred_mixedup, y_mixedup)
@@ -121,6 +122,7 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         if is_classification:
             pred_class = pred.argmax(dim=-1)
