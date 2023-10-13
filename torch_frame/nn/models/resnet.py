@@ -93,17 +93,25 @@ class FCResidualBlock(Module):
 
 
 class ResNet(Module):
-    r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
+    r"""The ResNet model introduced in the
+    `"Revisiting Deep Learning Models for Tabular Data"
+    <https://arxiv.org/abs/2106.11959>`_ paper.
 
     Args:
         channels (int): The number of channels in the backbone layers.
         out_channels (int): The number of output channels in the decoder.
         num_layers (int): The number of layers in the backbone.
-        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
-            column statistics
-        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
-            containing column names categorized by statistical type
-        stype_encoder_dict (Optional[Dict[torch_frame.stype, StypeEncoder]):
+        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
+            Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict (Optional[Dict[:class:`torch_frame.stype`,
+            StypeEncoder]):
             Dictionary containing encoder type per column statistics
             (default: :obj:`None`, :obj:`EmbeddingEncoder()` for categorial
             feature and :obj:`LinearEncoder()` for numerical feature)
@@ -169,10 +177,10 @@ class ResNet(Module):
         r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (Tensor): Input :obj:`TensorFrame` object.
+            x (torch.Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
-            Tensor: Output. The shape is [batch_size, out_channels].
+            torch.Tensor: Output of shape [batch_size, out_channels].
         """
         x, _ = self.encoder(tf)
 

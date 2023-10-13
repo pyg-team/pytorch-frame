@@ -28,8 +28,8 @@ class StypeEncoder(Module, ABC):
 
     Args:
         out_channels (int): The output channel dimensionality
-        stats_list (List[Dict[StatType, Any]]): The list of stats for each
-            column within the same stype.
+        stats_list (List[Dict[torch_frame.data.stats.StatType, Any]]): The list
+            of stats for each column within the same stype.
         stype (stype): The stype of the encoder input.
         post_module (Module, optional): The post-hoc module applied to the
             output, such as activation function and normalization. Must
@@ -116,7 +116,7 @@ class StypeEncoder(Module, ABC):
             feat (Tensor): Input :obj:`Tensor`.
 
         Returns:
-            Tensor: Output :obj:`Tensor` with NaNs replaced given
+            torch.Tensor: Output :obj:`Tensor` with NaNs replaced given
                 :obj:`na_strategy`.
         """
         if self.na_strategy is None:

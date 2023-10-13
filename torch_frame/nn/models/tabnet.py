@@ -18,7 +18,9 @@ from torch_frame.nn import (
 
 
 class TabNet(Module):
-    r"""TabNet model introduced in https://arxiv.org/abs/1908.07442
+    r"""The TabNet model introduced in the
+    `"TabNet: Attentive Interpretable Tabular Learning"
+    <https://arxiv.org/abs/1908.07442>`_ paper.
 
     Args:
         out_channels (int): Output dimensionality
@@ -27,11 +29,15 @@ class TabNet(Module):
         split_attention_channels (int): Dimensionality of attention channels.
         gamma (float): The gamma value for updating the prior for the attention
             mask.
-        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats.
-        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
-            maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
+        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
+            Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
         num_shared_glu_layers (int): Number of GLU layers shared across the
             TabNet layers. (default: `2`)
         num_dependent_gpu_layers (int): Number of GLU layers specific to each
@@ -123,9 +129,9 @@ class TabNet(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            Tensor: The output embeddings of size
+            x (torch.Tensor): The output embeddings of size
                 [batch_size, out_channels].
-            Tensor: If :obj:`return_reg` is :obj:`True`, return the
+            y (torch.Tensor): If :obj:`return_reg` is :obj:`True`, return the
                 entropy regularization as well.
         """
         # [batch_size, num_cols, cat_emb_channels]

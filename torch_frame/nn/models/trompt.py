@@ -18,7 +18,9 @@ from torch_frame.nn.decoder import TromptDecoder
 
 
 class Trompt(Module):
-    r"""The Trompt model introduced in https://arxiv.org/abs/2305.18446
+    r"""The Trompt model introduced in the
+    `"Trompt: Towards a Better Deep Neural Network for Tabular Data"
+    <https://arxiv.org/abs/2305.18446>`_ paper.
 
     Args:
         channels (int): Hidden channel dimensionality
@@ -26,12 +28,15 @@ class Trompt(Module):
         num_prompts (int): Number of prompt columns.
         num_layers (int, optional): Number of :class:`TromptConv` layers.
             (default: :obj:`6`)
-        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats. Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
-            maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
-            Available as :obj:`tensor_frame.col_names_dict`.
+        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
+            Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
     """
     def __init__(
         self,
@@ -89,11 +94,11 @@ class Trompt(Module):
         predictions at each layer.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            tf (torch_frame.TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
-            Tensor: Output predictions stacked across layers. The
-                shape is [batch_size, num_layers, out_channels].
+            torch.Tensor: Output predictions stacked across layers. The
+            shape is [batch_size, num_layers, out_channels].
         """
         batch_size = len(tf)
         outs = []

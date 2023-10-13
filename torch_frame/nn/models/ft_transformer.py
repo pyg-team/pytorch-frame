@@ -17,17 +17,25 @@ from torch_frame.nn.conv import FTTransformerConvs
 
 
 class FTTransformer(Module):
-    r"""The FT-Transformer model introduced in https://arxiv.org/abs/2106.11959
+    r"""The FT-Transformer model introduced in the
+    `"Revisiting Deep Learning Models for Tabular Data"
+    <https://arxiv.org/abs/2106.11959>`_ paper.
 
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.  (default: 3)
-        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
-            column statistics
-        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
-            containing column names categorized by statistical type
-        stype_encoder_dict (Optional[Dict[torch_frame.stype,StypeEncoder]) :
+        col_stats (Dict[str, Dict[:obj:`torch_frame.data.stats.StatType`,
+            Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (Optional[Dict[torch_frame.stype, torch_frame.nn.StypeEncoder]) :
             Dictionary containing encoder type per column statistics (default:
             :obj:None, will call EmbeddingEncoder() for categorial feature and
             LinearEncoder() for numerical feature)
@@ -81,7 +89,7 @@ class FTTransformer(Module):
             x (Tensor): Input :obj:`TensorFrame` object.
 
         Returns:
-            Tensor: Output. The shape is [batch_size, out_channels].
+            torch.Tensor: Output of shape [batch_size, out_channels].
         """
         x, _ = self.encoder(tf)
         x, x_cls = self.backbone(x)

@@ -17,8 +17,9 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
 
     Args:
         out_channels (int): Output dimensionality.
-        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats. Available as :obj:`dataset.col_stats`.
+        col_stats (Dict[str, Dict[torch_frame.data.stats.StatType, Any]]):
+            A dictionary that maps column name into stats. Available as
+            :obj:`dataset.col_stats`.
         col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
             maps stype to a list of column names. The column names are sorted
             based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
