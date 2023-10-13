@@ -299,7 +299,7 @@ def train_and_eval_with_cfg(
         out_channels=out_channels,
         col_stats=col_stats,
         col_names_dict=col_names_dict,
-    )
+    ).to(device)
     # Use train_cfg to set up training procedure
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['base_lr'])
     lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg['gamma_rate'])
