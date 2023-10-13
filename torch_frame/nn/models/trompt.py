@@ -22,6 +22,12 @@ class Trompt(Module):
     `"Trompt: Towards a Better Deep Neural Network for Tabular Data"
     <https://arxiv.org/abs/2305.18446>`_ paper.
 
+    .. note::
+
+        For an example of using Trompt, see `examples/trompt.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        trompt.py>`_.
+
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality

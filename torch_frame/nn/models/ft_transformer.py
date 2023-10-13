@@ -21,6 +21,12 @@ class FTTransformer(Module):
     `"Revisiting Deep Learning Models for Tabular Data"
     <https://arxiv.org/abs/2106.11959>`_ paper.
 
+    .. note::
+
+        For an example of using FTTransformer, see `examples/revisiting.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        revisiting.py>`_.
+
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality

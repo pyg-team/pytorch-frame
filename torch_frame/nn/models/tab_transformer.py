@@ -32,6 +32,12 @@ class TabTransformer(Module):
     applies layer normalization on input features. The model utilizes an
     MLP(Multilayer Perceptron) for decoding.
 
+    .. note::
+
+        For an example of using TabTransformer, see `examples/tabtransformer.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        tabtransformer.py>`_.
+
     Args:
         channels (int): Input channel dimensionality.
         out_channels (int): Output channels dimensionality.

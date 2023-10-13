@@ -97,6 +97,12 @@ class ResNet(Module):
     `"Revisiting Deep Learning Models for Tabular Data"
     <https://arxiv.org/abs/2106.11959>`_ paper.
 
+    .. note::
+
+        For an example of using ResNet, see `examples/revisiting.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        revisiting.py>`_.
+
     Args:
         channels (int): The number of channels in the backbone layers.
         out_channels (int): The number of output channels in the decoder.

@@ -22,6 +22,12 @@ class TabNet(Module):
     `"TabNet: Attentive Interpretable Tabular Learning"
     <https://arxiv.org/abs/1908.07442>`_ paper.
 
+    .. note::
+
+        For an example of using TabNet, see `examples/tabnet.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        tabnet.py>`_.
+
     Args:
         out_channels (int): Output dimensionality
         num_layers (int): Number of TabNet layers.
