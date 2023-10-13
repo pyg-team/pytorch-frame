@@ -71,8 +71,10 @@ The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `n
     The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
-Creating a :class:`torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
-:meth:`~torch_frame.data.Dataset.materialize` converts raw data in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`:
+Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
+:meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`.
+
+The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In Pytorch Frame, we build data loaders and models around :class:`TensorFrame`, benefitting all the efficiency and flexibility from PyTorch.
 
 .. code-block:: python
 
