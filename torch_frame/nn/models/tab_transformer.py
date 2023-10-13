@@ -39,10 +39,10 @@ class TabTransformer(Module):
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of positional encoding padding to the
             categorical embeddings.
-        col_stats (Dict[str,Dict[:obj:`torch_frame.data.stats.StatType`,Any]]):
+        col_stats (Dict[str, Dict[:class:`StatType`, Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
