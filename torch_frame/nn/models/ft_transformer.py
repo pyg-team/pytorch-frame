@@ -43,8 +43,10 @@ class FTTransformer(Module):
             (Optional[Dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`]):
             Dictionary containing encoder type per column statistics (default:
-            :obj:`None`, will call EmbeddingEncoder() for categorial feature
-            and LinearEncoder() for numerical feature)
+            :obj:`None`, will call
+            :class:`torch_frame.nn.encoder.EmbeddingEncoder()` for categorial
+            feature and :class:`torch_frame.nn.encoder.LinearEncoder()`
+            for numerical feature)
     """
     def __init__(
         self,
