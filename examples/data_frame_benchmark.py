@@ -169,9 +169,9 @@ else:
         col_stats = dataset.col_stats
     elif args.model_type == 'Trompt':
         model_search_space = {
-            'channels': [128],
+            'channels': [64, 128, 192],
             'num_layers': [4, 6, 8],
-            'num_prompts': [128],
+            'num_prompts': [64, 128, 192],
         }
         train_search_space = {
             'batch_size': [128, 256],
