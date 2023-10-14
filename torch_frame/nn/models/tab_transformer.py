@@ -96,6 +96,7 @@ class TabTransformer(Module):
 
     def reset_parameters(self):
         self.cat_encoder.reset_parameters()
+        torch.nn.init.normal_(self.pad_embedding.weight, std=0.01)
         self.num_norm.reset_parameters()
         for tab_transformer_conv in self.tab_transformer_convs:
             tab_transformer_conv.reset_parameters()
