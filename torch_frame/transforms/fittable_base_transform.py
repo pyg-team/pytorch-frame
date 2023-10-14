@@ -12,7 +12,6 @@ from torch_frame.transforms import BaseTransform
 
 class FittableBaseTransform(BaseTransform):
     r"""An abstract base class for writing fittable transforms.
-
     Fittable transforms must be fitted on training data before transform.
     """
     def __init__(self):
