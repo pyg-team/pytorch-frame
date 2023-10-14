@@ -101,8 +101,8 @@ col_stats = None
 # Set up model specific search space
 if args.model_type == 'TabNet':
     model_search_space = {
-        'split_attention_channels': [64, 128],
-        'split_feature_channels': [64, 128],
+        'split_attention_channels': [64, 128, 256],
+        'split_feature_channels': [64, 128, 256],
         'gamma': [1., 1.2, 1.5],
         'num_layers': [4, 6, 8],
     }
@@ -115,7 +115,7 @@ if args.model_type == 'TabNet':
     col_stats = dataset.col_stats
 elif args.model_type == 'FTTransformer':
     model_search_space = {
-        'channels': [128, 256],
+        'channels': [64, 128, 256],
         'num_layers': [4, 6, 8],
     }
     train_search_space = {
@@ -127,7 +127,7 @@ elif args.model_type == 'FTTransformer':
     col_stats = dataset.col_stats
 elif args.model_type == 'FTTransformerBucket':
     model_search_space = {
-        'channels': [128, 256],
+        'channels': [64, 128, 256],
         'num_layers': [4, 6, 8],
     }
     train_search_space = {
@@ -140,7 +140,7 @@ elif args.model_type == 'FTTransformerBucket':
     col_stats = dataset.col_stats
 elif args.model_type == 'ResNet':
     model_search_space = {
-        'channels': [128, 256],
+        'channels': [64, 128, 256],
         'num_layers': [4, 6, 8],
     }
     train_search_space = {
@@ -168,9 +168,9 @@ elif args.model_type == 'TabTransformer':
     col_stats = dataset.col_stats
 elif args.model_type == 'Trompt':
     model_search_space = {
-        'channels': [64, 128],
+        'channels': [128],
         'num_layers': [4, 6, 8],
-        'num_prompts': [64, 128],
+        'num_prompts': [128],
     }
     train_search_space = {
         'batch_size': [128, 256],
