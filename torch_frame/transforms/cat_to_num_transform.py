@@ -54,14 +54,14 @@ class CatToNumTransform(FittableBaseTransform):
             shape = tf_train.feat_dict[stype.categorical].shape
             transformed_tensor = torch.zeros(shape[0],
                                              shape[1] * (num_classes - 1),
-                                             dtype=float,
+                                             dtype=torch.float32,
                                              device=tf_train.device)
         else:
             num_classes = 2
             target = tf_train.y.unsqueeze(1)
             self.target_mean = torch.mean(target.float())
             transformed_tensor = torch.zeros_like(
-                tf_train.feat_dict[stype.categorical], dtype=float)
+                tf_train.feat_dict[stype.categorical], dtype=torch.float32)
 
         for i in range(len(tf_train.col_names_dict[stype.categorical])):
             col_name = tf_train.col_names_dict[stype.categorical][i]
@@ -104,11 +104,12 @@ class CatToNumTransform(FittableBaseTransform):
             shape = tf.feat_dict[stype.categorical].shape
             transformed_tensor = torch.zeros(shape[0],
                                              shape[1] * (num_classes - 1),
-                                             dtype=float, device=tf.device)
+                                             dtype=torch.float32,
+                                             device=tf.device)
         else:
             num_classes = 2
             transformed_tensor = torch.zeros_like(
-                tf.feat_dict[stype.categorical], dtype=float)
+                tf.feat_dict[stype.categorical], dtype=torch.float32)
         target_mean = self.target_mean.to(tf.device)
         for i in range(len(tf.col_names_dict[stype.categorical])):
             col_name = tf.col_names_dict[stype.categorical][i]
