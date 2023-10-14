@@ -80,6 +80,8 @@ class Trompt(Module):
 
     def reset_parameters(self):
         torch.nn.init.normal_(self.x_prompt, std=0.01)
+        for encoder in self.encoders:
+            encoder.reset_parameters()
         for trompt_conv in self.trompt_convs:
             trompt_conv.reset_parameters()
         self.trompt_decoder.reset_parameters()
