@@ -385,20 +385,21 @@ def main_deep_models():
     best_val_metrics = np.array(best_val_metrics)
     best_test_metrics = np.array(best_test_metrics)
 
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metrics': best_val_metrics,
+        'best_test_metrics': best_test_metrics,
+        'best_val_metric': best_val_metrics.mean(),
+        'best_test_metric': best_test_metrics.mean(),
+        'best_train_cfg': best_train_cfg,
+        'best_model_cfg': best_model_cfg,
+        'search_time': search_time,
+        'final_model_time': final_model_time,
+        'total_time': search_time + final_model_time,
+    }
+    print(result_dict)
     # Save results
     if args.result_path != '':
-        result_dict = {
-            'args': args.__dict__,
-            'best_val_metrics': best_val_metrics,
-            'best_test_metrics': best_test_metrics,
-            'best_val_metric': best_val_metrics.mean(),
-            'best_test_metric': best_test_metrics.mean(),
-            'best_train_cfg': best_train_cfg,
-            'best_model_cfg': best_model_cfg,
-            'search_time': search_time,
-            'final_model_time': final_model_time,
-            'total_time': search_time + final_model_time,
-        }
         os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
         torch.save(result_dict, args.result_path)
 
@@ -421,16 +422,16 @@ def main_gbdt():
     test_metric = model.compute_metric(test_dataset.tensor_frame.y,
                                        test_pred)[model.metric]
     end_time = time.time()
-
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metric': val_metric,
+        'best_test_metric': test_metric,
+        'best_cfg': model.params,
+        'total_time': end_time - start_time,
+    }
+    print(result_dict)
     # Save results
     if args.result_path != '':
-        result_dict = {
-            'args': args.__dict__,
-            'best_val_metric': val_metric,
-            'best_test_metric': test_metric,
-            'best_cfg': model.params,
-            'total_time': end_time - start_time,
-        }
         os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
         torch.save(result_dict, args.result_path)
 
