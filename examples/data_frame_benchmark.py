@@ -109,7 +109,7 @@ if args.model_type == 'TabNet':
     train_search_space = {
         'batch_size': [2048, 4096],
         'base_lr': [0.001, 0.01],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = TabNet
     col_stats = dataset.col_stats
@@ -121,7 +121,7 @@ elif args.model_type == 'FTTransformer':
     train_search_space = {
         'batch_size': [256, 512],
         'base_lr': [0.0001, 0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = FTTransformer
     col_stats = dataset.col_stats
@@ -133,7 +133,7 @@ elif args.model_type == 'FTTransformerBucket':
     train_search_space = {
         'batch_size': [256, 512],
         'base_lr': [0.0001, 0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = FTTransformer
 
@@ -146,7 +146,7 @@ elif args.model_type == 'ResNet':
     train_search_space = {
         'batch_size': [256, 512],
         'base_lr': [0.0001, 0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = ResNet
     col_stats = dataset.col_stats
@@ -162,7 +162,7 @@ elif args.model_type == 'TabTransformer':
     train_search_space = {
         'batch_size': [128, 256],
         'base_lr': [0.0001, 0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = TabTransformer
     col_stats = dataset.col_stats
@@ -175,7 +175,7 @@ elif args.model_type == 'Trompt':
     train_search_space = {
         'batch_size': [128, 256],
         'base_lr': [0.01, 0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = Trompt
     col_stats = dataset.col_stats
@@ -208,7 +208,7 @@ elif args.model_type == 'ExcelFormer':
     train_search_space = {
         'batch_size': [256, 512],
         'base_lr': [0.001],
-        'gamma_rate': [0.8, 0.9, 0.95],
+        'gamma_rate': [0.9, 0.95, 1.],
     }
     model_cls = ExcelFormer
 
@@ -294,6 +294,7 @@ def train_and_eval_with_cfg(
         col_stats=col_stats,
         col_names_dict=col_names_dict,
     ).to(device)
+    model.reset_parameters()
     # Use train_cfg to set up training procedure
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['base_lr'])
     lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg['gamma_rate'])
