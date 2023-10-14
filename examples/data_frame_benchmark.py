@@ -153,9 +153,9 @@ else:
         col_stats = dataset.col_stats
     elif args.model_type == 'TabTransformer':
         model_search_space = {
-            'channels': [32, 64, 128],
+            'channels': [16, 32, 64, 128],
             'num_layers': [4, 6, 8],
-            'num_heads': [4, 8, 16],
+            'num_heads': [4, 8],
             'encoder_pad_size': [2, 4],
             'attn_dropout': [0, 0.2],
             'ffn_dropout': [0, 0.2],
