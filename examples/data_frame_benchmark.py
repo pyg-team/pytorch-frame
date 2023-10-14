@@ -41,7 +41,7 @@ parser.add_argument('--scale', type=str, choices=['small', 'medium', 'large'],
 parser.add_argument('--idx', type=int, default=0,
                     help='The index of the dataset within DataFrameBenchmark')
 parser.add_argument('--epochs', type=int, default=50)
-parser.add_argument('--num_trials', type=int, default=10,
+parser.add_argument('--num_trials', type=int, default=20,
                     help='Number of Optuna-based hyper-parameter tuning.')
 parser.add_argument(
     '--num_repeats', type=int, default=5,
@@ -108,7 +108,7 @@ if args.model_type == 'TabNet':
     }
     train_search_space = {
         'batch_size': [2048, 4096],
-        'base_lr': [0.005, 0.01],
+        'base_lr': [0.001, 0.01],
         'gamma_rate': [0.8, 0.9, 0.95],
     }
     model_cls = TabNet
@@ -174,7 +174,7 @@ elif args.model_type == 'Trompt':
     }
     train_search_space = {
         'batch_size': [128, 256],
-        'base_lr': [0.001],
+        'base_lr': [0.01, 0.001],
         'gamma_rate': [0.8, 0.9, 0.95],
     }
     model_cls = Trompt
