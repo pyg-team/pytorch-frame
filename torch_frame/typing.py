@@ -33,9 +33,9 @@ class NAStrategy(Enum):
 
     Attributes:
         MEAN: Replacing NaN values with mean
-        (numerical :class:`torch_frame.stype`).
+            (numerical :class:`torch_frame.stype`).
         ZEROS: Replacing NaN values with zeros
-        (numerical :class:`torch_frame.stype`).
+            (numerical :class:`torch_frame.stype`).
         MOST_FREQUENT: Replacing NaN values with most frequent
             (categorical :class:`torch_frame.stype`).
     """
