@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 
 import torch_frame
+from torch_frame.utils.split import SPLIT_TO_NUM
+
+SPLIT_COL = 'split_col'
+TARGET_COL = 'target_col'
 
 
 def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
@@ -87,9 +91,13 @@ def get_df_and_col_to_stype(
         if numerical_features is not None:
             for n_col in n_col_names:
                 df[n_col] = df[n_col].astype('float64')
-        df['label'] = labels
-        # Stores the split information in "split" column.
-        df['split'] = split
+        label_split_df = pd.DataFrame({
+            TARGET_COL:
+            labels,
+            SPLIT_COL:
+            np.full((len(df), ), fill_value=SPLIT_TO_NUM[split])
+        })
+        df = pd.concat([df, label_split_df], axis=1)
         dataframes.append(df)
 
     df = pd.concat(dataframes, ignore_index=True)
@@ -193,6 +201,13 @@ class Yandex(torch_frame.data.Dataset):
     }
     regression_datasets = {'california_housing', 'microsoft', 'yahoo', 'year'}
 
+    @classmethod
+    @property
+    def name_list(cls) -> List[str]:
+        r"List of dataset names available."
+        return sorted(
+            list(cls.classification_datasets) + list(cls.regression_datasets))
+
     def __init__(self, root: str, name: str):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -201,8 +216,11 @@ class Yandex(torch_frame.data.Dataset):
                                  root)
         df, col_to_stype = get_df_and_col_to_stype(path)
         if name in self.regression_datasets:
-            col_to_stype['label'] = torch_frame.numerical
+            col_to_stype[TARGET_COL] = torch_frame.numerical
         else:
-            col_to_stype['label'] = torch_frame.categorical
-        super().__init__(df, col_to_stype, target_col='label',
-                         split_col='split')
+            col_to_stype[TARGET_COL] = torch_frame.categorical
+        super().__init__(df, col_to_stype, target_col=TARGET_COL,
+                         split_col=SPLIT_COL)
+
+    def __repr__(self) -> str:
+        return (f"{self.__class__.__name__}(name='{self.name}')")

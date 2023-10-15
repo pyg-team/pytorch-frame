@@ -8,6 +8,7 @@ from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
+from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -90,9 +91,9 @@ class FakeDataset(torch_frame.data.Dataset):
             if num_rows < 3:
                 raise ValueError("Dataframe needs at least 3 rows to include"
                                  " each of train, val and test split.")
-            split = ['train'] * num_rows
-            split[1] = 'val'
-            split[2] = 'test'
+            split = [SPLIT_TO_NUM['train']] * num_rows
+            split[1] = SPLIT_TO_NUM['val']
+            split[2] = SPLIT_TO_NUM['test']
             df['split'] = split
         super().__init__(
             df,

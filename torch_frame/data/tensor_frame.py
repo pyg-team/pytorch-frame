@@ -145,13 +145,13 @@ class TensorFrame:
             for stype, col_names in self.col_names_dict.items()
         ])
 
-        return (f'{self.__class__.__name__}(\n'
-                f'  num_cols={self.num_cols},\n'
-                f'  num_rows={self.num_rows},\n'
-                f'{stype_repr}\n'
-                f'  has_target={self.y is not None},\n'
-                f'  device={self.device},\n'
-                f')')
+        return (f"{self.__class__.__name__}(\n"
+                f"  num_cols={self.num_cols},\n"
+                f"  num_rows={self.num_rows},\n"
+                f"{stype_repr}\n"
+                f"  has_target={self.y is not None},\n"
+                f"  device='{self.device}',\n"
+                f")")
 
     def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':
         if isinstance(index, int):
