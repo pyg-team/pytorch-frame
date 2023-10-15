@@ -17,15 +17,20 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
 
     Args:
         out_channels (int): Output dimensionality.
-        col_stats (Dict[str, Dict[torch_frame.data.stats.StatType, Any]]):
+        col_stats
+            (Dict[str, Dict[:class:`torch_frame.data.stats.StatType`, Any]]):
             A dictionary that maps column name into stats. Available as
             :obj:`dataset.col_stats`.
-        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
-            maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
+        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`.
             Available as :obj:`tensor_frame.col_names_dict`.
-        stype_encoder_dict (Dict[torch_frame.stype, StypeEncoder]): A
-            dictionary that maps stype into :class:`StypeEncoder` class.
+        stype_encoder_dict
+            (Dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`]):
+            A dictionary that maps :class:`torch_frame.stype` into
+            :class:`torch_frame.nn.encoder.StypeEncoder` class.
     """
     def __init__(
         self,

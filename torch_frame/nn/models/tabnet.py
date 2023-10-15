@@ -131,8 +131,7 @@ class TabNet(Module):
         r"""Transform :obj:`TensorFrame` object into output embeddings.
 
         Args:
-            tf (:class:`torch_frame.TensorFrame`):
-                Input :obj:`TensorFrame` object.
+            tf (TensorFrame): Input :obj:`TensorFrame` object.
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output

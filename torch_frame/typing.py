@@ -32,10 +32,12 @@ class NAStrategy(Enum):
     r"""Strategy for dealing with NaN values in columns.
 
     Attributes:
-        MEAN: Replacing NaN values with mean(numerical features).
-        ZEROS: Replacing NaN values with zeros(numerical features).
+        MEAN: Replacing NaN values with mean
+        (numerical :class:`torch_frame.stype`).
+        ZEROS: Replacing NaN values with zeros
+        (numerical :class:`torch_frame.stype`).
         MOST_FREQUENT: Replacing NaN values with most frequent
-            (categorical features).
+            (categorical :class:`torch_frame.stype`).
     """
     MEAN = 'mean'
     MOST_FREQUENT = 'most_frequent'

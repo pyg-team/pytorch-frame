@@ -281,7 +281,10 @@ class StackEncoder(StypeEncoder):
 class LinearBucketEncoder(StypeEncoder):
     r"""A numerical converter that transforms a tensor into a piecewise
     linear representation, followed by a linear transformation. The original
-    encoding is described in https://arxiv.org/abs/2203.05556."""
+    encoding is described in
+    `"On Embeddings for Numerical Features in Tabular Deep Learning"
+    <https://arxiv.org/abs/2203.05556>`_.
+    """
     supported_stypes = {stype.numerical}
 
     def __init__(
