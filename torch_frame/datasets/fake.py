@@ -6,6 +6,7 @@ import pandas as pd
 import torch_frame
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 
 
@@ -36,6 +37,7 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
@@ -74,6 +76,11 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_embedded
+        if stype.text_tokenized in stypes:
+            for col_name in ['text_3', 'text_4']:
+                arr = ['Hello world!'] * 1 + ['Hello'] * (num_rows - 1)
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.text_tokenized
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
@@ -93,4 +100,5 @@ class FakeDataset(torch_frame.data.Dataset):
             target_col='target',
             split_col='split' if create_split else None,
             text_embedder_cfg=text_embedder_cfg,
+            text_tokenizer_cfg=text_tokenizer_cfg,
         )

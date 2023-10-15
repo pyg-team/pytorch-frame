@@ -48,20 +48,27 @@ class TensorFrame:
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            if feat.dim() < 2:
+            if stype_name != torch_frame.text_tokenized and feat.dim() < 2:
                 raise ValueError(
                     f"feat_dict['{stype_name}'] must be at least 2-dimensional"
                 )
-            if num_cols != feat.size(1):
+
+            feat_num_cols = feat.size(
+                1) if stype_name != torch_frame.text_tokenized else len(feat)
+            if num_cols != feat_num_cols:
                 raise ValueError(
                     f"The expected number of columns for {stype_name} feature "
                     f"is {num_cols}, which does not align with the column "
                     f"dimensionality of feat_dict[{stype_name}] (got "
-                    f"{feat.size(1)})")
-            if feat.size(0) != num_rows:
+                    f"{feat_num_cols})")
+
+            feat_num_rows = feat.size(
+                0
+            ) if stype_name != torch_frame.text_tokenized else feat[0].size(0)
+            if num_rows != feat_num_rows:
                 raise ValueError(
                     f"The length of elements in feat_dict are not aligned, "
-                    f"got {feat.size(0)} but expected {num_rows}.")
+                    f"got {feat_num_rows} but expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(

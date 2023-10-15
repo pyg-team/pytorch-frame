@@ -5,6 +5,7 @@ from torch.nn import ReLU
 import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -14,10 +15,12 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEmbeddingEncoder,
     LinearEncoder,
+    LinearModelEncoder,
     LinearPeriodicEncoder,
     StackEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
+from torch_frame.testing.text_tokenizer import WhiteSpaceTokenizer
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -180,4 +183,37 @@ def test_text_embedding_encoder():
     x = encoder(x_text)
     assert x.shape == (num_rows,
                        len(tensor_frame.col_names_dict[stype.text_embedded]),
+                       out_channels)
+
+
+def test_text_tokenized_encoder():
+    num_rows = 20
+    text_emb_channels = 10
+    out_channels = 5
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=[
+            torch_frame.numerical,
+            torch_frame.categorical,
+            torch_frame.text_tokenized,
+        ],
+        text_tokenizer_cfg=TextTokenizerConfig(
+            text_tokenizer=WhiteSpaceTokenizer(), batch_size=None),
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
+    ]
+    encoder = LinearModelEncoder(
+        out_channels=out_channels, stats_list=stats_list,
+        stype=stype.text_tokenized,
+        model=lambda _: torch.rand(1, 1, text_emb_channels),
+        in_channels=text_emb_channels)
+
+    x_text = tensor_frame.feat_dict[stype.text_tokenized]
+    x = encoder(x_text)
+    assert x.shape == (num_rows,
+                       len(tensor_frame.col_names_dict[stype.text_tokenized]),
                        out_channels)

@@ -6,6 +6,7 @@ class stype(Enum):
     numerical = 'numerical'
     categorical = 'categorical'
     text_embedded = 'text_embedded'
+    text_tokenized = 'text_tokenized'
 
     @property
     def is_text_stype(self) -> bool:
@@ -15,3 +16,4 @@ class stype(Enum):
 numerical = stype('numerical')
 categorical = stype('categorical')
 text_embedded = stype('text_embedded')
+text_tokenized = stype('text_tokenized')

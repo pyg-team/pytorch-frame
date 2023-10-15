@@ -4,6 +4,7 @@ from typing import Any, Callable, Iterable, List, Optional
 import pandas as pd
 import torch
 from torch import Tensor
+from torch.nested import nested_tensor
 
 from torch_frame.typing import Series
 
@@ -126,6 +127,37 @@ class TextEmbeddingTensorMapper(TensorMapper):
         emb_list = []
         for i in range(0, len(ser_list), self.batch_size):
             emb = self.text_embedder(ser_list[i:i + self.batch_size])
+            emb_list.append(emb.to(device))
+        return torch.cat(emb_list, dim=0)
+
+    def backward(self, tensor: Tensor) -> pd.Series:
+        raise NotImplementedError
+
+
+class TextTokenizationTensorMapper(TensorMapper):
+    def __init__(
+        self,
+        text_tokenizer: Callable[[List[str]], nested_tensor],
+        batch_size: Optional[int],
+    ):
+        super().__init__()
+        self.text_tokenizer = text_tokenizer
+        self.batch_size = batch_size
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> nested_tensor:
+        ser_list = ser.tolist()
+        if self.batch_size is None:
+            emb = self.text_tokenizer(ser_list)
+            return emb.to(device)
+
+        emb_list = []
+        for i in range(0, len(ser_list), self.batch_size):
+            emb = self.text_tokenizer(ser_list[i:i + self.batch_size])
             emb_list.append(emb.to(device))
         return torch.cat(emb_list, dim=0)
 

@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
 
 import torch_frame
 from torch_frame.typing import Series
@@ -30,6 +29,8 @@ class StatType(Enum):
                 StatType.COUNT,
             ]
         elif stype == torch_frame.text_embedded:
+            return []
+        elif stype == torch_frame.text_tokenized:
             return []
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")

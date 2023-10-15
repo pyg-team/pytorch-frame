@@ -10,13 +10,14 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame.config import TextEmbedderConfig
+from torch_frame.config import TextEmbedderConfig, TextTokenizerConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
     TextEmbeddingTensorMapper,
+    TextTokenizationTensorMapper,
 )
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
@@ -72,11 +73,13 @@ class DataFrameToTensorFrameConverter:
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
         self.text_embedder_cfg = text_embedder_cfg
+        self.text_tokenizer_cfg = text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
@@ -95,6 +98,11 @@ class DataFrameToTensorFrameConverter:
             raise ValueError("`text_embedder_cfg` needs to be specified when "
                              "stype.text_embedded column exists.")
 
+        if (torch_frame.text_tokenized
+                in self.col_names_dict) and (self.text_tokenizer_cfg is None):
+            raise ValueError("`text_tokenizer_cfg` needs to be specified when "
+                             "stype.text_tokenized column exists.")
+
     @property
     def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
         return self._col_names_dict
@@ -111,6 +119,11 @@ class DataFrameToTensorFrameConverter:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
                 self.text_embedder_cfg.batch_size,
+            )
+        elif stype == torch_frame.text_tokenized:
+            return TextTokenizationTensorMapper(
+                self.text_tokenizer_cfg.text_tokenizer,
+                self.text_tokenizer_cfg.batch_size,
             )
         else:
             raise NotImplementedError(f"Unable to process the semantic "
@@ -130,7 +143,9 @@ class DataFrameToTensorFrameConverter:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
         feat_dict = {
-            stype: torch.stack(xs, dim=1)
+            stype:
+            torch.stack(xs, dim=1)
+            if stype != torch_frame.text_tokenized else xs
             for stype, xs in xs_dict.items()
         }
 
@@ -166,6 +181,7 @@ class Dataset(ABC):
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -193,6 +209,7 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         self.text_embedder_cfg = text_embedder_cfg
+        self.text_tokenizer_cfg = text_tokenizer_cfg
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -331,6 +348,7 @@ class Dataset(ABC):
             col_stats=self._col_stats,
             target_col=self.target_col,
             text_embedder_cfg=self.text_embedder_cfg,
+            text_tokenizer_cfg=self.text_tokenizer_cfg,
         )
 
     @property
