@@ -59,7 +59,6 @@ class TabTransformer(Module):
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
         self.col_names_dict = col_names_dict
-        categorical_stats_list = []
         categorical_col_len = 0
         numerical_col_len = 0
         if stype.categorical in self.col_names_dict:
@@ -71,10 +70,11 @@ class TabTransformer(Module):
             self.cat_encoder = EmbeddingEncoder(
                 out_channels=channels - encoder_pad_size,
                 stats_list=categorical_stats_list, stype=stype.categorical)
-            # We use the categorical embedding with EmbeddingEncoder and
+            # Use the categorical embedding with EmbeddingEncoder and
             # added contextual padding to the end of each feature.
             self.pad_embedding = Embedding(categorical_col_len,
                                            encoder_pad_size)
+            # Apply transformer convolution only over categorical columns
             self.tab_transformer_convs = ModuleList([
                 TabTransformerConv(channels=channels, num_heads=num_heads,
                                    attn_dropout=attn_dropout,
@@ -87,6 +87,7 @@ class TabTransformer(Module):
                 for col_name in self.col_names_dict[stype.numerical]
             ]
             numerical_col_len = len(self.col_names_dict[stype.numerical])
+            # Use stack encoder to normalize the numerical columns.
             self.num_encoder = StackEncoder(out_channels=1,
                                             stats_list=numerical_stats_list,
                                             stype=stype.numerical)
