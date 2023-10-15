@@ -102,7 +102,7 @@ Initializing and calling it is straightforward.
 
 
 :class:`Decoder`
--------
+----------------
 
 :class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`Tensor` :obj:`x` into output :class:`Tensor` `out` of shape :obj:`[batch_size, out_channels]`, representing
 the row embeddings of the original :obj:`DataFrame`.

@@ -7,7 +7,9 @@ from torch_frame.nn.conv import TableConv
 
 
 class TromptConv(TableConv):
-    r"""The Trompt cell introduced in https://arxiv.org/abs/2305.18446
+    r"""The Trompt cell introduced in the
+    `"Trompt: Towards a Better Deep Neural Network for Tabular Data"
+    <https://arxiv.org/abs/2305.18446>`_ paper.
 
     Args:
         channels (int): Input/output channel dimensionality
@@ -56,13 +58,13 @@ class TromptConv(TableConv):
         the next layer.
 
         Args:
-            x (Tensor): Feature-based embedding of shape
+            x (torch.Tensor): Feature-based embedding of shape
                 [batch_size, num_cols, channels]
-            x_prompt (Tensor): Input prompt embeddings of shape
+            x_prompt (torch.Tensor): Input prompt embeddings of shape
                 [batch_size, num_prompts, channels]
 
         Returns:
-            x_prompt (Tensor): Output prompt embeddings for the next layer. The
+            torch.Tensor: Output prompt embeddings for the next layer. The
                 shape is [batch_size, num_prompts, channels].
         """
         batch_size = len(x)

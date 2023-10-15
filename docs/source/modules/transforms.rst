@@ -1,5 +1,5 @@
 torch_frame.transforms
-====================
+======================
 
 .. contents:: Contents
     :local:
@@ -7,7 +7,7 @@ torch_frame.transforms
 .. currentmodule:: torch_frame.transforms
 
 Transforms
---------
+----------
 
 :pyf:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 

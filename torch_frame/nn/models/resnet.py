@@ -30,8 +30,8 @@ class FCResidualBlock(Module):
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
-            (default: :obj:`layernorm`)
+            :obj:`batchnorm`, :class:`torch.nn.LayerNorm`, or :obj:`None`.
+            (default: :class:`torch.nn.LayerNorm`)
         dropout_prob (float): The dropout probability (default: `0.0`, i.e.,
             no dropout).
     """
@@ -93,17 +93,31 @@ class FCResidualBlock(Module):
 
 
 class ResNet(Module):
-    r"""The ResNet model introduced in https://arxiv.org/abs/2106.11959
+    r"""The ResNet model introduced in the
+    `"Revisiting Deep Learning Models for Tabular Data"
+    <https://arxiv.org/abs/2106.11959>`_ paper.
+
+    .. note::
+
+        For an example of using ResNet, see `examples/revisiting.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        revisiting.py>`_.
 
     Args:
         channels (int): The number of channels in the backbone layers.
         out_channels (int): The number of output channels in the decoder.
         num_layers (int): The number of layers in the backbone.
-        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
-            column statistics
-        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
-            containing column names categorized by statistical type
-        stype_encoder_dict (Optional[Dict[torch_frame.stype, StypeEncoder]):
+        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (Optional[Dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`]):
             Dictionary containing encoder type per column statistics
             (default: :obj:`None`, :obj:`EmbeddingEncoder()` for categorial
             feature and :obj:`LinearEncoder()` for numerical feature)
@@ -166,6 +180,15 @@ class ResNet(Module):
         self.decoder[-1].reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
+        r"""Transforming :obj:`TensorFrame` object into output prediction.
+
+        Args:
+            x (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
+
+        Returns:
+            torch.Tensor: Output of shape [batch_size, out_channels].
+        """
         x, _ = self.encoder(tf)
 
         # Flattening the encoder output

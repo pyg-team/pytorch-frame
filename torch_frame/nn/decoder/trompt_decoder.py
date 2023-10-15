@@ -6,7 +6,9 @@ from torch_frame.nn.decoder import Decoder
 
 
 class TromptDecoder(Decoder):
-    r"""The Trompt downstream introduced in https://arxiv.org/abs/2305.18446
+    r"""The Trompt downstream introduced in
+    `"TabTransformer: Tabular Data Modeling Using Contextual Embeddings"
+    <https://arxiv.org/abs/2012.06678>`_ paper.
 
     Args:
         in_channels (int): Input channel dimensionality

@@ -13,7 +13,10 @@ from torch_frame.nn.conv import TableConv
 
 
 class FTTransformerConvs(TableConv):
-    r"""The FT-Transformer backbone in https://arxiv.org/abs/2106.11959
+    r"""The FT-Transformer backbone in the
+    `"Revisiting Deep Learning Models for Tabular Data"
+    <https://arxiv.org/abs/2106.11959>`_ paper.
+
     This module concatenates a learnable CLS token embedding :obj:`x_cls` to
     the input tensor :obj:`x` and applies a multi-layer Transformer on the
     concatenated tensor. After the Transformer layer, the output tensor is
@@ -72,10 +75,10 @@ class FTTransformerConvs(TableConv):
             x (Tensor): Input tensor of shape [batch_size, num_cols, channels]
 
         Returns:
-            x (Tensor): Output tensor of shape [batch_size, num_cols, channels]
-                corresponding to the input columns.
-            x_cls (Tensor): Output tensor of shape [batch_size, channels],
-                corresponding to the added CLS token column.
+            (torch.Tensor, torch.Tensor): (Output tensor of shape
+            [batch_size, num_cols, channels] corresponding to the input
+            columns, Output tensor of shape [batch_size, channels],
+            corresponding to the added CLS token column.)
         """
         B, _, _ = x.shape
         # [batch_size, num_cols, channels]

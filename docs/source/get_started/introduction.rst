@@ -64,7 +64,10 @@ A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_fr
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :class:`~torch_frame.stype`.
 - :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :class:`~torch_frame.stype`'s.
-The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
+
+The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns.
+Any remaining dimension describes the feature value of the (row, column) pair.
+
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
