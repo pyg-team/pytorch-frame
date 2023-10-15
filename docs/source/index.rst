@@ -23,5 +23,6 @@ PyTorch Frame Documentation
    modules/datasets
    modules/nn
    modules/gbdt
+   modules/config
    modules/transforms
    modules/utils

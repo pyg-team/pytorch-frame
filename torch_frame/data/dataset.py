@@ -56,16 +56,19 @@ class DataFrameToTensorFrameConverter:
     r"""DataFrame to TensorFrame converter.
 
     Args:
-        col_to_stype (Dict[str, torch_frame.stype]): A dictionary that maps
-            each column in the data frame to a semantic type.
+        col_to_stype (Dict[str, :class:`torch_frame.stype`]):
+            A dictionary that maps each column in the data frame to a
+            semantic type.
         col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
-            config specifying :obj:`text_embedder` that maps sentences into
-            PyTorch embeddings and :obj:`batch_size` that specifies the
-            mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
+        text_embedder_cfg
+            (:class:`torch_frame.config.TextEmbedderConfig`, optional):
+            A text embedder config specifying :obj:`text_embedder` that
+            maps sentences into :class:`torch.nn.Embeddings` and
+            :obj:`batch_size` that specifies the mini-batch size for
+            :obj:`text_embedder`. (default: :obj:`None`)
     """
     def __init__(
         self,

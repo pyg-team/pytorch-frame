@@ -50,7 +50,7 @@ Decoders
    {% endfor %}
 
 Models
---------
+------
 
 .. currentmodule:: torch_frame.nn.models
 
