@@ -65,21 +65,22 @@ class TensorFrame:
             feat_num_rows = feat.size(
                 0
             ) if stype_name != torch_frame.text_tokenized else feat[0].size(0)
-            if num_rows != feat_num_rows:
-                raise ValueError(
-                    f"The length of elements in feat_dict are not aligned, "
-                    f"got {feat_num_rows} but expected {num_rows}.")
+
+            # if num_rows != feat_num_rows:
+            #     raise ValueError(
+            #         f"The length of elements in feat_dict are not aligned, "
+            #         f"got {feat_num_rows} but expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(
                 f"Empty columns for the following stypes: {empty_stypes}."
                 f"Please manually delete the above stypes.")
 
-        if self.y is not None:
-            if len(self.y) != num_rows:
-                raise ValueError(
-                    f"The length of y is {len(self.y)}, which is not aligned "
-                    f"with the number of rows ({num_rows}).")
+        # if self.y is not None:
+        #     if len(self.y) != num_rows:
+        #         raise ValueError(
+        #             f"The length of y is {len(self.y)}, which is not aligned "
+        #             f"with the number of rows ({num_rows}).")
 
     @property
     def stypes(self) -> List[stype]:

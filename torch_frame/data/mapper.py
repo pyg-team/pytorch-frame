@@ -153,12 +153,12 @@ class TextTokenizationTensorMapper(TensorMapper):
         ser_list = ser.tolist()
         if self.batch_size is None:
             emb = self.text_tokenizer(ser_list)
-            return emb.to(device)
+            return emb
 
         emb_list = []
         for i in range(0, len(ser_list), self.batch_size):
             emb = self.text_tokenizer(ser_list[i:i + self.batch_size])
-            emb_list.append(emb.to(device))
+            emb_list.append(emb)
         return torch.cat(emb_list, dim=0)
 
     def backward(self, tensor: Tensor) -> pd.Series:

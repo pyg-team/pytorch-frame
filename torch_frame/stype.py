@@ -10,7 +10,7 @@ class stype(Enum):
 
     @property
     def is_text_stype(self) -> bool:
-        return self in [stype.text_embedded]
+        return self in [stype.text_embedded, stype.text_tokenized]
 
 
 numerical = stype('numerical')

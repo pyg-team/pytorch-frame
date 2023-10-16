@@ -1,15 +1,17 @@
 import argparse
 import os.path as osp
-from typing import List
+from typing import Any, List
 
 import torch
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm
+import torch_frame
 
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import DataLoader
 from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
@@ -17,7 +19,9 @@ from torch_frame.nn import (
     FTTransformer,
     LinearEmbeddingEncoder,
     LinearEncoder,
+    LinearModelEncoder,
 )
+from transformers import AutoTokenizer, DistilBertModel
 
 # Text embedded:
 # ============== wine_reviews ===============
@@ -35,6 +39,29 @@ class PretrainedTextEncoder:
         return embeddings.to(self.device)
 
 
+class Tokenizer:
+    def __init__(self, device: torch.device):
+        self.device = device
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    
+    def __call__(self, sentences: List[str]) -> torch.nested.nested_tensor:
+        res = []
+        for sentence in sentences:
+            inputs = self.tokenizer(sentence)
+            res.append(inputs['input_ids'])
+        return torch.nested.nested_tensor(res)
+
+
+class DistilBert:
+    def __init__(self, device: torch.device):
+        self.device = device
+        self.model = DistilBertModel.from_pretrained("distilbert-base-uncased").to(device)
+    
+    def __call__(self, input_ids: Tensor) -> Tensor:
+        breakpoint()
+        return self.model(input_ids=input_ids)
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--channels', type=int, default=256)
@@ -43,6 +70,7 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--use_tokenizer', action='store_true')
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -51,12 +79,22 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-text_encoder = PretrainedTextEncoder(device=device)
+
+
+if not args.use_tokenizer:
+    text_encoder = PretrainedTextEncoder(device=device)
+    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
+                                         batch_size=5),
+    kwargs = dict(text_embedder_cfg=text_embedder_cfg, text_stype=torch_frame.text_embedded)
+else:
+    text_tokenizer = Tokenizer(device=device)
+    text_tokenizer_cfg = TextTokenizerConfig(text_tokenizer=text_tokenizer)
+    kwargs = dict(text_tokenizer_cfg=text_tokenizer_cfg, text_stype=torch_frame.text_tokenized)
+
 dataset = MultimodalTextBenchmark(
     root=path,
     name=args.dataset,
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+    **kwargs,
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
@@ -76,11 +114,19 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
-stype_encoder_dict = {
-    stype.categorical: EmbeddingEncoder(),
-    stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
-}
+if not args.use_tokenizer:
+    stype_encoder_dict = {
+        stype.categorical: EmbeddingEncoder(),
+        stype.numerical: LinearEncoder(),
+        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
+    }
+else:
+    distil_model = DistilBert(device=device)
+    stype_encoder_dict = {
+        stype.categorical: EmbeddingEncoder(),
+        stype.numerical: LinearEncoder(),
+        stype.text_tokenized: LinearModelEncoder(model=distil_model, in_channels=768)
+    }
 
 model = FTTransformer(
     channels=args.channels,
