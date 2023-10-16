@@ -1,5 +1,5 @@
 torch_frame.transforms
-====================
+======================
 
 .. contents:: Contents
     :local:
@@ -7,9 +7,9 @@ torch_frame.transforms
 .. currentmodule:: torch_frame.transforms
 
 Transforms
---------
+----------
 
-:pyg:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
+:pyf:`PyTorch Frame` allows for data transformation across different :obj:`stype`'s or within the same :obj:`stype`. Transforms takes in both :obj:`TensorFrame` and column stats.
 
 Let's look an example, where we apply `CatToNumTransform <https://dl.acm.org/doi/10.1145/507533.507538>`_ to transform the categorical features into numerical features.
 

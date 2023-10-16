@@ -1,8 +1,6 @@
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
-import catboost
 import numpy as np
-import optuna
 import pandas as pd
 import torch
 from torch import Tensor
@@ -60,7 +58,7 @@ class CatBoost(GBDT):
 
     def _predict_helper(
         self,
-        model: catboost.CatBoost,
+        model: Any,  # catboost.CatBoost
         x: DataFrame,
     ) -> np.ndarray:
         r"""A helper function that applies the catboost model on DataFrame
@@ -91,8 +89,13 @@ class CatBoost(GBDT):
 
         return pred
 
-    def objective(self, trial, tf_train: TensorFrame, tf_val: TensorFrame,
-                  num_boost_round: int):
+    def objective(
+        self,
+        trial,
+        tf_train: TensorFrame,
+        tf_val: TensorFrame,
+        num_boost_round: int,
+    ):
         r""" Objective function to be optimized.
 
         Args:
@@ -102,9 +105,11 @@ class CatBoost(GBDT):
             num_boost_round (int): Number of boosting round.
 
         Returns:
-            score (float): Best objective value. Root mean squared error for
-                regression task and accuracy for classification task.
+            float: Best objective value. Root mean squared error for
+            regression task and accuracy for classification task.
         """
+        import catboost
+
         self.params = {
             "iterations":
             num_boost_round,
@@ -150,8 +155,16 @@ class CatBoost(GBDT):
                                     torch.from_numpy(pred))[self.metric]
         return score
 
-    def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-              num_trials: int, num_boost_round=2000):
+    def _tune(
+        self,
+        tf_train: TensorFrame,
+        tf_val: TensorFrame,
+        num_trials: int,
+        num_boost_round=2000,
+    ):
+        import catboost
+        import optuna
+
         if self.task_type == TaskType.REGRESSION:
             study = optuna.create_study(direction="minimize")
         else:

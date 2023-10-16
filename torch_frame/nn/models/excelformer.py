@@ -63,22 +63,40 @@ def feature_mixup(
 
 
 class ExcelFormer(Module):
-    r"""The ExcelFormer model introduced in https://arxiv.org/abs/2301.02819
+    r"""The ExcelFormer model introduced in the
+    `"ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data"
+    <https://arxiv.org/abs/2301.02819>`_ paper.
+
+    ExcelFormer first converts the categorical features with a target
+    statistics encoder into numerical features. Then it sorts the
+    numerical features with mutual information sort. So the model
+    itself limits to numerical features.
+
+    .. note::
+
+        For an example of using ExcelFormer, see `examples/excelformer.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        excelfromer.py>`_.
 
     Args:
         in_channels (int): Input channel dimensionality
         out_channels (int): Output channels dimensionality
         num_cols (int): Number of columns
-        num_layers (int): Number of :class:`ExcelFormerConv` layers.
+        num_layers (int): Number of
+            :class:`torch_frame.nn.conv.ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
-        col_stats (Dict[str, Dict[StatType, Any]]): A dictionary that maps
-            column name into stats.
-        col_names_dict (Dict[torch_frame.stype, List[str]]): A dictionary that
-            maps stype to a list of column names. The column names are sorted
-            based on the ordering that appear in :obj:`tensor_frame.feat_dict`.
-        diam_dropout (float, optional): diam_dropout (default: :obj:`0.0`)
-        aium_dropout (float, optional): aium_dropout (default: :obj:`0.0`)
-        residual_dropout (float, optional): residual dropout (default: `0.0`)
+        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
+        diam_dropout (float, optional): diam_dropout. (default: :obj:`0.0`)
+        aium_dropout (float, optional): aium_dropout. (default: :obj:`0.0`)
+        residual_dropout (float, optional): residual dropout.
+            (default: :obj:`0.0`)
     """
     def __init__(
         self,
@@ -130,10 +148,11 @@ class ExcelFormer(Module):
         r"""Transform :obj:`TensorFrame` object into output embeddings.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            tf (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): The output embeddings of size
+            torch.Tensor: The output embeddings of size
                 [batch_size, out_channels].
         """
         if stype.numerical not in tf.feat_dict or len(
@@ -160,15 +179,14 @@ class ExcelFormer(Module):
             tf (TensorFrame): Input :obj:`TensorFrame` object.
             beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when mixup is
-                true. (default: 0.5)
+                true. (default: :obj:`0.5`)
 
         Returns:
-            out_mixedup (Tensor): The mixed up output embeddings of size
-                [batch_size, out_channels].
-            y_mixedup (Tensor): Output :obj:`Tensor` y_mixedup will be
-                returned only when mixup is set to true. The size is
-                [batch_size, num_classes] for classification and
-                [batch_size, 1] for regression.
+            (torch.Tensor, torch.Tensor): The first :obj:`Tensor` is the mixed
+            up output embeddings of size [batch_size, out_channels].
+            The second :obj:`Tensor` y_mixedup will be returned only when
+            mixup is set to true. The size is [batch_size, num_classes] for
+            classification and [batch_size, 1] for regression.
         """
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(

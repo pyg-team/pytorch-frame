@@ -21,5 +21,6 @@ __all__ = [
     'save',
     'load',
     'cat',
+    'torch_frame',
     '__version__',
 ]

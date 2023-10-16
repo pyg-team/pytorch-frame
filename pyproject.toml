@@ -3,7 +3,7 @@ requires=["flit_core >=3.2,<4"]
 build-backend="flit_core.buildapi"
 
 [project]
-name="torch_frame"
+name="pytorch_frame"
 version="0.1.0"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
@@ -32,10 +32,6 @@ dependencies=[
     "pandas",
     "torch",
     "pyarrow",
-    "scikit-learn",
-    "xgboost>=1.7.0, <2.0.0",
-    "optuna>=3.0.0",
-    "catboost",
 ]
 
 [project.optional-dependencies]
@@ -46,6 +42,12 @@ test=[
 dev=[
     "torch_frame[test]",
     "pre-commit",
+]
+full=[
+    "scikit-learn",
+    "xgboost>=1.7.0, <2.0.0",
+    "optuna>=3.0.0",
+    "catboost",
 ]
 
 [project.urls]
@@ -71,7 +73,11 @@ skip = [".gitignore", "__init__.py"]
 ignore = ["F811", "W503", "W504"]
 
 [tool.pytest.ini_options]
-addopts = "--capture=no"
+addopts = [
+    "--capture=no",
+    "--color=yes",
+    "-vv",
+]
 
 [tool.coverage.report]
 exclude_lines = [

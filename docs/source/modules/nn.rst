@@ -48,3 +48,17 @@ Decoders
    {% for name in torch_frame.nn.decoder.classes %}
      {{ name }}
    {% endfor %}
+
+Models
+------
+
+.. currentmodule:: torch_frame.nn.models
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   {% for name in torch_frame.nn.models.classes %}
+     {{ name }}
+   {% endfor %}

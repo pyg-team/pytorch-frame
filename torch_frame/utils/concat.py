@@ -5,7 +5,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame import TensorFrame
+from torch_frame.data.tensor_frame import TensorFrame
 
 
 def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:

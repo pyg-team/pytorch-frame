@@ -1,10 +1,8 @@
 import copy
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
-import optuna
 import torch
-import xgboost
 from torch import Tensor
 
 from torch_frame import TaskType, TensorFrame, stype
@@ -89,8 +87,13 @@ class XGBoost(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
         return feat.numpy(), y.numpy(), feature_types
 
-    def objective(self, trial: optuna.trial.Trial, dtrain: xgboost.DMatrix,
-                  dvalid: xgboost.DMatrix, num_boost_round: int) -> float:
+    def objective(
+        self,
+        trial: Any,  # optuna.trial.Trial
+        dtrain: Any,  # xgboost.DMatrix
+        dvalid: Any,  # xgboost.DMatrix
+        num_boost_round: int,
+    ) -> float:
         r""" Objective function to be optimized.
 
         Args:
@@ -100,9 +103,12 @@ class XGBoost(GBDT):
             num_boost_round (int): Number of boosting round.
 
         Returns:
-            score (float): Best objective value. Root mean squared error for
-                regression task and accuracy for classification task.
+            float: Best objective value. Root mean squared error for
+            regression task and accuracy for classification task.
         """
+        import optuna
+        import xgboost
+
         self.params = {
             "objective":
             self.obj,
@@ -160,8 +166,16 @@ class XGBoost(GBDT):
                                     torch.from_numpy(pred))[self.metric]
         return score
 
-    def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
-              num_trials: int, num_boost_round: int = 2000):
+    def _tune(
+        self,
+        tf_train: TensorFrame,
+        tf_val: TensorFrame,
+        num_trials: int,
+        num_boost_round: int = 2000,
+    ):
+        import optuna
+        import xgboost
+
         if self.task_type == TaskType.REGRESSION:
             study = optuna.create_study(direction="minimize")
         else:
@@ -186,6 +200,8 @@ class XGBoost(GBDT):
                                    evals=[(dvalid, 'validation')])
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
+        import xgboost
+
         device = tf_test.device
         test_feat, test_y, test_feat_type = self._to_xgboost_input(tf_test)
         dtest = xgboost.DMatrix(test_feat, label=test_y,

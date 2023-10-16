@@ -37,18 +37,20 @@ Our aspirations for PyTorch Frame are twofold:
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
+* [Quick Tour](#quick-tour)
 * [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
+* [Installation](#installation)
 
 ## Library Highlights
 
 PyTorch Frame emphasizes a tensor-centric API and maintains design elements similar to vanilla PyTorch. For those acquainted with PyTorch, adapting to PyTorch Frame is a seamless process. Here are our major library highlights:
 
 * **Versitility with Tabular Data**:
-  PyTorch Frame provides inhouse support for multimodal learning on a variety of semantic types, including categories, numbers and text.
+  PyTorch Frame provides in-house support for multimodal learning on a variety of semantic types, including categories, numbers and texts. Extensions to other types, including but not limited to sequences, multicategoricies, images, time are on our road map.
 * **Modular Implementation of Diverse Models**:
-  Many existing deep learning models are implemented in a modular way. See next section for [more details](#architecture-overview).
+  We provide a framework for users to implement deep learning models in a modular way, enhancing module reusability, code clarity and ease of experimentation. See next section for [more details](#architecture-overview).
 * **Empowerment through Multimodal Learning**:
-  PyTorch Frame can mesh with large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
+  PyTorch Frame can mesh with a variety of different transformers on different semantic types, e.g. large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
 * **PyG Integration**:
   PyTorch Frame synergizes seamlessly with PyG, enabling `TensorFrame` representation of node features, inclusive of numeric, categorical, textual attributes, and beyond.
 
@@ -62,10 +64,119 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
-* `materialization` stage handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
 * `TableConv` handles column-wise interactions between different semantic types.
-* `Decoder` summaries the embeddings and generates the prediction outputs.
+* `Decoder` summarizes the embeddings and generates the prediction outputs.
+
+
+## Quick Tour
+
+In this quick tour, we showcase the ease of creating and training a deep tabular model with only a few lines of code.
+
+### Build your own deep tabular model
+
+In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
+
+* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list of encoders, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
+* `self.convs`: We create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model. Each `TabTransformerConv` module takes in an embedding of size `[batch_size, num_cols, channels]` and outputs an embedding of the same size.
+* `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
+
+```python
+from typing import Any, Dict, List
+
+from torch import Tensor
+from torch.nn import Linear, Module, ModuleList
+
+import torch_frame
+from torch_frame import TensorFrame, stype
+from torch_frame.data.stats import StatType
+from torch_frame.nn.conv import TabTransformerConv
+from torch_frame.nn.encoder import (
+    EmbeddingEncoder,
+    LinearEncoder,
+    StypeWiseFeatureEncoder,
+)
+
+
+class ExampleTransformer(Module):
+    def __init__(
+        self,
+        channels: int,
+        out_channels: int,
+        num_layers: int,
+        num_heads: int,
+        col_stats: Dict[str, Dict[StatType, Any]],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+    ):
+        super().__init__()
+        self.encoder = StypeWiseFeatureEncoder(
+            out_channels=channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict={
+                stype.categorical: EmbeddingEncoder(),
+                stype.numerical: LinearEncoder()
+            },
+        )
+        self.tab_transformer_convs = ModuleList([
+            TabTransformerConv(
+                channels=channels,
+                num_heads=num_heads,
+            ) for _ in range(num_layers)
+        ])
+        self.decoder = Linear(channels, out_channels)
+
+    def forward(self, tf: TensorFrame) -> Tensor:
+        x, _ = self.encoder(tf)
+        for tab_transformer_conv in self.tab_transformer_convs:
+            x = tab_transformer_conv(x)
+        out = self.decoder(x.mean(dim=1))
+        return out
+```
+
+<details>
+<summary>Once we decide the model, we can load the Adult Census Income dataset and create a train dataloader.</summary>
+
+```python
+    from torch_frame.datasets import Yandex
+
+    dataset = Yandex(root='/tmp/adult', name='adult')
+    dataset.materialize()
+    train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
+    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
+                            shuffle=True)
+```
+</details>
+
+<details>
+<summary>We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.</summary>
+
+```python
+import torch
+import torch.nn.functional as F
+from tqdm import tqdm
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = ExampleTransformer(
+    channels=32,
+    out_channels=dataset.num_classes,
+    num_layers=2,
+    num_heads=8,
+    col_stats=train_dataset.col_stats,
+    col_names_dict=train_dataset.tensor_frame.col_names_dict,
+).to(device)
+
+optimizer = torch.optim.Adam(model.parameters())
+
+for epoch in range(50):
+    for tf in tqdm(train_loader):
+        pred = model.forward(tf)
+        loss = F.cross_entropy(pred, tf.y)
+        optimizer.zero_grad()
+        loss.backward()
+```
+</details>
 
 ## Implemented Deep Tabular Models
 
@@ -76,4 +187,17 @@ We list currently supported deep tabular models:
 * **[ResNet](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.ResNet.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/revisiting.py)]
 * **[TabNet](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabnet.py)]
 * **[ExcelFormer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)]
-* **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Arık *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+* **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+
+In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
+
+
+## Installation
+
+PyTorch is available for Python 3.8 to Python 3.11.
+
+```
+pip install pytorch_frame
+```
+
+See [the installation guide](https://pyg-team-pytorch-frame.readthedocs.build/en/latest/get_started/installation.html) for other options.
