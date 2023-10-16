@@ -13,7 +13,7 @@ as shown in the figure below.
   :width: 100%
 
 
-- First, the input :obj:`DataFrame` with different columns is converted to :class:`TensorFrame`, where the columns are organized according to their `stype` (semantic types such as categorical and numerical).
+- First, the input :obj:`DataFrame` with different columns is converted to :class:`TensorFrame`, where the columns are organized according to their `stype` (semantic types such as categorical, numerical and text).
 - Then, the :class:`~torch_frame.TensorFrame` is fed into :class:`~torch_frame.nn.encoder.FeatureEncoder` which converts each `stype` feature into a 3-dimensional :obj:`Tensor`.
 - The :obj:`Tensor`'s across different :obj:`stypes` are then concatenated into a single :obj:`Tensor` :obj:`x` of shape [`batch_size`, `num_cols`, `num_channels`].
 - The :obj:`Tensor` :obj:`x` is then updated iteratively via :class:`TableConv`'s.
