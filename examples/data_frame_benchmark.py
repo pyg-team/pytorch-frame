@@ -302,7 +302,8 @@ def train_and_eval_with_cfg(
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['base_lr'])
     lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg['gamma_rate'])
     train_loader = DataLoader(train_tensor_frame,
-                              batch_size=train_cfg['batch_size'], shuffle=True)
+                              batch_size=train_cfg['batch_size'], shuffle=True,
+                              drop_last=True)
     val_loader = DataLoader(val_tensor_frame,
                             batch_size=train_cfg['batch_size'])
     test_loader = DataLoader(test_tensor_frame,
@@ -437,6 +438,9 @@ def main_gbdt():
 
 
 if __name__ == '__main__':
+    print(args)
+    if os.path.exists(args.result_path):
+        exit(-1)
     if args.model_type in ["XGBoost", "CatBoost"]:
         main_gbdt()
     else:
