@@ -31,7 +31,6 @@ dependencies=[
     "numpy",
     "pandas",
     "torch",
-    "pyarrow",
 ]
 
 [project.optional-dependencies]
