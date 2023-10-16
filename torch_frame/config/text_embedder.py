@@ -8,6 +8,15 @@ from torch import Tensor
 class TextEmbedderConfig:
     r"""Text embedder model that maps a list of strings/sentences into PyTorch
     Tensor embeddings.
+
+    Args:
+        text_embedder (callable): A callable text embedder that takes a list
+            of strings as input and output the PyTorch Tensor embeddings for
+            that list of strings.
+        batch_size (int, optional): Batch size to use when encoding the
+            sentences. If set to :obj:`None`, the text embeddings will
+            be obtained in a full-batch manner. (default: :obj:`None`)
+
     """
     text_embedder: Callable[[List[str]], Tensor]
     # Batch size to use when encoding the sentences. It is recommended to set
