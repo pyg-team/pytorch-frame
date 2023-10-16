@@ -178,6 +178,10 @@ else:
             'base_lr': [0.01, 0.001],
             'gamma_rate': [0.9, 0.95, 1.],
         }
+        if train_tensor_frame.num_cols > 20:
+            # Reducing the model size to avoid GPU OOM
+            model_search_space['channels'] = [64, 128]
+            model_search_space['num_prompts'] = [64, 128]
         model_cls = Trompt
         col_stats = dataset.col_stats
     elif args.model_type == 'ExcelFormer':
