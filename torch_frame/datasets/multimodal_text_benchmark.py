@@ -6,6 +6,7 @@ import pandas as pd
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
@@ -34,6 +35,94 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - #classes
           - Task
           - Missing value ratio
+        * - product_sentiment_machine_hack
+          - 6,364
+          - 0
+          - 1
+          - 1
+          - 4
+          - multiclass_classification
+          - 0.0%
+        * - jigsaw_unintended_bias100K
+          - 125,000
+          - 29
+          - 0
+          - 1
+          - 2
+          - binary_classification
+          - 41.4%
+        * - news_channel
+          - 25,355
+          - 14
+          - 0
+          - 1
+          - 6
+          - multiclass_classification
+          - 0.0%
+        * - wine_reviews
+          - 105,154
+          - 2
+          - 2
+          - 1
+          - 30
+          - multiclass_classification
+          - 1.0%
+        * - fake_job_postings2
+          - 15,907
+          - 0
+          - 3
+          - 2
+          - 2
+          - binary_classification
+          - 23.8%
+        * - google_qa_answer_type_reason_explanation
+          - 6,079
+          - 0
+          - 1
+          - 3
+          - 1
+          - regression
+          - 0.0%
+        * - google_qa_question_type_reason_explanation
+          - 6,079
+          - 0
+          - 1
+          - 3
+          - 1
+          - regression
+          - 0.0%
+        * - bookprice_prediction
+          - 6,237
+          - 2
+          - 3
+          - 3
+          - 1
+          - regression
+          - 1.7%
+        * - jc_penney_products
+          - 13,575
+          - 2
+          - 1
+          - 2
+          - 1
+          - regression
+          - 13.7%
+        * - women_clothing_review
+          - 23,486
+          - 1
+          - 3
+          - 2
+          - 1
+          - regression
+          - 1.8%
+        * - news_popularity2
+          - 30,009
+          - 3
+          - 0
+          - 1
+          - 1
+          - regression
+          - 0.0%
     """
     base_url = 'https://automl-mm-bench.s3.amazonaws.com'
 
@@ -116,8 +205,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         'kick_starter_funding': ['train', 'test'],
         'jigsaw_unintended_bias100K': ['train', 'test'],
         'google_qa_answer_type_reason_explanation': ['train', 'dev'],
-        'google_qa_question_type_reason_explanation': ['train', 'dev', 'test'],
-        'bookprice_prediction': ['train', 'test', 'competition'],
+        'google_qa_question_type_reason_explanation': ['train', 'dev'],
+        'bookprice_prediction': ['train', 'test'],
         'jc_penney_products': ['train', 'test'],
         'women_clothing_review': ['train', 'test'],
         'ae_price_prediction': ['train', 'test'],
@@ -365,7 +454,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         splits = ['train', 'val', 'test'] if len(
             self._dataset_splits[self.name]) == 3 else ['train', 'test']
         for split_df, split in zip(dfs, splits):
-            split_df['split'] = split
+            split_df['split'] = SPLIT_TO_NUM[split]
 
         df = pd.concat(dfs, ignore_index=True)
 
