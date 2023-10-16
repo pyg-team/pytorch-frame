@@ -21,8 +21,6 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     **STATS:**
 
-    (TODO) To be added by zecheng.
-
     .. list-table::
         :widths: 20 10 10 10 10 10 20 10
         :header-rows: 1
