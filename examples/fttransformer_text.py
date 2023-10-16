@@ -22,6 +22,12 @@ from torch_frame.nn import (
 # Text embedded:
 # ============== wine_reviews ===============
 # Best Val Acc: 0.7946, Best Test Acc: 0.7878
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9334, Best Test Acc: 0.8814
+# ========== data_scientist_salary ==========
+# Best Val Acc: 0.5355, Best Test Acc: 0.4582
+# ======== jigsaw_unintended_bias100K =======
+# Best Val Acc: 0.9543, Best Test Acc: 0.9511
 
 
 class PretrainedTextEncoder:
@@ -63,9 +69,12 @@ dataset.materialize(path=osp.join(path, 'data.pt'))
 
 is_classification = dataset.task_type.is_classification
 
-train_dataset = dataset.get_split_dataset('train')[:0.9]
-val_dataset = dataset.get_split_dataset('train')[0.9:]
+train_dataset = dataset.get_split_dataset('train')
+val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
+if val_dataset.tensor_frame.num_rows == 0:
+    train_dataset = dataset.get_split_dataset('train')[:0.9]
+    val_dataset = dataset.get_split_dataset('train')[0.9:]
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame.to(device)
@@ -82,9 +91,14 @@ stype_encoder_dict = {
     stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
 }
 
+if is_classification:
+    output_channels = dataset.num_classes
+else:
+    output_channels = 1
+
 model = FTTransformer(
     channels=args.channels,
-    out_channels=dataset.num_classes,
+    out_channels=output_channels,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
