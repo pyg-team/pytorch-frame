@@ -25,13 +25,13 @@ from transformers import AutoTokenizer, DistilBertModel
 
 # Text embedded:
 # ============== wine_reviews ===============
-# Best Val Acc: 0.7946, Best Test Acc: 0.7878
+# Best Val Acc: 0.8067, Best Test Acc: 0.7970
 
 
 class PretrainedTextEncoder:
     def __init__(self, device: torch.device):
         self.device = device
-        self.model = SentenceTransformer('all-distilroberta-v1')
+        self.model = SentenceTransformer('all-mpnet-base-v2')
 
     def __call__(self, sentences: List[str]) -> Tensor:
         embeddings = self.model.encode(sentences, convert_to_numpy=False,
@@ -84,7 +84,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 if not args.use_tokenizer:
     text_encoder = PretrainedTextEncoder(device=device)
     text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+                                         batch_size=5)
     kwargs = dict(text_embedder_cfg=text_embedder_cfg, text_stype=torch_frame.text_embedded)
 else:
     text_tokenizer = Tokenizer(device=device)
