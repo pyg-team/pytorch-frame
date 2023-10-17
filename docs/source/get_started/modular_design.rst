@@ -49,24 +49,23 @@ Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEnc
         stype_encoder_dict=stype_encoder_dict,
     )
 
-There are other encoders implemnted as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
+There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
 :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for `stype.text_embedded` columns.
 See :ref:`_torch_frame_nn` for the full list of built-in encoders.
 
-You can also implement your custom encoder for given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
+You can also implement your custom encoder for a given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
 
 
 2. :class:`TableConv`
 ---------------------
 
 The table convolution layer inherits from :class:`~torch_frame.nn.conv.TableConv`.
-It takes the 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]` as input and
+It takes the 3-dimensional :class:`~torch.Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]` as input and
 updates the column embeddings based on embeddings of other columns; thereby modeling the complex interactions among different column values.
 Below, we show a simple self-attention-based table convolution to model the interaction among columns.
 
 .. code-block:: python
 
-    import torch
     import torch.nn.functional as F
     from torch import Tensor
     from torch.nn import Linear
@@ -106,7 +105,7 @@ See :ref:`_torch_frame_nn` for the full list of built-in convolution layers.
 3. :class:`Decoder`
 -------------------
 
-:class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`Tensor` :obj:`x` into output :class:`Tensor` `out` of shape :obj:`[batch_size, out_channels]`, representing
+:class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`~torch.Tensor` :obj:`x` into :obj:`out`, a :class:`~torch.Tensor` of shape :obj:`[batch_size, out_channels]`, representing
 the row embeddings of the original :obj:`DataFrame`.
 
 Below is a simple example of a :class:`~torch_frame.nn.decoder.Decoder` that mean-pools over the column embeddings, followed by a linear transformation.
