@@ -1,11 +1,9 @@
 Modular Design of Deep Tabular Models
 =====================================
 Our key observation is that many tabular deep learning models all follow a modular design of **three components**:
-
-- :obj:`FeatureEncoder`
-- :obj:`TableConv`
-- :obj:`Decoder`
-
+1. :obj:`FeatureEncoder`
+2. :obj:`TableConv`
+3. :obj:`Decoder`
 as shown in the figure below.
 
 .. figure:: ../_figures/modular.png
@@ -19,8 +17,8 @@ as shown in the figure below.
 - The :obj:`Tensor` :obj:`x` is then updated iteratively via :class:`TableConv`'s.
 - The updated :obj:`Tensor` :obj:`x` is inputed into :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`Tensor` of shape [`batch_size`, `out_channels`].
 
-:class:`FeatureEncoder`
------------------------
+1. :class:`FeatureEncoder`
+--------------------------
 
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into :obj:`x`, a :class:`torch.Tensor` of size :obj:`[batch_size, num_cols, channels]`.
 This class can contain learnable parameters and `NaN` (missing value) handling.
@@ -65,8 +63,8 @@ See :ref:`_torch_frame_nn` for the full list of built-in encoders.
 You can also implement your custom encoder for given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
 
 
-:class:`TableConv`
-------------------
+2. :class:`TableConv`
+---------------------
 
 The table convolution layer inherits from :class:`~torch_frame.nn.conv.TableConv`.
 It takes the 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]` as input and
@@ -112,8 +110,8 @@ Initializing and calling it is straightforward.
 See :ref:`_torch_frame_nn` for the full list of built-in convolution layers.
 
 
-:class:`Decoder`
-----------------
+3. :class:`Decoder`
+-------------------
 
 :class:`~torch_frame.nn.decoder.Decoder`. transforms the input :class:`Tensor` :obj:`x` into output :class:`Tensor` `out` of shape :obj:`[batch_size, out_channels]`, representing
 the row embeddings of the original :obj:`DataFrame`.
