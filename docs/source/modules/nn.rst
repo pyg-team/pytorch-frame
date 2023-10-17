@@ -37,8 +37,8 @@ torch_frame.nn.conv
      {{ name }}
    {% endfor %}
 
-torch_frame.decoder
--------------------
+torch_frame.nn.decoder
+----------------------
 
 .. currentmodule:: torch_frame.nn.decoder
 
@@ -51,8 +51,8 @@ torch_frame.decoder
      {{ name }}
    {% endfor %}
 
-Models
-------
+torch_frame.nn.models
+---------------------
 
 .. currentmodule:: torch_frame.nn.models
 

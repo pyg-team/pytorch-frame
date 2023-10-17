@@ -23,15 +23,11 @@ as shown in the figure below.
 :class:`~torch_frame.nn.encoder.FeatureEncoder` transforms input :class:`~torch_frame.TensorFrame` into :obj:`x`, a :class:`torch.Tensor` of size :obj:`[batch_size, num_cols, channels]`.
 This class can contain learnable parameters and `NaN` (missing value) handling.
 
-# TODO: the structure of the encoder is a bit confusing due to many encoders introduced here.
-# might be worth describing stype encoders vs. feature encoders.
-
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` inherits from :class:`~torch_frame.nn.encoder.FeatureEncoder`.
 It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via :obj:`stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
 The embeddings of different `stypes` are then concatenated to give the final 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
-Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
-It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
+Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
 
 .. code-block:: python
 
@@ -53,8 +49,6 @@ It uses :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.ca
         col_names_dict=col_names_dict,
         stype_encoder_dict=stype_encoder_dict,
     )
-
-    # TODO: Add code snippet with a small TensorFrame
 
 There are other encoders implemnted as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
 :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for `stype.text_embedded` columns.
