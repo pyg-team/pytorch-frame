@@ -11,8 +11,9 @@ from torch_frame.stype import stype
 
 
 @pytest.mark.parametrize('task_type', [
-    TaskType.REGRESSION, TaskType.BINARY_CLASSIFICATION,
-    TaskType.MULTICLASS_CLASSIFICATION
+    TaskType.REGRESSION,
+    TaskType.BINARY_CLASSIFICATION,
+    TaskType.MULTICLASS_CLASSIFICATION,
 ])
 def test_excelformer(task_type):
     batch_size = 10
@@ -29,10 +30,15 @@ def test_excelformer(task_type):
         out_channels = 1
     num_cols = len(dataset.col_stats) - 1
     tensor_frame = dataset.tensor_frame
-    model = ExcelFormer(in_channels=in_channels, out_channels=out_channels,
-                        num_cols=num_cols, num_layers=num_layers,
-                        num_heads=num_heads, col_stats=dataset.col_stats,
-                        col_names_dict=tensor_frame.col_names_dict)
+    model = ExcelFormer(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        num_cols=num_cols,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        col_stats=dataset.col_stats,
+        col_names_dict=tensor_frame.col_names_dict,
+    )
 
     # Test the original forward pass
     out = model(tensor_frame)
@@ -49,3 +55,28 @@ def test_excelformer(task_type):
         assert y_mixedup.shape == (batch_size, out_channels)
     else:
         assert y_mixedup.shape == tensor_frame.y.shape
+
+
+@pytest.mark.xfail
+def test_no_graph_breaks():
+    import torch._dynamo as dynamo
+
+    dataset: Dataset = FakeDataset(
+        num_rows=10,
+        with_nan=False,
+        stypes=[stype.numerical],
+        task_type=TaskType.REGRESSION,
+    )
+    dataset.materialize()
+    tf = dataset.tensor_frame
+    model = ExcelFormer(
+        in_channels=8,
+        out_channels=1,
+        num_cols=len(dataset.col_stats) - 1,
+        num_heads=2,
+        num_layers=6,
+        col_stats=dataset.col_stats,
+        col_names_dict=tf.col_names_dict,
+    )
+    explanation = dynamo.explain(model)(tf)
+    assert explanation.graph_break_count == 0
