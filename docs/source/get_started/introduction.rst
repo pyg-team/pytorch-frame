@@ -71,7 +71,7 @@ Any remaining dimension describes the feature value of the (row, column) pair.
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
-    The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
+    The set of keys in :obj:`feat_dict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
 Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
