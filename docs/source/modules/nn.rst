@@ -1,3 +1,5 @@
+.. _torch_frame_nn:
+
 torch_frame.nn
 ==============
 
@@ -6,8 +8,8 @@ torch_frame.nn
 
 .. currentmodule:: torch_frame.nn
 
-Encoders
---------
+torch_frame.nn.encoder
+----------------------
 
 .. currentmodule:: torch_frame.nn.encoder
 
@@ -20,8 +22,8 @@ Encoders
      {{ name }}
    {% endfor %}
 
-Convolutions
-------------
+torch_frame.nn.conv
+-------------------
 
 .. currentmodule:: torch_frame.nn.conv
 
@@ -35,8 +37,8 @@ Convolutions
      {{ name }}
    {% endfor %}
 
-Decoders
---------
+torch_frame.nn.decoder
+----------------------
 
 .. currentmodule:: torch_frame.nn.decoder
 
@@ -49,8 +51,8 @@ Decoders
      {{ name }}
    {% endfor %}
 
-Models
-------
+torch_frame.nn.models
+---------------------
 
 .. currentmodule:: torch_frame.nn.models
 
