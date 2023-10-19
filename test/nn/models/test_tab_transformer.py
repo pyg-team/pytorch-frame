@@ -29,5 +29,6 @@ def test_tab_transformer(stypes):
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )
+    model.reset_parameters()
     out = model(tensor_frame)
     assert out.shape == (batch_size, out_channels)

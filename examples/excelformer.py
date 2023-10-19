@@ -3,7 +3,7 @@ Reported (reproduced) accuracy(rmse for regression task) of ExcelFormer based
 on Table 1 of the paper. https://arxiv.org/pdf/2301.02819.pdf
 ExcelFormer uses the same train-validation-test split as the Yandex paper.
 
-california: 0.4587 (0.4733) num_layers=5, num_heads=4, num_layers=5,
+california_housing: 0.4587 (0.4733) num_layers=5, num_heads=4, num_layers=5,
 channels=32, lr: 0.001,
 jannis : 72.51 (72.38) num_heads=32, lr: 0.0001
 covtype: 97.17 (95.37)
@@ -21,10 +21,7 @@ from tqdm import tqdm
 from torch_frame.data.loader import DataLoader
 from torch_frame.datasets.yandex import Yandex
 from torch_frame.nn import ExcelFormer
-from torch_frame.transforms import (
-    MutualInformationSort,
-    CatToNumTransform,
-)
+from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='higgs_small')
@@ -35,7 +32,6 @@ parser.add_argument('--num_layers', type=int, default=5)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--mixup', type=bool, default=True)
-parser.add_argument('--beta', type=float, default=0.5)
 args = parser.parse_args()
 
 if torch.cuda.is_available():
@@ -50,9 +46,9 @@ dataset.materialize()
 train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 
 # CategoricalCatBoostEncoder encodes the categorical features
 # into numerical features with CatBoostEncoder.
@@ -89,7 +85,7 @@ model = ExcelFormer(
     in_channels=args.channels,
     out_channels=out_channels,
     num_layers=args.num_layers,
-    num_cols=len(dataset.col_to_stype) - 1,
+    num_cols=train_tensor_frame.num_cols,
     num_heads=args.num_heads,
     residual_dropout=0.,
     diam_dropout=0.3,
@@ -106,6 +102,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred_mixedup, y_mixedup = model.forward_mixup(tf)
         if is_classification:
             loss = F.cross_entropy(pred_mixedup, y_mixedup)
@@ -125,6 +122,7 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         if is_classification:
             pred_class = pred.argmax(dim=-1)
@@ -166,6 +164,7 @@ for epoch in range(1, args.epochs + 1):
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val {metric}: {best_val_metric:.4f}, '
       f'Best Test {metric}: {best_test_metric:.4f}')
