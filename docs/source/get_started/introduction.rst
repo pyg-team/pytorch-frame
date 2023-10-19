@@ -79,7 +79,7 @@ Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Datas
 
 .. note::
     Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
-    :pyf:`Pytorch Frame` converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
+    Pytorch Frame converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
     We expect `NaN`/missing-value handling and normalization to be handled by the model side via :class:`torch_frame.nn.encoder.StypeEncoder`.
 
 The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In Pytorch Frame, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
