@@ -105,8 +105,8 @@ class CatBoost(GBDT):
             num_boost_round (int): Number of boosting round.
 
         Returns:
-            score (float): Best objective value. Root mean squared error for
-                regression task and accuracy for classification task.
+            float: Best objective value. Root mean squared error for
+            regression task and accuracy for classification task.
         """
         import catboost
 

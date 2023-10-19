@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added the model performance benchmark script ([#114](https://github.com/pyg-team/pytorch-frame/pull/114)).
+- Improved documentation on the `TextEmbedderConfig`. ([#118](https://github.com/pyg-team/pytorch-frame/pull/118))
+- Fixed the `MultimodalTextBenchmark`. ([#117](https://github.com/pyg-team/pytorch-frame/pull/117))
 - Added `DataFrameBenchmark` ([#107](https://github.com/pyg-team/pytorch-frame/pull/107)).
 - Added stats to datasets documentation ([#101](https://github.com/pyg-team/pytorch-frame/pull/101)).
 - Add concat and equal ops for `TensorFrame` ([#100](https://github.com/pyg-team/pytorch-frame/pull/100)).

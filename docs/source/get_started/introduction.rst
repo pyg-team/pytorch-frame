@@ -64,15 +64,23 @@ A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_fr
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :class:`~torch_frame.stype`.
 - :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :class:`~torch_frame.stype`'s.
-The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns. Any remaining dimension describes the feature value of the (row, column) pair.
+
+The size of :obj:`Tensor` is at least two-dimensional with shape [`num_rows`, `num_cols`, \*]. The first dimension represents rows and the second dimension represents columns.
+Any remaining dimension describes the feature value of the (row, column) pair.
+
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
-    The set of keys in :obj:`featdict` must exactly match with the set of keys in :obj:`col_names_dict`.
+    The set of keys in :obj:`feat_dict` must exactly match with the set of keys in :obj:`col_names_dict`.
     :class:`~torch_frame.TensorFrame` is validated at initialization time.
 
 Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
 :meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`.
+
+.. note::
+    Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
+    Pytorch Frame converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
+    We expect `NaN`/missing-value handling and normalization to be handled by the model side via :class:`torch_frame.nn.encoder.StypeEncoder`.
 
 The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In Pytorch Frame, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
 

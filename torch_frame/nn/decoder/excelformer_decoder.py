@@ -6,7 +6,9 @@ from torch_frame.nn.decoder import Decoder
 
 
 class ExcelFormerDecoder(Decoder):
-    r"""The ExcelFormer decoder introduced in https://arxiv.org/abs/2301.02819
+    r"""The ExcelFormer decoder introduced in the
+    `"ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data"
+    <https://arxiv.org/abs/2301.02819>`_ paper
 
     Args:
         in_channels (int): Input channel dimensionality
@@ -36,7 +38,7 @@ class ExcelFormerDecoder(Decoder):
                 [batch_size, num_cols, in_channels]
 
         Returns:
-            x (Tensor): [batch_size, out_channels].
+            Tensor: [batch_size, out_channels].
         """
         x = x.transpose(1, 2)
         x = self.lin_f(x)

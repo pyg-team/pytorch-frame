@@ -93,8 +93,9 @@ class SelfAttention(Module):
 
 
 class TabTransformerConv(TableConv):
-    r"""The TabTransformer Layer introduced in
-        https://arxiv.org/abs/2012.06678
+    r"""The TabTransformer Layer introduced in the
+    `"TabTransformer: Tabular Data Modeling Using Contextual Embeddings"
+    <https://arxiv.org/abs/2012.06678>`_ paper.
 
     Args:
         channels (int): Input/output channel dimensionality
@@ -102,8 +103,8 @@ class TabTransformerConv(TableConv):
         attn_dropout (float): attention module dropout (default: 0.)
         ffn_dropout (float): attention module dropout (default: 0.)
     """
-    def __init__(self, channels: int, num_heads: int,
-                 attn_dropout: float = 0., ffn_dropout: float=0.):
+    def __init__(self, channels: int, num_heads: int, attn_dropout: float = 0.,
+                 ffn_dropout: float = 0.):
         super().__init__()
         self.norm_1 = LayerNorm(channels)
         self.attn = SelfAttention(channels, num_heads, attn_dropout)

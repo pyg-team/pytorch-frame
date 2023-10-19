@@ -2,13 +2,22 @@ from enum import Enum
 from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
 
 import torch_frame
 from torch_frame.typing import Series
 
 
 class StatType(Enum):
+    r"""The different types for column statistics.
+
+    Attributes:
+        MEAN: Mean. Numerical column only.
+        STD: Standard deviation. Numerical column only.
+        QUANTILES: The minimum, first quartile, median, third quartile,
+            and the maximum of the column. Numerical column only.
+        COUNT: The count of each class. Categorical column only.
+
+    """
     # Numerical:
     MEAN = 'MEAN'
     STD = 'STD'

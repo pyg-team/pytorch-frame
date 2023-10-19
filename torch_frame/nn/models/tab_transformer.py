@@ -22,25 +22,37 @@ from torch_frame.nn.conv import TabTransformerConv
 
 
 class TabTransformer(Module):
-    r"""The Tab-Transformer model introduced in
-        https://arxiv.org/abs/2012.06678. The model pads a column positional
-        embedding in categorical feature embeddings and executes multi-layer
-        column-interaction modeling exclusively on the categorical features.
-        If the input :obj:`TensorFrame` lacks categorical features, the model
-        simply applies layer normalization on input features and utilizes an
-        MLP(Multilayer Perceptron) for decoding.
+    r"""The Tab-Transformer model introduced in the
+    `"TabTransformer: Tabular Data Modeling Using Contextual Embeddings"
+    <https://arxiv.org/abs/2012.06678>`_ paper.
+
+    The model pads a column positional embedding in categorical feature
+    embeddings and executes multi-layer column-interaction modeling exclusively
+    on the categorical features. For numerical features, the model simply
+    applies layer normalization on input features. The model utilizes an
+    MLP(Multilayer Perceptron) for decoding.
+
+    .. note::
+
+        For an example of using TabTransformer, see `examples/tabtransformer.py
+        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        tabtransformer.py>`_.
 
     Args:
-        channels (int): Hidden channel dimensionality
-        out_channels (int): Output channels dimensionality
-        num_layers (int): Numner of layers.
+        channels (int): Input channel dimensionality.
+        out_channels (int): Output channels dimensionality.
+        num_layers (int): Numner of convolution layers.
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of positional encoding padding to the
             categorical embeddings.
-        col_stats (Dict[str, Dict[StatType, Any]]): Dictionary containing
-            column statistics
-        col_names_dict (Dict[torch_frame.stype, List[str]]): Dictionary
-            containing column names categorized by statistical type
+        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+             A dictionary that maps column name into stats.
+             Available as :obj:`dataset.col_stats`.
+        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+            dictionary that maps stype to a list of column names. The column
+            names are sorted based on the ordering that appear in
+            :obj:`tensor_frame.feat_dict`. Available as
+            :obj:`tensor_frame.col_names_dict`.
     """
     def __init__(
         self,
@@ -120,10 +132,11 @@ class TabTransformer(Module):
         r"""Transforming :obj:`TensorFrame` object into output prediction.
 
         Args:
-            x (Tensor): Input :obj:`TensorFrame` object.
+            x (:class:`torch_frame.TensorFrame`):
+                Input :obj:`TensorFrame` object.
 
         Returns:
-            out (Tensor): Output. The shape is [batch_size, out_channels].
+            torch.Tensor: Output of shape [batch_size, out_channels].
         """
         xs = []
         batch_size = len(tf)

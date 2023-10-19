@@ -119,7 +119,9 @@ class DiaM(Module):
 
 
 class ExcelFormerConv(TableConv):
-    r"""The ExcelFormer Layer introduced in https://arxiv.org/abs/2301.02819
+    r"""The ExcelFormer Layer introduced in the
+    `"ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data"
+    <https://arxiv.org/abs/2301.02819>`_ paper.
 
     Args:
         channels (int): Input/output channel dimensionality

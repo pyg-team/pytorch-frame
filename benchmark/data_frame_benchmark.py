@@ -182,6 +182,9 @@ else:
             # Reducing the model size to avoid GPU OOM
             model_search_space['channels'] = [64, 128]
             model_search_space['num_prompts'] = [64, 128]
+        elif train_tensor_frame.num_cols > 50:
+            model_search_space['channels'] = [64]
+            model_search_space['num_prompts'] = [64]
         model_cls = Trompt
         col_stats = dataset.col_stats
     elif args.model_type == 'ExcelFormer':
