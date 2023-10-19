@@ -201,7 +201,7 @@ We include a benchmark on SOTA tabular deep learning models against GBDTs over d
 
 The following chart shows the performance of various deep learning models on small regression datasets. For more results, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
 
-The index in the first row maps to public datasets in documentation(#TODO add documentation link). We can observe that deep tabular models outperforms GBDTs on 7 of the 12 datasets.
+The indices in the first row maps to different public datasets in documentation(#TODO add documentation link). We can observe that deep tabular models outperforms GBDTs on 7 of the 12 datasets.
 
 |                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
