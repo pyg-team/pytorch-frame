@@ -105,6 +105,8 @@ Metric: Accuracy, the higher the better.
 
 #### `scale: medium`
 
+TODO: Add results.
+
 Experimental setting: 10 Optuna search trials. 25 epochs of training.
 
 #### `scale: large`
