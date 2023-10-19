@@ -2,10 +2,7 @@
 
 First install additional dependencies:
 ```bash
-<<<<<<< HEAD
 pip install optuna
-=======
->>>>>>> 4a9e104facba8b6b785a230b6e1fd6f1d07695a3
 pip install torchmetrics
 pip install xgboost
 pip install catboost
