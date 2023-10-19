@@ -53,7 +53,7 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
 * **Empowerment through Multimodal Learning**:
   PyTorch Frame can mesh with a variety of different transformers on different semantic types, e.g. large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
 * **Benchmark**:
-  PyTorch Frame includes a [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md). Users can compare their models with state-of-art deep tablular models, as well as GBDTs and add their models to leaderboard.
+  PyTorch Frame includes a [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md). Users can compare their models with state-of-the-art deep tablular models, as well as GBDTs and add their models to leaderboard.
 * **Pytorch Integration**:
   PyTorch Frame synergizes seamlessly with other Pytorch libraries, like [PyG](https://pyg.org/), enabling end-to-end training of Pytorch Frame models with any other Pytorch models.
 
@@ -200,6 +200,8 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 We include a benchmark on SOTA tabular deep learning models against GBDTs over datasets with different size and task types.
 
 The following chart shows the performance of various deep learning models on small regression datasets. For more results, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
+
+The index in the first row maps to public datasets in documentation(#TODO add documentation link). We can observe that deep tabular models outperforms GBDTs on 7 of the 12 datasets.
 
 |                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
