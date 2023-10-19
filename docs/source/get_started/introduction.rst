@@ -23,7 +23,7 @@ Common Benchmark Datasets
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
-An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the `Adult Census Income` dataset, type:
+An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the `Titanic` dataset, type:
 
 .. code-block:: python
 
@@ -58,7 +58,7 @@ Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype
 
 - :class:`~torch_frame.stype.categorical` denotes categorical columns.
 - :obj:`~torch_frame.stype.numerical` denotes numerical columns.
-- :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some sentence encoder.
+- :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some text encoder.
 
 A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
 
@@ -76,19 +76,26 @@ Any remaining dimension describes the feature value of the (row, column) pair.
 
 Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
 :meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`.
+:meth:`~torch_frame.data.Dataset.materialize` also provides an optional argument `path` to cache the :class:`~torch_frame.TensorFrame` and `col_stats`. If `path` is specified,
+during the materialization :pyf:`PyTorch Frame` will try to load saved :class:`~torch_frame.TensorFrame` and `col_stats` at first. If there is no saved object found for that `path`, :pyf:`PyTorch Frame`
+instead will do the normal materialization and saving materialized :class:`~torch_frame.TensorFrame` and `col_stats` to the `path`.
 
 .. note::
     Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
-    Pytorch Frame converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
+    :pyf:`PyTorch Frame` converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
     We expect `NaN`/missing-value handling and normalization to be handled by the model side via :class:`torch_frame.nn.encoder.StypeEncoder`.
 
-The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In Pytorch Frame, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
+The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In :pyf:`PyTorch Frame`, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
 
 .. code-block:: python
 
     from torch_frame import stype
 
     dataset.materialize() # materialize the dataset
+
+    dataset.materialize(path='/tmp/titanic/data.pt') # materialize the dataset with caching
+
+    dataset.materialize(path='/tmp/titanic/data.pt') # next materialization will load the cache
 
     tensor_frame = dataset.tensor_frame
 

@@ -26,7 +26,10 @@ This class can contain learnable parameters and `NaN` (missing value) handling.
 It takes :class:`~torch_frame.TensorFrame` as input and applies stype-specific feature encoder (specified via :obj:`stype_encoder_dict`) to :obj:`Tensor` of each stype to get embeddings for each `stype`.
 The embeddings of different `stypes` are then concatenated to give the final 3-dimensional :obj:`Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
-Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
+Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of
+:class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding `stype.categorical` columns
+:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding `stype.text_embedded` columns,
+and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical` columns.
 
 .. code-block:: python
 
@@ -34,12 +37,14 @@ Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEnc
     from torch_frame.nn import (
         StypeWiseFeatureEncoder,
         EmbeddingEncoder,
+        LinearEmbeddingEncoder,
         LinearEncoder,
     )
 
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
+        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768),
     }
 
     encoder = StypeWiseFeatureEncoder(
@@ -49,8 +54,7 @@ Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEnc
         stype_encoder_dict=stype_encoder_dict,
     )
 
-There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns, and
-:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for `stype.text_embedded` columns.
+There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns.
 See :ref:`_torch_frame_nn` for the full list of built-in encoders.
 
 You can also implement your custom encoder for a given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
