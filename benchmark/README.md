@@ -12,15 +12,20 @@ Then run
 # Specify the model from TabNet, FTTransformer, ResNet, TabTransformer, Trompt
 # ExcelFormer', FTTransformerBucket, XGBoost, CatBoost
 model_type=TabNet
+
 # Specify the task type from [binary_classification, regression,
 # multiclass_classification]
 task_type=binary_classification
+
 # Specify the dataset scale from [small, medium, large]
 scale=small
+
 # Specify the dataset idx from [0, 1, ...]
 idx=0
+
 # Specify the path to save the results
 result_path=results.pt
+
 # Run hyper-parameter tuning and training of the specified model on a specified
 # dataset.
 python data_frame_benchmark.py --model_type $model_type --task_type $task_type --scale $scale --idx $idx --result_path $result_path
@@ -30,6 +35,7 @@ python data_frame_benchmark.py --model_type $model_type --task_type $task_type -
 
 We show the current model performance across different datasets.
 The 0-th axis denotes the model name and 1-st axis denotes the dataset `idx`.
+For the mapping from dataset `idx` into the actual dataset object, please see the documentation. [TODO, add link once public]
 
 ### `task_type: binary_classification`
 Metric: ROC-AUC, higher the better.
@@ -48,8 +54,15 @@ Metric: ROC-AUC, higher the better.
 | TabNet              | 0.911±0.001     | **1.000±0.000** | 0.931±0.005     | 0.937±0.003     | 0.864±0.002     | 0.944±0.001     | 0.828±0.001     | 0.771±0.005     | 0.913±0.005     | 0.606±0.014     | 0.790±0.003     | 0.936±0.003     | **1.000±0.000** | 0.910±0.001     |
 | TabTransformer      | 0.910±0.001     | **1.000±0.000** | 0.928±0.001     | 0.918±0.003     | 0.829±0.002     | 0.928±0.001     | 0.816±0.002     | 0.757±0.003     | 0.885±0.001     | 0.652±0.006     | 0.780±0.002     | 0.937±0.001     | 0.996±0.000     | 0.905±0.001     |
 
+#### `scale: medium`
 
-### `task_type: regression_classification`
+TODO
+
+#### `scale: large`
+
+TODO
+
+### `task_type: regression`
 Metric: RMSE, lower the better.
 
 #### `scale: small`
@@ -65,3 +78,23 @@ Metric: RMSE, lower the better.
 | FTTransformer       | 0.335±0.010     | 0.161±0.022     | 0.140±0.002     | 0.277±0.004     | 0.335±0.003     | 0.445±0.003     | 0.361±0.018     | 0.345±0.005     | OOM             | 0.106±0.012     | 0.826±0.005     | 0.896±0.007     | 0.461±0.003     |
 | TabNet              | 0.279±0.003     | 0.224±0.016     | 0.141±0.010     | 0.275±0.002     | 0.348±0.003     | 0.451±0.007     | 0.355±0.030     | 0.332±0.004     | 0.992±0.182     | 0.015±0.002     | 0.805±0.014     | 0.885±0.013     | 0.544±0.011     |
 | TabTransformer      | 0.624±0.003     | 0.229±0.003     | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003     | 0.619±0.005     | 0.351±0.001     | 0.893±0.005     | 0.431±0.001     | 0.819±0.002     | 0.886±0.005     | 0.545±0.004     |
+
+#### `scale: medium`
+
+TODO
+
+#### `scale: large`
+
+TODO
+
+### `task_type: multiclass_classification`
+Metric: Accuracy, the higher the better.
+
+
+#### `scale: medium`
+
+TODO
+
+#### `scale: large`
+
+TODO
