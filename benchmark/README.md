@@ -62,13 +62,13 @@ Experimental setting: 20 Optuna search trials. 50 epochs of training.
 
 #### `scale: medium`
 
-Experimental setting: 10 Optuna search trials. 25 epochs of training.
+TODO: Add results.
 
-TODO
+Experimental setting: 10 Optuna search trials. 25 epochs of training.
 
 #### `scale: large`
 
-TODO
+TODO: Add results.
 
 ### `task_type: regression`
 Metric: RMSE, lower the better.
@@ -91,11 +91,13 @@ Experimental setting: 20 Optuna search trials. 50 epochs of training.
 
 #### `scale: medium`
 
+TODO: Add results.
+
 Experimental setting: 10 Optuna search trials. 25 epochs of training.
 
 #### `scale: large`
 
-TODO
+TODO: Add results.
 
 ### `task_type: multiclass_classification`
 Metric: Accuracy, the higher the better.
