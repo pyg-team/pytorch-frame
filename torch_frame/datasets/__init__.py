@@ -13,6 +13,7 @@ from .dota2 import Dota2
 from .kdd_census_income import KDDCensusIncome
 from .multimodal_text_benchmark import MultimodalTextBenchmark
 from .data_frame_benchmark import DataFrameBenchmark
+from .mercari import Mercari
 
 real_world_datasets = [
     'Titanic',
@@ -27,6 +28,7 @@ real_world_datasets = [
     'KDDCensusIncome',
     'MultimodalTextBenchmark',
     'DataFrameBenchmark',
+    'Mercari',
 ]
 
 synthetic_datasets = [

@@ -39,6 +39,7 @@ Our aspirations for PyTorch Frame are twofold:
 * [Architecture Overview](#architecture-overview)
 * [Quick Tour](#quick-tour)
 * [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
+* [Benchmark](#benchmark)
 * [Installation](#installation)
 
 ## Library Highlights
@@ -51,6 +52,8 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
   We provide a framework for users to implement deep learning models in a modular way, enhancing module reusability, code clarity and ease of experimentation. See next section for [more details](#architecture-overview).
 * **Empowerment through Multimodal Learning**:
   PyTorch Frame can mesh with a variety of different transformers on different semantic types, e.g. large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
+* **Benchmark**:
+  PyTorch Frame includes a [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md). Users can compare their models with state-of-the-art deep tablular models, as well as GBDTs and add their models to leaderboard.
 * **Pytorch Integration**:
   PyTorch Frame synergizes seamlessly with other Pytorch libraries, like [PyG](https://pyg.org/), enabling end-to-end training of Pytorch Frame models with any other Pytorch models.
 
@@ -190,6 +193,27 @@ We list currently supported deep tabular models:
 * **[TabTransformer](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
 
 In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
+
+
+## Benchmark
+
+We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
+
+The following chart shows the performance of various deep learning models on small regression datasets. For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
+
+Some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research. The indices in the first row maps to different public datasets in documentation(#TODO add documentation link).
+
+|                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
+|:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
+| XGBoost             | **0.247±0.000** | 0.077±0.000     | 0.167±0.000     | 1.119±0.000     | 0.328±0.000     | 1.024±0.000     | **0.292±0.000** | 0.606±0.000     | **0.876±0.000** | 0.023±0.000     | **0.697±0.000** | **0.865±0.000** | 0.435±0.000     |
+| CatBoost            | 0.265±0.000     | 0.062±0.000     | 0.128±0.000     | 0.336±0.000     | 0.346±0.000     | 0.443±0.000     | 0.375±0.000     | **0.273±0.000** | 0.881±0.000     | 0.040±0.000     | 0.756±0.000     | 0.876±0.000     | 0.439±0.000     |
+| Trompt              | 0.261±0.003     | **0.015±0.005** | **0.118±0.001** | **0.262±0.001** | **0.323±0.001** | 0.418±0.003     | 0.329±0.009     | 0.312±0.002     | OOM             | **0.008±0.001** | 0.779±0.006     | 0.874±0.004     | **0.424±0.005** |
+| ResNet              | 0.288±0.006     | 0.018±0.003     | 0.124±0.001     | 0.268±0.001     | 0.335±0.001     | 0.434±0.004     | 0.325±0.012     | 0.324±0.004     | 0.895±0.005     | 0.036±0.002     | 0.794±0.006     | 0.875±0.004     | 0.468±0.004     |
+| FTTransformerBucket | 0.325±0.008     | 0.096±0.005     | 0.360±0.354     | 0.284±0.005     | 0.342±0.004     | 0.441±0.003     | 0.345±0.007     | 0.339±0.003     | OOM             | 0.105±0.011     | 0.807±0.010     | 0.885±0.008     | 0.468±0.006     |
+| ExcelFormer         | 0.302±0.003     | 0.099±0.003     | 0.145±0.003     | 0.382±0.011     | 0.344±0.002     | **0.411±0.005** | 0.359±0.016     | 0.336±0.008     | OOM             | 0.192±0.014     | 0.794±0.005     | 0.890±0.003     | 0.445±0.005     |
+| FTTransformer       | 0.335±0.010     | 0.161±0.022     | 0.140±0.002     | 0.277±0.004     | 0.335±0.003     | 0.445±0.003     | 0.361±0.018     | 0.345±0.005     | OOM             | 0.106±0.012     | 0.826±0.005     | 0.896±0.007     | 0.461±0.003     |
+| TabNet              | 0.279±0.003     | 0.224±0.016     | 0.141±0.010     | 0.275±0.002     | 0.348±0.003     | 0.451±0.007     | 0.355±0.030     | 0.332±0.004     | 0.992±0.182     | 0.015±0.002     | 0.805±0.014     | 0.885±0.013     | 0.544±0.011     |
+| TabTransformer      | 0.624±0.003     | 0.229±0.003     | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003     | 0.619±0.005     | 0.351±0.001     | 0.893±0.005     | 0.431±0.001     | 0.819±0.002     | 0.886±0.005     | 0.545±0.004     |
 
 
 ## Installation
