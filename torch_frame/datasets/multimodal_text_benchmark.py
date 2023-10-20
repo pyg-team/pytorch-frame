@@ -11,7 +11,8 @@ from torch_frame.utils.split import SPLIT_TO_NUM
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
     r"""The tabular data with text columns benchmark datasets used by
-    https://arxiv.org/abs/2111.02705. Some regression datasets' target
+    `"Benchmarking Multimodal AutoML for Tabular Data with Text Fields"
+    <https://arxiv.org/abs/2111.02705>`_. Some regression datasets' target
     column is transformed from log scale to original scale.
 
     Args:

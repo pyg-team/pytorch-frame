@@ -106,9 +106,11 @@ def get_df_and_col_to_stype(
 
 
 class Yandex(torch_frame.data.Dataset):
-    r"""The Yandex dataset collections used by https://arxiv.org/abs/2106.11959
+    r"""The Yandex dataset collections used by `"Revisiting Deep Learning
+    Models for Tabular Data" <https://arxiv.org/abs/2106.11959>`_.
     Originally downloaded from
-    https://github.com/yandex-research/tabular-dl-revisiting-models
+    `github.com/yandex-research/tabular-dl-revisiting-models
+    <https://github.com/yandex-research/tabular-dl-revisiting-models>`.
 
     **STATS:**
 
