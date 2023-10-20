@@ -14,6 +14,7 @@ from torch_frame.config import TextEmbedderConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
+    MultiCategoricalTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
     TextEmbeddingTensorMapper,
@@ -111,6 +112,9 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
+        elif stype == torch_frame.multi_categorical:
+            index, _ = self.col_stats[col][StatType.COUNT]
+            return MultiCategoricalTensorMapper(index)
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
