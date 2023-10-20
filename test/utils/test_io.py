@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 import shutil
 import tempfile
@@ -55,6 +56,7 @@ def test_dataset_cache():
 
     path = osp.join(TEST_DIR.name, TEST_DATASET_NAME)
     dataset.materialize(path=path)
+
     new_dataset = get_fake_dataset(num_rows, text_embedder_cfg)
     new_dataset.df = dataset.df
 
@@ -67,6 +69,18 @@ def test_dataset_cache():
     # Test `tensor_frame` converter
     tf = new_dataset._to_tensor_frame_converter(dataset.df)
     compare_tfs(dataset.tensor_frame, tf)
+
+    # Remove saved tensor frame object
+    os.remove(path)
+
+    new_dataset = get_fake_dataset(num_rows, text_embedder_cfg)
+    new_dataset.df = new_dataset.df
+
+    # Test materialize again with specified path
+    new_dataset.materialize()
+    new_dataset.materialize(path=path)
+
+    assert new_dataset.is_materialized
 
 
 def test_save_load_tensor_frame():
