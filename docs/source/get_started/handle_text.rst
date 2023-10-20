@@ -22,8 +22,8 @@ that include text columns, such as those in the
 
 The processes of initializing and materializing datasets are similar to those introduced in
 :doc:`/get_started/introduction`. Below is an example demonstrating how to embed a standard
-tabular text dataset using a specified text encoder and incorporating caching to speed up
-the :meth:`~torch_frame.data.Dataset.materialize`.
+tabular text dataset using a specified text encoder and incorporating caching during
+:meth:`~torch_frame.data.Dataset.materialize`.
 
 .. code-block:: python
 
@@ -59,22 +59,22 @@ the :meth:`~torch_frame.data.Dataset.materialize`.
     dataset.feat_cols  # This dataset contains one text column `description`
     >>> ['description', 'country', 'province', 'points', 'price']
 
-    # Materialize will call predefined encoder to encode text columns
+    # Materialize will call pre-defined encoding for text columns
     dataset.materialize(path='/tmp/multimodal_text_benchmark/wine_reviews/data.pt')
 
 It's strongly recommended to cache the :class:`~torch_frame.TensorFrame`
 by specifying the `path` during :meth:`~torch_frame.data.Dataset.materialize`,
 as text encoding typically takes a considerable amount of time.
-Cached :class:`~torch_frame.TensorFrame`, including encoded text embeddings, can be efficiently reused
-for subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
+Cached :class:`~torch_frame.TensorFrame`, including the encoded text embeddings, can be
+efficiently reused for subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
 
 Fusing Text Embeddings into Tabular Learning
 --------------------------------------------
 
 :pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder`, designed
 to encode pre-computed embeddings. This encoder applies linear layer on each embedding feature
-and concatenate the output embeddings.
-This encoder can easily handle :obj:`~torch_frame.stype.text_embedded` case.
+and concatenate the output embeddings, which can easily handle the
+:obj:`~torch_frame.stype.text_embedded` case.
 
 .. code-block:: python
 
@@ -91,7 +91,7 @@ This encoder can easily handle :obj:`~torch_frame.stype.text_embedded` case.
     }
 
 In the example above, `stype_encoder_dict` can be directly fed into
-:class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` directly and seamlessly
+:class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` and seamlessly
 fusing text embeddings to the tabular learning.
 
 Please refer to the
