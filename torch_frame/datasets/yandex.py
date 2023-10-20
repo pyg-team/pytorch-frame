@@ -110,7 +110,7 @@ class Yandex(torch_frame.data.Dataset):
     Models for Tabular Data" <https://arxiv.org/abs/2106.11959>`_.
     Originally downloaded from
     `github.com/yandex-research/tabular-dl-revisiting-models
-    <https://github.com/yandex-research/tabular-dl-revisiting-models>`.
+    <https://github.com/yandex-research/tabular-dl-revisiting-models>`_.
 
     **STATS:**
 
