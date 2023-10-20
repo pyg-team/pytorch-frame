@@ -10,7 +10,7 @@ class TaskType(Enum):
 
     Attributes:
         REGRESSION: Regression task.
-        MULTICLASS_CLASSIFICATION: Multiclass classification task.
+        MULTICLASS_CLASSIFICATION: Multi-class classification task.
         BINARY_CLASSIFICATION: Binary classification task.
     """
     REGRESSION = 'regression'
@@ -32,12 +32,12 @@ class NAStrategy(Enum):
     r"""Strategy for dealing with NaN values in columns.
 
     Attributes:
-        MEAN: Replacing NaN values with mean
-            (numerical :class:`torch_frame.stype`).
-        ZEROS: Replacing NaN values with zeros
-            (numerical :class:`torch_frame.stype`).
-        MOST_FREQUENT: Replacing NaN values with most frequent
-            (categorical :class:`torch_frame.stype`).
+        MEAN: Replaces NaN values with the mean of a
+            :obj:`torch_frame.numerical` column.
+        ZEROS: Replaces NaN values with zeros in a
+            :obj:`torch_frame.numerical` column.
+        MOST_FREQUENT: Replaces NaN values with the most frequent category of a
+            :obj:`torch_frame.categorical` column.
     """
     MEAN = 'mean'
     MOST_FREQUENT = 'most_frequent'

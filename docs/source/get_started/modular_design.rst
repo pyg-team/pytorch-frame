@@ -55,7 +55,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical
     )
 
 There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns.
-See :ref:`_torch_frame_nn` for the full list of built-in encoders.
+See :py:mod:`torch_frame.nn` for the full list of built-in encoders.
 
 You can also implement your custom encoder for a given `stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.
 
@@ -103,7 +103,7 @@ Initializing and calling it is straightforward.
     conv = SelfAttentionConv(32)
     x = conv(x)
 
-See :ref:`_torch_frame_nn` for the full list of built-in convolution layers.
+See :py:mod:`torch_frame.nn` for the full list of built-in convolution layers.
 
 
 3. :class:`Decoder`
@@ -133,4 +133,4 @@ Below is a simple example of a :class:`~torch_frame.nn.decoder.Decoder` that mea
             # [batch_size, out_channels]
             return self.lin(out)
 
-See :ref:`_torch_frame_nn` for the full list of built-in decoders.
+See :py:mod:`torch_frame.nn` for the full list of built-in decoders.

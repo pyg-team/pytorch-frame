@@ -1,5 +1,3 @@
-.. _torch_frame_nn:
-
 torch_frame.nn
 ==============
 
@@ -31,7 +29,6 @@ torch_frame.nn.conv
    :nosignatures:
    :toctree: ../generated
    :template: autosummary/class.rst
-
 
    {% for name in torch_frame.nn.conv.classes %}
      {{ name }}
