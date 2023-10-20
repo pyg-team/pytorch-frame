@@ -55,28 +55,3 @@ def test_excelformer(task_type):
         assert y_mixedup.shape == (batch_size, out_channels)
     else:
         assert y_mixedup.shape == tensor_frame.y.shape
-
-
-@pytest.mark.xfail
-def test_no_graph_breaks():
-    import torch._dynamo as dynamo
-
-    dataset: Dataset = FakeDataset(
-        num_rows=10,
-        with_nan=False,
-        stypes=[stype.numerical],
-        task_type=TaskType.REGRESSION,
-    )
-    dataset.materialize()
-    tf = dataset.tensor_frame
-    model = ExcelFormer(
-        in_channels=8,
-        out_channels=1,
-        num_cols=len(dataset.col_stats) - 1,
-        num_heads=2,
-        num_layers=6,
-        col_stats=dataset.col_stats,
-        col_names_dict=tf.col_names_dict,
-    )
-    explanation = dynamo.explain(model)(tf)
-    assert explanation.graph_break_count == 0

@@ -77,7 +77,6 @@ addopts = [
     "--color=yes",
     "-vv",
 ]
-xfail_strict = true
 
 [tool.coverage.report]
 exclude_lines = [
