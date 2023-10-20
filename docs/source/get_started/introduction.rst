@@ -23,7 +23,7 @@ Common Benchmark Datasets
 , datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
 
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
-An initialization of a dataset will automatically download its raw files and process the columns, *e.g*., to load the `Titanic` dataset, type:
+An initialization of a dataset will automatically download its raw files and process the columns.
 
 .. code-block:: python
 
@@ -78,7 +78,7 @@ Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Datas
 :meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`'s and stores them in :class:`torch_frame.TensorFrame`.
 :meth:`~torch_frame.data.Dataset.materialize` also provides an optional argument `path` to cache the :class:`~torch_frame.TensorFrame` and `col_stats`. If `path` is specified,
 during the materialization :pyf:`PyTorch Frame` will try to load saved :class:`~torch_frame.TensorFrame` and `col_stats` at first. If there is no saved object found for that `path`, :pyf:`PyTorch Frame`
-instead will do the normal materialization and saving materialized :class:`~torch_frame.TensorFrame` and `col_stats` to the `path`.
+will materialize the dataset and save the materialized :class:`~torch_frame.TensorFrame` and `col_stats` to the `path`.
 
 .. note::
     Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
