@@ -4,6 +4,7 @@ from typing import Any, Callable, Iterable, List, Optional
 import pandas as pd
 import torch
 from torch import Tensor
+from tqdm import tqdm
 
 from torch_frame.typing import Series
 
@@ -124,9 +125,11 @@ class TextEmbeddingTensorMapper(TensorMapper):
             return emb.to(device)
 
         emb_list = []
-        for i in range(0, len(ser_list), self.batch_size):
+        print('Start embedding sentences in mini-batch...')
+        for i in tqdm(range(0, len(ser_list), self.batch_size)):
             emb = self.text_embedder(ser_list[i:i + self.batch_size])
             emb_list.append(emb.to(device))
+        print('Fisnished embeddings!.')
         return torch.cat(emb_list, dim=0)
 
     def backward(self, tensor: Tensor) -> pd.Series:
