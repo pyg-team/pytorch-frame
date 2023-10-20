@@ -297,6 +297,10 @@ class Dataset(ABC):
                 materialize and does not cache. (default: :obj:`None`)
         """
         if self.is_materialized:
+            # Materialized without specifying path at first and materialize
+            # again by specifying the path
+            if path is not None and not osp.isfile(path):
+                torch_frame.save(self._tensor_frame, self._col_stats, path)
             return self
 
         if path is not None and osp.isfile(path):
