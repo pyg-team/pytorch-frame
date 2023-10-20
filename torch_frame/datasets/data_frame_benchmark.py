@@ -714,12 +714,19 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
     }
 
     @classmethod
-    def datasets_available(cls, task_type: TaskType,
-                           scale: str) -> List[Tuple[str, Dict[str, Any]]]:
+    def datasets_available(
+        cls,
+        task_type: TaskType,
+        scale: str,
+    ) -> List[Tuple[str, Dict[str, Any]]]:
+        r"""List of datasets available for a given :obj:`task_type` and
+        :obj:`scale`."""
         return cls.dataset_categorization_dict[task_type.value][scale]
 
     @classmethod
     def num_datasets_available(cls, task_type: TaskType, scale: str):
+        r"""Number of datasets available for a given :obj:`task_type` and
+        :obj:`scale`."""
         return len(cls.datasets_available(task_type, scale))
 
     def __init__(
@@ -757,6 +764,11 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                                   train_ratio=0.8, val_ratio=0.1)
         })
         df = pd.concat([df, split_df], axis=1)
+
+        # For regression task, we normalize the target.
+        if task_type == TaskType.REGRESSION:
+            ser = df[dataset.target_col]
+            df[dataset.target_col] = (ser - ser.mean()) / ser.std()
 
         # check the scale
         if dataset.num_rows < 5000:

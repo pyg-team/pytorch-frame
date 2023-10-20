@@ -122,6 +122,16 @@ class TabNet(Module):
                 ))
 
         self.lin = Linear(self.split_feature_channels, out_channels)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.feature_encoder.reset_parameters()
+        self.bn.reset_parameters()
+        for feat_transformer in self.feat_transformers:
+            feat_transformer.reset_parameters()
+        for attn_transformer in self.attn_transformers:
+            attn_transformer.reset_parameters()
+        self.lin.reset_parameters()
 
     def forward(
         self,
@@ -218,11 +228,18 @@ class FeatureTransformer(Module):
                 no_first_residual=no_first_residual,
                 num_glu_layers=num_dependent_glu_layers,
             )
+        self.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.shared_glu_block(x)
         x = self.dependent(x)
         return x
+
+    def reset_parameters(self):
+        if not isinstance(self.shared_glu_block, Identity):
+            self.shared_glu_block.reset_parameters()
+        if not isinstance(self.dependent, Identity):
+            self.dependent.reset_parameters()
 
 
 class GLUBlock(Module):
@@ -243,7 +260,6 @@ class GLUBlock(Module):
             else:
                 glu_layer = GLULayer(out_channels, out_channels)
             self.glu_layers.append(glu_layer)
-
         self.reset_parameters()
 
     def forward(self, x: Tensor) -> Tensor:
