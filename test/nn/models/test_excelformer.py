@@ -39,6 +39,7 @@ def test_excelformer(task_type):
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )
+    model.reset_parameters()
 
     # Test the original forward pass
     out = model(tensor_frame)
