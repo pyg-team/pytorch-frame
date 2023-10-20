@@ -20,7 +20,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
             :obj:`TaskType.BINARY_CLASSIFICATION`,
             :obj:`TaskType.MULTICLASS_CLASSIFICATION`, or
             :obj:`TaskType.REGRESSION`
-        scale (str): The scale of the dataset. :obj:`small` means 5K to 50K
+        scale (str): The scale of the dataset. :obj:`"small"` means 5K to 50K
             rows. :obj:`"medium"` means 50K to 500K rows. :obj:`"large"`
             means more than 500K rows.
         idx (int): The index of the dataset within a category specified via
