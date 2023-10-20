@@ -3,11 +3,22 @@ from enum import Enum
 
 class stype(Enum):
     r"""The semantic type of a column.
+    A semantic type denotes the semantic meaning of a column, and denotes how
+    columns are encoded into an embedding space within tabular deep learning
+    models:
+
+    .. code-block:: python
+
+        import torch_frame
+
+        stype = torch_frame.numerical  # Numerical columns
+        stype = torch_frame.categorical  # Categorical columns
+        ...
 
     Attributes:
-        numerical: Numerical features.
-        categorical: Categorical features.
-        text_embedded: Pre-embedding of text.
+        numerical: Numerical columns.
+        categorical: Categorical columns.
+        text_embedded: Columns that hold a pre-embedding of text.
     """
     numerical = 'numerical'
     categorical = 'categorical'

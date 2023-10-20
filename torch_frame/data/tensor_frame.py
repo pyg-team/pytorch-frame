@@ -13,18 +13,54 @@ from torch_frame.typing import IndexSelectType
 @dataclass(repr=False)
 class TensorFrame:
     r"""A tensor frame holds a :pytorch:`PyTorch` tensor for each table column.
-    Table columns are first organized into their semantic types (e.g.,
-    categorical, numerical) and then converted into their tensor
-    representation, which is stored as :obj:`feat_dict`. For instance,
-    :obj:`feat_dict[stype.numerical]` stores a concatenated :pytorch:`PyTorch`
-    tensor for all numerical features, where 0th/1st dim represents the
-    row/column in the original DataFrame, respectively.
+    Table columns are organized into their semantic types
+    :class:`~torch_frame.stype` (*e.g.*, categorical, numerical) and mapped to
+    a compact tensor representation (*e.g.*, strings in a categorical column
+    are mapped to indices from :obj:`{0, ..., num_categories - 1}`), and can be
+    accessed through :obj:`feat_dict`.
+    For instance, :obj:`feat_dict[stype.numerical]` stores a concatenated
+    :pytorch:`PyTorch` tensor for all numerical features, where the first and
+    second dimension represents the row and column in the original data frame,
+    respectively.
 
-    :obj:`col_names_dict` stores column names of :obj:`feat_dict`. For example,
-    :obj:`col_names_dict[stype.numerical][i]` stores the column name of
-    :obj:`feat_dict[stype.numerical][:,i]`.
+    :class:`TensorFrame` handles missing values via :obj:`float('NaN')` for
+    floating-point tensors, and :obj:`-1` otherwise.
 
-    Additionally, TensorFrame can store the target values in :obj:`y`.
+    :obj:`col_names_dict` maps each column in :obj:`feat_dict` to their
+    original column name.
+    For example, :obj:`col_names_dict[stype.numerical][i]` stores the column
+    name of :obj:`feat_dict[stype.numerical][:, i]`.
+
+    Additionally, :class:`TensorFrame` can store any target values in :obj:`y`.
+
+    .. code-block:: python
+
+        import torch_frame
+
+        tf = torch_frame.TensorFrame({
+            feat_dict = {
+                # Two numerical columns:
+                torch_frame.numerical: torch.randn(10, 2),
+                # Three categorical columns:
+                torch_frame.categorical: torch.randint(0, 5, (10, 3)),
+            },
+            col_names_dict = {
+                torch_frame.numerical: ['x', 'y'],
+                torch_frame.categorical: ['a', 'b', 'c'],
+
+            },
+        })
+
+        print(len(tf))
+        >>> 10
+
+        # Row-wise filtering:
+        tf = tf[torch.tensor([0, 2, 4, 6, 8])]
+        print(len(tf))
+        >>> 5
+
+        # Transfer tensor frame to the GPU:
+        tf = tf.to('cuda')
     """
     feat_dict: Dict[torch_frame.stype, Tensor]
     col_names_dict: Dict[torch_frame.stype, List[str]]
@@ -34,7 +70,7 @@ class TensorFrame:
         self.validate()
 
     def validate(self):
-        r"""Validate the tensor frame object."""
+        r"""Validates the :class:`TensorFrame` object."""
         if self.feat_dict.keys() != self.col_names_dict.keys():
             raise RuntimeError(
                 f"The keys of feat_dict and col_names_dict must be the same, "
@@ -76,7 +112,7 @@ class TensorFrame:
 
     @property
     def stypes(self) -> List[stype]:
-        r"""Returns a canonical ordering of stypes in :obj:`feat_dict`"""
+        r"""Returns a canonical ordering of stypes in :obj:`feat_dict`."""
         return list(
             filter(lambda x: x in self.feat_dict, list(torch_frame.stype)))
 

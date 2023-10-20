@@ -8,7 +8,19 @@ from torch_frame.typing import IndexSelectType
 
 class DataLoader(torch.utils.data.DataLoader):
     r"""A data loader which creates mini-batches from a
-    :class:`torch_frame.Dataset` or :class:`torch_frame.TensorFrame`.
+    :class:`torch_frame.Dataset` or :class:`torch_frame.TensorFrame` object.
+
+    .. code-block:: python
+
+        import torch_frame
+
+        dataset = ...
+
+        loader = torch_frame.data.DataLoader(
+            dataset,
+            batch_size=512,
+            shuffle=True,
+        )
 
     Args:
         dataset (Dataset or TensorFrame): The dataset or tensor frame from
