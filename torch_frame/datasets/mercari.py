@@ -3,12 +3,34 @@ import os.path as osp
 import pandas as pd
 
 import torch_frame
-from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class Mercari(torch_frame.data.Dataset):
+    r"""The `Mercari Price Suggestion Challenge
+    <https://www.kaggle.com/c/mercari-price-suggestion-challenge/>`_
+    dataset.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #cols (text_embedded)
+          - Task
+          - Missing value ratio
+        * - 1,482,535
+          - 1
+          - 4
+          - 2
+          - regression
+          - 0.0%
+    """
     base_url = 'https://data.pyg.org/datasets/tables/mercari_price_suggestion/'
-    files = ['train', 'test', 'test_stg2']
+    files = ['train']
 
     def __init__(self, root: str):
         self.dfs = dict()
@@ -21,19 +43,8 @@ class Mercari(torch_frame.data.Dataset):
             'shipping': torch_frame.categorical,
             'item_description': torch_frame.text_embedded
         }
-        for file in self.files:
-            if file == 'test':
-                split = 'val'
-            elif file == 'test_stg2':
-                split = 'test'
-            else:
-                split = 'train'
-            self.dfs[split] = pd.read_csv(
-                self.download_url(osp.join(self.base_url, file + '.csv'),
-                                  root))
-        df = pd.concat(self.dfs.values(), keys=self.dfs.keys(),
-                       names=['split']).reset_index(level=0)
-        df['split'] = df['split'].map(SPLIT_TO_NUM)
-        df.drop(['train_id', 'test_id'], axis=1, inplace=True)
-        super().__init__(df, col_to_stype, target_col='price',
-                         split_col='split')
+        path = osp.join(self.base_url, 'train.csv')
+        self.download_url(path, root)
+        df = pd.read_csv(path)
+        df.drop(['train_id'], axis=1, inplace=True)
+        super().__init__(df, col_to_stype, target_col='price')
