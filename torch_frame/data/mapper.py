@@ -109,6 +109,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         device: Optional[torch.device] = None,
     ) -> Tensor:
 
+        print(ser)
         index = pd.merge(
             ser.rename('data'),
             self.categories,

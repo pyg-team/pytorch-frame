@@ -173,6 +173,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
+        delimiter: Optional[str] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -201,6 +202,7 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         self.text_embedder_cfg = text_embedder_cfg
+        self.delimiter = delimiter
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
