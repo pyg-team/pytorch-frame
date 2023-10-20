@@ -54,7 +54,7 @@ An initialization of a dataset will automatically download its raw files and pro
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
-Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype`'s:
+Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype`s:
 
 - :class:`~torch_frame.stype.categorical` denotes categorical columns.
 - :obj:`~torch_frame.stype.numerical` denotes numerical columns.
