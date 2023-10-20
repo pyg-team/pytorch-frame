@@ -51,8 +51,8 @@ PyTorch Frame emphasizes a tensor-centric API and maintains design elements simi
   We provide a framework for users to implement deep learning models in a modular way, enhancing module reusability, code clarity and ease of experimentation. See next section for [more details](#architecture-overview).
 * **Empowerment through Multimodal Learning**:
   PyTorch Frame can mesh with a variety of different transformers on different semantic types, e.g. large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
-* **PyG Integration**:
-  PyTorch Frame synergizes seamlessly with PyG, enabling `TensorFrame` representation of node features, inclusive of numeric, categorical, textual attributes, and beyond.
+* **Pytorch Integration**:
+  PyTorch Frame synergizes seamlessly with other Pytorch libraries, like [PyG](https://pyg.org/), enabling end-to-end training of Pytorch Frame models with any other Pytorch models.
 
 ## Architecture Overview
 
@@ -64,7 +64,7 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
-* `Materialization` handles converting the dataset into a `TensorFrame` and computes the column statistics for each semantic type.
+* `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
 * `TableConv` handles column-wise interactions between different semantic types.
 * `Decoder` summarizes the embeddings and generates the prediction outputs.
@@ -79,7 +79,7 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
 * `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list of encoders, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
-* `self.convs`: We create a two layers of `TabTransformerConv`, taken from the `TabTransformer` model. Each `TabTransformerConv` module takes in an embedding of size `[batch_size, num_cols, channels]` and outputs an embedding of the same size.
+* `self.convs`: We create a two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 ```python
@@ -143,7 +143,7 @@ class ExampleTransformer(Module):
 
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
-    train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
+    train_dataset = dataset[:0.8]
     train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
 ```
@@ -194,7 +194,7 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 
 ## Installation
 
-PyTorch is available for Python 3.8 to Python 3.11.
+PyTorch Frame is available for Python 3.8 to Python 3.11.
 
 ```
 pip install pytorch_frame

@@ -1,7 +1,6 @@
 """
 Reported (reproduced, xgboost) results of of TabTransformer model based on
 Table 1 of original paper https://arxiv.org/abs/2012.06678
-albert: 75.7 (63.92, 65.74)
 adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
 bank-marketing: 93.4 (78.35, 81.00)
 dota2: 63.3 (58.28, 53.75)
@@ -22,7 +21,7 @@ from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='bank-marketing',
-                    choices=["adult", "dota2"])
+                    choices=["adult", "dota2", "bank-marketing"])
 parser.add_argument('--channels', type=int, default=32)
 parser.add_argument('--num_heads', type=int, default=8)
 parser.add_argument('--num_layers', type=int, default=6)
@@ -59,9 +58,9 @@ train_dataset, val_dataset, test_dataset = dataset[:0.65], dataset[
     0.65:0.80], dataset[0.80:]
 
 # Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -89,6 +88,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred = model.forward(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
@@ -105,6 +105,7 @@ def test(loader: DataLoader) -> float:
     all_preds = []
     all_labels = []
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
 
@@ -133,6 +134,7 @@ for epoch in range(1, args.epochs + 1):
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val {metric}: {best_val_metric:.4f}, '
       f'Best Test {metric}: {best_test_metric:.4f}')

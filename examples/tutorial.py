@@ -56,9 +56,9 @@ train_dataset = dataset.get_split_dataset('train')
 val_dataset = dataset.get_split_dataset('val')
 test_dataset = dataset.get_split_dataset('test')
 
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 
 # Set up data loaders for TensorFrame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
@@ -227,6 +227,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
@@ -243,6 +244,7 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
         accum += float((tf.y == pred_class).sum())

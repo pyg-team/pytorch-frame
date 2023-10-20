@@ -85,6 +85,7 @@ class FTTransformer(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        self.encoder.reset_parameters()
         self.backbone.reset_parameters()
         for m in self.decoder:
             if not isinstance(m, ReLU):

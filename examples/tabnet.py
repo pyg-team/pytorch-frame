@@ -52,9 +52,9 @@ train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
     0.8:0.9], dataset[0.9:]
 
 # Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame.to(device)
-val_tensor_frame = val_dataset.tensor_frame.to(device)
-test_tensor_frame = test_dataset.tensor_frame.to(device)
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
@@ -80,6 +80,7 @@ def train(epoch: int) -> float:
     loss_accum = total_count = 0
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
@@ -87,7 +88,6 @@ def train(epoch: int) -> float:
         loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
         optimizer.step()
-    lr_scheduler.step()
     return loss_accum / total_count
 
 
@@ -97,6 +97,7 @@ def test(loader: DataLoader) -> float:
     accum = total_count = 0
 
     for tf in loader:
+        tf = tf.to(device)
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
         accum += float((tf.y == pred_class).sum())
@@ -117,5 +118,6 @@ for epoch in range(1, args.epochs + 1):
         best_test_acc = test_acc
     print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
           f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
