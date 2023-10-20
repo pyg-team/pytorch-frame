@@ -13,7 +13,7 @@ PyTorch Frame Documentation
    get_started/installation
    get_started/introduction
    get_started/modular_design
-   get_started/handle_multimodal
+   get_started/handle_text
 
 .. toctree::
    :maxdepth: 1
