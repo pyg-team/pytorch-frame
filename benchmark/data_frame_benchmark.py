@@ -102,8 +102,8 @@ else:
     # Set up model specific search space
     if args.model_type == 'TabNet':
         model_search_space = {
-            'split_attention_channels': [64, 128, 256],
-            'split_feature_channels': [64, 128, 256],
+            'split_attn_channels': [64, 128, 256],
+            'split_feat_channels': [64, 128, 256],
             'gamma': [1., 1.2, 1.5],
             'num_layers': [4, 6, 8],
         }
