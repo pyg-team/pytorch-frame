@@ -197,11 +197,11 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 
 ## Benchmark
 
-We include a benchmark on SOTA tabular deep learning models against GBDTs over datasets with different size and task types.
+We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
 
-The following chart shows the performance of various deep learning models on small regression datasets. For more results, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
+The following chart shows the performance of various deep learning models on small regression datasets. For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
 
-The indices in the first row maps to different public datasets in documentation(#TODO add documentation link). We can observe that deep tabular models outperforms GBDTs on 7 of the 12 datasets.
+Some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research. The indices in the first row maps to different public datasets in documentation(#TODO add documentation link).
 
 |                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
