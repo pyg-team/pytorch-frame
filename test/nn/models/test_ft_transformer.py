@@ -1,5 +1,3 @@
-import pytest
-
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import FTTransformer
