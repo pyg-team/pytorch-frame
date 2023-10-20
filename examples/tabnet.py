@@ -64,8 +64,8 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 model = TabNet(
     out_channels=dataset.num_classes,
     num_layers=args.num_layers,
-    split_attention_channels=args.channels,
-    split_feature_channels=args.channels,
+    split_attn_channels=args.channels,
+    split_feat_channels=args.channels,
     gamma=args.gamma,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
