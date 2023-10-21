@@ -6,8 +6,8 @@ import torch_frame
 class AdultCensusIncome(torch_frame.data.Dataset):
     r"""The `Adult Census Income
     <https://www.kaggle.com/datasets/uciml/adult-census-income>`_
-    dataset. It's extracted from census bureau database and the task
-    is to predict whether a person's income exceeds $50K/year.
+    dataset from Kaggle. It's extracted from census bureau database and the
+    task is to predict whether a person's income exceeds $50K/year.
 
     **STATS:**
 
