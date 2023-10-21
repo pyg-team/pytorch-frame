@@ -11,8 +11,9 @@ from torch_frame.stype import stype
 
 
 @pytest.mark.parametrize('task_type', [
-    TaskType.REGRESSION, TaskType.BINARY_CLASSIFICATION,
-    TaskType.MULTICLASS_CLASSIFICATION
+    TaskType.REGRESSION,
+    TaskType.BINARY_CLASSIFICATION,
+    TaskType.MULTICLASS_CLASSIFICATION,
 ])
 def test_excelformer(task_type):
     batch_size = 10
@@ -29,10 +30,15 @@ def test_excelformer(task_type):
         out_channels = 1
     num_cols = len(dataset.col_stats) - 1
     tensor_frame = dataset.tensor_frame
-    model = ExcelFormer(in_channels=in_channels, out_channels=out_channels,
-                        num_cols=num_cols, num_layers=num_layers,
-                        num_heads=num_heads, col_stats=dataset.col_stats,
-                        col_names_dict=tensor_frame.col_names_dict)
+    model = ExcelFormer(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        num_cols=num_cols,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        col_stats=dataset.col_stats,
+        col_names_dict=tensor_frame.col_names_dict,
+    )
     model.reset_parameters()
 
     # Test the original forward pass
