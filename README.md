@@ -27,7 +27,7 @@ PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), 
 
 PyTorch Frame democratizes deep learning research for tabular data, catering to both novices and experts alike. Our goals are:
 
-1. **Advance Deep Learning for Tabular Data:** Historically, tree-based models (e.g., XGBoost) excelled at tabular learning but had notable limitations, such as integration difficulties with downstream models such as GNNs, and handling complex column types (e.g., text, sequences, images). Deep tabular models are promising to resolve the limitations.
+1. **Facilitate Deep Learning for Tabular Data:** Historically, tree-based models (e.g., XGBoost) excelled at tabular learning but had notable limitations, such as integration difficulties with downstream models such as GNNs, and handling complex column types (e.g., text, sequences, images). Deep tabular models are promising to resolve the limitations.
 
 2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to manage diverse column types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
 
