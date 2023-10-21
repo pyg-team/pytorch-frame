@@ -16,16 +16,15 @@ Handling Text Columns in a Benchmark Dataset
 ----------------------------------------------
 
 :pyf:`PyTorch Frame` provides a collection of tabular benchmark datasets
-with text columns, such as :doc:`generated/torch_frame.datasets.MultimodalTextBenchmark`.
+with text columns, such as :obj:`~torch_frame.datasets.MultimodalTextBenchmark`.
 
 In :pyf:`PyTorch Frame`, you can specify text columns as
 :obj:`~torch_frame.stype.text_embedded` :class:`~torch_frame.stype`.  This will
 encode text columns using a user-specified text embedding model during the
-dataset materialization stage. In :obj:`~torch_frame.datasets.MultimodalTextBenchmark`,
-:pyf:`PyTorch Frame` does this automatically under the hood.
+dataset materialization stage.
 
-The processes of initializing and materializing datasets are similar to those introduced in
-:doc:`/get_started/introduction`. Below we highlight the difference.
+The processes of initializing and materializing datasets are similar
+to :doc:`/get_started/introduction`. Below we highlight the difference.
 
 First you need to specify your text embedding model. Here we use the
 `SentenceTransformer <https://www.sbert.net/>`_ pakcage.
@@ -53,12 +52,9 @@ Next we create a text encoder class that encodes a list of strings into text emb
         # size [batch_size, emb_dim]
         embeddings = self.model.encode(sentences, convert_to_numpy=False,
                                         convert_to_tensor=True)
-
         return embeddings.cpu()
 
 Then we instantiate :obj:`TextEmbedderConfig` for our text embedding model as follows.
-:obj:`text_embedder` maps from a list of sentences to PyTorch Tensor embeddings
-in mini-batch, where :obj:`batch_size` represents the batch size.
 
 .. code-block:: python
 
@@ -69,6 +65,9 @@ in mini-batch, where :obj:`batch_size` represents the batch size.
 
     text_embedder_cfg = TextEmbedderConfig(text_embedder=text_encoder,
                                        batch_size=5)
+
+Here :obj:`text_embedder` maps a list of sentences into PyTorch Tensor embeddings
+in mini-batch, where :obj:`batch_size` represents the batch size.
 
 .. code-block:: python
 
@@ -100,8 +99,8 @@ in mini-batch, where :obj:`batch_size` represents the batch size.
 
 It is strongly recommended to cache :class:`~torch_frame.TensorFrame`
 by specifying the `path` during :meth:`~torch_frame.data.Dataset.materialize`,
-as embedding texts in every materialization is time-consuming.
-The cached :class:`~torch_frame.TensorFrame` can be efficiently reused for
+as embedding texts in every materialization run can be quite time-consuming.
+Once cached, :class:`~torch_frame.TensorFrame` can be reused for
 subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
 
 Fusing Text Embeddings into Tabular Learning
@@ -109,7 +108,7 @@ Fusing Text Embeddings into Tabular Learning
 
 :pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` designed
 to encode pre-computed embeddings. This encoder applies linear function over the
-pre-computed embeddings, which can easily handle the :obj:`~torch_frame.stype.text_embedded` case.
+pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_embedded`.
 
 .. code-block:: python
 
@@ -122,10 +121,10 @@ pre-computed embeddings, which can easily handle the :obj:`~torch_frame.stype.te
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768) # With text embedding size 768
+        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
     }
 
-In the example above, `stype_encoder_dict` can be directly fed into
+Then, `stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` to handle text columns.
 
 Please refer to the
