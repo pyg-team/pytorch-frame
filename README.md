@@ -196,7 +196,7 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 
 We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
 
-The following chart shows the performance of various deep learning models on small regression datasets, where the row represents the models and column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
+The following chart shows the performance of various deep learning models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
 
 |                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
