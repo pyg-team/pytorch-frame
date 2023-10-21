@@ -125,11 +125,11 @@ class TextEmbeddingTensorMapper(TensorMapper):
             return emb.to(device)
 
         emb_list = []
-        print('Start embedding sentences in mini-batch...')
+        print('Embedding texts in mini-batch...')
         for i in tqdm(range(0, len(ser_list), self.batch_size)):
             emb = self.text_embedder(ser_list[i:i + self.batch_size])
             emb_list.append(emb.to(device))
-        print('Fisnished embeddings!.')
+        print('Fisnished embedding texts!')
         return torch.cat(emb_list, dim=0)
 
     def backward(self, tensor: Tensor) -> pd.Series:
