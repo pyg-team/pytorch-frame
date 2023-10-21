@@ -2,7 +2,7 @@ Introduction by Example
 =======================
 
 :pyf:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.
-Modern data is stored in a table format with heterogeneous columns each with its own semantic type, e.g., numerical (e.g., age, price), categorical (e.g., gender, product type), time, text (e.g., descriptions, comments), images, etc.
+Modern data is stored in a table format with heterogeneous columns each with its own semantic type, *e.g.*, numerical (such as age or price), categorical (such as gender or product type), time, text (such as descriptions or comments), images, etc.
 The goal of :pyf:`PyTorch Frame` is to build a deep learning framework to perform effective machine learning on such complex and diverse data.
 
 Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
@@ -100,7 +100,7 @@ will materialize the dataset and save the materialized :class:`~torch_frame.Tens
 
 .. note::
     Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
-    :pyf:`PyTorch Frame` converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
+    PyTorch Frame converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
     We expect `NaN`/missing-value handling and normalization to be handled by the model side via :class:`torch_frame.nn.encoder.StypeEncoder`.
 
 The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In :pyf:`PyTorch Frame`, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.

@@ -58,9 +58,7 @@ dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
 is_classification = dataset.task_type.is_classification
 
-train_dataset = dataset.get_split_dataset('train')
-val_dataset = dataset.get_split_dataset('val')
-test_dataset = dataset.get_split_dataset('test')
+train_dataset, val_dataset, test_dataset = dataset.split()
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame

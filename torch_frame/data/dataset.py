@@ -53,7 +53,7 @@ def requires_post_materialization(func):
 
 
 class DataFrameToTensorFrameConverter:
-    r"""DataFrame to TensorFrame converter.
+    r"""A data frame to :class:`TensorFrame` converter.
 
     Args:
         col_to_stype (Dict[str, :class:`torch_frame.stype`]):
@@ -148,7 +148,7 @@ class DataFrameToTensorFrameConverter:
 
 
 class Dataset(ABC):
-    r"""Base class for creating tabular datasets.
+    r"""A base class for creating tabular datasets.
 
     Args:
         df (DataFrame): The tabular data frame.
@@ -160,9 +160,8 @@ class Dataset(ABC):
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
-            config specifying :obj:`text_embedder` that maps sentences into
-            PyTorch embeddings and :obj:`batch_size` that specifies the
-            mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
+            configuration that specifies the text embedder to map text columns
+            into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -263,7 +262,7 @@ class Dataset(ABC):
 
     @property
     def num_rows(self):
-        r"""Number of rows."""
+        r"""The number of rows of the dataset."""
         return len(self.df)
 
     @property
@@ -415,22 +414,32 @@ class Dataset(ABC):
 
         return dataset
 
-    def get_split_dataset(self, split: str) -> 'Dataset':
-        r"""Get splitted dataset defined in `split_col` of :obj:`self.df`.
+    def get_split(self, split: str) -> 'Dataset':
+        r"""Returns a subset of the dataset that belongs to a given training
+        split (as defined in :obj:`split_col`).
 
         Args:
-            split (str): The split name. Should be 'train', 'val', or 'test'.
+            split (str): The split name (either :obj:`"train"`, :obj:`"val"`,
+                or :obj:`"test"`.
         """
         if self.split_col is None:
             raise ValueError(
-                f"'get_split_dataset' is not supported for {self} "
-                "since 'split_col' is not specified.")
+                f"'get_split' is not supported for '{self}' since 'split_col' "
+                f"is not specified.")
         if split not in ['train', 'val', 'test']:
-            raise ValueError(f"The split named {split} is not available. "
-                             f"Needs to either 'train', 'val', or 'test'.")
+            raise ValueError(f"The split named '{split}' is not available. "
+                             f"Needs to be either 'train', 'val', or 'test'.")
         indices = self.df.index[self.df[self.split_col] ==
                                 SPLIT_TO_NUM[split]].tolist()
         return self[indices]
+
+    def split(self) -> Tuple['Dataset', 'Dataset', 'Dataset']:
+        r"""Splits the dataset into training, validation and test splits."""
+        return (
+            self.get_split('train'),
+            self.get_split('val'),
+            self.get_split('test'),
+        )
 
     @property
     @requires_post_materialization
