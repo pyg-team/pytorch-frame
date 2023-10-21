@@ -15,7 +15,7 @@ from torch_frame.stype import stype
 
 
 @pytest.mark.parametrize(
-    "model_cls, model_kwargs, stypes, expected",
+    "model_cls, model_kwargs, stypes, expected_graph_breaks",
     [
         pytest.param(
             FTTransformer,
@@ -65,7 +65,7 @@ from torch_frame.stype import stype
         ),
     ],
 )
-def test_compile_graph_break(model_cls, model_kwargs, stypes, expected):
+def test_compile_graph_break(model_cls, model_kwargs, stypes, expected_graph_breaks):
     torch._dynamo.config.suppress_errors = True
 
     dataset = FakeDataset(
@@ -83,4 +83,4 @@ def test_compile_graph_break(model_cls, model_kwargs, stypes, expected):
         **model_kwargs,
     )
     explanation = torch._dynamo.explain(model)(tf)
-    assert explanation.graph_break_count == expected
+    assert explanation.graph_break_count == expected_graph_breaks
