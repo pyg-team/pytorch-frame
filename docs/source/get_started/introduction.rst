@@ -50,6 +50,25 @@ An initialization of a dataset will automatically download its raw files and pro
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
 
+:pyf:`PyTorch Frame` also supports a custom dataset, so that you can use :pyf:`PyTorch Frame` for your own problem.
+Let's say you prepare your :class:`pandas.DataFrame` as :obj:`df` with five columns:
+:obj:`cat1`, :obj:`cat2`, :obj:`num1`, :obj:`num2`, and :obj:`y`.
+Creating :obj:`dataset` object is very easy:
+
+.. code-block:: python
+
+    import torch_frame
+    from torch_frame.data import Dataset
+
+    # Specify the stype of each column with a dictionary.
+    col_to_stype = {"cat1": torch_frame.categorical, "cat2": torch_frame.categorical,
+                    "num1": torch_frame.numerical, "num2": torch_frame.numerical,
+                    "y": torch_frame.categorical}
+
+    # Set "y" as the target column.
+    dataset = Dataset(df, col_to_stype=col_to_stype, target_col="y")
+
+
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
@@ -151,7 +170,6 @@ We support transferring the data in a :class:`~torch_frame.TensorFrame` to devic
     tensor_frame.to("cuda")
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
-
 For each :class:`~torch_frame.stype`, a different set of statistics is calculated.
 
 For categorical features,
@@ -174,6 +192,15 @@ For numerical features,
 
     dataset.col_stats['Age']
     >>> {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
+
+Now let's say you have a new :class:`pandas.DataFrame` called :obj:`new_df`, and
+you want to convert it to a corresponding :class:`~torch_frame.TensorFrame` object.
+You can achieve this as follows:
+
+.. code-block:: python
+
+    new_tf = dataset.convert_to_tensor_frame(new_df)
+
 
 Mini-batches
 ------------
