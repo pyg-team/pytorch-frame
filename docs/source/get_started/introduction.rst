@@ -51,7 +51,7 @@ An initialization of a dataset will automatically download its raw files and pro
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
 
-:pyf:`PyTorch Frame` also support custom dataset. Here is an example of how you can load your own dataset from a :obj:`pd.DataFrame`:
+:pyf:`PyTorch Frame` also supports custom dataset. Here is an example of how you can load your own dataset from a :obj:`pd.DataFrame`:
 
 .. code-block:: python
 
@@ -66,6 +66,7 @@ An initialization of a dataset will automatically download its raw files and pro
                     "shipping": torch_frame.categorical, "price": torch_frame.numerical,
                     "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
 
+    # Set column name to stype mapping using col_to_stype.
     # Set the target column using target_col.
     dataset = Dataset(df, col_to_stype=col_to_stype, target_col="price")
 
