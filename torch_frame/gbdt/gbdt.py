@@ -63,8 +63,8 @@ class GBDT:
         - :obj:`TaskType.BINARY_CLASSIFICATION`: Returns the probability of
           being positive.
 
-        - :obj:`TaskType.MULTICLASS_CLASSIFICATION`: Returns the per-class
-          probabilities.
+        - :obj:`TaskType.MULTICLASS_CLASSIFICATION`: Returns the class label
+          predictions.
         """
         if not self.is_fitted:
             raise RuntimeError(

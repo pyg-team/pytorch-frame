@@ -4,6 +4,7 @@ from typing import List
 
 import torch
 import torch.nn.functional as F
+# Please run `pip install -U sentence-transformers` to install the package
 from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm
@@ -32,13 +33,14 @@ from torch_frame.nn import (
 
 class PretrainedTextEncoder:
     def __init__(self, device: torch.device):
-        self.device = device
-        self.model = SentenceTransformer('all-distilroberta-v1')
+        self.model = SentenceTransformer('all-distilroberta-v1', device=device)
 
     def __call__(self, sentences: List[str]) -> Tensor:
+        # Inference on GPU (if available)
         embeddings = self.model.encode(sentences, convert_to_numpy=False,
                                        convert_to_tensor=True)
-        return embeddings.to(self.device)
+        # Map back to CPU
+        return embeddings.cpu()
 
 
 parser = argparse.ArgumentParser()

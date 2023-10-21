@@ -31,35 +31,35 @@ class TabNet(Module):
     Args:
         out_channels (int): Output dimensionality
         num_layers (int): Number of TabNet layers.
-        split_feature_channels (int): Dimensionality of feature channels.
-        split_attention_channels (int): Dimensionality of attention channels.
+        split_feat_channels (int): Dimensionality of feature channels.
+        split_attn_channels (int): Dimensionality of attention channels.
         gamma (float): The gamma value for updating the prior for the attention
             mask.
-        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+        col_stats (Dict[str,Dict[torch_frame.data.stats.StatType,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
-            dictionary that maps stype to a list of column names. The column
-            names are sorted based on the ordering that appear in
-            :obj:`tensor_frame.feat_dict`. Available as
+        col_names_dict (Dict[torch_frame.stype, List[str]]): A
+            dictionary that maps :class:`~torch_frame.stype` to a list of
+            column names. The column names are sorted based on the ordering
+            that appear in :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         num_shared_glu_layers (int): Number of GLU layers shared across the
-            TabNet layers. (default: :obj:`2`)
-        num_dependent_gpu_layers (int): Number of GLU layers specific to each
-            TabNet layer. (default: :obj:`2`)
-        cat_emb_channels (int): The categorical embedding dimensionality.
+            :obj:`num_layers` :class:`FeatureTransformer`s. (default: :obj:`2`)
+        num_dependent_glu_layers (int, optional): Number of GLU layers to use
+            in each of :obj:`num_layers` :class:`FeatureTransformer`s.
+            (default: :obj:`2`)
+        cat_emb_channels (int, optional): The categorical embedding
+            dimensionality.
     """
     def __init__(
         self,
         out_channels: int,
         num_layers: int,
-        split_feature_channels: int,
-        split_attention_channels: int,
+        split_feat_channels: int,
+        split_attn_channels: int,
         gamma: float,
-        # kwargs for encoder
         col_stats: Dict[str, Dict[StatType, Any]],
         col_names_dict: Dict[torch_frame.stype, List[str]],
-        # Additional kwargs for TabNet
         num_shared_glu_layers: int = 2,
         num_dependent_glu_layers: int = 2,
         cat_emb_channels: int = 2,
@@ -69,8 +69,8 @@ class TabNet(Module):
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
 
-        self.split_feature_channels = split_feature_channels
-        self.split_attention_channels = split_attention_channels
+        self.split_feat_channels = split_feat_channels
+        self.split_attn_channels = split_attn_channels
         self.num_layers = num_layers
         self.gamma = gamma
 
@@ -97,7 +97,7 @@ class TabNet(Module):
         if num_shared_glu_layers > 0:
             shared_glu_block = GLUBlock(
                 in_channels=in_channels,
-                out_channels=split_feature_channels + split_attention_channels,
+                out_channels=split_feat_channels + split_attn_channels,
                 no_first_residual=True,
             )
         else:
@@ -108,7 +108,7 @@ class TabNet(Module):
             self.feat_transformers.append(
                 FeatureTransformer(
                     in_channels,
-                    split_feature_channels + split_attention_channels,
+                    split_feat_channels + split_attn_channels,
                     num_dependent_glu_layers=num_dependent_glu_layers,
                     shared_glu_block=shared_glu_block,
                 ))
@@ -117,11 +117,11 @@ class TabNet(Module):
         for _ in range(self.num_layers):
             self.attn_transformers.append(
                 AttentiveTransformer(
-                    in_channels=split_attention_channels,
+                    in_channels=split_attn_channels,
                     out_channels=in_channels,
                 ))
 
-        self.lin = Linear(self.split_feature_channels, out_channels)
+        self.lin = Linear(self.split_feat_channels, out_channels)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -161,9 +161,9 @@ class TabNet(Module):
         if return_reg:
             reg = 0.
 
-        # [batch_size, split_attention_channels]
+        # [batch_size, split_attn_channels]
         attention_x = self.feat_transformers[0](
-            x)[:, self.split_feature_channels:]
+            x)[:, self.split_feat_channels:]
 
         outs = []
         for i in range(self.num_layers):
@@ -172,16 +172,16 @@ class TabNet(Module):
 
             # [batch_size, num_cols * cat_emb_channels]
             masked_x = attention_mask * x
-            # [batch_size, split_feature_channels + split_attention_channel]
+            # [batch_size, split_feat_channels + split_attn_channel]
             out = self.feat_transformers[i + 1](masked_x)
 
             # Get the split feature
-            # [batch_size, split_feature_channels]
-            feature_x = F.relu(out[:, :self.split_feature_channels])
+            # [batch_size, split_feat_channels]
+            feature_x = F.relu(out[:, :self.split_feat_channels])
             outs.append(feature_x)
             # Get the split attention
-            # [batch_size, split_attention_channels]
-            attention_x = out[:, self.split_feature_channels:]
+            # [batch_size, split_attn_channels]
+            attention_x = out[:, self.split_feat_channels:]
 
             # Update prior
             prior = (self.gamma - attention_mask) * prior
