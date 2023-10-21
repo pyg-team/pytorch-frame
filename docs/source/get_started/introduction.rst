@@ -50,44 +50,22 @@ An initialization of a dataset will automatically download its raw files and pro
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
 
-:pyf:`PyTorch Frame` also supports custom dataset. Here is an example of how you can load your own dataset from a :obj:`pd.DataFrame`:
+:pyf:`PyTorch Frame` also supports a custom dataset, so that you can readily apply :pyf:`PyTorch Frame` to your own dataset.
+Let's say you prepare your :class:`pandas.DataFrame` as :obj:`df` with five columns:
+:obj:`cat1`, :obj:`cat2`, :obj:`num1`, :obj:`num2`, and :obj:`y`.
+Creating :obj:`dataset` object is super simple:
 
 .. code-block:: python
 
     import torch_frame
     from torch_frame.data import Dataset
-    import pandas as pd
-
-    df = pd.read_csv("data/train.csv")
 
     # Specify the stype of each column with a dictionary.
-    col_to_stype = {"item_condition_id": torch_frame.categorical,
-                    "shipping": torch_frame.categorical, "price": torch_frame.numerical,
-                    "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
+    col_to_stype = {"cat1": torch_frame.categorical, "cat2": torch_frame.categorical,
+                    "num1": torch_frame.numerical, "num2": torch_frame.numerical,
+                    "y": torch_frame.categorical}
 
-    # Set column name to stype mapping using col_to_stype.
-    # Set the target column using target_col.
     dataset = Dataset(df, col_to_stype=col_to_stype, target_col="price")
-
-Inside :pyf:`PyTorch Frame`, data is mapped from :class:`~torch_frame.dataset.Dataset` to :class:`~torch_frame.TensorFrame` using :class:`~torch_frame.data.DataFrameToTensorFrameConverter`.
-Loading data with :class:`~torch_frame.dataset.Dataset` allows you to obtain column statistics through calling `dataset.materialize()`.
-However, if you'd like to load data on-the-fly during evaluation or testing, you can directly convert :obj:`pd.DataFrame` into :class:`~torch_frame.TensorFrame`.
-
-.. code-block:: python
-
-    import torch_frame
-    from torch_frame.data import Dataset
-    import pandas as pd
-
-    df = pd.read_csv("data/train.csv")
-
-    # Specify the stype of each column with a dictionary.
-    col_to_stype = {"item_condition_id": torch_frame.categorical,
-                    "shipping": torch_frame.categorical, "price": torch_frame.numerical,
-                    "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
-
-    # Note that during evaluation/testing, col_stats is not necessary.
-    tf = DataFrameToTensorFrameConverter(col_to_stype, col_stats={}, target_col="price")
 
 
 Data Handling of Tables
@@ -191,7 +169,6 @@ We support transferring the data in a :class:`~torch_frame.TensorFrame` to devic
     tensor_frame.to("cuda")
 
 Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
-
 For each :class:`~torch_frame.stype`, a different set of statistics is calculated.
 
 For categorical features,
@@ -214,6 +191,15 @@ For numerical features,
 
     dataset.col_stats['Age']
     >>> {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
+
+Now let's say you have a new :class:`pandas.DataFrame` called :obj:`new_df`, and
+you want to convert it to a corresponding :class:`~torch_frame.TensorFrame` object.
+You can achieve this as follows:
+
+.. code-block:: python
+
+    new_tf = dataset.convert_to_tensor_frame(new_df)
+
 
 Mini-batches
 ------------
