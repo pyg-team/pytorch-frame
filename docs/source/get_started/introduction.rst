@@ -50,10 +50,10 @@ An initialization of a dataset will automatically download its raw files and pro
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
 
-:pyf:`PyTorch Frame` also supports a custom dataset, so that you can readily apply :pyf:`PyTorch Frame` to your own dataset.
+:pyf:`PyTorch Frame` also supports a custom dataset, so that you can use :pyf:`PyTorch Frame` for your own problem.
 Let's say you prepare your :class:`pandas.DataFrame` as :obj:`df` with five columns:
 :obj:`cat1`, :obj:`cat2`, :obj:`num1`, :obj:`num2`, and :obj:`y`.
-Creating :obj:`dataset` object is super simple:
+Creating :obj:`dataset` object is very easy:
 
 .. code-block:: python
 
@@ -65,7 +65,8 @@ Creating :obj:`dataset` object is super simple:
                     "num1": torch_frame.numerical, "num2": torch_frame.numerical,
                     "y": torch_frame.categorical}
 
-    dataset = Dataset(df, col_to_stype=col_to_stype, target_col="price")
+    # Set "y" as the target column.
+    dataset = Dataset(df, col_to_stype=col_to_stype, target_col="y")
 
 
 Data Handling of Tables
