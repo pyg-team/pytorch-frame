@@ -42,16 +42,16 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
-* **Tabular Data Versatility**:
+* **Diverse column types**:
   Supports learning across various semantic types like categorical, numberical, and texts. Future plans encompass sequences, multicategories, images, and time.
-* **Modular Model Design**:
+* **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
   Implements many state-of-the-art deep tabular models as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
 * **Datasets**:
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve with your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
-* **Pytorch Integration**:
+* **Pytorch integration**:
   Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating combined training of PyTorch Frame with other PyTorch models.
 
 ## Architecture Overview
