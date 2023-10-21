@@ -62,13 +62,33 @@ An initialization of a dataset will automatically download its raw files and pro
     df = pd.read_csv("data/train.csv")
 
     # Specify the stype of each column with a dictionary.
-    col_to_stype = {"name": torch_frame.text_embedded, "item_condition_id": torch_frame.categorical,
+    col_to_stype = {"item_condition_id": torch_frame.categorical,
                     "shipping": torch_frame.categorical, "price": torch_frame.numerical,
                     "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
 
     # Set column name to stype mapping using col_to_stype.
     # Set the target column using target_col.
     dataset = Dataset(df, col_to_stype=col_to_stype, target_col="price")
+
+Inside :pyf:`PyTorch Frame`, data is mapped from :class:`~torch_frame.dataset.Dataset` to :class:`~torch_frame.TensorFrame` using :class:`~torch_frame.data.DataFrameToTensorFrameConverter`.
+Loading data with :class:`~torch_frame.dataset.Dataset` allows you to obtain column statistics through calling `dataset.materialize()`.
+However, if you'd like to load data on-the-fly during evaluation or testing, you can directly convert :obj:`pd.DataFrame` into :class:`~torch_frame.TensorFrame`.
+
+.. code-block:: python
+
+    import torch_frame
+    from torch_frame.data import Dataset
+    import pandas as pd
+
+    df = pd.read_csv("data/train.csv")
+
+    # Specify the stype of each column with a dictionary.
+    col_to_stype = {"item_condition_id": torch_frame.categorical,
+                    "shipping": torch_frame.categorical, "price": torch_frame.numerical,
+                    "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
+
+    # Note that during evaluation/testing, col_stats is not necessary.
+    tf = DataFrameToTensorFrameConverter(col_to_stype, col_stats={}, target_col="price")
 
 
 Data Handling of Tables
