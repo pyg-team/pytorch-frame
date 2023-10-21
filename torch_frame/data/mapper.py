@@ -75,7 +75,7 @@ class CategoricalTensorMapper(TensorMapper):
             left_on='data',
             right_index=True,
         )['index'].values
-        index = torch.from_numpy(index).to(device)
+        index = torch.from_numpy(index).to(dtype=torch.float32).to(device)
 
         if index.is_floating_point():
             index[index.isnan()] = -1
