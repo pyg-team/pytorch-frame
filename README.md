@@ -27,9 +27,9 @@ PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), 
 
 PyTorch Frame democratizes deep learning research for tabular data, catering to both novices and experts alike. Our goals are:
 
-1. **Advance Deep Learning for Tabular Data:** Historically, tree-based models excelled with tabular data but had notable limitations, such as integration difficulties with GNNs, RNNs, and Transformers, and handling diverse column types. Recent studies suggest deep learning models can outperform them, especially on large datasets.
+1. **Advance Deep Learning for Tabular Data:** Historically, tree-based models excelled with tabular data but had notable limitations, such as integration difficulties with GNNs, RNNs, and Transformers, and handling diverse column types. Recent studies suggest promise of deep learning models especially on large datasets, and we aim to push this direction.
 
-2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to manage diverse semantic types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
+2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to manage diverse column types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
@@ -65,8 +65,8 @@ In essence, this modular setup empowers users to effortlessly experiment with my
 
 * `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
 * `FeatureEncoder` encodes different semantic types into hidden embeddings.
-* `TableConv` handles column-wise interactions between different semantic types.
-* `Decoder` summarizes the embeddings and generates the prediction outputs.
+* `TableConv` models column-wise interactions between different columns.
+* `Decoder` generates embedding/prediction per row.
 
 
 ## Quick Tour
