@@ -29,7 +29,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 
 1. **Facilitate Deep Learning for Tabular Data:** Historically, tree-based models (e.g., XGBoost) excelled at tabular learning but had notable limitations, such as integration difficulties with downstream models such as GNNs, and handling complex column types (e.g., text, sequences, images). Deep tabular models are promising to resolve the limitations.
 
-2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to manage diverse column types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
+2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to handle diverse column types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
