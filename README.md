@@ -49,7 +49,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 * **Models**
   Implements many state-of-the-art deep tabular models as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
 * **Datasets**:
-  Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve with your own problem.
+  Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
 * **Pytorch integration**:
   Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating combined training of PyTorch Frame with other PyTorch models.
