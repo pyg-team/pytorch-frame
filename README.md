@@ -47,7 +47,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
-  Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-model) as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
+  Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-models) as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
 * **Datasets**:
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
