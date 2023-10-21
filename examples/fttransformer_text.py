@@ -4,6 +4,7 @@ from typing import List
 
 import torch
 import torch.nn.functional as F
+# Please run `pip install -U sentence-transformers` to install the package
 from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm

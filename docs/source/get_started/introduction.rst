@@ -18,9 +18,8 @@ At its core, :pyf:`PyTorch Frame` provides the following main features:
 
 Common Benchmark Datasets
 -------------------------
-:pyf:`PyTorch Frame` contains a large number of common benchmark datasets, *e.g.*, datasets from
-`Revisiting Deep Learning Models for Tabular Data (NeurIPS 2021) <https://github.com/yandex-research/tabular-dl-revisiting-models>`_
-, and datasets from `tabular benchmark <https://huggingface.co/datasets/inria-soda/tabular-benchmark>`_ .
+:pyf:`PyTorch Frame` contains a large number of common benchmark datasets. The list
+of all datasets are available in :doc:`/modules/datasets`
 
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
 An initialization of a dataset will automatically download its raw files and process the columns.
