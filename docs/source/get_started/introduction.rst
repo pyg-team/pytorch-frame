@@ -51,6 +51,25 @@ An initialization of a dataset will automatically download its raw files and pro
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
 
 
+:pyf:`PyTorch Frame` also support custom dataset. Here is an example of how you can load your own dataset from a :obj:`pd.DataFrame`:
+
+.. code-block:: python
+
+    import torch_frame
+    from torch_frame.data import Dataset
+    import pandas as pd
+
+    df = pd.read_csv("data/train.csv")
+
+    # Specify the stype of each column with a dictionary.
+    col_to_stype = {"name": torch_frame.text_embedded, "item_condition_id": torch_frame.categorical,
+                    "shipping": torch_frame.categorical, "price": torch_frame.numerical,
+                    "category_name": torch_frame.categorical, "brand_name": torch_frame.categorical}
+
+    # Set the target column using target_col.
+    dataset = Dataset(df, col_to_stype=col_to_stype, target_col="price")
+
+
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
