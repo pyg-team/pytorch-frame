@@ -18,7 +18,7 @@ class stype(Enum):
     Attributes:
         numerical: Numerical columns.
         categorical: Categorical columns.
-        text_embedded: Columns that hold a pre-embedding of text.
+        text_embedded: Pre-computed embeddings of text columns.
     """
     numerical = 'numerical'
     categorical = 'categorical'
