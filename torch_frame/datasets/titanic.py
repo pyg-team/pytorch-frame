@@ -4,7 +4,7 @@ import torch_frame
 
 
 class Titanic(torch_frame.data.Dataset):
-    r"""The Titanic dataset from the `Titanic ML competition
+    r"""The Titanic dataset from the `Titanic Kaggle competition
     <https://www.kaggle.com/competitions/titanic>`_.
     The Titanic dataset is known as the MNIST equivalent for tabular learning.
     The goal is to predict which passenger survived using passenger data

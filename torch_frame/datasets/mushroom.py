@@ -7,7 +7,7 @@ import torch_frame
 
 
 class Mushroom(torch_frame.data.Dataset):
-    r"""The `Mushroom
+    r"""The `Mushroom classification Kaggle competition
     <https://www.kaggle.com/datasets/uciml/mushroom-classification>`_
     dataset. It's a task to predict whether a mushroom is edible
     or poisonous.
