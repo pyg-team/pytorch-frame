@@ -43,7 +43,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  Supports learning across various semantic types like categorical, numberical, and texts. Future plans encompass sequences, multicategories, images, and time.
+  Supports learning across various column types like categorical, numberical, and texts. Future plans encompass sequences, multicategories, images, and time.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -65,7 +65,7 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
 * `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
-* `FeatureEncoder` encodes different semantic types into hidden embeddings.
+* `FeatureEncoder` encodes different column types into hidden embeddings.
 * `TableConv` models column-wise interactions between different columns.
 * `Decoder` generates embedding/prediction per row.
 
@@ -78,7 +78,7 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
-* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame.
+* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different column types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame.
 * `self.convs`: We create a two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
