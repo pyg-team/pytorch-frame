@@ -42,10 +42,10 @@ class GBDT:
         number of trials is specified by num_trials.
 
         Args:
-            tf_train (TensorFrame): The train data in :obt:`TensorFrame`.
+            tf_train (TensorFrame): The train data in :obj:`TensorFrame`.
             tf_val (TensorFrame): The validation data in :obj:`TensorFrame`.
-            num_trials (int): Number of trials to perform hyper-
-                parameter search.
+            num_trials (int): Number of trials to perform hyperparameter
+                search.
         """
         if tf_train.y is None:
             raise RuntimeError("tf_train.y must be a Tensor, but None given.")
@@ -58,8 +58,9 @@ class GBDT:
         r"""Predict the labels/values of the test data on the fitted model.
 
         Returns:
-            pred (Tensor): The prediction output :obj:`Tensor` on the fitted
-                model. pred depends on the task type.
+            prediction (Tensor): The prediction output :obj:`Tensor` on the
+                fitted model. Prediction depends on the task type.
+
                 - If regression, pred contains numerical value prediction.
                 - If binary classification, pred contains the probability of
                   being positive.

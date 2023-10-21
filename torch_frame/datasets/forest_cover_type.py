@@ -9,7 +9,7 @@ import torch_frame
 class ForestCoverType(torch_frame.data.Dataset):
     r"""The `Forest Cover Type
     <https://www.kaggle.com/datasets/uciml/forest-cover-type-dataset>`_
-    dataset. It's a task of forest cover type classification
+    dataset from Kaggle. It's a task of forest cover type classification
     based on attributes such as elevation, slop and soil type etc.
 
     **STATS:**
