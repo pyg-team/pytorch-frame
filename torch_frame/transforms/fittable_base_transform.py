@@ -35,6 +35,7 @@ class FittableBaseTransform(BaseTransform):
                 in categorical columns are to be replaced.
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.
+
         Returns:
             Tensor: Output :obj:`TensorFrame` with NaN values replaced.
         """
@@ -65,7 +66,7 @@ class FittableBaseTransform(BaseTransform):
         Args:
             tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
             col_stats (Dict[str, Dict[StatType, Any]], optional): The column
-            stats of the input :obj:`TensorFrame`.
+                stats of the input :obj:`TensorFrame`.
         """
         self._fit(tf, col_stats)
         self._is_fitted = True

@@ -9,7 +9,8 @@ import torch_frame
 
 class TabularBenchmark(torch_frame.data.Dataset):
     r"""A collection of Tabular benchmark datasets introduced in
-    https://arxiv.org/abs/2207.08815.
+    `"Why do tree-based models still outperform deep learning on tabular data?"
+    <https://arxiv.org/abs/2207.08815>`_.
 
     **STATS:**
 
@@ -354,12 +355,10 @@ class TabularBenchmark(torch_frame.data.Dataset):
         'seattlecrime6': 'reg_cat',
         'topo_2_1': 'reg_cat',
         'visualizing_soil': 'reg_cat',
-        'cpu_act': 'reg_num',
         'elevators': 'reg_num',
         'houses': 'reg_num',
         'cpu_act': 'reg_num',
         'delays_zurich_transport': 'reg_num',
-        'elevators': 'reg_num',
         'nyc-taxi-green-dec-2016': 'reg_num',
         'sulfur': 'reg_num',
         'superconduct': 'reg_num',

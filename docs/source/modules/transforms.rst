@@ -22,12 +22,12 @@ Let's look an example, where we apply `CatToNumTransform <https://dl.acm.org/doi
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
     transform = CatToNumTransform()
-    train_dataset = dataset.get_split_dataset('train')
+    train_dataset = dataset.get_split('train')
 
     train_dataset.tensor_frame.col_names_dict[stype.categorical]
     >>> ['C_feature_0', 'C_feature_1', 'C_feature_2', 'C_feature_3', 'C_feature_4', 'C_feature_5', 'C_feature_6', 'C_feature_7']
 
-    test_dataset = dataset.get_split_dataset('test')
+    test_dataset = dataset.get_split('test')
     transform.fit(train_dataset.tensor_frame, dataset.col_stats)
 
     transformed_col_stats = transform.transformed_stats

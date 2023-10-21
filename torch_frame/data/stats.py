@@ -11,12 +11,11 @@ class StatType(Enum):
     r"""The different types for column statistics.
 
     Attributes:
-        MEAN: Mean. Numerical column only.
-        STD: Standard deviation. Numerical column only.
+        MEAN: The average value of a numerical column.
+        STD: The standard deviation of a numerical column.
         QUANTILES: The minimum, first quartile, median, third quartile,
-            and the maximum of the column. Numerical column only.
-        COUNT: The count of each class. Categorical column only.
-
+            and the maximum of a numerical column.
+        COUNT: The count of each category in a categorical column.
     """
     # Numerical:
     MEAN = 'MEAN'

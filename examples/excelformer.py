@@ -43,9 +43,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
 dataset = Yandex(root=path, name=args.dataset)
 dataset.materialize()
-train_dataset = dataset.get_split_dataset('train')
-val_dataset = dataset.get_split_dataset('val')
-test_dataset = dataset.get_split_dataset('test')
+train_dataset, val_dataset, test_dataset = dataset.split()
 train_tensor_frame = train_dataset.tensor_frame
 val_tensor_frame = val_dataset.tensor_frame
 test_tensor_frame = test_dataset.tensor_frame

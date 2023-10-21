@@ -8,7 +8,7 @@ import torch_frame
 class Mercari(torch_frame.data.Dataset):
     r"""The `Mercari Price Suggestion Challenge
     <https://www.kaggle.com/c/mercari-price-suggestion-challenge/>`_
-    dataset.
+    dataset from Kaggle.
 
     **STATS:**
 
@@ -41,7 +41,7 @@ class Mercari(torch_frame.data.Dataset):
             'brand_name': torch_frame.categorical,
             'price': torch_frame.numerical,
             'shipping': torch_frame.categorical,
-            'item_description': torch_frame.text_embedded
+            'item_description': torch_frame.text_embedded,
         }
         path = osp.join(self.base_url, 'train.csv')
         self.download_url(path, root)

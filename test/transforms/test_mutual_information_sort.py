@@ -19,7 +19,7 @@ def test_mutual_information_sort(with_nan):
     dataset.materialize()
 
     tensor_frame: TensorFrame = dataset.tensor_frame
-    train_dataset = dataset.get_split_dataset('train')
+    train_dataset = dataset.get_split('train')
     transform = MutualInformationSort(task_type)
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
     out = transform(tensor_frame)
