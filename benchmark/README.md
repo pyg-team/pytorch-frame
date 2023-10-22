@@ -10,8 +10,8 @@ pip install catboost
 
 Then run
 ```bash
-# Specify the model from TabNet, FTTransformer, ResNet, TabTransformer, Trompt
-# ExcelFormer', FTTransformerBucket, XGBoost, CatBoost
+# Specify the model from [TabNet, FTTransformer, ResNet, TabTransformer, Trompt
+# ExcelFormer, FTTransformerBucket, XGBoost, CatBoost]
 model_type=TabNet
 
 # Specify the task type from [binary_classification, regression,
