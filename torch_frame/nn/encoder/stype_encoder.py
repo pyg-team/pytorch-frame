@@ -349,8 +349,9 @@ class LinearPeriodicEncoder(StypeEncoder):
     r"""A periodic encoder that utilizes sinusoidal functions to transform the
     input tensor into a 3-dimensional tensor. The encoding is defined using
     trainable parameters and includes the application of sine and cosine
-    functions. The original encoding is described
-    in https://arxiv.org/abs/2203.05556.
+    functions. The original encoding is described in
+    `"On Embeddings for Numerical Features in Tabular Deep Learning"
+    <https://arxiv.org/abs/2203.05556>`_.
 
     Args:
         n_bins (int): Number of bins for periodic encoding.
@@ -413,7 +414,10 @@ class ExcelFormerEncoder(StypeEncoder):
     and categorical features are transformed into numerical features by the
     CatBoost Encoder implemented with the Sklearn Python package. The features
     are then ranked based on mutual information.
-    The original encoding is described in https://arxiv.org/pdf/2301.02819
+    The original encoding is described in
+    `"ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data"
+    <https://arxiv.org/abs/2301.02819>`_ paper.
+
 
     Args:
         out_channels (int): The output channel dimensionality.
