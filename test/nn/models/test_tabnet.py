@@ -9,8 +9,8 @@ def test_tabnet():
     tensor_frame = dataset.tensor_frame
     out_channels = 12
     model = TabNet(out_channels=out_channels, num_layers=3,
-                   split_feat_channels=8, split_attn_channels=8,
-                   gamma=1.2, col_stats=dataset.col_stats,
+                   split_feat_channels=8, split_attn_channels=8, gamma=1.2,
+                   col_stats=dataset.col_stats,
                    col_names_dict=tensor_frame.col_names_dict)
     model.reset_parameters()
     out, reg = model(tensor_frame, return_reg=True)

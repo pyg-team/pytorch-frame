@@ -162,8 +162,8 @@ class TabNet(Module):
             reg = 0.
 
         # [batch_size, split_attn_channels]
-        attention_x = self.feat_transformers[0](
-            x)[:, self.split_feat_channels:]
+        attention_x = self.feat_transformers[0](x)[:,
+                                                   self.split_feat_channels:]
 
         outs = []
         for i in range(self.num_layers):
