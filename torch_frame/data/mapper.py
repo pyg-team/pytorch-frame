@@ -55,7 +55,6 @@ class CategoricalTensorMapper(TensorMapper):
     :obj:`-1` denoting N/A values."""
     def __init__(self, categories: Iterable[Any]):
         super().__init__()
-
         self.categories: pd.Series = pd.Series(
             index=categories,
             data=pd.RangeIndex(0, len(categories)),
@@ -68,7 +67,6 @@ class CategoricalTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-
         index = pd.merge(
             ser.rename('data'),
             self.categories,
@@ -96,27 +94,18 @@ class MultiCategoricalTensorMapper(TensorMapper):
     def __init__(self, categories: Iterable[Any]):
         super().__init__()
 
-        self.categories: pd.Series = pd.Series(
-            index=categories,
-            data=pd.RangeIndex(0, len(categories)),
-            name='index',
-        )
+        self.categories = categories
 
     def forward(
         self,
         ser: Series,
         *,
         device: Optional[torch.device] = None,
+        delimiter: str = ",",
     ) -> Tensor:
 
-        print(ser)
-        index = pd.merge(
-            ser.rename('data'),
-            self.categories,
-            how='left',
-            left_on='data',
-            right_index=True,
-        )['index'].values
+        df = ser.str.split(delimiter).str.join('|').str.get_dummies().fillna(0)
+        index = df[self.categories].values
         index = torch.from_numpy(index).to(device)
 
         if index.is_floating_point():
@@ -126,8 +115,12 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
     def backward(self, tensor: Tensor) -> pd.Series:
         index = tensor.cpu().numpy()
-        ser = pd.Series(self.categories[index].index)
-        ser[index < 0] = None
+        df = pd.DataFrame(index,
+                          columns=self.categories).multiply(self.categories)
+        ser = df.apply(
+            lambda row: ','.join(filter(lambda x: x != '', map(str, row))),
+            axis=1).squeeze()
+        ser = ser.replace('', None)
         return ser
 
 

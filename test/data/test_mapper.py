@@ -3,6 +3,7 @@ import torch
 
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
+    MultiCategoricalTensorMapper,
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
 )
@@ -36,6 +37,21 @@ def test_categorical_tensor_mapper():
 
     out = mapper.backward(out)
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
+
+
+def test_multicategorical_tensor_mapper():
+    ser = pd.Series(['A,B', 'B', None, 'C', 'B,C'])
+    expected = torch.tensor([[1, 1], [1, 0], [0, 0], [0, 0], [1, 0]])
+
+    mapper = MultiCategoricalTensorMapper(['B', 'A'])
+
+    out = mapper.forward(ser)
+    assert out.dtype == torch.long
+    assert torch.equal(out, expected)
+
+    out = mapper.backward(out)
+    pd.testing.assert_series_equal(out,
+                                   pd.Series(['B,A', 'B', None, None, 'B']))
 
 
 def test_text_embedding_tensor_mapper():
