@@ -60,7 +60,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
-  <img width="100%" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/modular.png" />
+  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png" />
 </p>
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
@@ -222,4 +222,4 @@ PyTorch Frame is available for Python 3.8 to Python 3.11.
 pip install pytorch_frame
 ```
 
-See [the installation guide](https://pyg-team-pytorch-frame.readthedocs.build/en/latest/get_started/installation.html) for other options.
+See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.

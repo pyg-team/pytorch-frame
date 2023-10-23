@@ -39,7 +39,7 @@ The row denotes the model names and the column denotes the dataset `idx`.
 In each cell, we include the mean and standard deviation of the model performance, as well as
 the total time spent, including [`Optuna`](https://optuna.org/)-based hyper-parameter search and final model training.
 
-For the mapping from dataset `idx` into the actual dataset object, please see the documentation. [TODO, add link once public]
+For the mapping from dataset `idx` into the actual dataset object, please see the [documentation](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.DataFrameBenchmark.html#torch_frame.datasets.DataFrameBenchmark).
 
 ### `task_type: binary_classification`
 Metric: ROC-AUC, higher the better.
