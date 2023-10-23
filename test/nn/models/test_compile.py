@@ -1,19 +1,20 @@
 import pytest
 import torch
 
-
+from torch_frame.datasets import FakeDataset
 from torch_frame.nn.models import (
+    ExcelFormer,
     FTTransformer,
     ResNet,
     TabNet,
     TabTransformer,
     Trompt,
-    ExcelFormer,
 )
-from torch_frame.datasets import FakeDataset
 from torch_frame.stype import stype
+from torch_frame.testing import withPackage
 
 
+@withPackage('torch>=2.1.0')
 @pytest.mark.parametrize(
     "model_cls, model_kwargs, stypes, expected_graph_breaks",
     [
@@ -65,7 +66,12 @@ from torch_frame.stype import stype
         ),
     ],
 )
-def test_compile_graph_break(model_cls, model_kwargs, stypes, expected_graph_breaks):
+def test_compile_graph_break(
+    model_cls,
+    model_kwargs,
+    stypes,
+    expected_graph_breaks,
+):
     torch._dynamo.config.suppress_errors = True
 
     dataset = FakeDataset(
