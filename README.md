@@ -5,9 +5,9 @@
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
 
-<p align="center">
-  <img height="150" src="https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/master/pyg_sphinx_theme/static/img/pytorch_frame_logo_text.png?sanitize=true" />
-</p>
+
+<img height="150" src="https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/master/pyg_sphinx_theme/static/img/pytorch_frame_logo_text.png?sanitize=true" />
+
 
 
 **A modular deep learning framework for building neural network models on heterogeneous tabular data.**
