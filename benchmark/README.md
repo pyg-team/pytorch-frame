@@ -10,8 +10,8 @@ pip install catboost
 
 Then run
 ```bash
-# Specify the model from TabNet, FTTransformer, ResNet, TabTransformer, Trompt
-# ExcelFormer', FTTransformerBucket, XGBoost, CatBoost
+# Specify the model from [TabNet, FTTransformer, ResNet, TabTransformer, Trompt
+# ExcelFormer, FTTransformerBucket, XGBoost, CatBoost]
 model_type=TabNet
 
 # Specify the task type from [binary_classification, regression,
@@ -35,7 +35,7 @@ python data_frame_benchmark.py --model_type $model_type --task_type $task_type -
 ## Leaderboard
 
 We show the current model performance across different datasets.
-The 0-th axis denotes the model name and 1-st axis denotes the dataset `idx`.
+The row denotes the model names and the column denotes the dataset `idx`.
 In each cell, we include the mean and standard deviation of the model performance, as well as
 the total time spent, including [`Optuna`](https://optuna.org/)-based hyper-parameter search and final model training.
 

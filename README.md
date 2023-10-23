@@ -23,17 +23,13 @@
 
 **[Documentation](https://pyg-team-pytorch-frame.readthedocs-hosted.com)**
 
-PyTorch Frame is a tabular deep learning extension library for [PyTorch](https://pytorch.org/). Modern data is stored in a table format with heterogeneous columns with different semantic types, e.g. numerical (age, price), categorical (gender, product type), time, text(descriptions), images(pictures), etc. The goal of PyTorch Frame is to build a deep learning framework to perform effective machine learning on such complex data.
+PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), designed for heterogeneous tabular data with different column types, including numerical, categorical, time, text, and images. It offers a modular framework for implementing existing and future methods. The library features methods from state-of-the-art models, user-friendly mini-batch loaders, benchmark datasets, and interfaces for custom data integration.
 
-PyTorch Frame allow existing (and future) methods to be easily and intuitively implemented in a modular way. The library includes various methods for deep learning on tables from a variety of published papers. In addition, it includes easy-to-use mini-batch loaders, a large number of common benchmark datasets, and intuitive interfaces for custom dataset integration.
+PyTorch Frame democratizes deep learning research for tabular data, catering to both novices and experts alike. Our goals are:
 
-With PyTorch Frame, we aim to democratize the deep learning research for tabular data. Whether you're an experienced deep learning researcher, a novice delving into machine learning, or a Kaggle enthusiast, PyTorch Frame makes experimenting with different architectures a breeze.
+1. **Facilitate Deep Learning for Tabular Data:** Historically, tree-based models (e.g., XGBoost) excelled at tabular learning but had notable limitations, such as integration difficulties with downstream models such as GNNs, and handling complex column types (e.g., text, sequences, images). Deep tabular models are promising to resolve the limitations.
 
-Our aspirations for PyTorch Frame are twofold:
-
-1. **To Propel Deep Learning Research for Tabular Data:** Historically, tree-based models have superior performance on tabular datasets. However, tree-based models have many limitations, for example, they cannot be trained with downstream models like GNNs, RNNs and Transformers, hence hard to be integrated into larger systems. Tree-based models also cannot handle diverse column types, like text or sequences. Recent research shows that some deep learning models have comparable, if not better, performance on larger datasets. This is not to mention the advantages in training efficiency with massive data scales.
-
-2. **To Support Enhanced Semantic Types and Model Architectures:** We aim to extend PyTorch Frame's functionalities to handle a wider variety of semantic types, such as time sequences. Concurrently, we're focusing on extending PyTorch Frame to latest technologies like large language models.
+2. **Expand Functionalities and Model Architectures:** We are enhancing PyTorch Frame to handle diverse column types, like time images, language, and sequences, and integrate cutting-edge technologies like large language models.
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
@@ -44,18 +40,19 @@ Our aspirations for PyTorch Frame are twofold:
 
 ## Library Highlights
 
-PyTorch Frame emphasizes a tensor-centric API and maintains design elements similar to vanilla PyTorch. For those acquainted with PyTorch, adapting to PyTorch Frame is a seamless process. Here are our major library highlights:
+PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
-* **Versitility with Tabular Data**:
-  PyTorch Frame provides in-house support for multimodal learning on a variety of semantic types, including categories, numbers and texts. Extensions to other types, including but not limited to sequences, multicategoricies, images, time are on our road map.
-* **Modular Implementation of Diverse Models**:
-  We provide a framework for users to implement deep learning models in a modular way, enhancing module reusability, code clarity and ease of experimentation. See next section for [more details](#architecture-overview).
-* **Empowerment through Multimodal Learning**:
-  PyTorch Frame can mesh with a variety of different transformers on different semantic types, e.g. large language models on text, as illustrated in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py).
-* **Benchmark**:
-  PyTorch Frame includes a [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md). Users can compare their models with state-of-the-art deep tablular models, as well as GBDTs and add their models to leaderboard.
-* **Pytorch Integration**:
-  PyTorch Frame synergizes seamlessly with other Pytorch libraries, like [PyG](https://pyg.org/), enabling end-to-end training of Pytorch Frame models with any other Pytorch models.
+* **Diverse column types**:
+  Supports learning across various column types like categorical, numberical, and texts. Future plans encompass sequences, multicategories, images, and time.
+* **Modular model design**:
+  Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
+* **Models**
+  Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-models) as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
+* **Datasets**:
+  Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
+  We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
+* **Pytorch integration**:
+  Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating end-to-end training of PyTorch Frame with downstream PyTorch models.
 
 ## Architecture Overview
 
@@ -68,9 +65,9 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
 * `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
-* `FeatureEncoder` encodes different semantic types into hidden embeddings.
-* `TableConv` handles column-wise interactions between different semantic types.
-* `Decoder` summarizes the embeddings and generates the prediction outputs.
+* `FeatureEncoder` encodes `TensorFrame` into hidden column embeddings of size `[batch_size, num_cols, channels]`.
+* `TableConv` models column-wise interactions over the hidden embeddings.
+* `Decoder` generates embedding/prediction per row.
 
 
 ## Quick Tour
@@ -81,7 +78,7 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
-* `self.encoder`: The encoder maps an input `tensor` of size `[batch_size, num_cols]` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different semantic types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame. For a comprehensive list of encoders, check out this [file](https://github.com/pyg-team/pytorch-frame/blob/master/torch_frame/nn/encoder/stype_encoder.py).
+* `self.encoder`: The encoder maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different column types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame.
 * `self.convs`: We create a two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
@@ -199,9 +196,7 @@ In addition, we implemented `XGBoost` and `CatBoost` [examples](https://github.c
 
 We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
 
-The following chart shows the performance of various deep learning models on small regression datasets. For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark/README.md).
-
-Some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research. The indices in the first row maps to different public datasets in documentation(#TODO add documentation link).
+The following chart shows the performance of various deep learning models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
 
 |                     | 0               | 1               | 2               | 3               | 4               | 5               | 6               | 7               | 8               | 9               | 10              | 11              | 12              |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
@@ -215,6 +210,8 @@ Some recent deep tabular models were able to achieve competitive model performan
 | TabNet              | 0.279±0.003     | 0.224±0.016     | 0.141±0.010     | 0.275±0.002     | 0.348±0.003     | 0.451±0.007     | 0.355±0.030     | 0.332±0.004     | 0.992±0.182     | 0.015±0.002     | 0.805±0.014     | 0.885±0.013     | 0.544±0.011     |
 | TabTransformer      | 0.624±0.003     | 0.229±0.003     | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003     | 0.619±0.005     | 0.351±0.001     | 0.893±0.005     | 0.431±0.001     | 0.819±0.002     | 0.886±0.005     | 0.545±0.004     |
 
+
+We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research.
 
 ## Installation
 
