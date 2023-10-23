@@ -4,12 +4,11 @@
 [contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
-<div align="center">
 
-<img width="800px" style="max-width: 100%; padding: 0; margin: 0;" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.png" />
+<p align="center">
+  <img height="150" src="https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/master/pyg_sphinx_theme/static/img/pytorch_frame_logo_text.svg?sanitize=true" />
+</p>
 
-<br/>
-<br/>
 
 **A modular deep learning framework for building neural network models on heterogeneous tabular data.**
 
