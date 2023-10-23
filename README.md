@@ -6,7 +6,7 @@
 [slack-url]: https://data.pyg.org/slack.html
 <div align="center">
 
-<img width="800px" style="max-width: 100%;" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.JPG" />
+<img width="800px" style="max-width: 100%;" src="https://github.com/pyg-team/pytorch-frame/blob/master/docs/source/_figures/pytorch_frame_logo_text.png" />
 
 <br/>
 <br/>
