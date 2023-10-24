@@ -140,13 +140,14 @@ class ExampleTransformer(Module):
 <summary>Once we decide the model, we can load the Adult Census Income dataset and create a train dataloader.</summary>
 
 ```python
-    from torch_frame.datasets import Yandex
+from torch_frame.datasets import Yandex
+from torch_frame.data import DataLoader
 
-    dataset = Yandex(root='/tmp/adult', name='adult')
-    dataset.materialize()
-    train_dataset = dataset[:0.8]
-    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
-                            shuffle=True)
+dataset = Yandex(root='/tmp/adult', name='adult')
+dataset.materialize()
+train_dataset = dataset[:0.8]
+train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
+                          shuffle=True)
 ```
 </details>
 
@@ -172,6 +173,7 @@ optimizer = torch.optim.Adam(model.parameters())
 
 for epoch in range(50):
     for tf in tqdm(train_loader):
+        tf = tf.to(device)
         pred = model.forward(tf)
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
