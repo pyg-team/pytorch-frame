@@ -125,4 +125,3 @@ To build the documentation:
    cd docs
    make html
    ```
-
