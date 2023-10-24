@@ -97,16 +97,16 @@ class Trompt(Module):
         self.trompt_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transforming :obj:`TensorFrame` object into a series of output
+        r"""Transforming :class:`TensorFrame` object into a series of output
         predictions at each layer.
 
         Args:
             tf (:class:`torch_frame.TensorFrame`):
-                Input :obj:`TensorFrame` object.
+                Input :class:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output predictions stacked across layers. The
-            shape is [batch_size, num_layers, out_channels].
+                shape is :obj:`[batch_size, num_layers, out_channels]`.
         """
         batch_size = len(tf)
         outs = []

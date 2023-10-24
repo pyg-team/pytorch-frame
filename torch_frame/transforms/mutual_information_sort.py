@@ -10,7 +10,7 @@ from torch_frame.transforms import FittableBaseTransform
 
 class MutualInformationSort(FittableBaseTransform):
     r"""A transform that sorts the numerical features of input
-        :obj:`TensorFrame` based on mutual information.
+        :class:`TensorFrame` based on mutual information.
 
     Args:
         task_type (TaskType): The task type.

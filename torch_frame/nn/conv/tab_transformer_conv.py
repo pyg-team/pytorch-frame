@@ -18,8 +18,8 @@ class FFN(Module):
 
     Args:
         channels (int): Input channel dimensionality
-        mult (int): Expansion factor of the first layer (default: 4)
-        dropout (float): Percentage of random deactivation (default: 0.)
+        mult (int): Expansion factor of the first layer (default: :obj:`4`)
+        dropout (float): Percentage of random deactivation (default: :obj:`0.`)
     """
     def __init__(self, channels: int, mult: int = 4, dropout: float = 0.):
         super().__init__()
@@ -46,7 +46,7 @@ class SelfAttention(Module):
     Args:
         channels (int): Input channel dimensionality
         num_heads (int): Number of heads in Attention module
-        dropout (float): Percentage of random deactivation (default: 0.)
+        dropout (float): Percentage of random deactivation (default: :obj:`0.`)
     """
     def __init__(self, channels: int, num_heads: int, dropout=0.):
         super().__init__()
@@ -100,8 +100,8 @@ class TabTransformerConv(TableConv):
     Args:
         channels (int): Input/output channel dimensionality
         num_heads (int): Number of attention heads
-        attn_dropout (float): attention module dropout (default: 0.)
-        ffn_dropout (float): attention module dropout (default: 0.)
+        attn_dropout (float): attention module dropout (default: :obj:`0.`)
+        ffn_dropout (float): attention module dropout (default: :obj:`0.`)
     """
     def __init__(self, channels: int, num_heads: int, attn_dropout: float = 0.,
                  ffn_dropout: float = 0.):

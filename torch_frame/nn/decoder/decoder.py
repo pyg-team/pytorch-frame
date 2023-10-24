@@ -6,11 +6,12 @@ from torch.nn import Module
 
 
 class Decoder(Module, ABC):
-    r"""Base class for decoder that transforms the input column-wise pytorch
+    r"""Base class for decoder that transforms the input column-wise PyTorch
     tensor into output tensor on which prediction head is applied."""
     @abstractmethod
     def forward(self, x: Tensor, *args: Any, **kwargs: Any) -> Any:
-        r"""Encode TensorFrame into (x, col_names).
+        r"""Decode :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`
+        into an output tensor of shape :obj:`[batch_size, out_channels]`.
 
         Args:
             x (torch.Tensor): Input column-wise tensor of shape

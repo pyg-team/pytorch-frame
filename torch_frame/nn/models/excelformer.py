@@ -36,7 +36,7 @@ def feature_mixup(
     Returns:
         x_mixedup (Tensor): The mixedup numerical feature.
         y_mixedup (Tensor): Transformed target of size
-            [batch_size, num_classes]
+            :obj:`[batch_size, num_classes]`
     """
     assert num_classes > 0
 
@@ -144,11 +144,11 @@ class ExcelFormer(Module):
         self.excelformer_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transform :obj:`TensorFrame` object into output embeddings.
+        r"""Transform :class:`TensorFrame` object into output embeddings.
 
         Args:
             tf (:class:`torch_frame.TensorFrame`):
-                Input :obj:`TensorFrame` object.
+                Input :class:`TensorFrame` object.
 
         Returns:
             torch.Tensor: The output embeddings of size
@@ -170,12 +170,12 @@ class ExcelFormer(Module):
         tf: TensorFrame,
         beta: Optional[float] = 0.5,
     ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        r"""Transform :obj:`TensorFrame` object into output embeddings. If
+        r"""Transform :class:`TensorFrame` object into output embeddings. If
         `mixup` is :obj:`True`, it produces the output embeddings together with
         the mixed-up targets.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            tf (TensorFrame): Input :class:`TensorFrame` object.
             beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when mixup is
                 true. (default: :obj:`0.5`)

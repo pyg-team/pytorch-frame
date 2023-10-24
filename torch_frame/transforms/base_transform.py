@@ -23,9 +23,9 @@ class BaseTransform(ABC):
     def forward(self, tf: TensorFrame) -> TensorFrame:
         r"""Process TensorFrame obj into another TensorFrame obj.
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame`.
+            tf (TensorFrame): Input :class:`TensorFrame`.
         Returns:
-            TensorFrame: Input :obj:`TensorFrame` after transform.
+            TensorFrame: Input :class:`TensorFrame` after transform.
         """
         return tf
 
@@ -35,10 +35,10 @@ class BaseTransform(ABC):
 
         Returns:
             transformed_stats (Dict[str, Dict[StatType, Any]]):
-                Transformed column stats. The :obj:`TensorFrame` might be
+                Transformed column stats. The :class:`TensorFrame` might be
                 modified by the transform, so the returned transformed_stats
                 would contain the column stats of the modified
-                :obj:`TensorFrame`.
+                :class:`TensorFrame`.
         """
         if self._transformed_stats is None:
             raise ValueError("Transformed column stats is not computed yet. "

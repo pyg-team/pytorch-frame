@@ -138,15 +138,16 @@ class TabNet(Module):
         tf: TensorFrame,
         return_reg: bool = False,
     ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        r"""Transform :obj:`TensorFrame` object into output embeddings.
+        r"""Transform :class:`TensorFrame` object into output embeddings.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` object.
+            tf (TensorFrame): Input :class:`TensorFrame` object.
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
-            embeddings of size [batch_size, out_channels]. If :obj:`return_reg`
-            is :obj:`True`, return the entropy regularization as well.
+                embeddings of size [batch_size, out_channels].
+                If :obj:`return_reg` is :obj:`True`, return the entropy
+                regularization as well.
         """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
