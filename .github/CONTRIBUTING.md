@@ -58,8 +58,6 @@ To develop PyTorch Frame on your machine, here are some tips:
    pytest
    ```
 
-   In case an error occurs, please first check if all sub-packages ([`pyg-lib`](https://github.com/pyg-team/pyg-lib), [`torch-scatter`](https://github.com/rusty1s/pytorch_scatter), [`torch-sparse`](https://github.com/rusty1s/pytorch_sparse), [`torch-cluster`](https://github.com/rusty1s/pytorch_cluster) and [`torch-spline-conv`](https://github.com/rusty1s/pytorch_spline_conv)) are on its latest reported version.
-
 8. Install pre-commit hooks:
 
    ```bash
@@ -69,17 +67,19 @@ To develop PyTorch Frame on your machine, here are some tips:
 ## Unit Testing
 
 The PyTorch Frame testing suite is located under `test/`.
-Run the entire test suite with
+Run the test suite with
 
 ```bash
+# all test cases
 pytest
-```
 
-or test individual files via, _e.g._, `pytest test/utils/test_split.py`.
+# individual test cases
+pytest test/utils/test_split.py
+```
 
 ## Continuous Integration
 
-PyTorch Frame uses [GitHub Actions](https://github.com/pyg-team/pytorch_geometric/actions) in combination with [CodeCov](https://codecov.io/github/pyg-team/pytorch_geometric?branch=master) for continuous integration.
+PyTorch Frame uses [GitHub Actions](https://github.com/pyg-team/pytorch-frame/actions) in combination with [CodeCov](https://codecov.io/github/pyg-team/pytorch-frame?branch=master) for continuous integration.
 
 Everytime you send a Pull Request, your commit will be built and checked against the PyTorch Frame guidelines:
 
@@ -87,7 +87,7 @@ Everytime you send a Pull Request, your commit will be built and checked against
    We use the [`Flake8-pyproject`](https://pypi.org/project/Flake8-pyproject/) plugin for configuration:
 
    ```bash
-   flake8 .
+   flake8
    ```
 
    If you do not want to format your code manually, we recommend to use [`yapf`](https://github.com/google/yapf).
@@ -100,15 +100,9 @@ Everytime you send a Pull Request, your commit will be built and checked against
    pytest --cov
    ```
 
-   or
-
-   ```bash
-   FULL_TEST=1 pytest --cov
-   ```
-
    (which runs a set of additional but time-consuming tests) dependening on your needs.
 
-3. Add your feature/bugfix to the [`CHANGELOG.md`](https://github.com/pyg-team/pytorch_geometric/blob/master/CHANGELOG.md?plain=1).
+3. Add your feature/bugfix to the [`CHANGELOG.md`](https://github.com/pyg-team/pyotrch-frame/blob/master/CHANGELOG.md?plain=1).
    If multiple PRs move towards integrating a single feature, it is advised to group them together into one bullet point.
 
 ## Building Documentation
