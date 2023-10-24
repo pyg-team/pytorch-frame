@@ -31,13 +31,14 @@ class FittableBaseTransform(BaseTransform):
         r"""Replace NaNs based on NAStrategy.
 
         Args:
-            tf (TensorFrame): Input :class:`TensorFrame` whose NaN values
-                in categorical columns are to be replaced.
+            tf (TensorFrame): Input :class:`TensorFrame` object whose NaN
+                values in categorical columns are to be replaced.
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.
 
         Returns:
-            Tensor: Output :class:`TensorFrame` with NaN values replaced.
+            Tensor: Output :class:`TensorFrame` object with NaN values
+                replaced.
         """
         x = x.clone()
         for col in range(x.size(1)):

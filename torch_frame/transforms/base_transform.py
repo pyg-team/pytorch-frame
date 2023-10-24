@@ -35,10 +35,10 @@ class BaseTransform(ABC):
 
         Returns:
             transformed_stats (Dict[str, Dict[StatType, Any]]):
-                Transformed column stats. The :class:`TensorFrame` might be
-                modified by the transform, so the returned transformed_stats
-                would contain the column stats of the modified
-                :class:`TensorFrame`.
+                Transformed column stats. The :class:`TensorFrame` object might
+                be modified by the transform, so the returned
+                :obj:`transformed_stats` would contain the column stats of the
+                modified :class:`TensorFrame` object.
         """
         if self._transformed_stats is None:
             raise ValueError("Transformed column stats is not computed yet. "

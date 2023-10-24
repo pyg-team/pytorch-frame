@@ -17,10 +17,12 @@ class FeatureEncoder(Module, ABC):
     """
     @abstractmethod
     def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
-        r"""Encode :class:`TensorFrame` into the tuple :obj:`(x, col_names)`.
+        r"""Encode :class:`TensorFrame` object into a tuple
+        :obj:`(x, col_names)`.
 
         Args:
-            tf (:class:`torch_frame.TensorFrame`): Input :class:`TensorFrame`.
+            tf (:class:`torch_frame.TensorFrame`): Input :class:`TensorFrame`
+                object.
 
         Returns:
             (torch.Tensor, List[str]): A tuple of an output column-wise
