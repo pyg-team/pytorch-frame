@@ -98,7 +98,7 @@ in mini-batch, where :obj:`batch_size` represents the batch size.
     >>> torch.Size([105154, 1, 768])
 
 It is strongly recommended to cache :class:`~torch_frame.TensorFrame`
-by specifying the `path` during :meth:`~torch_frame.data.Dataset.materialize`,
+by specifying the :obj:`path` during :meth:`~torch_frame.data.Dataset.materialize`,
 as embedding texts in every materialization run can be quite time-consuming.
 Once cached, :class:`~torch_frame.TensorFrame` can be reused for
 subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
@@ -124,7 +124,7 @@ pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_e
         stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
     }
 
-Then, `stype_encoder_dict` can be directly fed into
+Then, :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` to handle text columns.
 
 Please refer to the
