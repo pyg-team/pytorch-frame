@@ -15,7 +15,7 @@ class TromptConv(TableConv):
         channels (int): Input/output channel dimensionality
         num_cols (int): Number of columns
         num_prompts (int): Number of prompt columns.
-        num_groups (int): Number of groups in group norm. (default: 2)
+        num_groups (int): Number of groups in group norm. (default: :obj:`2`)
     """
     def __init__(
         self,
@@ -59,13 +59,13 @@ class TromptConv(TableConv):
 
         Args:
             x (torch.Tensor): Feature-based embedding of shape
-                [batch_size, num_cols, channels]
+                :obj:`[batch_size, num_cols, channels]`
             x_prompt (torch.Tensor): Input prompt embeddings of shape
-                [batch_size, num_prompts, channels]
+                :obj:`[batch_size, num_prompts, channels]`.
 
         Returns:
             torch.Tensor: Output prompt embeddings for the next layer. The
-                shape is [batch_size, num_prompts, channels].
+                shape is :obj:`[batch_size, num_prompts, channels]`.
         """
         batch_size = len(x)
         assert x.shape == (batch_size, self.num_cols, self.channels)

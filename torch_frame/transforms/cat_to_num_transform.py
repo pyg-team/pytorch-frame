@@ -13,7 +13,7 @@ from torch_frame.transforms import FittableBaseTransform
 
 class CatToNumTransform(FittableBaseTransform):
     r"""A transform that encodes the categorical features of
-        :class:`TensorFrame` using target statistics.
+        the :class:`TensorFrame` object using target statistics.
         The original transform is explained in
         https://dl.acm.org/doi/10.1145/507533.507538
         Specifically, each categorical feature is transformed

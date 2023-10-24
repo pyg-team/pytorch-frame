@@ -52,7 +52,7 @@ class XGBoost(GBDT):
         self,
         tf: TensorFrame,
     ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-        r"""Convert :obj:`TensorFrame` into XGBoost-compatible input format:
+        r"""Convert :class:`TensorFrame` into XGBoost-compatible input format:
         :obj:`(feat, y, feat_types)`.
 
         Args:
@@ -60,7 +60,7 @@ class XGBoost(GBDT):
         Returns:
             feat (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
-                the input :obj:`TensorFrame`.
+                the input :class:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation

@@ -18,7 +18,7 @@ class CatBoost(GBDT):
     """
     def _to_catboost_input(
             self, tf) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
-        r"""Convert :obj:`TensorFrame` into CatBoost-compatible input format:
+        r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
         Args:
@@ -26,7 +26,7 @@ class CatBoost(GBDT):
         Returns:
             x (DataFrame): Output :obj:`Dataframe` by
                 concatenating tensors of categorical and numerical features of
-                the input :obj:`TensorFrame`.
+                the input :class:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
             cat_features (numpy.ndarray, optional): Array containing indexes of
                 categorical features :obj:`numpy.ndarray`.

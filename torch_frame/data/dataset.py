@@ -125,7 +125,7 @@ class DataFrameToTensorFrameConverter:
         df: DataFrame,
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
-        r"""Convert a given :obj:`DataFrame` object into :obj:`TensorFrame`
+        r"""Convert a given :obj:`DataFrame` object into :class:`TensorFrame`
         object."""
 
         xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
@@ -287,13 +287,15 @@ class Dataset(ABC):
 
         Args:
             device (torch.device, optional): Device to load the
-                :obj:`TensorFrame` object. (default: :obj:`None`)
-            path (str, optional): If path is specified and cache file exists,
-                will try to load saved :obj:`TensorFrame` and :obj:`col_stats`.
-                If path is specified but cache file does not exist, will
-                do materialization at first then save :obj:`TensorFrame` and
-                :obj:`col_stats` to the path. If path is not specified, will
-                materialize and does not cache. (default: :obj:`None`)
+                :class:`TensorFrame` object. (default: :obj:`None`)
+            path (str, optional): If path is specified and a cached file
+                exists, this will try to load the saved the
+                :class:`TensorFrame` object and :obj:`col_stats`.
+                If :obj:`path` is specified but a cached file does not exist,
+                this will perform materialization and then save the
+                :class:`TensorFrame object and :obj:`col_stats` to :obj:`path`.
+                If :obj:`path` is :obj:`None`, this will materialize the
+                dataset without caching. (default: :obj:`None`)
         """
         if self.is_materialized:
             # Materialized without specifying path at first and materialize

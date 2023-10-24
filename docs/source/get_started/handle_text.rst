@@ -128,5 +128,5 @@ Then, :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` to handle text columns.
 
 Please refer to the
-`pytorch-frame/examples/fttransformer_text.py <https://github.com/pyg-team/pytorch-frame/blob/master/examples/fttransformer_text.py>`_
+`pytorch-frame/examples/ft_transformer_text.py <https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py>`_
 for more information.

@@ -92,7 +92,7 @@ class StypeEncoder(Module, ABC):
     def encode_forward(self, feat: Tensor) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
-        [batch_size, num_cols, out_channels]."""
+        :obj:`[batch_size, num_cols, out_channels]`."""
         raise NotImplementedError
 
     def post_forward(self, out: Tensor) -> Tensor:
@@ -243,8 +243,9 @@ class LinearEncoder(StypeEncoder):
 
 
 class StackEncoder(StypeEncoder):
-    r"""Simply stack input numerical features of shape [batch_size, num_cols]
-    into [batch_size, num_cols, out_channels]."""
+    r"""Simply stack input numerical features of shape
+    :obj:`[batch_size, num_cols]` into
+    :obj:`[batch_size, num_cols, out_channels]`."""
     supported_stypes = {stype.numerical}
 
     def __init__(

@@ -92,11 +92,11 @@ class FTTransformer(Module):
                 m.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transforming :obj:`TensorFrame` object into output prediction.
+        r"""Transforming :class:`TensorFrame` object into output prediction.
 
         Args:
             x (:class:`torch_frame.TensorFrame`):
-                Input :obj:`TensorFrame` object.
+                Input :class:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output of shape [batch_size, out_channels].

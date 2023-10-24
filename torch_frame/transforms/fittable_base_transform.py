@@ -31,13 +31,14 @@ class FittableBaseTransform(BaseTransform):
         r"""Replace NaNs based on NAStrategy.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` whose NaN values
-                in categorical columns are to be replaced.
+            tf (TensorFrame): Input :class:`TensorFrame` object whose NaN
+                values in categorical columns are to be replaced.
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.
 
         Returns:
-            Tensor: Output :obj:`TensorFrame` with NaN values replaced.
+            Tensor: Output :class:`TensorFrame` object with NaN values
+                replaced.
         """
         x = x.clone()
         for col in range(x.size(1)):
@@ -64,9 +65,10 @@ class FittableBaseTransform(BaseTransform):
         r"""Fit the transform with train data.
 
         Args:
-            tf (TensorFrame): Input :obj:`TensorFrame` representing train data.
+            tf (TensorFrame): Input :class:`TensorFrame` object representing
+                the training data.
             col_stats (Dict[str, Dict[StatType, Any]], optional): The column
-                stats of the input :obj:`TensorFrame`.
+                stats of the input :class:`TensorFrame`.
         """
         self._fit(tf, col_stats)
         self._is_fitted = True
