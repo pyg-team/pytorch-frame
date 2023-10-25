@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import torch
 
 from torch_frame.data import Rusty
 
 
-def test_multicategorical_tensor_mapper():
+def test_rusty():
     data = {
         'multi_cat1': ['A,B', 'B', None, 'C', 'B,C'],
         'multi_cat2': ['M', 'M,N', None, None, 'N']
@@ -19,13 +18,13 @@ def test_multicategorical_tensor_mapper():
     }, sep=",")
 
     values, boundaries = mapper.forward(df)
-    assert values.dtype == np.integer
-    assert torch.equal(values, expected_values)
-    assert torch.equal(boundaries, expected_boundaries)
+    assert values.dtype == np.int64
+    assert np.all(values == expected_values)
+    assert np.all(boundaries == expected_boundaries)
 
     out = mapper.backward(values, boundaries)
     data = {
-        'multi_cat1': ['A,B', 'B', None, 'None', 'B'],
+        'multi_cat1': ['A,B', 'B', None, None, 'B'],
         'multi_cat2': ['M', 'M,N', None, None, 'N']
     }
     pd.testing.assert_frame_equal(out, pd.DataFrame(data))
