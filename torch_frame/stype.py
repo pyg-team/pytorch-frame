@@ -33,4 +33,4 @@ class stype(Enum):
 numerical = stype('numerical')
 categorical = stype('categorical')
 text_embedded = stype('text_embedded')
-multi_categorical = stype('multicategorical')
+multicategorical = stype('multicategorical')
