@@ -9,7 +9,7 @@ class Rusty:
     r"""3-D sparse matrix to store multi-categorical data
      [num_rows + 1, num_cols]
     """
-    def __init__(self, categories: Dict[str, List[str]], delimiter: str):
+    def __init__(self, categories: Dict[str, List[str]], sep: str):
         self.columns = list(categories.keys())
         self.categories = {
             col: {
@@ -19,27 +19,22 @@ class Rusty:
             for col in self.columns
         }
         self.id_to_col = categories
-        self.delimiter = delimiter
+        self.sep = sep
 
     def forward(self, df: pd.DataFrame) -> Tuple[torch.Tensor, torch.Tensor]:
         values = []
         boundaries = [0]
         df = df[self.columns]
-        for _, row in df.iterrows():
-            for col in self.columns:
-                if row[col] is None:
-                    boundaries.append(boundaries[-1])
-                    continue
-                items = list(
-                    filter(lambda x: x in self.categories[col],
-                           row[col].split(self.delimiter)))
-                if not items:
-                    boundaries.append(boundaries[-1])
-                    continue
-                boundaries.append(boundaries[-1] + len(items))
-                values += [self.categories[col][item] for item in items]
-        values = torch.from_numpy(np.array(values))
-        boundaries = torch.from_numpy(np.array(boundaries))
+        for col in self.columns:
+            df[col] = df[col].apply(lambda x: [
+                self.categories[col][s] for s in x.split(self.sep)
+                if s in self.categories[col]
+            ] if x is not None else [])
+        values = np.array(sum(df.apply(lambda row: sum(row, []), axis=1), []))
+        boundaries = np.array(
+            sum(df.apply(lambda row: [len(item) for item in row], axis=1), []))
+        boundaries = np.cumsum(boundaries)
+        print(boundaries)
         return values, boundaries
 
     def backward(self, values, boundaries):
@@ -55,9 +50,6 @@ class Rusty:
                     for item in values[values_ptr:values_ptr + boundaries[i] -
                                        boundaries[i - 1]]
                 ]))
-            print(
-                "values ", values[values_ptr:values_ptr + boundaries[i] -
-                                  boundaries[i - 1]], values_ptr)
             categories = self.delimiter.join(
                 index) if index is not None else None
             data[col].append(categories)
