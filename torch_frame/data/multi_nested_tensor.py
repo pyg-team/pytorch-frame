@@ -1,5 +1,4 @@
 import copy
-from collections import defaultdict
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import torch
@@ -12,79 +11,62 @@ class MultiNestedTensor:
     different for different data/column. Internally, we store the object in an
     efficient flattened format: :obj:`(value, offset)`, where the element
     at :obj:`(i, j)` is accessed by
-    :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`.
-    We store a dictionary of :obj:`values` so that the element at :obj:`(i, j)`
-    can be a dictionary of tensors.
 
     Args:
         num_rows (int): Numnber of rows.
         num_cols (int): Number of columns.
-        values_dict (Dict[str, Tensor]): A dictionary of values Tensor.
+        values (Tensor): The values Tensor.
         offset (Tensor): The offset Tensor.
 
 
     """
-    def __init__(self, num_rows: int, num_cols: int,
-                 values_dict: Dict[str, Tensor], offset: Tensor):
+    def __init__(self, num_rows: int, num_cols: int, values: Dict[str, Tensor],
+                 offset: Tensor):
+        assert offset[0] == 0
+        assert offset[-1] == len(values)
+        assert len(offset) == num_rows * num_cols + 1
         self.num_rows = num_rows
         self.num_cols = num_cols
-        self.values_dict = values_dict
+        self.values = values
         self.offset = offset
 
     @classmethod
-    def from_tensor_mat_dict(
+    def from_tensor_mat(
         cls,
-        tensor_mat_dict: Dict[str, List[List[Tensor]]],
+        tensor_mat: List[List[Tensor]],
     ) -> 'MultiNestedTensor':
         r"""Construct :class:`MultiNestedTensor` object from
-        :obj:`tensor_mat_dict`.
+        :obj:`tensor_mat`.
 
         Args:
-            tensor_mat_dict Dict[str, List[List[Tensor]]]: A dictionary of
+            tensor_mat List[List[Tensor]]: A dictionary of
                 matrix of PyTorch Tensors. :obj:`tensor_mat[i][j]` contains
                 1-dim PyTorch Tensor of :obj:`i`-th row and :obj:`j`-th column.
-                If there are multiple keys, we require the shape of
-                :obj:`tensor_mat_dict[key1][i][j]` and
-                :obj:`tensor_mat_dict[key2][i][j]` to be the same for every
-                :obj:`(i, j)`.
 
         Returns:
             MultiNestedTensor: Returned class object.
         """
-        first_name = next(iter(tensor_mat_dict))
-        first_tensor_mat = tensor_mat_dict[first_name]
-        num_rows = len(first_tensor_mat)
-        num_cols = len(first_tensor_mat[0])
+        num_rows = len(tensor_mat)
+        num_cols = len(tensor_mat[0])
 
         offset_list = []
         accum_idx = 0
         offset_list.append(accum_idx)
-        values_list_dict = defaultdict(list)
-        for row_i in range(num_rows):
-            for col_j in range(num_cols):
-                for name, tensor_mat in tensor_mat_dict.items():
-                    tensor = tensor_mat[row_i][col_j]
-                    if not isinstance(tensor, Tensor):
-                        raise RuntimeError(
-                            "The element of tensor_mat must be PyTorch Tensor")
-                    if tensor.ndim != 1:
-                        raise RuntimeError(
-                            "Each element of tensor_mat_dict must be "
-                            "1-dimensional.")
-                    if tensor.shape != first_tensor_mat[row_i][col_j].shape:
-                        raise RuntimeError(
-                            "The shape of tensor_mat_dict[key1][i][j] must be "
-                            "the same for every (i, j).")
-                    values_list_dict[name].append(tensor)
+        values_list = []
+        for i in range(num_rows):
+            for j in range(num_cols):
+                tensor = tensor_mat[i][j]
+                if not isinstance(tensor, Tensor):
+                    raise RuntimeError(
+                        "The element of tensor_mat must be PyTorch Tensor")
+                values_list.append(tensor)
                 accum_idx += len(tensor)
                 offset_list.append(accum_idx)
 
-        values_dict = {}
-        for name, value_list in values_list_dict.items():
-            values_dict[name] = torch.cat(value_list)
+        values = torch.cat(values_list)
         offset = torch.tensor(offset_list, dtype=torch.long)
 
-        return cls(num_rows, num_cols, values_dict, offset)
+        return cls(num_rows, num_cols, values, offset)
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -96,7 +78,7 @@ class MultiNestedTensor:
         for key, value in self.__dict__.items():
             out.__dict__[key] = value
 
-        out.values_dict = copy.copy(out.values_dict)
+        out.values = copy.copy(out.values)
         out.offset = copy.copy(out.offset)
 
         return out
@@ -104,9 +86,9 @@ class MultiNestedTensor:
     def __getitem__(
         self,
         index: Any,
-    ) -> Union['MultiNestedTensor', Dict[str, Tensor]]:
+    ) -> Union['MultiNestedTensor', Tensor]:
         if isinstance(index, Tuple):
-            # Get an element of (i, j). Returns Dict[str, Tensor]
+            # Get an element of (i, j). Returns Tensor
             assert len(index) == 2
             if index[0] < 0 or index[0] >= self.num_rows:
                 raise IndexError(
@@ -116,12 +98,10 @@ class MultiNestedTensor:
                 raise IndexError(
                     f"Index out-of-bounds. The second element of {index} "
                     f"needs to be [0, {self.num_cols}]")
-            out = {}
             idx = index[0] * self.num_cols + index[1]
             start_idx = self.offset[idx]
             end_idx = self.offset[idx + 1]
-            for name, values in self.values_dict.items():
-                out[name] = values[start_idx:end_idx]
+            out = self.values[start_idx:end_idx]
             return out
         elif isinstance(index, int):
             if index < 0 or index >= self.num_rows:
@@ -132,12 +112,10 @@ class MultiNestedTensor:
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
             offset = self.offset[start_idx:end_idx]
-            values_dict = {}
-            for name, values in self.values_dict.items():
-                values_dict[name] = values[offset[0]:offset[-1]]
+            values = self.values[offset[0]:offset[-1]]
             offset = offset - offset[0]
             return MultiNestedTensor(num_rows=1, num_cols=self.num_cols,
-                                     values_dict=values_dict, offset=offset)
+                                     values=values, offset=offset)
         elif isinstance(index, Tensor) and index.ndim == 1:
             return self._row_index_selet_helper(index)
         elif isinstance(index, List):
@@ -149,14 +127,12 @@ class MultiNestedTensor:
         if index.min() < 0 or index.max() >= self.num_rows:
             raise IndexError(f"Index out-of-bounds. The {index} needs to be "
                              f"[0, {self.num_rows}]")
-        # Calculate values_dict
+        # Calculate values
         count = self.offset[(index + 1) *
                             self.num_cols] - self.offset[index * self.num_cols]
         batch, arange = batched_arange(count)
         idx = self.offset[index * self.num_cols][batch] + arange
-        values_dict = {}
-        for name in self.values_dict.keys():
-            values_dict[name] = self.values_dict[name][idx]
+        values = self.values[idx]
 
         # Calculate offset
         count = torch.full(size=(len(index), ), fill_value=self.num_cols,
@@ -172,7 +148,7 @@ class MultiNestedTensor:
         diff_cumsum[0] = 0
         offset = offset + diff_cumsum[batch]
         return MultiNestedTensor(num_rows=len(index), num_cols=self.num_cols,
-                                 values_dict=values_dict, offset=offset)
+                                 values=values, offset=offset)
 
     # Device Transfer #########################################################
 
@@ -189,10 +165,7 @@ class MultiNestedTensor:
 
     def _apply(self, fn: Callable[[Tensor], Tensor]) -> 'MultiNestedTensor':
         out = copy.copy(self)
-        out.values_dict = {
-            name: fn(values)
-            for name, values in out.values_dict.items()
-        }
+        out.values = fn(out.values)
         out.offset = fn(out.offset)
 
         return out
