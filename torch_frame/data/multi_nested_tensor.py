@@ -17,23 +17,30 @@ class MultiNestedTensor:
         num_cols (int): Number of columns.
         values (Tensor): The values Tensor.
         offset (Tensor): The offset Tensor.
-
-
+        device (torch.device): Device to put.
     """
-    def __init__(self, num_rows: int, num_cols: int, values: Dict[str, Tensor],
-                 offset: Tensor):
+    def __init__(
+        self,
+        num_rows: int,
+        num_cols: int,
+        values: Dict[str, Tensor],
+        offset: Tensor,
+        device: torch.device = None,
+    ):
         assert offset[0] == 0
         assert offset[-1] == len(values)
         assert len(offset) == num_rows * num_cols + 1
         self.num_rows = num_rows
         self.num_cols = num_cols
-        self.values = values
-        self.offset = offset
+        self.device = device
+        self.values = values.to(self.device)
+        self.offset = offset.to(self.device)
 
     @classmethod
     def from_tensor_mat(
         cls,
         tensor_mat: List[List[Tensor]],
+        device: torch.device = None,
     ) -> 'MultiNestedTensor':
         r"""Construct :class:`MultiNestedTensor` object from
         :obj:`tensor_mat`.
@@ -42,6 +49,7 @@ class MultiNestedTensor:
             tensor_mat List[List[Tensor]]: A dictionary of
                 matrix of PyTorch Tensors. :obj:`tensor_mat[i][j]` contains
                 1-dim PyTorch Tensor of :obj:`i`-th row and :obj:`j`-th column.
+            device (torch.device): Device to put.
 
         Returns:
             MultiNestedTensor: Returned class object.
@@ -66,11 +74,12 @@ class MultiNestedTensor:
         values = torch.cat(values_list)
         offset = torch.tensor(offset_list, dtype=torch.long)
 
-        return cls(num_rows, num_cols, values, offset)
+        return cls(num_rows, num_cols, values, offset, device)
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        name += f"(num_rows: {self.num_rows}, num_cols: {self.num_cols})"
+        name += f"(num_rows={self.num_rows}, num_cols={self.num_cols} "
+        name += f"device={self.device})"
         return name
 
     def __copy__(self) -> 'MultiNestedTensor':
@@ -119,7 +128,8 @@ class MultiNestedTensor:
         elif isinstance(index, Tensor) and index.ndim == 1:
             return self._row_index_selet_helper(index)
         elif isinstance(index, List):
-            return self._row_index_selet_helper(torch.LongTensor(index))
+            return self._row_index_selet_helper(
+                torch.LongTensor(index, device=self.device))
         else:
             raise RuntimeError("Advanced indexing not supported yet.")
 
@@ -136,7 +146,7 @@ class MultiNestedTensor:
 
         # Calculate offset
         count = torch.full(size=(len(index), ), fill_value=self.num_cols,
-                           dtype=torch.long)
+                           dtype=torch.long, device=self.device)
         count[-1] += 1
         batch, arange = batched_arange(count)
         idx = (index * self.num_cols)[batch] + arange
