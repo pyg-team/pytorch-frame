@@ -17,8 +17,8 @@ def test_multi_nested_tensor_basic():
         tensor_mat.append(tensor_list)
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
-    assert str(
-        multi_nested_tensor) == "MultiNestedTensor(num_rows: 8, num_cols: 10)"
+    assert str(multi_nested_tensor
+               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device=cpu)"
     assert multi_nested_tensor.num_rows == num_rows
     assert multi_nested_tensor.num_cols == num_cols
 
