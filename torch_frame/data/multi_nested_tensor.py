@@ -9,8 +9,9 @@ class MultiNestedTensor:
     r"""A PyTorch Tensor-based data structure that stores
     :obj:`[num_rows, num_cols, *]` , where the size of last dimension can be
     different for different data/column. Internally, we store the object in an
-    efficient flattened format: :obj:`(value, offset)`, where the element
-    at :obj:`(i, j)` is accessed by
+    efficient flattened format: :obj:`(values, offset)`, where the PyTorch
+    Tensor at :obj:`(i, j)` is accessed by
+    :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`
 
     Args:
         num_rows (int): Numnber of rows.
