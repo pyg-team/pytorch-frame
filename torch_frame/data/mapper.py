@@ -94,12 +94,12 @@ class MultiCategoricalTensorMapper(TensorMapper):
     def __init__(
         self,
         categories: Iterable[Any],
-        delimiter: str = ",",
+        sep: str = ",",
     ):
         super().__init__()
 
         self.categories = categories
-        self.delimiter = delimiter
+        self.sep = sep
 
     def forward(
         self,
@@ -108,8 +108,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         device: Optional[torch.device] = None,
     ) -> Tensor:
 
-        df = ser.str.split(
-            self.delimiter).str.join('|').str.get_dummies().fillna(0)
+        df = ser.str.split(self.sep).str.join('|').str.get_dummies().fillna(0)
         index = df[self.categories].values
         index = torch.from_numpy(index).to(device)
 
@@ -123,8 +122,8 @@ class MultiCategoricalTensorMapper(TensorMapper):
         df = pd.DataFrame(index,
                           columns=self.categories).multiply(self.categories)
         ser = df.apply(
-            lambda row: self.delimiter.join(
-                filter(lambda x: x != '', map(str, row))), axis=1).squeeze()
+            lambda row: self.sep.join(filter(lambda x: x != '', map(str, row))
+                                      ), axis=1).squeeze()
         ser = ser.replace('', None)
         return ser
 
