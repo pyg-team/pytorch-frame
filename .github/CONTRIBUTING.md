@@ -16,7 +16,7 @@ Your PR will be merged after one or more rounds of reviews by the [pyg-team](htt
 
 To develop PyTorch Frame on your machine, here are some tips:
 
-1. Ensure that you are running on one of the two latest PyTorch releases (*e.g.*, `2.0.0`):
+1. Ensure that you are running on one of the supported PyTorch versions (*e.g.*, `2.1.0`):
 
    ```python
    import torch
@@ -30,12 +30,11 @@ To develop PyTorch Frame on your machine, here are some tips:
    pip uninstall pytorch_frame
    ```
 
-3. Clone a copy of PyTorch Frame from source:
+3. Fork and clone the PyTorch Frame repository:
 
    ```bash
-   git clone https://github.com/pyg-team/pytorch-frame.git
+   git clone https://github.com/<your_username>/pytorch-frame.git
    cd pytorch-frame
-   ```
 
 5. If you already cloned PyTorch Frame from source, update it:
 
