@@ -103,20 +103,27 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.categories = categories
         self.sep = sep
 
+    def _row_to_tensor(self, row: str):
+        if row == '':
+            return []
+        elif row is None:
+            return [-1]
+        else:
+            return [
+                self.categories.index(s) if s in self.categories else -1
+                for s in row.split(self.sep)
+            ]
+
     def forward(
         self,
         ser: Series,
         *,
         device: Optional[torch.device] = None,
     ) -> MultiNestedTensor:
-        if ser.dtype != 'object' or not all(
-                isinstance(item, str) for item in ser):
+        if ser.dtype != 'object':
             raise ValueError('Multi-categorical types expect string as input')
         values = []
-        ser = ser.apply(lambda x: [] if x == '' else [
-            self.categories.index(s) if s in self.categories else -1
-            for s in x.split(self.sep)
-        ])
+        ser = ser.apply(self._row_to_tensor)
         values = torch.tensor(sum(ser, []), device=device)
         ser = ser.apply(lambda x: len(x))
         offset = torch.tensor([0] + ser.tolist(), device=device)

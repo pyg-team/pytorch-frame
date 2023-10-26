@@ -130,6 +130,9 @@ class MultiNestedTensor:
         else:
             raise RuntimeError("Advanced indexing not supported yet.")
 
+    def __len__(self):
+        return self.num_rows
+
     def index_select(self, index: Tensor, dim: int) -> Tensor:
         if dim == 0:
             return self._row_index_select(index)

@@ -100,6 +100,16 @@ def test_converter():
     assert len(tf) == len(dataset)
 
 
+def test_multicategorical_materialization():
+    data = {'a': ['A,B', 'B,C,A', '', 'B', None]}
+    df = pd.DataFrame(data)
+    dataset = Dataset(df, {'a': stype.multicategorical})
+    dataset.materialize()
+    assert StatType.COUNT in dataset.col_stats['a']
+    assert dataset.col_stats['a'][StatType.COUNT][0] == ['B', 'A', 'C']
+    assert dataset.col_stats['a'][StatType.COUNT][1] == [3, 2, 1]
+
+
 @pytest.mark.parametrize('with_nan', [True, False])
 def test_num_classes(with_nan):
     num_classes = 10

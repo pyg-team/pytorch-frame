@@ -337,8 +337,11 @@ class Dataset(ABC):
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
             if stype == torch_frame.multicategorical:
-                ser = self.df[col].apply(lambda x: x.split(self.sep))
-                ser = self.df[col].explode()
+                ser = self.df[col].apply(
+                    lambda x: [cat.strip() for cat in x.split(self.sep)]
+                    if x is not None and x != '' else [])
+                ser = ser.explode()
+                ser = ser.dropna()
             else:
                 ser = self.df[col]
             self._col_stats[col] = compute_col_stats(ser, stype)
