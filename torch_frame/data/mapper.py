@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, List, Optional
+from typing import Any, Callable, Iterable, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
 from tqdm import tqdm
 
+from torch_frame.data import MultiNestedTensor
 from torch_frame.typing import Series
 
 
@@ -19,7 +21,7 @@ class TensorMapper(ABC):
         ser: Series,
         *,
         device: Optional[torch.device] = None,
-    ) -> Tensor:
+    ) -> Union[Tensor, MultiNestedTensor]:
         r"""Maps raw input data into a compact tensor representation."""
         raise NotImplementedError
 
@@ -90,42 +92,51 @@ class CategoricalTensorMapper(TensorMapper):
 
 class MultiCategoricalTensorMapper(TensorMapper):
     r"""Maps any categorical series into an index representation, with
-    :obj:`-1` denoting N/A values."""
+    :obj:`-1` denoting NaN values.
+        -1 for no values and error for missing value
+    """
     def __init__(
         self,
         categories: Iterable[Any],
         sep: str = ",",
+        missing_value: object = np.nan,
     ):
         super().__init__()
-
         self.categories = categories
         self.sep = sep
+        self.missing_value = missing_value
 
     def forward(
         self,
         ser: Series,
         *,
         device: Optional[torch.device] = None,
-    ) -> Tensor:
+    ) -> Union[Tensor, Tensor]:
+        if self.missing_value in ser:
+            raise ValueError("Missing Value is not currently supported"
+                             " in multi-categorical columns.")
+        values = []
+        # TODO: When add logic to handle missing value here.
+        ser = ser.apply(lambda x: [
+            self.categories.index(s) if s in self.categories else -1
+            for s in x.split(self.sep)
+        ])
+        values = torch.tensor(sum(ser, []), device=device)
+        ser = ser.apply(lambda x: len(x))
+        offset = torch.tensor([0] + ser.tolist(), device=device)
+        offset = torch.cumsum(offset, dim=0)
+        return values, offset
 
-        df = ser.str.split(self.sep).str.join('|').str.get_dummies().fillna(0)
-        index = df[self.categories].values
-        index = torch.from_numpy(index).to(device)
-
-        if index.is_floating_point():
-            index[index.isnan()] = -1
-
-        return index.to(torch.long)
-
-    def backward(self, tensor: Tensor) -> pd.Series:
-        index = tensor.cpu().numpy()
-        df = pd.DataFrame(index,
-                          columns=self.categories).multiply(self.categories)
-        ser = df.apply(
-            lambda row: self.sep.join(filter(lambda x: x != '', map(str, row))
-                                      ), axis=1).squeeze()
-        ser = ser.replace('', None)
-        return ser
+    def backward(self, values: Tensor, offset: Tensor) -> pd.Series:
+        values = values.tolist()
+        ser = []
+        for i in range(1, len(offset)):
+            index = list([
+                self.categories[item]
+                for item in values[offset[i - 1]:offset[i]] if item != -1
+            ])
+            ser.append(self.sep.join(index))
+        return pd.Series(ser)
 
 
 class TextEmbeddingTensorMapper(TensorMapper):

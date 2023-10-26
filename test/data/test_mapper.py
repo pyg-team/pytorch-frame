@@ -40,18 +40,18 @@ def test_categorical_tensor_mapper():
 
 
 def test_multicategorical_tensor_mapper():
-    ser = pd.Series(['A,B', 'B', None, 'C', 'B,C'])
-    expected = torch.tensor([[1, 1], [1, 0], [0, 0], [0, 0], [1, 0]])
+    ser = pd.Series(['A,B', 'B', '', 'C', 'B,C'])
+    expected_values = torch.tensor([1, 0, 0, -1, -1, 0, -1])
+    expected_boundaries = torch.tensor([0, 2, 3, 4, 5, 7])
+    mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
-    mapper = MultiCategoricalTensorMapper(['B', 'A'])
+    values, boundaries = mapper.forward(ser)
+    assert values.dtype == torch.long
+    assert torch.equal(values, expected_values)
+    assert torch.equal(boundaries, expected_boundaries)
 
-    out = mapper.forward(ser)
-    assert out.dtype == torch.long
-    assert torch.equal(out, expected)
-
-    out = mapper.backward(out)
-    pd.testing.assert_series_equal(out,
-                                   pd.Series(['B,A', 'B', None, None, 'B']))
+    out = mapper.backward(values, boundaries)
+    pd.testing.assert_series_equal(out, pd.Series(['A,B', 'B', '', '', 'B']))
 
 
 def test_text_embedding_tensor_mapper():
