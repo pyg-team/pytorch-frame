@@ -10,7 +10,6 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame import stype
 from torch_frame.config import TextEmbedderConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
@@ -90,13 +89,13 @@ class DataFrameToTensorFrameConverter:
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
-        for col, semantic_type in self.col_to_stype.items():
+        for col, stype in self.col_to_stype.items():
             if col != self.target_col:
-                if semantic_type not in self._col_names_dict:
-                    self._col_names_dict[semantic_type] = [col]
+                if stype not in self._col_names_dict:
+                    self._col_names_dict[stype] = [col]
                 else:
-                    self._col_names_dict[semantic_type].append(col)
-        for semantic_type in self._col_names_dict.keys():
+                    self._col_names_dict[stype].append(col)
+        for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
 
@@ -111,16 +110,16 @@ class DataFrameToTensorFrameConverter:
 
     def _get_mapper(self, col: str) -> TensorMapper:
         r"""Get TensorMapper given a column name."""
-        semantic_type = self.col_to_stype[col]
-        if semantic_type == torch_frame.numerical:
+        stype = self.col_to_stype[col]
+        if stype == torch_frame.numerical:
             return NumericalTensorMapper()
-        elif semantic_type == torch_frame.categorical:
+        elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
-        elif semantic_type == torch_frame.multicategorical:
+        elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return MultiCategoricalTensorMapper(index, sep=self.sep)
-        elif semantic_type == torch_frame.text_embedded:
+        elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
                 self.text_embedder_cfg.batch_size,
@@ -141,15 +140,15 @@ class DataFrameToTensorFrameConverter:
                       List[Union[Tensor,
                                  MultiNestedTensor]]] = defaultdict(list)
 
-        for semantic_type, col_names in self.col_names_dict.items():
+        for stype, col_names in self.col_names_dict.items():
             for col in col_names:
                 out = self._get_mapper(col).forward(df[col], device=device)
-                xs_dict[semantic_type].append(out)
+                xs_dict[stype].append(out)
         feat_dict = {
-            semantic_type: (torch.stack(xs, dim=1)
-                            if not stype.is_stored_in_multi_nested_tensor else
-                            MultiNestedTensor.stack(xs, dim=1))
-            for semantic_type, xs in xs_dict.items()
+            stype: (torch.stack(xs, dim=1)
+                    if not stype.is_stored_in_multi_nested_tensor else
+                    MultiNestedTensor.stack(xs, dim=1))
+            for stype, xs in xs_dict.items()
         }
 
         y: Optional[Tensor] = None
@@ -212,7 +211,7 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         if target_col is not None and self.col_to_stype[
-                target_col] == stype.multicategorical:
+                target_col] == torch_frame.multicategorical:
             raise ValueError(
                 'Multilabel classification task is not yet supported.')
 
@@ -336,13 +335,13 @@ class Dataset(ABC):
             return self
 
         # 1. Fill column statistics:
-        for col, semantic_type in self.col_to_stype.items():
-            if semantic_type == stype.multicategorical:
+        for col, stype in self.col_to_stype.items():
+            if stype == torch_frame.multicategorical:
                 ser = self.df[col].apply(lambda x: x.split(self.sep))
                 ser = self.df[col].explode()
             else:
                 ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(ser, semantic_type)
+            self._col_stats[col] = compute_col_stats(ser, stype)
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
