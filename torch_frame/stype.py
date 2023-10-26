@@ -29,6 +29,10 @@ class stype(Enum):
     def is_text_stype(self) -> bool:
         return self in [stype.text_embedded]
 
+    @property
+    def is_stored_in_multi_nested_tensor(self) -> bool:
+        return self in [stype.multicategorical]
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')

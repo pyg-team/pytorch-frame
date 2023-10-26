@@ -187,6 +187,25 @@ class MultiNestedTensor:
 
         return out
 
+    def dim(self) -> int:
+        return 2
+
+    def size(self, dim) -> int:
+        if dim == 0:
+            return self.num_rows
+        elif dim == 1:
+            return self.num_cols
+        else:
+            raise ValueError(f"Dim {dim} does not exist.")
+
+    @staticmethod
+    def stack(xs: List['MultiNestedTensor'],
+              dim: int = 0) -> 'MultiNestedTensor':
+        if len(xs) == 1:
+            return xs[0]
+        else:
+            raise NotImplementedError
+
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.

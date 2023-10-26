@@ -41,9 +41,9 @@ def test_categorical_tensor_mapper():
 
 def test_multicategorical_tensor_mapper():
     ser = pd.Series(['A,B', 'B', '', 'C', 'B,C'])
-    expected_values = torch.tensor([1, 0, 0, -1, -1, 0, -1])
-    expected_boundaries = torch.tensor([0, 2, 3, 4, 5, 7])
-    mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
+    expected_values = torch.tensor([1, 0, 0, -1, 0, -1])
+    expected_boundaries = torch.tensor([0, 2, 3, 3, 4, 6])
+    mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",", no_value="")
 
     tensor = mapper.forward(ser)
     values = tensor.values

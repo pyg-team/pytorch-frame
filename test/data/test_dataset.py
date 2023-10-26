@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import torch_frame
+from torch_frame import stype
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -85,7 +86,10 @@ def test_dataset_inductive_transform():
 
 
 def test_converter():
-    dataset = FakeDataset(num_rows=10).materialize()
+    dataset = FakeDataset(
+        num_rows=10,
+        stypes=[stype.categorical, stype.numerical,
+                stype.multicategorical]).materialize()
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,

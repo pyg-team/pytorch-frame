@@ -39,7 +39,7 @@ class StatType(Enum):
             ]
         elif stype == torch_frame.text_embedded:
             return []
-        elif stype == torch_frame.multi_categorical:
+        elif stype == torch_frame.multicategorical:
             return [
                 StatType.COUNT,
             ]

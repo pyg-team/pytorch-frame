@@ -10,6 +10,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
+from torch_frame import stype
 from torch_frame.config import TextEmbedderConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
@@ -19,6 +20,7 @@ from torch_frame.data.mapper import (
     TensorMapper,
     TextEmbeddingTensorMapper,
 )
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
     ColumnSelectType,
@@ -64,6 +66,7 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
+        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -76,22 +79,24 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
+        sep: str = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
+        self.sep = sep
         self.text_embedder_cfg = text_embedder_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
-        for col, stype in self.col_to_stype.items():
+        for col, semantic_type in self.col_to_stype.items():
             if col != self.target_col:
-                if stype not in self._col_names_dict:
-                    self._col_names_dict[stype] = [col]
+                if semantic_type not in self._col_names_dict:
+                    self._col_names_dict[semantic_type] = [col]
                 else:
-                    self._col_names_dict[stype].append(col)
-        for stype in self._col_names_dict.keys():
+                    self._col_names_dict[semantic_type].append(col)
+        for semantic_type in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
 
@@ -106,16 +111,16 @@ class DataFrameToTensorFrameConverter:
 
     def _get_mapper(self, col: str) -> TensorMapper:
         r"""Get TensorMapper given a column name."""
-        stype = self.col_to_stype[col]
-        if stype == torch_frame.numerical:
+        semantic_type = self.col_to_stype[col]
+        if semantic_type == torch_frame.numerical:
             return NumericalTensorMapper()
-        elif stype == torch_frame.categorical:
+        elif semantic_type == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
-        elif stype == torch_frame.multicategorical:
+        elif semantic_type == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.COUNT]
-            return MultiCategoricalTensorMapper(index)
-        elif stype == torch_frame.text_embedded:
+            return MultiCategoricalTensorMapper(index, sep=self.sep)
+        elif semantic_type == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
                 self.text_embedder_cfg.batch_size,
@@ -132,16 +137,19 @@ class DataFrameToTensorFrameConverter:
         r"""Convert a given :obj:`DataFrame` object into :class:`TensorFrame`
         object."""
 
-        xs_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+        xs_dict: Dict[torch_frame.stype,
+                      List[Union[Tensor,
+                                 MultiNestedTensor]]] = defaultdict(list)
 
-        for stype, col_names in self.col_names_dict.items():
+        for semantic_type, col_names in self.col_names_dict.items():
             for col in col_names:
                 out = self._get_mapper(col).forward(df[col], device=device)
-                xs_dict[stype].append(out)
-
+                xs_dict[semantic_type].append(out)
         feat_dict = {
-            stype: torch.stack(xs, dim=1)
-            for stype, xs in xs_dict.items()
+            semantic_type: (torch.stack(xs, dim=1)
+                            if not stype.is_stored_in_multi_nested_tensor else
+                            MultiNestedTensor.stack(xs, dim=1))
+            for semantic_type, xs in xs_dict.items()
         }
 
         y: Optional[Tensor] = None
@@ -164,6 +172,7 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
+        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
@@ -174,7 +183,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        sep: Optional[str] = ',',
+        sep: str = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -201,6 +210,11 @@ class Dataset(ABC):
         if len(missing_cols) > 0:
             raise ValueError(f"The column(s) '{missing_cols}' are specified "
                              f"but missing in the data frame")
+
+        if target_col is not None and self.col_to_stype[
+                target_col] == stype.multicategorical:
+            raise ValueError(
+                'Multilabel classification task is not yet supported.')
 
         self.text_embedder_cfg = text_embedder_cfg
         self.sep = sep
@@ -322,8 +336,13 @@ class Dataset(ABC):
             return self
 
         # 1. Fill column statistics:
-        for col, stype in self.col_to_stype.items():
-            self._col_stats[col] = compute_col_stats(self.df[col], stype)
+        for col, semantic_type in self.col_to_stype.items():
+            if semantic_type == stype.multicategorical:
+                ser = self.df[col].apply(lambda x: x.split(self.sep))
+                ser = self.df[col].explode()
+            else:
+                ser = self.df[col]
+            self._col_stats[col] = compute_col_stats(ser, stype)
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
@@ -352,6 +371,7 @@ class Dataset(ABC):
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
+            sep=self.sep,
             text_embedder_cfg=self.text_embedder_cfg,
         )
 

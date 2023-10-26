@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -91,20 +90,19 @@ class CategoricalTensorMapper(TensorMapper):
 
 
 class MultiCategoricalTensorMapper(TensorMapper):
-    r"""Maps any categorical series into an index representation, with
-    :obj:`-1` denoting NaN values.
-        -1 for no values and error for missing value
+    r"""Maps any multi-categorical series into an index representation, with
+    :obj:`-1` denoting missing values(NaN) and no value denoting not belonging
+    to any categories. If no_value is unspecified, then it will be treated the
+    same as missing values.
     """
     def __init__(
         self,
         categories: Iterable[Any],
-        sep: str = ",",
-        missing_value: object = np.nan,
+        sep: str = ',',
     ):
         super().__init__()
         self.categories = categories
         self.sep = sep
-        self.missing_value = missing_value
 
     def forward(
         self,
@@ -112,12 +110,8 @@ class MultiCategoricalTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> MultiNestedTensor:
-        if self.missing_value in ser:
-            raise ValueError("Missing Value is not currently supported"
-                             " in multi-categorical columns.")
         values = []
-        # TODO: When add logic to handle missing value here.
-        ser = ser.apply(lambda x: [
+        ser = ser.apply(lambda x: [] if x == '' else [
             self.categories.index(s) if s in self.categories else -1
             for s in x.split(self.sep)
         ])
