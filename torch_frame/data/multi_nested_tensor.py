@@ -6,8 +6,8 @@ from torch import Tensor
 
 
 class MultiNestedTensor:
-    r"""A PyTorch Tensor-based data structure that stores
-    :obj:`[num_rows, num_cols, *]` , where the size of last dimension can be
+    r"""A PyTorch tensor-based data structure that stores
+    :obj:`[num_rows, num_cols, *]`, where the size of last dimension can be
     different for different data/column. Internally, we store the object in an
     efficient flattened format: :obj:`(values, offset)`, where the PyTorch
     Tensor at :obj:`(i, j)` is accessed by
@@ -82,10 +82,6 @@ class MultiNestedTensor:
         out = self.__class__.__new__(self.__class__)
         for key, value in self.__dict__.items():
             out.__dict__[key] = value
-
-        out.values = copy.copy(out.values)
-        out.offset = copy.copy(out.offset)
-
         return out
 
     def __getitem__(
@@ -95,24 +91,30 @@ class MultiNestedTensor:
         if isinstance(index, Tuple):
             # Get an element of (i, j). Returns Tensor
             assert len(index) == 2
-            if index[0] < 0 or index[0] >= self.num_rows:
-                raise IndexError(
-                    f"Index out-of-bounds. The first element of {index} needs "
-                    f"to be [0, {self.num_rows}]")
-            if index[1] < 0 or index[1] >= self.num_cols:
-                raise IndexError(
-                    f"Index out-of-bounds. The second element of {index} "
-                    f"needs to be [0, {self.num_cols}]")
-            idx = index[0] * self.num_cols + index[1]
+            idx_0 = index[0]
+            # Support negative indices
+            if idx_0 < 0:
+                idx_0 = self.num_rows + idx_0
+            if idx_0 < 0 or idx_0 >= self.num_rows:
+                raise IndexError("Index out of bounds!")
+            idx_1 = index[1]
+            if idx_1 < 0:
+                idx_1 = self.num_cols + idx_1
+            if idx_1 < 0 or idx_1 >= self.num_cols:
+                raise IndexError("Index out of bounds!")
+
+            idx = idx_0 * self.num_cols + idx_1
             start_idx = self.offset[idx]
             end_idx = self.offset[idx + 1]
             out = self.values[start_idx:end_idx]
             return out
+
         elif isinstance(index, int):
+            # Support negative indices
+            if index < 0:
+                index = self.num_rows + index
             if index < 0 or index >= self.num_rows:
-                raise IndexError(
-                    f"Index out-of-bounds. The {index} needs to be "
-                    f"[0, {self.num_rows}]")
+                raise IndexError("Index out of bounds!")
             # Get i-th row. Returns MultiNestedTensor
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
@@ -122,17 +124,27 @@ class MultiNestedTensor:
             return MultiNestedTensor(num_rows=1, num_cols=self.num_cols,
                                      values=values, offset=offset)
         elif isinstance(index, Tensor) and index.ndim == 1:
-            return self._row_index_selet_helper(index)
+            return self.index_selet(index, dim=0)
         elif isinstance(index, List):
-            return self._row_index_selet_helper(
-                torch.LongTensor(index, device=self.values.device))
+            return self.index_selet(
+                torch.LongTensor(index, device=self.values.device), dim=0)
         else:
             raise RuntimeError("Advanced indexing not supported yet.")
 
-    def _row_index_selet_helper(self, index: Tensor) -> Tensor:
+    def index_selet(self, index: Tensor, dim: int) -> Tensor:
+        if dim == 0:
+            return self._row_index_select(index)
+        else:
+            raise RuntimeError(
+                f"index_select for dim={dim} not supported yet.")
+
+    def _row_index_select(self, index: Tensor) -> Tensor:
+        index = index.clone()
+        # Support negative indices
+        neg_idx = index < 0
+        index[neg_idx] = self.num_rows + index[neg_idx]
         if index.min() < 0 or index.max() >= self.num_rows:
-            raise IndexError(f"Index out-of-bounds. The {index} needs to be "
-                             f"[0, {self.num_rows}]")
+            raise IndexError("Index out of bounds!")
         # Calculate values
         count = self.offset[(index + 1) *
                             self.num_cols] - self.offset[index * self.num_cols]
