@@ -26,7 +26,7 @@ class TensorMapper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def backward(self, tensor: Tensor) -> pd.Series:
+    def backward(self, tensor: Union[Tensor, MultiNestedTensor]) -> pd.Series:
         r"""Maps a compact tensor representation back into the raw input data.
         The reverse operation of :meth:`forward`."""
         raise NotImplementedError
@@ -111,7 +111,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         ser: Series,
         *,
         device: Optional[torch.device] = None,
-    ) -> Union[Tensor, Tensor]:
+    ) -> MultiNestedTensor:
         if self.missing_value in ser:
             raise ValueError("Missing Value is not currently supported"
                              " in multi-categorical columns.")
@@ -125,9 +125,11 @@ class MultiCategoricalTensorMapper(TensorMapper):
         ser = ser.apply(lambda x: len(x))
         offset = torch.tensor([0] + ser.tolist(), device=device)
         offset = torch.cumsum(offset, dim=0)
-        return values, offset
+        return MultiNestedTensor(len(ser), 1, values, offset)
 
-    def backward(self, values: Tensor, offset: Tensor) -> pd.Series:
+    def backward(self, tensor: MultiNestedTensor) -> pd.Series:
+        values = tensor.values
+        offset = tensor.offset
         values = values.tolist()
         ser = []
         for i in range(1, len(offset)):

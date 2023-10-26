@@ -6,13 +6,11 @@ from .stats import StatType
 from .dataset import Dataset, DataFrameToTensorFrameConverter
 from .loader import DataLoader
 from .download import download_url
-from .rusty import Rusty
 
 data_classes = [
     'TensorFrame',
     'MultiNestedTensor',
     'Dataset',
-    'Rusty',
 ]
 
 loader_classes = [

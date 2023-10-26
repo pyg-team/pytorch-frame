@@ -112,7 +112,7 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
-        elif stype == torch_frame.multi_categorical:
+        elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return MultiCategoricalTensorMapper(index)
         elif stype == torch_frame.text_embedded:
@@ -138,6 +138,7 @@ class DataFrameToTensorFrameConverter:
             for col in col_names:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
+
         feat_dict = {
             stype: torch.stack(xs, dim=1)
             for stype, xs in xs_dict.items()
@@ -173,7 +174,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        delimiter: Optional[str] = ',',
+        sep: Optional[str] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -202,7 +203,7 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         self.text_embedder_cfg = text_embedder_cfg
-        self.delimiter = delimiter
+        self.sep = sep
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
