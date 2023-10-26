@@ -145,7 +145,7 @@ class TabNet(Module):
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
-                embeddings of size [batch_size, out_channels].
+                embeddings of size :obj:`[batch_size, out_channels]`.
                 If :obj:`return_reg` is :obj:`True`, return the entropy
                 regularization as well.
         """
