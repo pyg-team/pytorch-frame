@@ -48,7 +48,7 @@ class MultiNestedTensor:
                 1-dim PyTorch Tensor of :obj:`i`-th row and :obj:`j`-th column.
 
         Returns:
-            MultiNestedTensor: Returned class object.
+            MultiNestedTensor: Returned the class object.
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -63,12 +63,15 @@ class MultiNestedTensor:
                 if not isinstance(tensor, Tensor):
                     raise RuntimeError(
                         "The element of tensor_mat must be PyTorch Tensor")
+                if tensor.ndim != 1:
+                    raise RuntimeError(
+                        "tensor in tensor_mat needs to be 1-dimensional.")
                 values_list.append(tensor)
                 accum_idx += len(tensor)
                 offset_list.append(accum_idx)
 
         values = torch.cat(values_list)
-        offset = torch.tensor(offset_list, dtype=torch.long)
+        offset = torch.LongTensor(offset_list)
 
         return cls(num_rows, num_cols, values, offset)
 
@@ -190,7 +193,7 @@ class MultiNestedTensor:
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
-    r"""Fast implementation of bached version of torch.arange.
+    r"""Fast implementation of batched version of :meth:`torch.arange`.
     It essentially does the following
     >>> batch = torch.cat([torch.full((c,), i) for i, c in enumerate(count)])
     >>> arange = torch.cat([torch.arange(c) for c in count])
