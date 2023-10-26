@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `multicategorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149/files))
 - Added `Mercari` dataset ([#123](https://github.com/pyg-team/pytorch-frame/pull/123/files))
 - Added the model performance benchmark script ([#114](https://github.com/pyg-team/pytorch-frame/pull/114))
