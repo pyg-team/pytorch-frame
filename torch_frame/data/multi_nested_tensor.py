@@ -76,16 +76,12 @@ class MultiNestedTensor:
         return cls(num_rows, num_cols, values, offset)
 
     def __repr__(self) -> str:
-        name = self.__class__.__name__
-        name += f"(num_rows={self.num_rows}, num_cols={self.num_cols}, "
-        name += f"device={self.values.device})"
-        return name
+        name = ' '.join([
+            f"{self.__class__.__name__}(num_rows={self.num_rows},",
+            f"num_cols={self.num_cols},", f"device={self.values.device})"
+        ])
 
-    def __copy__(self) -> 'MultiNestedTensor':
-        out = self.__class__.__new__(self.__class__)
-        for key, value in self.__dict__.items():
-            out.__dict__[key] = value
-        return out
+        return name
 
     def __getitem__(
         self,
@@ -127,14 +123,14 @@ class MultiNestedTensor:
             return MultiNestedTensor(num_rows=1, num_cols=self.num_cols,
                                      values=values, offset=offset)
         elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_selet(index, dim=0)
+            return self.index_select(index, dim=0)
         elif isinstance(index, List):
-            return self.index_selet(
-                torch.LongTensor(index, device=self.values.device), dim=0)
+            return self.index_select(
+                torch.tensor(index, device=self.values.device), dim=0)
         else:
             raise RuntimeError("Advanced indexing not supported yet.")
 
-    def index_selet(self, index: Tensor, dim: int) -> Tensor:
+    def index_select(self, index: Tensor, dim: int) -> Tensor:
         if dim == 0:
             return self._row_index_select(index)
         else:
