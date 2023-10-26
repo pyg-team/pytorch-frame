@@ -342,7 +342,7 @@ class Dataset(ABC):
                 ser = self.df[col].explode()
             else:
                 ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(ser, stype)
+            self._col_stats[col] = compute_col_stats(ser, semantic_type)
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.

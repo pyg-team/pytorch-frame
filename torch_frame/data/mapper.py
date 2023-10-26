@@ -92,8 +92,7 @@ class CategoricalTensorMapper(TensorMapper):
 class MultiCategoricalTensorMapper(TensorMapper):
     r"""Maps any multi-categorical series into an index representation, with
     :obj:`-1` denoting missing values(NaN) and no value denoting not belonging
-    to any categories. If no_value is unspecified, then it will be treated the
-    same as missing values.
+    to any categories.
     """
     def __init__(
         self,
