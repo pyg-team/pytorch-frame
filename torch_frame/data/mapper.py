@@ -109,6 +109,9 @@ class MultiCategoricalTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> MultiNestedTensor:
+        if ser.dtype != 'object' or not all(
+                isinstance(item, str) for item in ser):
+            raise ValueError('Multi-categorical types expect string as input')
         values = []
         ser = ser.apply(lambda x: [] if x == '' else [
             self.categories.index(s) if s in self.categories else -1
