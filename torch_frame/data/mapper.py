@@ -92,7 +92,8 @@ class CategoricalTensorMapper(TensorMapper):
 class MultiCategoricalTensorMapper(TensorMapper):
     r"""Maps any multi-categorical series into an index representation, with
     :obj:`-1` denoting missing values (NaN) and no value denoting not belonging
-    to any categories.
+    to any categories. If the cell contains unseen categories, it will be
+    ignored.
 
     Args:
         categories (List[Any]): A list of possible categories in the

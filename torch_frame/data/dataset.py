@@ -1,5 +1,6 @@
 import copy
 import functools
+import logging
 import os.path as osp
 from abc import ABC
 from collections import defaultdict
@@ -79,7 +80,7 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        sep: str = ',',
+        sep: Dict[str, str] = {},
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.col_to_stype = col_to_stype
@@ -118,8 +119,13 @@ class DataFrameToTensorFrameConverter:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
-            index, _ = self.col_stats[col][StatType.COUNT]
-            return MultiCategoricalTensorMapper(index, sep=self.sep)
+            index, _ = self.col_stats[col][StatType.OCCURRENCE]
+            if col not in self.sep:
+                logging.warning(
+                    "The separator is not specified for multicategorical"
+                    " column: {col}. ',' will be set as default separator.")
+                self.sep[col] = ','
+            return MultiCategoricalTensorMapper(index, sep=self.sep[col])
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -180,7 +186,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        sep: str = ',',
+        sep: Dict[str, str] = {},
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -334,15 +340,14 @@ class Dataset(ABC):
 
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
-            if stype == torch_frame.multicategorical:
-                ser = self.df[col].apply(
-                    lambda x: [cat.strip() for cat in x.split(self.sep)]
-                    if x is not None and x != '' else [])
-                ser = ser.explode()
-                ser = ser.dropna()
-            else:
-                ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(ser, stype)
+            ser = self.df[col]
+            if stype == torch_frame.multicategorical and col not in self.sep:
+                logging.warning(
+                    "The separator is not specified for multicategorical"
+                    " column: {col}. ',' will be set as default separator.")
+                self.sep[col] = ','
+            self._col_stats[col] = compute_col_stats(
+                ser, stype, sep=self.sep.get(col, None))
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.

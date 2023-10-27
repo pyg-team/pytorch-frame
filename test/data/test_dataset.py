@@ -101,18 +101,20 @@ def test_converter():
 
 
 def test_multicategorical_materialization():
-    data = {'a': ['A,B', 'B,C,A', '', 'B', None]}
+    data = {'a': ['A|B', 'B|C|A', '', '', 'B', 'B|A', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'a': stype.multicategorical})
+    dataset = Dataset(df, {'a': stype.multicategorical}, sep={'a': '|'})
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
     assert torch.equal(feat[0, 0], torch.tensor([1, 0], device=feat.device))
-    assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1], device=feat.device))
-    assert feat[2, 0].numel() == 0
-    assert torch.equal(feat[4, 0], torch.tensor([-1], device=feat.device))
-    assert StatType.COUNT in dataset.col_stats['a']
-    assert dataset.col_stats['a'][StatType.COUNT][0] == ['B', 'A', 'C']
-    assert dataset.col_stats['a'][StatType.COUNT][1] == [3, 2, 1]
+    assert torch.equal(feat[1, 0], torch.tensor([0, 3, 1], device=feat.device))
+    assert torch.equal(feat[2, 0], torch.tensor([2], device=feat.device))
+    assert torch.equal(feat[6, 0], torch.tensor([-1], device=feat.device))
+    assert StatType.OCCURRENCE in dataset.col_stats['a']
+    assert dataset.col_stats['a'][StatType.OCCURRENCE][0] == [
+        'B', 'A', '', 'C'
+    ]
+    assert dataset.col_stats['a'][StatType.OCCURRENCE][1] == [4, 3, 2, 1]
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
