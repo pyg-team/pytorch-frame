@@ -62,16 +62,6 @@ def test_multi_nested_tensor_basic():
     assert empty_multi_nested_tensor.num_rows == 0
     assert empty_multi_nested_tensor.num_cols == num_cols
 
-    # Test multi_nested_tensor[:, i] indexing
-    # for j in range(-num_cols, num_cols):
-    #     multi_nested_tensor_col = multi_nested_tensor[:, j]
-    #     assert multi_nested_tensor_col.num_rows == num_rows
-    #     assert multi_nested_tensor_col.num_cols == 1
-    #     for i in range(-num_cols, num_cols):
-    #         tensor = multi_nested_tensor_col[i, 0]
-    #         assert isinstance(tensor, torch.Tensor)
-    #         assert torch.allclose(tensor_mat[i][j], tensor)
-
     # Test multi_nested_tensor[List[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
@@ -81,3 +71,15 @@ def test_multi_nested_tensor_basic():
             for j in range(num_cols):
                 tensor = multi_nested_tensor_indexed[i, j]
                 assert torch.allclose(tensor_mat[idx][j], tensor)
+
+    # Test multi_nested_tensor[:, i] indexing
+    for j in range(-num_cols, num_cols):
+        multi_nested_tensor_col = multi_nested_tensor[:, j]
+        assert multi_nested_tensor_col.num_rows == num_rows
+        assert multi_nested_tensor_col.num_cols == 1
+        for i in range(-num_rows, num_rows):
+            tensor = multi_nested_tensor_col[i, 0]
+            assert isinstance(tensor, torch.Tensor)
+            assert torch.allclose(tensor_mat[i][j], tensor)
+
+    # TODO: Test column List[int] indexing and slicing once supported.
