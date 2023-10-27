@@ -97,7 +97,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
     Args:
         categories (List[Any]): A list of possible categories in the
-        multi-categorical column sorted by occurence.
+        multi-categorical column sorted by occurrence.
         sep (str): The delimiter for the categories in each cell.
         (default: :obj:`,`)
     """
