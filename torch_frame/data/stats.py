@@ -49,7 +49,7 @@ class StatType(Enum):
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
 
-    def compute(self, ser: Series, sep: Optional[str]) -> Any:
+    def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
             return np.mean(ser.values).item()
 
