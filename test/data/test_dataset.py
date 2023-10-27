@@ -108,7 +108,7 @@ def test_multi_categorical_materialization():
     feat = dataset.tensor_frame.feat_dict[stype.multi_categorical]
     assert torch.equal(feat[0, 0], torch.tensor([1, 0], device=feat.device))
     assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1], device=feat.device))
-    assert torch.equal(feat[2, 0], torch.Tensor(device=feat.device))
+    assert feat[2, 0].numel() == 0
     assert torch.equal(feat[4, 0], torch.tensor([-1], device=feat.device))
     assert StatType.COUNT in dataset.col_stats['a']
     assert dataset.col_stats['a'][StatType.COUNT][0] == ['B', 'A', 'C']
