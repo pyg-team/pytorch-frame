@@ -93,10 +93,16 @@ class MultiCategoricalTensorMapper(TensorMapper):
     r"""Maps any multi-categorical series into an index representation, with
     :obj:`-1` denoting missing values (NaN) and no value denoting not belonging
     to any categories.
+
+    Args:
+        categories (List[Any]): A list of possible categories in the
+        multi-categorical column.
+        sep (str): The delimiter for the categories in each cell.
+        (default: :obj:`,`)
     """
     def __init__(
         self,
-        categories: Iterable[Any],
+        categories: List[Any],
         sep: str = ',',
     ):
         super().__init__()

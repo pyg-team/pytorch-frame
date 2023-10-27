@@ -14,7 +14,7 @@ class MultiNestedTensor:
     :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`
 
     Args:
-        num_rows (int): Numnber of rows.
+        num_rows (int): Number of rows.
         num_cols (int): Number of columns.
         values (Tensor): The values Tensor.
         offset (Tensor): The offset Tensor.
