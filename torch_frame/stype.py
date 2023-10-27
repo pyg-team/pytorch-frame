@@ -23,12 +23,21 @@ class stype(Enum):
     numerical = 'numerical'
     categorical = 'categorical'
     text_embedded = 'text_embedded'
+    multi_categorical = 'multi_categorical'
 
     @property
     def is_text_stype(self) -> bool:
         return self in [stype.text_embedded]
 
+    @property
+    def use_multi_nested_tensor(self) -> bool:
+        r""" This property indicates if the data of an stype is stored in
+        :class:`torch_frame.data.MultiNestedTensor`.
+        """
+        return self in [stype.multi_categorical]
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')
 text_embedded = stype('text_embedded')
+multi_categorical = stype('multi_categorical')

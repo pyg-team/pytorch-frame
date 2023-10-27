@@ -83,7 +83,6 @@ class TensorFrame:
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
-
             if feat.dim() < 2:
                 raise ValueError(
                     f"feat_dict['{stype_name}'] must be at least 2-dimensional"

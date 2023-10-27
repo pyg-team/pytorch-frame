@@ -14,7 +14,7 @@ class MultiNestedTensor:
     :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`
 
     Args:
-        num_rows (int): Numnber of rows.
+        num_rows (int): Number of rows.
         num_cols (int): Number of columns.
         values (Tensor): The values Tensor.
         offset (Tensor): The offset Tensor.
@@ -130,6 +130,9 @@ class MultiNestedTensor:
         else:
             raise RuntimeError("Advanced indexing not supported yet.")
 
+    def __len__(self):
+        return self.num_rows
+
     def index_select(self, index: Tensor, dim: int) -> Tensor:
         if dim == 0:
             return self._row_index_select(index)
@@ -186,6 +189,40 @@ class MultiNestedTensor:
         out.offset = fn(out.offset)
 
         return out
+
+    def dim(self) -> int:
+        return 3
+
+    @property
+    def device(self) -> torch.device:
+        return self.values.device
+
+    def size(self, dim: int) -> int:
+        r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
+        """
+        if dim < 0:
+            dim = self.dim - dim
+        if dim == 0:
+            return self.num_rows
+        elif dim == 1:
+            return self.num_cols
+        elif dim == 2:
+            raise ValueError(
+                "MultiNestedTensor does not have a fixed length on the third"
+                " dimension.")
+        else:
+            raise IndexError(
+                "Dimension out of range (expected to be in range of [0, 2],"
+                f" but got {dim}")
+
+    @staticmethod
+    def stack(xs: List['MultiNestedTensor'],
+              dim: int = 0) -> 'MultiNestedTensor':
+        # TODO: To be implemented.
+        if len(xs) == 1:
+            return xs[0]
+        else:
+            raise NotImplementedError
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
