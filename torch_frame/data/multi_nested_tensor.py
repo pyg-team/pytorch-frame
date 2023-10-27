@@ -99,7 +99,7 @@ class MultiNestedTensor:
             elif isinstance(index, List):
                 # TODO: Support this
                 return multi_nested_tensor.index_select(
-                    torch.tensor(index[1], device=multi_nested_tensor.device),
+                    torch.tensor(index, device=multi_nested_tensor.device),
                     dim=1)
             elif isinstance(index, slice):
                 # TODO: Support this
