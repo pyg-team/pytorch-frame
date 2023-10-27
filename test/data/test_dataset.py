@@ -111,9 +111,9 @@ def test_multicategorical_materialization():
     assert torch.equal(feat[2, 0], torch.tensor([2], device=feat.device))
     assert torch.equal(feat[6, 0], torch.tensor([-1], device=feat.device))
     assert StatType.MULTI_COUNT in dataset.col_stats['a']
-    assert dataset.col_stats['a'][StatType.MULTI_COUNT][0] == [
+    assert (dataset.col_stats['a'][StatType.MULTI_COUNT][0] == [
         'B', 'A', '', 'C'
-    ]
+    ])
     assert dataset.col_stats['a'][StatType.MULTI_COUNT][1] == [4, 3, 2, 1]
 
 
