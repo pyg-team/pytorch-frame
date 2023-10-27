@@ -145,9 +145,8 @@ class DataFrameToTensorFrameConverter:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
         feat_dict = {
-            stype: (torch.stack(xs, dim=1)
-                    if not stype.is_stored_in_multi_nested_tensor else
-                    MultiNestedTensor.stack(xs, dim=1))
+            stype: (torch.stack(xs, dim=1) if not stype.use_multi_nested_tensor
+                    else MultiNestedTensor.stack(xs, dim=1))
             for stype, xs in xs_dict.items()
         }
 
@@ -210,8 +209,8 @@ class Dataset(ABC):
             raise ValueError(f"The column(s) '{missing_cols}' are specified "
                              f"but missing in the data frame")
 
-        if target_col is not None and self.col_to_stype[
-                target_col] == torch_frame.multicategorical:
+        if (target_col is not None and self.col_to_stype[target_col]
+                == torch_frame.multicategorical):
             raise ValueError(
                 'Multilabel classification task is not yet supported.')
 

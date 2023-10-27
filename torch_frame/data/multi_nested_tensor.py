@@ -191,21 +191,30 @@ class MultiNestedTensor:
         return out
 
     def dim(self) -> int:
-        return 2
+        return 3
 
-    def size(self, dim) -> int:
+    def size(self, dim: int) -> int:
+        r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
+        """
+        if dim < 0:
+            dim = self.dim - dim
         if dim == 0:
             return self.num_rows
         elif dim == 1:
             return self.num_cols
+        elif dim == 2:
+            raise ValueError(
+                "MultiNestedTensor does not have a fixed length on the third"
+                " dimension.")
         else:
             raise IndexError(
-                f"Dimension out of range (expected to be in range of [0, 1], but got {dim}"
-            )
+                "Dimension out of range (expected to be in range of [0, 2],"
+                f" but got {dim}")
 
     @staticmethod
     def stack(xs: List['MultiNestedTensor'],
               dim: int = 0) -> 'MultiNestedTensor':
+        # TODO: To be implemented.
         if len(xs) == 1:
             return xs[0]
         else:
