@@ -199,7 +199,9 @@ class MultiNestedTensor:
         elif dim == 1:
             return self.num_cols
         else:
-            raise IndexError(f"Dimension out of range (expected to be in range of [0, 1], but got {dim}")
+            raise IndexError(
+                f"Dimension out of range (expected to be in range of [0, 1], but got {dim}"
+            )
 
     @staticmethod
     def stack(xs: List['MultiNestedTensor'],
