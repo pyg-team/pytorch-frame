@@ -116,7 +116,7 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
-        elif stype == torch_frame.multicategorical:
+        elif stype == torch_frame.multi_categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return MultiCategoricalTensorMapper(index, sep=self.sep)
         elif stype == torch_frame.text_embedded:
@@ -210,7 +210,7 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         if (target_col is not None and self.col_to_stype[target_col]
-                == torch_frame.multicategorical):
+                == torch_frame.multi_categorical):
             raise ValueError(
                 'Multilabel classification task is not yet supported.')
 
@@ -335,7 +335,7 @@ class Dataset(ABC):
 
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
-            if stype == torch_frame.multicategorical:
+            if stype == torch_frame.multi_categorical:
                 ser = self.df[col].apply(
                     lambda x: [cat.strip() for cat in x.split(self.sep)]
                     if x is not None and x != '' else [])

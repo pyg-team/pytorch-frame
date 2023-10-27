@@ -193,6 +193,10 @@ class MultiNestedTensor:
     def dim(self) -> int:
         return 3
 
+    @property
+    def device(self) -> torch.device:
+        return self.values.device
+
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
         """
