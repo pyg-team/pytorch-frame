@@ -58,6 +58,7 @@ def test_multi_nested_tensor_basic():
     assert_equal(tensor_mat[3:5], multi_nested_tensor[3:5])
     assert_equal(tensor_mat[-7:5], multi_nested_tensor[-7:5])
     assert_equal(tensor_mat[-7:-1], multi_nested_tensor[-7:-1])
+    assert_equal(tensor_mat[1::2], multi_nested_tensor[1::2])
     empty_multi_nested_tensor = multi_nested_tensor[5:3]
     assert empty_multi_nested_tensor.num_rows == 0
     assert empty_multi_nested_tensor.num_cols == num_cols
