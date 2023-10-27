@@ -4,6 +4,8 @@ from typing import List, Union
 import pandas as pd
 from torch import Tensor
 
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+
 
 class TaskType(Enum):
     r"""The type of the task.
@@ -57,3 +59,4 @@ DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
+TensorData = Union[Tensor, MultiNestedTensor]

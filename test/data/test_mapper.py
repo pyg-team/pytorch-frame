@@ -39,10 +39,10 @@ def test_categorical_tensor_mapper():
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
 
 
-def test_multi_categorical_tensor_mapper():
+def test_multicategorical_tensor_mapper():
     ser = pd.Series(['A,B', 'B', '', 'C', 'B,C', None])
-    expected_values = torch.tensor([1, 0, 0, -1, 0, -1, -1])
-    expected_boundaries = torch.tensor([0, 2, 3, 3, 4, 6, 7])
+    expected_values = torch.tensor([1, 0, 0, 0, -1])
+    expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
     mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
     tensor = mapper.forward(ser)

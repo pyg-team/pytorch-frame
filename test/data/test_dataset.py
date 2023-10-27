@@ -89,7 +89,7 @@ def test_converter():
     dataset = FakeDataset(
         num_rows=10,
         stypes=[stype.categorical, stype.numerical,
-                stype.multi_categorical]).materialize()
+                stype.multicategorical]).materialize()
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,
@@ -100,12 +100,12 @@ def test_converter():
     assert len(tf) == len(dataset)
 
 
-def test_multi_categorical_materialization():
+def test_multicategorical_materialization():
     data = {'a': ['A,B', 'B,C,A', '', 'B', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'a': stype.multi_categorical})
+    dataset = Dataset(df, {'a': stype.multicategorical})
     dataset.materialize()
-    feat = dataset.tensor_frame.feat_dict[stype.multi_categorical]
+    feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
     assert torch.equal(feat[0, 0], torch.tensor([1, 0], device=feat.device))
     assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1], device=feat.device))
     assert feat[2, 0].numel() == 0
