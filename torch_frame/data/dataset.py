@@ -80,7 +80,7 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        sep: Dict[str, str] = {},
+        sep: Optional[Dict[str, str]] = None,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.col_to_stype = col_to_stype
