@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Supported row advanced indexing of `MultiNestedTensor` ([#150](https://github.com/pyg-team/pytorch-frame/pull/150))
 - Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 
