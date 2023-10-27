@@ -39,6 +39,10 @@ class StatType(Enum):
             ]
         elif stype == torch_frame.text_embedded:
             return []
+        elif stype == torch_frame.multi_categorical:
+            return [
+                StatType.COUNT,
+            ]
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
 
