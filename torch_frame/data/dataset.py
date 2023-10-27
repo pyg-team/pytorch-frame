@@ -342,7 +342,7 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             if stype == torch_frame.multicategorical and col not in self.sep:
-                logging.warning(
+                warnings.warn(
                     "The separator is not specified for multicategorical"
                     " column: {col}. ',' will be set as default separator.")
                 self.sep[col] = ','
