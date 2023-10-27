@@ -128,7 +128,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         ser = ser.apply(lambda x: len(x))
         offset = torch.tensor([0] + ser.tolist(), device=device)
         offset = torch.cumsum(offset, dim=0)
-        return MultiNestedTensor(len(ser), 1, values, offset)
+        return MultiNestedTensor(num_rows=len(ser), num_cols=1, values=values, offset=offset)
 
     def backward(self, tensor: MultiNestedTensor) -> pd.Series:
         values = tensor.values
