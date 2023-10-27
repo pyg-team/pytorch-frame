@@ -121,7 +121,7 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.OCCURRENCE]
             if col not in self.sep:
-                logging.warning(
+                warnings.warn(
                     "The separator is not specified for multicategorical"
                     " column: {col}. ',' will be set as default separator.")
                 self.sep[col] = ','
