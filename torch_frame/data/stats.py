@@ -76,7 +76,7 @@ class StatType(Enum):
 def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
-    sep: Optional[str],
+    sep: Optional[str] = None,
 ) -> Dict[StatType, Any]:
 
     if stype == torch_frame.numerical:
