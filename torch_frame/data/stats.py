@@ -26,7 +26,7 @@ class StatType(Enum):
     COUNT = 'COUNT'
 
     # Multicategorical:
-    OCCURRENCE = 'OCCURRENCE'
+    MULTI_COUNT = 'MULTI_COUNT'
 
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
@@ -44,7 +44,7 @@ class StatType(Enum):
             return []
         elif stype == torch_frame.multicategorical:
             return [
-                StatType.OCCURRENCE,
+                StatType.MULTI_COUNT,
             ]
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
@@ -62,7 +62,7 @@ class StatType(Enum):
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
-        elif self == StatType.OCCURRENCE:
+        elif self == StatType.MULTI_COUNT:
             assert sep is not None
             ser = ser.apply(
                 lambda x: set([cat.strip() for cat in x.split(sep)])

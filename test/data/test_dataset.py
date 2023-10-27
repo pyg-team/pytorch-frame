@@ -110,11 +110,11 @@ def test_multicategorical_materialization():
     assert torch.equal(feat[1, 0], torch.tensor([0, 3, 1], device=feat.device))
     assert torch.equal(feat[2, 0], torch.tensor([2], device=feat.device))
     assert torch.equal(feat[6, 0], torch.tensor([-1], device=feat.device))
-    assert StatType.OCCURRENCE in dataset.col_stats['a']
-    assert dataset.col_stats['a'][StatType.OCCURRENCE][0] == [
+    assert StatType.MULTI_COUNT in dataset.col_stats['a']
+    assert dataset.col_stats['a'][StatType.MULTI_COUNT][0] == [
         'B', 'A', '', 'C'
     ]
-    assert dataset.col_stats['a'][StatType.OCCURRENCE][1] == [4, 3, 2, 1]
+    assert dataset.col_stats['a'][StatType.MULTI_COUNT][1] == [4, 3, 2, 1]
 
 
 @pytest.mark.parametrize('with_nan', [True, False])

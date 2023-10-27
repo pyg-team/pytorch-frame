@@ -1,7 +1,7 @@
 import copy
 import functools
-import logging
 import os.path as osp
+import warnings
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -119,7 +119,7 @@ class DataFrameToTensorFrameConverter:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
-            index, _ = self.col_stats[col][StatType.OCCURRENCE]
+            index, _ = self.col_stats[col][StatType.MULTI_COUNT]
             if col not in self.sep:
                 warnings.warn(
                     "The separator is not specified for multicategorical"

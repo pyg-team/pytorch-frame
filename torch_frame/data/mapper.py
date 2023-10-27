@@ -115,7 +115,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         )
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
-    def _row_to_tensor(self, row: str):
+    def _split_by_sep(self, row: str):
         if row is None:
             return [-1]
         else:
@@ -131,7 +131,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
             raise ValueError('Multi-categorical types expect string as input')
         values = []
         original_index = ser.index
-        ser = ser.apply(self._row_to_tensor)
+        ser = ser.apply(self._split_by_sep)
         ser = ser.explode()
         ser = pd.merge(
             ser.rename('data'),
@@ -141,11 +141,11 @@ class MultiCategoricalTensorMapper(TensorMapper):
             right_index=True,
         ).dropna()
         ser['index'] = ser['index'].astype('int64')
-        ser = ser.groupby(level=0)['index'].apply(list)
-        ser = ser.reindex(original_index, fill_value=[])
-        values = torch.tensor(sum(ser, []), device=device)
-        ser = ser.apply(lambda x: len(x))
-        offset = torch.tensor([0] + ser.tolist(), device=device)
+        values = torch.tensor(ser['index'].values, device=device)
+        offset = ser.index.value_counts()
+        offset = offset.reindex(original_index, fill_value=0)
+        offset = pd.concat((pd.Series([0]), offset))
+        offset = torch.tensor(offset.values, device=device)
         offset = torch.cumsum(offset, dim=0)
         return MultiNestedTensor(num_rows=len(ser), num_cols=1, values=values,
                                  offset=offset)
