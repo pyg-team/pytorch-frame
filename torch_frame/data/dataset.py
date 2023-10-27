@@ -120,10 +120,12 @@ class DataFrameToTensorFrameConverter:
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
-            if col not in self.sep:
+            if self.sep is None or col not in self.sep:
                 warnings.warn(
                     "The separator is not specified for multicategorical"
                     " column: {col}. ',' will be set as default separator.")
+                if self.sep is None:
+                    self.sep = {}
                 self.sep[col] = ','
             return MultiCategoricalTensorMapper(index, sep=self.sep[col])
         elif stype == torch_frame.text_embedded:
@@ -341,10 +343,13 @@ class Dataset(ABC):
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
-            if stype == torch_frame.multicategorical and col not in self.sep:
+            if stype == torch_frame.multicategorical and (self.sep is None or
+                                                          col not in self.sep):
                 warnings.warn(
                     "The separator is not specified for multicategorical"
                     " column: {col}. ',' will be set as default separator.")
+                if self.sep is None:
+                    self.sep = {}
                 self.sep[col] = ','
             self._col_stats[col] = compute_col_stats(
                 ser, stype, sep=self.sep.get(col, None))
