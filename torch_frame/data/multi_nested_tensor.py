@@ -91,15 +91,8 @@ class MultiNestedTensor:
             # index[0] for row indexing, index[1] for column indexing
             assert len(index) == 2
             if isinstance(index[0], int) and isinstance(index[1], int):
-                # tensor[i, j]
                 # Returns Tensor
-                idx0 = self._to_positive_index(index[0], dim=0)
-                idx1 = self._to_positive_index(index[1], dim=1)
-                idx = idx0 * self.num_cols + idx1
-                start_idx = self.offset[idx]
-                end_idx = self.offset[idx + 1]
-                out = self.values[start_idx:end_idx]
-                return out
+                return MultiNestedTensor.get_tensor(self, index[0], index[1])
             else:
                 # Returns MultiNestedTensor
                 out = self
@@ -356,10 +349,9 @@ class MultiNestedTensor:
 
         Args:
             multi_nested_tensor (MultiNestedTensor): Input
-                :class:`MultiNestedTensor` to be indexed.
+                :class:`MultiNestedTensor` object to be indexed.
             index (Union[int, Tensor, List, slice]): Input :obj:`index`.
             dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
-
         """
         if isinstance(index, int):
             return multi_nested_tensor.single_index_select(index, dim=dim)
@@ -373,6 +365,29 @@ class MultiNestedTensor:
                 dim=dim)
         else:
             raise NotImplementedError
+
+    @staticmethod
+    def get_tensor(
+        multi_nested_tensor: 'MultiNestedTensor',
+        i: int,
+        j: int,
+    ) -> Tensor:
+        r"""Get :obj:`(i, j)`-th :class:`Tensor` object of
+        :class:`MultiNestedTensor` object.
+
+        Args:
+            multi_nested_tensor (MultiNestedTensor): Input
+                :class:`MultiNestedTensor` object.
+            i (int): The row integer index.
+            j (int): The column integer index.
+        """
+        i = multi_nested_tensor._to_positive_index(i, dim=0)
+        j = multi_nested_tensor._to_positive_index(j, dim=1)
+        idx = i * multi_nested_tensor.num_cols + j
+        start_idx = multi_nested_tensor.offset[idx]
+        end_idx = multi_nested_tensor.offset[idx + 1]
+        out = multi_nested_tensor.values[start_idx:end_idx]
+        return out
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
