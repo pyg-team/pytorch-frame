@@ -12,8 +12,8 @@ def assert_equal(tensor_mat: List[List[Tensor]],
                  multi_nested_tensor: MultiNestedTensor):
     assert len(tensor_mat) == multi_nested_tensor.shape[0]
     assert len(tensor_mat[0]) == multi_nested_tensor.shape[1]
-    for i in range(multi_nested_tensor.num_rows):
-        for j in range(multi_nested_tensor.num_cols):
+    for i in range(multi_nested_tensor.shape[0]):
+        for j in range(multi_nested_tensor.shape[1]):
             tensor = multi_nested_tensor[i, j]
             assert torch.allclose(tensor_mat[i][j], tensor)
 
@@ -32,8 +32,8 @@ def test_multi_nested_tensor_basic():
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
     assert str(multi_nested_tensor
                ) == "MultiNestedTensor(num_rows=8, num_cols=10, device=cpu)"
-    assert multi_nested_tensor.num_rows == num_rows
-    assert multi_nested_tensor.num_cols == num_cols
+    assert multi_nested_tensor.shape[0] == num_rows
+    assert multi_nested_tensor.shape[1] == num_cols
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
@@ -45,8 +45,8 @@ def test_multi_nested_tensor_basic():
     # Test multi_nested_tensor[i] indexing
     for i in range(-num_rows, num_rows):
         multi_nested_tensor_row = multi_nested_tensor[i]
-        assert multi_nested_tensor_row.num_rows == 1
-        assert multi_nested_tensor_row.num_cols == num_cols
+        assert multi_nested_tensor_row.shape[0] == 1
+        assert multi_nested_tensor_row.shape[1] == num_cols
         for j in range(-num_cols, num_cols):
             tensor = multi_nested_tensor_row[0, j]
             assert isinstance(tensor, torch.Tensor)
@@ -61,14 +61,14 @@ def test_multi_nested_tensor_basic():
     assert_equal(tensor_mat[-7:-1], multi_nested_tensor[-7:-1])
     assert_equal(tensor_mat[1::2], multi_nested_tensor[1::2])
     empty_multi_nested_tensor = multi_nested_tensor[5:3]
-    assert empty_multi_nested_tensor.num_rows == 0
-    assert empty_multi_nested_tensor.num_cols == num_cols
+    assert empty_multi_nested_tensor.shape[0] == 0
+    assert empty_multi_nested_tensor.shape[1] == num_cols
 
     # Test multi_nested_tensor[List[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
-        assert multi_nested_tensor_indexed.num_rows == len(index)
-        assert multi_nested_tensor_indexed.num_cols == num_cols
+        assert multi_nested_tensor_indexed.shape[0] == len(index)
+        assert multi_nested_tensor_indexed.shape[1] == num_cols
         for i, idx in enumerate(index):
             for j in range(num_cols):
                 tensor = multi_nested_tensor_indexed[i, j]
@@ -77,8 +77,8 @@ def test_multi_nested_tensor_basic():
     # Test multi_nested_tensor[:, i] indexing
     for j in range(-num_cols, num_cols):
         multi_nested_tensor_col = multi_nested_tensor[:, j]
-        assert multi_nested_tensor_col.num_rows == num_rows
-        assert multi_nested_tensor_col.num_cols == 1
+        assert multi_nested_tensor_col.shape[0] == num_rows
+        assert multi_nested_tensor_col.shape[1] == 1
         for i in range(-num_rows, num_rows):
             tensor = multi_nested_tensor_col[i, 0]
             assert isinstance(tensor, torch.Tensor)
