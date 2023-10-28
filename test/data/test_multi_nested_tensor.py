@@ -9,8 +9,8 @@ from torch_frame.data import MultiNestedTensor
 
 def assert_equal(tensor_mat: List[List[Tensor]],
                  multi_nested_tensor: MultiNestedTensor):
-    assert len(tensor_mat) == multi_nested_tensor.num_rows
-    assert len(tensor_mat[0]) == multi_nested_tensor.num_cols
+    assert len(tensor_mat) == multi_nested_tensor.shape[0]
+    assert len(tensor_mat[0]) == multi_nested_tensor.shape[1]
     for i in range(multi_nested_tensor.num_rows):
         for j in range(multi_nested_tensor.num_cols):
             tensor = multi_nested_tensor[i, j]

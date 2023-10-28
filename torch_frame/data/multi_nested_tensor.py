@@ -86,83 +86,29 @@ class MultiNestedTensor:
         self,
         index: Any,
     ) -> Union['MultiNestedTensor', Tensor]:
-        def col_index(
-                multi_nested_tensor: 'MultiNestedTensor',
-                index: Union[int, Tensor, List, slice]) -> 'MultiNestedTensor':
-            r"""Supports all types of column-level advanced indexing of input
-            :class:`MultiNestedTensor` object."""
-            if isinstance(index, int):
-                return multi_nested_tensor.single_index_select(index, dim=1)
-            elif isinstance(index, Tensor):
-                # TODO: Support this
-                return multi_nested_tensor.index_select(index, dim=1)
-            elif isinstance(index, List):
-                # TODO: Support this
-                return multi_nested_tensor.index_select(
-                    torch.tensor(index, device=multi_nested_tensor.device),
-                    dim=1)
-            elif isinstance(index, slice):
-                # TODO: Support this
-                return multi_nested_tensor.slice(index, dim=1)
-            else:
-                raise NotImplementedError
 
         if isinstance(index, Tuple):
             # index[0] for row indexing, index[1] for column indexing
             assert len(index) == 2
-            if isinstance(index[0], slice):
-                # Returns MultiNestedTensor
-                multi_nested_tensor = self.slice(index[0], dim=0)
-                return col_index(multi_nested_tensor, index[1])
-            elif isinstance(index[0], int):
-                if isinstance(index[1], int):
-                    # tensor[i, j]
-                    # Returns Tensor
-                    idx0 = self._to_positive_index(index[0], dim=0)
-                    idx1 = self._to_positive_index(index[1], dim=1)
-                    idx = idx0 * self.num_cols + idx1
-                    start_idx = self.offset[idx]
-                    end_idx = self.offset[idx + 1]
-                    out = self.values[start_idx:end_idx]
-                    return out
-                else:
-                    # Returns MultiNestedTensor
-                    multi_nested_tensor = self.single_index_select(
-                        index[0], dim=0)
-                    return col_index(multi_nested_tensor, index[1])
-            elif isinstance(index[0], Tensor) and index.ndim == 1:
-                multi_nested_tensor = self.index_select(index, dim=0)
-                return col_index(multi_nested_tensor, index[1])
-            elif isinstance(index[0], List):
-                multi_nested_tensor = self.index_select(
-                    torch.tensor(index, device=self.device),
-                    dim=0,
-                )
-                return col_index(multi_nested_tensor, index[1])
+            if isinstance(index[0], int) and isinstance(index[1], int):
+                # tensor[i, j]
+                # Returns Tensor
+                idx0 = self._to_positive_index(index[0], dim=0)
+                idx1 = self._to_positive_index(index[1], dim=1)
+                idx = idx0 * self.num_cols + idx1
+                start_idx = self.offset[idx]
+                end_idx = self.offset[idx + 1]
+                out = self.values[start_idx:end_idx]
+                return out
             else:
-                raise NotImplementedError
-        # index is for row indexing.
-        elif isinstance(index, slice):
-            # tensor[i:j]
-            # Returns MultiNestedTensor
-            return self.slice(index, dim=0)
-        elif isinstance(index, int):
-            # tensor[i]
-            # Returns MultiNestedTensor
-            return self.single_index_select(index, dim=0)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            # tensor[[i0, i1, i2, ..., iN]]
-            # Returns MultiNestedTensor
-            return self.index_select(index, dim=0)
-        elif isinstance(index, List):
-            # tensor[[i0, i1, i2, ..., iN]]
-            # Returns MultiNestedTensor
-            return self.index_select(
-                torch.tensor(index, device=self.device),
-                dim=0,
-            )
+                # Returns MultiNestedTensor
+                out = self
+                for dim, idx in enumerate(index):
+                    out = MultiNestedTensor.index(out, idx, dim)
+                return out
         else:
-            raise NotImplementedError("Advanced indexing not supported yet.")
+            # Returns MultiNestedTensor
+            return MultiNestedTensor.index(self, index, dim=0)
 
     def slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
         if dim == 0 or dim == -3:
@@ -355,7 +301,10 @@ class MultiNestedTensor:
 
         return out
 
-    def dim(self) -> int:
+    # Properties ##############################################################
+
+    @property
+    def ndim(self) -> int:
         return 3
 
     @property
@@ -365,8 +314,10 @@ class MultiNestedTensor:
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
         """
+        # Handle negative dim
         if dim < 0:
-            dim = self.dim - dim
+            dim = self.ndim - dim
+
         if dim == 0:
             return self.num_rows
         elif dim == 1:
@@ -380,12 +331,46 @@ class MultiNestedTensor:
                 "Dimension out of range (expected to be in range of [0, 2],"
                 f" but got {dim}")
 
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        return (self.num_rows, self.num_cols, -1)
+
+    # Static methods ##########################################################
     @staticmethod
     def stack(xs: List['MultiNestedTensor'],
               dim: int = 0) -> 'MultiNestedTensor':
         # TODO: To be implemented.
         if len(xs) == 1:
             return xs[0]
+        else:
+            raise NotImplementedError
+
+    @staticmethod
+    def index(
+        multi_nested_tensor: 'MultiNestedTensor',
+        index: Union[int, Tensor, List, slice],
+        dim: int,
+    ) -> 'MultiNestedTensor':
+        r"""Supports all types of row/column-level advanced indexing of input
+        :class:`MultiNestedTensor` object.
+
+        Args:
+            multi_nested_tensor (MultiNestedTensor): Input
+                :class:`MultiNestedTensor` to be indexed.
+            index (Union[int, Tensor, List, slice]): Input :obj:`index`.
+            dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
+
+        """
+        if isinstance(index, int):
+            return multi_nested_tensor.single_index_select(index, dim=dim)
+        elif isinstance(index, slice):
+            return multi_nested_tensor.slice(index, dim=dim)
+        elif isinstance(index, Tensor) and index.ndim == 1:
+            return multi_nested_tensor.index_select(index, dim=dim)
+        elif isinstance(index, List):
+            return multi_nested_tensor.index_select(
+                torch.tensor(index, device=multi_nested_tensor.device),
+                dim=dim)
         else:
             raise NotImplementedError
 
