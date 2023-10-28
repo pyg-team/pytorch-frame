@@ -1,6 +1,7 @@
 import random
 from typing import List
 
+import pytest
 import torch
 from torch import Tensor
 
@@ -83,4 +84,12 @@ def test_multi_nested_tensor_basic():
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_mat[i][j], tensor)
 
-    # TODO: Test column List[int] indexing and slicing once supported.
+    # Test column List[int] indexing
+    with pytest.raises(NotImplementedError):
+        # TODO: Add proper test once implemented
+        multi_nested_tensor[:, [2, 4, 6]]
+
+    # Test column slicing
+    with pytest.raises(NotImplementedError):
+        # TODO: Add proper test once implemented
+        multi_nested_tensor[:, 4:8]

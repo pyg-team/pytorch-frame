@@ -109,12 +109,6 @@ class MultiNestedTensor:
         elif dim == 1 or dim == -2:
             return self.col_slice(slice)
 
-    def index_select(self, index: Tensor, dim: int) -> Tensor:
-        if dim == 0:
-            return self._row_index_select(index)
-        else:
-            raise RuntimeError(f"Unsupported dim={dim} for index_select.")
-
     def row_slice(self, slice: slice) -> 'MultiNestedTensor':
         r"""Slice along row (dim=0)"""
         if slice.step is not None and slice.step > 1:
@@ -156,7 +150,7 @@ class MultiNestedTensor:
         if dim == 0 or dim == -3:
             return self.row_index_select(index)
         elif dim == 1 or dim == -2:
-            raise self.col_index_select(index)
+            return self.col_index_select(index)
         else:
             raise RuntimeError(f"Unsupported dim={dim} for index_select.")
 
@@ -185,7 +179,7 @@ class MultiNestedTensor:
         return MultiNestedTensor(num_rows=len(index), num_cols=self.num_cols,
                                  values=values, offset=offset)
 
-    def col_index_select(index: Tensor) -> 'MultiNestedTensor':
+    def col_index_select(self, index: Tensor) -> 'MultiNestedTensor':
         # TODO Implement
         raise NotImplementedError
 
