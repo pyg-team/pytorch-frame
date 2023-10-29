@@ -11,6 +11,7 @@ from torch_frame import NAStrategy, stype
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -240,7 +241,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
+    def encode_forward(self, feat: TensorData) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
