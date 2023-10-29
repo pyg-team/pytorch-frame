@@ -102,15 +102,23 @@ def test_converter():
 
 
 def test_multicategorical_materialization():
-    data = {'multicat_col': ['A|B', 'B|C|A', '', '', 'B', 'B|A', None]}
+    data = {'multicat_col': ['A|B', 'B|C|A', '', 'B', 'B|A|A', None]}
     df = pd.DataFrame(data)
     dataset = Dataset(df, {'multicat_col': stype.multicategorical},
                       col_to_sep={'multicat_col': '|'})
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
-    assert torch.equal(feat[0, 0], torch.tensor([1, 0]))
-    assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1]))
-    assert torch.equal(feat[6, 0], torch.tensor([-1]))
+    assert torch.equal(feat[0, 0].sort().values,
+                       torch.tensor([1, 0]).sort().values)
+    assert torch.equal(feat[1, 0].sort().values,
+                       torch.tensor([0, 2, 1]).sort().values)
+    assert feat[2, 0].numel() == 0
+    assert torch.equal(feat[3, 0].sort().values,
+                       torch.tensor([0]).sort().values)
+    assert torch.equal(feat[4, 0].sort().values,
+                       torch.tensor([0, 1]).sort().values)
+    assert torch.equal(feat[5, 0].sort().values,
+                       torch.tensor([-1]).sort().values)
     assert StatType.MULTI_COUNT in dataset.col_stats['multicat_col']
     assert (dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][0] == [
         'B', 'A', 'C'

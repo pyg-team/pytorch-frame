@@ -116,11 +116,11 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
     def _split_by_sep(self, row: str):
         if row is None:
-            return [-1]
+            return set([-1])
         elif row == '':
-            return []
+            return set()
         else:
-            return row.split(self.sep)
+            return set(row.split(self.sep))
 
     def forward(
         self,
