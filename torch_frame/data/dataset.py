@@ -128,8 +128,8 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
             return MultiCategoricalTensorMapper(
-                index, sep=self.col_to_sep[col] if isinstance(
-                    self.col_to_sep, Dict) else self.col_to_sep)
+                index, sep=self.col_to_sep
+                if isinstance(self.col_to_sep, str) else self.col_to_sep[col])
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -193,7 +193,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        col_to_sep: Optional[Union[str, Dict[str, str]]] = None,
+        col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -355,8 +355,8 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
-                ser, stype, sep=self.col_to_sep[col]
-                if isinstance(col, Dict) else self.col_to_sep)
+                ser, stype, sep=self.col_to_sep if isinstance(
+                    self.col_to_sep, str) else self.col_to_sep[col])
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.

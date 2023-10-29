@@ -108,14 +108,15 @@ def test_multicategorical_materialization():
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
     assert torch.equal(feat[0, 0], torch.tensor([1, 0]))
-    assert torch.equal(feat[1, 0], torch.tensor([0, 3, 1]))
-    assert torch.equal(feat[2, 0], torch.tensor([2]))
+    assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1]))
     assert torch.equal(feat[6, 0], torch.tensor([-1]))
     assert StatType.MULTI_COUNT in dataset.col_stats['multicat_col']
     assert (dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][0] == [
-        'B', 'A', '', 'C'
+        'B', 'A', 'C'
     ])
-    assert dataset.col_stats['a'][StatType.MULTI_COUNT][1] == [4, 3, 2, 1]
+    assert dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][1] == [
+        4, 3, 1
+    ]
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
