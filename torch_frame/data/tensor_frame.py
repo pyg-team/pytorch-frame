@@ -7,7 +7,7 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
-from torch_frame.typing import IndexSelectType
+from torch_frame.typing import IndexSelectType, TensorData
 
 
 @dataclass(repr=False)
@@ -62,7 +62,7 @@ class TensorFrame:
         # Transfer tensor frame to the GPU:
         tf = tf.to('cuda')
     """
-    feat_dict: Dict[torch_frame.stype, Tensor]
+    feat_dict: Dict[torch_frame.stype, TensorData]
     col_names_dict: Dict[torch_frame.stype, List[str]]
     y: Optional[Tensor] = None
 
@@ -83,6 +83,11 @@ class TensorFrame:
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
+
+            # Get any value if feat is a dictionary
+            if isinstance(feat, dict):
+                feat = next(iter(feat.values()))
+
             if feat.dim() < 2:
                 raise ValueError(
                     f"feat_dict['{stype_name}'] must be at least 2-dimensional"

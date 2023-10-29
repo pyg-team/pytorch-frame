@@ -10,7 +10,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame.config import TextEmbedderConfig
+from torch_frame.config import TextEmbedderConfig, TextTokenizerConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
@@ -18,6 +18,7 @@ from torch_frame.data.mapper import (
     NumericalTensorMapper,
     TensorMapper,
     TextEmbeddingTensorMapper,
+    TextTokenizationTensorMapper,
 )
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType, compute_col_stats
@@ -110,6 +111,12 @@ class DataFrameToTensorFrameConverter:
             maps sentences into :class:`torch.nn.Embeddings` and
             :obj:`batch_size` that specifies the mini-batch size for
             :obj:`text_embedder`. (default: :obj:`None`)
+        text_tokenizer_cfg
+            (:class:`torch_frame.config.TextTokenizerConfig`, optional):
+            A text tokenizer config specifying :obj:`text_tokenizer` that
+            maps sentences into tensor of tokens and
+            :obj:`batch_size` that specifies the mini-batch size for
+            :obj:`text_tokenizer`. (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -118,11 +125,13 @@ class DataFrameToTensorFrameConverter:
         target_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
         self.text_embedder_cfg = text_embedder_cfg
+        self.text_tokenizer_cfg = text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
@@ -145,6 +154,11 @@ class DataFrameToTensorFrameConverter:
             raise ValueError("`text_embedder_cfg` needs to be specified when "
                              "stype.text_embedded column exists.")
 
+        if (torch_frame.text_tokenized
+                in self.col_names_dict) and (self.text_tokenizer_cfg is None):
+            raise ValueError("`text_tokenizer_cfg` needs to be specified when "
+                             "stype.text_tokenized column exists.")
+
     @property
     def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
         return self._col_names_dict
@@ -166,6 +180,11 @@ class DataFrameToTensorFrameConverter:
                 self.text_embedder_cfg.text_embedder,
                 self.text_embedder_cfg.batch_size,
             )
+        elif stype == torch_frame.text_tokenized:
+            return TextTokenizationTensorMapper(
+                self.text_tokenizer_cfg.text_tokenizer,
+                self.text_tokenizer_cfg.batch_size,
+            )
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -184,11 +203,19 @@ class DataFrameToTensorFrameConverter:
             for col in col_names:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
-        feat_dict = {
-            stype: (torch.stack(xs, dim=1) if not stype.use_multi_nested_tensor
-                    else MultiNestedTensor.stack(xs, dim=1))
-            for stype, xs in xs_dict.items()
-        }
+
+        feat_dict = {}
+        for stype, xs in xs_dict.items():
+            if stype.use_multi_nested_tensor:
+                feat_dict[stype] = MultiNestedTensor.stack(xs, dim=1)
+            elif stype.use_dict_multi_nested_tensor:
+                feat_dict[stype] = {}
+                keys = xs[0].keys()
+                for key in keys:
+                    feat_dict[stype][key] = MultiNestedTensor.cat(
+                        [x[key] for x in xs], dim=1)
+            else:
+                feat_dict[stype] = torch.stack(xs, dim=1)
 
         y: Optional[Tensor] = None
         if self.target_col is not None:
@@ -219,6 +246,9 @@ class Dataset(ABC):
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
+        text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
+            configuration the specifies the text tokenizer to map text columns
+            into maps sentences into tensor of tokens (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -228,6 +258,7 @@ class Dataset(ABC):
         split_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -260,6 +291,7 @@ class Dataset(ABC):
                 'Multilabel classification task is not yet supported.')
 
         self.text_embedder_cfg = text_embedder_cfg
+        self.text_tokenizer_cfg = text_tokenizer_cfg
         self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
             col for col, stype in self.col_to_stype.items()
             if stype == torch_frame.multicategorical
@@ -416,6 +448,7 @@ class Dataset(ABC):
             target_col=self.target_col,
             col_to_sep=self.col_to_sep,
             text_embedder_cfg=self.text_embedder_cfg,
+            text_tokenizer_cfg=self.text_tokenizer_cfg,
         )
 
     @property

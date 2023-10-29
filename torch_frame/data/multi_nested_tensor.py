@@ -28,7 +28,6 @@ class MultiNestedTensor:
     ):
         assert offset[0] == 0
         assert offset[-1] == len(values)
-        assert len(offset) == num_rows * num_cols + 1
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.values = values
@@ -194,8 +193,16 @@ class MultiNestedTensor:
         return 3
 
     @property
+    def ndim(self) -> int:
+        return self.dim()
+
+    @property
     def device(self) -> torch.device:
         return self.values.device
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return self.values.dtype
 
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
@@ -223,6 +230,29 @@ class MultiNestedTensor:
             return xs[0]
         else:
             raise NotImplementedError
+
+    @staticmethod
+    def cat(xs: List['MultiNestedTensor'],
+            dim: int = 0) -> 'MultiNestedTensor':
+        if dim < 0:
+            dim += xs[0].ndim
+        if dim == 0:
+            num_rows = sum(x.num_rows for x in xs)
+            num_cols = xs[0].num_cols
+        elif dim == 1:
+            num_rows = xs[0].num_rows
+            num_cols = sum(x.num_cols for x in xs)
+        else:
+            raise NotImplementedError
+        values = torch.cat([x.values for x in xs], dim=0)
+        accum_offset = 0
+        offset = []
+        for x in xs:
+            offset.append(x.offset + accum_offset)
+            accum_offset = accum_offset + x.offset[-1]
+        offset = torch.cat(offset, dim=0)
+        return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
+                                 values=values, offset=offset)
 
     def clone(self) -> 'MultiNestedTensor':
         return MultiNestedTensor(self.num_rows, self.num_cols,
