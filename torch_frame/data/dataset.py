@@ -398,7 +398,7 @@ class Dataset(ABC):
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
-            sep=self.sep,
+            col_to_sep=self.col_to_sep,
             text_embedder_cfg=self.text_embedder_cfg,
         )
 
