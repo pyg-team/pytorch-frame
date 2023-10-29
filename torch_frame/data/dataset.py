@@ -67,7 +67,8 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
             use a separator specified for each column. (default: :obj:`,`)
 
     Returns:
-        Dict[str, str]: Canonical :obj:`col_to_sep` in a dictionary format.
+        Dict[str, str]: :obj:`col_to_sep` in a dictionary format, mapping
+            multi-categorical columns into their specified separators.
     """
     if isinstance(col_to_sep, str):
         sep = col_to_sep
@@ -79,7 +80,7 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
         if len(missing_cols) > 0:
             raise ValueError(
                 f"col_to_sep needs to specify separators for all "
-                f"multi-categorical columns, but the separator for the "
+                f"multi-categorical columns, but the separators for the "
                 f"following columns are missing: {missing_cols}.")
     return col_to_sep
 
