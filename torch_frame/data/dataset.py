@@ -63,8 +63,9 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
             columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. Otherwise, we
-            use a separator specified for each column. (default: :obj:`,`)
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
         columns (List[str]): A list of multi-categorical columns.
 
     Returns:
@@ -100,8 +101,9 @@ class DataFrameToTensorFrameConverter:
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
             columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. Otherwise, we
-            use a separator specified for each column. (default: :obj:`,`)
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -211,8 +213,9 @@ class Dataset(ABC):
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
             columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. Otherwise, we
-            use a separator specified for each column. (default: :obj:`,`)
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
