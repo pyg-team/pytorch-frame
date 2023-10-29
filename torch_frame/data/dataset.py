@@ -368,7 +368,8 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
-                ser, stype, sep=self.sep.get(col, None))
+                ser, stype, sep=self.col_to_sep[col]
+                if isinstance(col, Dict) else self.col_to_sep)
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
