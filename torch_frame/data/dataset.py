@@ -65,6 +65,7 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
             columns. If a string is specified, then the same separator will be
             used throughout all the multi-categorical columns. Otherwise, we
             use a separator specified for each column. (default: :obj:`,`)
+        columns (List[str]): A list of multi-categorical columns.
 
     Returns:
         Dict[str, str]: :obj:`col_to_sep` in a dictionary format, mapping
