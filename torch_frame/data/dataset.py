@@ -67,7 +67,10 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
+        col_to_sep (Union[str, Dict[str, str]], optional): A dictionary that
+            maps each multi_categorical column to its delimiter or a string
+            indicating the delimiter for all multi_categorical columns. If not
+            specified, then :obj:`,` will be used. (default: :obj:`None`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -80,13 +83,24 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        sep: Optional[Dict[str, str]] = None,
+        col_to_sep: Optional[Union[str, Dict[str, str]]] = None,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
+        col_to_sep = col_to_sep or ","
+        if isinstance(col_to_sep, Dict):
+            for col in col_to_stype:
+                if (col_to_stype[col] == torch_frame.multicategorical
+                        and col not in col_to_sep):
+                    warnings.warn(
+                        "The delimiter is not specified for multicategorical "
+                        f"column: {col}. ',' will be set as default delimiter."
+                    )
+
+                    col_to_sep[col] = ','
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.sep = sep
+        self.col_to_sep = col_to_sep
         self.text_embedder_cfg = text_embedder_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
@@ -120,14 +134,9 @@ class DataFrameToTensorFrameConverter:
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
-            if self.sep is None or col not in self.sep:
-                warnings.warn(
-                    "The separator is not specified for multicategorical"
-                    " column: {col}. ',' will be set as default separator.")
-                if self.sep is None:
-                    self.sep = {}
-                self.sep[col] = ','
-            return MultiCategoricalTensorMapper(index, sep=self.sep[col])
+            return MultiCategoricalTensorMapper(
+                index, sep=self.col_to_sep[col] if isinstance(
+                    self.col_to_sep, Dict) else self.col_to_sep)
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -177,7 +186,10 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
-        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
+        col_to_sep (Union[str, Dict[str, str]], optional): A dictionary that
+            maps each multi_categorical column to its delimiter or a string
+            indicating the delimiter for all multi_categorical columns. If not
+            specified, then :obj:`,` will be used. (default: :obj:`None`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
@@ -188,7 +200,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        sep: Dict[str, str] = {},
+        col_to_sep: Optional[Union[str, Dict[str, str]]] = None,
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -221,8 +233,20 @@ class Dataset(ABC):
             raise ValueError(
                 'Multilabel classification task is not yet supported.')
 
+        col_to_sep = col_to_sep or ","
+        if isinstance(col_to_sep, Dict):
+            for col in col_to_stype:
+                if (col_to_stype[col] == torch_frame.multicategorical
+                        and col not in col_to_sep):
+                    warnings.warn(
+                        "The delimiter is not specified for multicategorical "
+                        f"column: {col}. ',' will be set as default delimiter."
+                    )
+
+                    col_to_sep[col] = ','
+
         self.text_embedder_cfg = text_embedder_cfg
-        self.sep = sep
+        self.col_to_sep = col_to_sep
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -343,14 +367,6 @@ class Dataset(ABC):
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
-            if stype == torch_frame.multicategorical and (self.sep is None or
-                                                          col not in self.sep):
-                warnings.warn(
-                    "The separator is not specified for multicategorical"
-                    " column: {col}. ',' will be set as default separator.")
-                if self.sep is None:
-                    self.sep = {}
-                self.sep[col] = ','
             self._col_stats[col] = compute_col_stats(
                 ser, stype, sep=self.sep.get(col, None))
             # For a target column, sort categories lexicographically such that

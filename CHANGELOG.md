@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `Occurrence` stat for `multicategorical` stype ([#151](https://github.com/pyg-team/pytorch-frame/pull/151))
+- Added `MULTI_COUNT` stat for `multicategorical` stype ([#151](https://github.com/pyg-team/pytorch-frame/pull/151))
 - Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 

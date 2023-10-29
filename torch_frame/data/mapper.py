@@ -97,7 +97,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
     Args:
         categories (List[Any]): A list of possible categories in the
-        multi-categorical column sorted by occurrence.
+        multi-categorical column sorted by counts.
         sep (str): The delimiter for the categories in each cell.
         (default: :obj:`,`)
     """
@@ -118,6 +118,8 @@ class MultiCategoricalTensorMapper(TensorMapper):
     def _split_by_sep(self, row: str):
         if row is None:
             return [-1]
+        elif row == '':
+            return []
         else:
             return row.split(self.sep)
 
@@ -141,11 +143,11 @@ class MultiCategoricalTensorMapper(TensorMapper):
             right_index=True,
         ).dropna()
         ser['index'] = ser['index'].astype('int64')
-        values = torch.tensor(ser['index'].values, device=device)
+        values = torch.from_numpy(ser['index'].values)
         offset = ser.index.value_counts()
         offset = offset.reindex(original_index, fill_value=0)
         offset = pd.concat((pd.Series([0]), offset))
-        offset = torch.tensor(offset.values, device=device)
+        offset = torch.from_numpy(offset.values)
         offset = torch.cumsum(offset, dim=0)
         return MultiNestedTensor(num_rows=len(original_index), num_cols=1,
                                  values=values, offset=offset)

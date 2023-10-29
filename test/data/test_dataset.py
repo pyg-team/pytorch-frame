@@ -101,17 +101,18 @@ def test_converter():
 
 
 def test_multicategorical_materialization():
-    data = {'a': ['A|B', 'B|C|A', '', '', 'B', 'B|A', None]}
+    data = {'multicat_col': ['A|B', 'B|C|A', '', '', 'B', 'B|A', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'a': stype.multicategorical}, sep={'a': '|'})
+    dataset = Dataset(df, {'multicat_col': stype.multicategorical},
+                      sep={'multicat_col': '|'})
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
-    assert torch.equal(feat[0, 0], torch.tensor([1, 0], device=feat.device))
-    assert torch.equal(feat[1, 0], torch.tensor([0, 3, 1], device=feat.device))
-    assert torch.equal(feat[2, 0], torch.tensor([2], device=feat.device))
-    assert torch.equal(feat[6, 0], torch.tensor([-1], device=feat.device))
-    assert StatType.MULTI_COUNT in dataset.col_stats['a']
-    assert (dataset.col_stats['a'][StatType.MULTI_COUNT][0] == [
+    assert torch.equal(feat[0, 0], torch.tensor([1, 0]))
+    assert torch.equal(feat[1, 0], torch.tensor([0, 3, 1]))
+    assert torch.equal(feat[2, 0], torch.tensor([2]))
+    assert torch.equal(feat[6, 0], torch.tensor([-1]))
+    assert StatType.MULTI_COUNT in dataset.col_stats['multicat_col']
+    assert (dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][0] == [
         'B', 'A', '', 'C'
     ])
     assert dataset.col_stats['a'][StatType.MULTI_COUNT][1] == [4, 3, 2, 1]

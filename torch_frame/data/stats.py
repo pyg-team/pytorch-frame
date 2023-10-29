@@ -66,7 +66,7 @@ class StatType(Enum):
             assert sep is not None
             ser = ser.apply(
                 lambda x: set([cat.strip() for cat in x.split(sep)])
-                if x is not None else set())
+                if (x is not None and x != '') else set())
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
