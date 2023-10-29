@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -23,7 +23,7 @@ class MultiNestedTensor:
         self,
         num_rows: int,
         num_cols: int,
-        values: Dict[str, Tensor],
+        values: Tensor,
         offset: Tensor,
     ):
         assert offset[0] == 0
@@ -223,6 +223,10 @@ class MultiNestedTensor:
             return xs[0]
         else:
             raise NotImplementedError
+
+    def clone(self) -> 'MultiNestedTensor':
+        return MultiNestedTensor(self.num_rows, self.num_cols,
+                                 self.values.clone(), self.offset.clone())
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
