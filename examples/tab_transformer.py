@@ -109,8 +109,8 @@ def test(loader: DataLoader) -> float:
         pred = model(tf)
         pred_class = pred.argmax(dim=-1)
 
-        all_labels.append(pred_class)
-        all_preds.append(tf.y)
+        all_labels.append(tf.y)
+        all_preds.append(pred_class)
     all_labels = torch.cat(all_labels).cpu()
     all_preds = torch.cat(all_preds).cpu()
 
