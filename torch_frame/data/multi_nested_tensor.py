@@ -386,6 +386,10 @@ class MultiNestedTensor:
         out = multi_nested_tensor.values[start_idx:end_idx]
         return out
 
+    def clone(self) -> 'MultiNestedTensor':
+        return MultiNestedTensor(self.num_rows, self.num_cols,
+                                 self.values.clone(), self.offset.clone())
+
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.

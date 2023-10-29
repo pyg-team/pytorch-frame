@@ -21,12 +21,13 @@ def assert_equal(tensor_mat: List[List[Tensor]],
 def test_multi_nested_tensor_basic():
     num_rows = 8
     num_cols = 10
+    max_value = 100
     tensor_mat = []
     for _ in range(num_rows):
         tensor_list = []
         for _ in range(num_cols):
             length = random.randint(0, 10)
-            tensor_list.append(torch.randint(0, 100, size=(length, )))
+            tensor_list.append(torch.randint(0, max_value, size=(length, )))
         tensor_mat.append(tensor_list)
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
@@ -93,3 +94,9 @@ def test_multi_nested_tensor_basic():
     with pytest.raises(NotImplementedError):
         # TODO: Add proper test once implemented
         multi_nested_tensor[:, 4:8]
+    cloned_multi_nested_tensor = multi_nested_tensor.clone()
+
+    multi_nested_tensor.values[0] = max_value + 1.0
+    assert cloned_multi_nested_tensor.values[0] != max_value + 1.0
+    multi_nested_tensor.offset[0] = -1
+    assert cloned_multi_nested_tensor.values[0] != -1

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -25,6 +25,9 @@ class StatType(Enum):
     # Categorical:
     COUNT = 'COUNT'
 
+    # Multicategorical:
+    MULTI_COUNT = 'MULTI_COUNT'
+
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
         if stype == torch_frame.numerical:
@@ -39,14 +42,14 @@ class StatType(Enum):
             ]
         elif stype == torch_frame.text_embedded:
             return []
-        elif stype == torch_frame.multi_categorical:
+        elif stype == torch_frame.multicategorical:
             return [
-                StatType.COUNT,
+                StatType.MULTI_COUNT,
             ]
 
         raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
 
-    def compute(self, ser: Series) -> Any:
+    def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
             return np.mean(ser.values).item()
 
@@ -59,21 +62,29 @@ class StatType(Enum):
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
-
+        elif self == StatType.MULTI_COUNT:
+            assert sep is not None
+            print("sep is ", sep)
+            ser = ser.apply(
+                lambda x: set([cat.strip() for cat in x.split(sep)])
+                if (x is not None and x != '') else set())
+            ser = ser.explode().dropna()
+            count = ser.value_counts(ascending=False)
+            return count.index.tolist(), count.values.tolist()
         raise NotImplementedError(f"Invalid stat type '{self.value}'")
 
 
 def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
+    sep: Optional[str] = None,
 ) -> Dict[StatType, Any]:
 
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
-
     ser = ser.dropna()
 
     return {
-        stat_type: stat_type.compute(ser)
+        stat_type: stat_type.compute(ser, sep)
         for stat_type in StatType.stats_for_stype(stype)
     }
