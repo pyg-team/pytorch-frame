@@ -4,12 +4,13 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, ModuleList, Parameter, Sequential
+from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -181,6 +182,65 @@ class EmbeddingEncoder(StypeEncoder):
             emb.reset_parameters()
 
     def encode_forward(self, feat: Tensor) -> Tensor:
+        # TODO: Make this more efficient.
+        # Increment the index by one so that NaN index (-1) becomes 0
+        # (padding_idx)
+        # feat: [batch_size, num_cols]
+        feat = feat + 1
+        xs = []
+        for i, emb in enumerate(self.embs):
+            xs.append(emb(feat[:, i]))
+        # [batch_size, num_cols, hidden_channels]
+        x = torch.stack(xs, dim=1)
+        return x
+
+
+class MultiCategoricalEmbeddingEncoder(StypeEncoder):
+    r"""An embedding look-up based encoder for multi_categorical features. It
+    applies :class:`torch.nn.EmbeddingBag` for each categorical feature and
+    concatenates the output embeddings.
+    Args:
+        out_channels (int, optional): Size of each embedding vector.
+            (default: :obj:`None`)
+        mode (str): "sum", "mean" or "max".
+            Specifies the way to reduce the bag. (default: :obj:`mean`)
+    """
+    supported_stypes = {stype.multicategorical}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        mode: str = 'mean',
+    ):
+        self.mode = mode
+        if mode not in ["mean", "sum", "max"]:
+            raise ValueError(
+                f"Unknown mode {mode} for MultiCategoricalEmbeddingEncoder.",
+                "Please use ")
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        self.embs = ModuleList([])
+        for stats in self.stats_list:
+            num_categories = len(stats[StatType.MULTI_COUNT][0])
+            # 0-th category is for NaN.
+            self.embs.append(
+                EmbeddingBag(num_categories + 1, self.out_channels,
+                             padding_idx=0, mode=self.mode))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        for emb in self.embs:
+            emb.reset_parameters()
+
+    def encode_forward(self, feat: TensorData) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
