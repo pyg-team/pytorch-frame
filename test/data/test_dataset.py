@@ -104,7 +104,7 @@ def test_multicategorical_materialization():
     data = {'multicat_col': ['A|B', 'B|C|A', '', '', 'B', 'B|A', None]}
     df = pd.DataFrame(data)
     dataset = Dataset(df, {'multicat_col': stype.multicategorical},
-                      sep={'multicat_col': '|'})
+                      col_to_sep={'multicat_col': '|'})
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
     assert torch.equal(feat[0, 0], torch.tensor([1, 0]))
