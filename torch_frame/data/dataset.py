@@ -82,7 +82,7 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
             raise ValueError(
                 f"col_to_sep needs to specify separators for all "
                 f"multi-categorical columns, but the separators for the "
-                f"following columns are missing: {missing_cols}.")
+                f"following columns are missing: {list(missing_cols)}.")
     return col_to_sep
 
 

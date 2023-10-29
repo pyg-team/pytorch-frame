@@ -6,6 +6,7 @@ import torch
 import torch_frame
 from torch_frame import stype
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
+from torch_frame.data.dataset import canonicalize_col_to_sep
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.typing import TaskType
@@ -142,3 +143,18 @@ def test_num_classes(with_nan):
     ).materialize()
     assert dataset.num_classes == num_classes
     assert dataset.task_type == task_type
+
+
+def test_canonicalize_col_to_sep():
+    col_to_sep = '|'
+    columns = ['a', 'b']
+    assert {'a': '|', 'b': '|'} == canonicalize_col_to_sep(col_to_sep, columns)
+
+    col_to_sep = {'a': '|', 'b': ','}
+    columns = ['a', 'b']
+    assert {'a': '|', 'b': ','} == canonicalize_col_to_sep(col_to_sep, columns)
+
+    col_to_sep = {'a': '|'}
+    columns = ['a', 'b']
+    with pytest.raises(ValueError, match='col_to_sep needs to specify'):
+        canonicalize_col_to_sep(col_to_sep, columns)
