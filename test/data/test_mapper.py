@@ -69,11 +69,11 @@ def test_text_embedding_tensor_mapper():
     out_channels = 10
     num_sentences = 20
     ser = pd.Series(["Hello world!"] * (num_sentences // 2) +
-                    ["I love torch-frame"] * (num_sentences // 2))
+                    ["I love torch-frame"] * (num_sentences // 2) + [0.1])
     mapper = TextEmbeddingTensorMapper(HashTextEmbedder(out_channels),
                                        batch_size=8)
     emb = mapper.forward(ser)
-    assert emb.shape == (num_sentences, out_channels)
+    assert emb.shape == (num_sentences + 1, out_channels)
     mapper.batch_size = None
     emb2 = mapper.forward(ser)
     assert torch.allclose(emb, emb2)
