@@ -26,6 +26,7 @@ from torch_frame.typing import (
     DataFrame,
     IndexSelectType,
     TaskType,
+    TensorData,
 )
 from torch_frame.utils.split import SPLIT_TO_NUM
 
@@ -54,6 +55,38 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
+def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
+                            columns: List[str]) -> Dict[str, str]:
+    r"""Canonicalize :obj:`col_to_sep` into a dictionary format.
+
+    Args:
+        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will be
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
+        columns (List[str]): A list of multi-categorical columns.
+
+    Returns:
+        Dict[str, str]: :obj:`col_to_sep` in a dictionary format, mapping
+            multi-categorical columns into their specified separators.
+    """
+    if isinstance(col_to_sep, str):
+        sep = col_to_sep
+        col_to_sep = {}
+        for col in columns:
+            col_to_sep[col] = sep
+    else:
+        missing_cols = set(columns) - set(col_to_sep.keys())
+        if len(missing_cols) > 0:
+            raise ValueError(
+                f"col_to_sep needs to specify separators for all "
+                f"multi-categorical columns, but the separators for the "
+                f"following columns are missing: {list(missing_cols)}.")
+    return col_to_sep
+
+
 class DataFrameToTensorFrameConverter:
     r"""A data frame to :class:`TensorFrame` converter.
 
@@ -65,7 +98,12 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
+        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will be
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -78,13 +116,12 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        sep: str = ',',
+        col_to_sep: Union[str, Dict[str, str]] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.sep = sep
         self.text_embedder_cfg = text_embedder_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
@@ -98,6 +135,10 @@ class DataFrameToTensorFrameConverter:
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
             sorted(self._col_names_dict[stype])
+
+        self.col_to_sep = canonicalize_col_to_sep(
+            col_to_sep,
+            self.col_names_dict.get(torch_frame.multicategorical, []))
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -116,9 +157,10 @@ class DataFrameToTensorFrameConverter:
         elif stype == torch_frame.categorical:
             index, _ = self.col_stats[col][StatType.COUNT]
             return CategoricalTensorMapper(index)
-        elif stype == torch_frame.multi_categorical:
-            index, _ = self.col_stats[col][StatType.COUNT]
-            return MultiCategoricalTensorMapper(index, sep=self.sep)
+        elif stype == torch_frame.multicategorical:
+            index, _ = self.col_stats[col][StatType.MULTI_COUNT]
+            return MultiCategoricalTensorMapper(index,
+                                                sep=self.col_to_sep[col])
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -136,9 +178,7 @@ class DataFrameToTensorFrameConverter:
         r"""Convert a given :obj:`DataFrame` object into :class:`TensorFrame`
         object."""
 
-        xs_dict: Dict[torch_frame.stype,
-                      List[Union[Tensor,
-                                 MultiNestedTensor]]] = defaultdict(list)
+        xs_dict: Dict[torch_frame.stype, List[TensorData]] = defaultdict(list)
 
         for stype, col_names in self.col_names_dict.items():
             for col in col_names:
@@ -170,7 +210,12 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
-        sep (str): Separator for multi-categorical columns. (default: :obj:`,`)
+        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will be
+            used throughout all the multi-categorical columns. If a dictionary
+            is given, we use a separator specified for each column.
+            (default: :obj:`,`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
@@ -181,7 +226,7 @@ class Dataset(ABC):
         col_to_stype: Dict[str, torch_frame.stype],
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
-        sep: str = ',',
+        col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
     ):
         self.df = df
@@ -210,12 +255,15 @@ class Dataset(ABC):
                              f"but missing in the data frame")
 
         if (target_col is not None and self.col_to_stype[target_col]
-                == torch_frame.multi_categorical):
+                == torch_frame.multicategorical):
             raise ValueError(
                 'Multilabel classification task is not yet supported.')
 
         self.text_embedder_cfg = text_embedder_cfg
-        self.sep = sep
+        self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
+            col for col, stype in self.col_to_stype.items()
+            if stype == torch_frame.multicategorical
+        ])
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -335,15 +383,9 @@ class Dataset(ABC):
 
         # 1. Fill column statistics:
         for col, stype in self.col_to_stype.items():
-            if stype == torch_frame.multi_categorical:
-                ser = self.df[col].apply(
-                    lambda x: [cat.strip() for cat in x.split(self.sep)]
-                    if x is not None and x != '' else [])
-                ser = ser.explode()
-                ser = ser.dropna()
-            else:
-                ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(ser, stype)
+            ser = self.df[col]
+            self._col_stats[col] = compute_col_stats(
+                ser, stype, sep=self.col_to_sep.get(col, None))
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
@@ -372,7 +414,7 @@ class Dataset(ABC):
             col_to_stype=self.col_to_stype,
             col_stats=self._col_stats,
             target_col=self.target_col,
-            sep=self.sep,
+            col_to_sep=self.col_to_sep,
             text_embedder_cfg=self.text_embedder_cfg,
         )
 

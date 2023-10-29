@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128))
+- Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128), [#151](https://github.com/pyg-team/pytorch-frame/pull/151))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 
 ### Changed

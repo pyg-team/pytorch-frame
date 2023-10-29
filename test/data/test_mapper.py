@@ -39,22 +39,30 @@ def test_categorical_tensor_mapper():
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
 
 
-def test_multi_categorical_tensor_mapper():
+def test_multicategorical_tensor_mapper():
     ser = pd.Series(['A,B', 'B', '', 'C', 'B,C', None])
-    expected_values = torch.tensor([1, 0, 0, -1, 0, -1, -1])
-    expected_boundaries = torch.tensor([0, 2, 3, 3, 4, 6, 7])
+    expected_values = torch.tensor([1, 0, 0, 0, -1])
+    expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
     mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
     tensor = mapper.forward(ser)
     values = tensor.values
     offset = tensor.offset
     assert values.dtype == torch.long
-    assert torch.equal(values, expected_values)
+    assert torch.equal(
+        values[expected_boundaries[0]:expected_boundaries[1]].sort().values,
+        torch.tensor([0, 1]))
+    assert torch.equal(values[expected_boundaries[1]:],
+                       expected_values[expected_boundaries[1]:])
     assert torch.equal(offset, expected_boundaries)
 
     out = mapper.backward(tensor)
-    pd.testing.assert_series_equal(out,
-                                   pd.Series(['A,B', 'B', '', '', 'B', '']))
+    assert out.values[0] == 'A,B' or out.values[0] == 'B,A'
+    assert out.values[1] == 'B'
+    assert out.values[2] == ''
+    assert out.values[3] == ''
+    assert out.values[4] == 'B'
+    assert out.values[5] == ''
 
 
 def test_text_embedding_tensor_mapper():

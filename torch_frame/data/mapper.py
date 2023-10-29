@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable, List, Optional
 
 import pandas as pd
 import torch
@@ -7,7 +7,7 @@ from torch import Tensor
 from tqdm import tqdm
 
 from torch_frame.data import MultiNestedTensor
-from torch_frame.typing import Series
+from torch_frame.typing import Series, TensorData
 
 
 class TensorMapper(ABC):
@@ -20,12 +20,12 @@ class TensorMapper(ABC):
         ser: Series,
         *,
         device: Optional[torch.device] = None,
-    ) -> Union[Tensor, MultiNestedTensor]:
+    ) -> TensorData:
         r"""Maps raw input data into a compact tensor representation."""
         raise NotImplementedError
 
     @abstractmethod
-    def backward(self, tensor: Union[Tensor, MultiNestedTensor]) -> pd.Series:
+    def backward(self, tensor: TensorData) -> pd.Series:
         r"""Maps a compact tensor representation back into the raw input data.
         The reverse operation of :meth:`forward`."""
         raise NotImplementedError
@@ -92,11 +92,11 @@ class CategoricalTensorMapper(TensorMapper):
 class MultiCategoricalTensorMapper(TensorMapper):
     r"""Maps any multi-categorical series into an index representation, with
     :obj:`-1` denoting missing values (NaN) and no value denoting not belonging
-    to any categories.
+    to any categories. Unseen categories will be ignored.
 
     Args:
         categories (List[Any]): A list of possible categories in the
-        multi-categorical column.
+        multi-categorical column sorted by counts.
         sep (str): The delimiter for the categories in each cell.
         (default: :obj:`,`)
     """
@@ -108,17 +108,19 @@ class MultiCategoricalTensorMapper(TensorMapper):
         super().__init__()
         self.categories = categories
         self.sep = sep
+        self.index = pd.Series(
+            index=categories,
+            data=pd.RangeIndex(0, len(categories)),
+        )
+        self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
-    def _row_to_tensor(self, row: str):
-        if row == '':
-            return []
-        elif row is None:
-            return [-1]
+    def _split_by_sep(self, row: str):
+        if row is None:
+            return set([-1])
+        elif row == '':
+            return set()
         else:
-            return [
-                self.categories.index(s) if s in self.categories else -1
-                for s in row.split(self.sep)
-            ]
+            return set(row.split(self.sep))
 
     def forward(
         self,
@@ -129,13 +131,25 @@ class MultiCategoricalTensorMapper(TensorMapper):
         if ser.dtype != 'object':
             raise ValueError('Multi-categorical types expect string as input')
         values = []
-        ser = ser.apply(self._row_to_tensor)
-        values = torch.tensor(sum(ser, []), device=device)
-        ser = ser.apply(lambda x: len(x))
-        offset = torch.tensor([0] + ser.tolist(), device=device)
+        original_index = ser.index
+        ser = ser.apply(self._split_by_sep)
+        ser = ser.explode()
+        ser = pd.merge(
+            ser.rename('data'),
+            self.index.rename('index'),
+            how='left',
+            left_on='data',
+            right_index=True,
+        ).dropna()
+        ser['index'] = ser['index'].astype('int64')
+        values = torch.from_numpy(ser['index'].values)
+        offset = ser.index.value_counts()
+        offset = offset.reindex(original_index, fill_value=0)
+        offset = pd.concat((pd.Series([0]), offset))
+        offset = torch.from_numpy(offset.values)
         offset = torch.cumsum(offset, dim=0)
-        return MultiNestedTensor(num_rows=len(ser), num_cols=1, values=values,
-                                 offset=offset)
+        return MultiNestedTensor(num_rows=len(original_index), num_cols=1,
+                                 values=values, offset=offset)
 
     def backward(self, tensor: MultiNestedTensor) -> pd.Series:
         values = tensor.values

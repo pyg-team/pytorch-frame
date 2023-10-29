@@ -6,6 +6,7 @@ import torch
 import torch_frame
 from torch_frame import stype
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
+from torch_frame.data.dataset import canonicalize_col_to_sep
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.typing import TaskType
@@ -89,7 +90,7 @@ def test_converter():
     dataset = FakeDataset(
         num_rows=10,
         stypes=[stype.categorical, stype.numerical,
-                stype.multi_categorical]).materialize()
+                stype.multicategorical]).materialize()
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,
@@ -100,19 +101,31 @@ def test_converter():
     assert len(tf) == len(dataset)
 
 
-def test_multi_categorical_materialization():
-    data = {'a': ['A,B', 'B,C,A', '', 'B', None]}
+def test_multicategorical_materialization():
+    data = {'multicat_col': ['A|B', 'B|C|A', '', 'B', 'B|A|A', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'a': stype.multi_categorical})
+    dataset = Dataset(df, {'multicat_col': stype.multicategorical},
+                      col_to_sep={'multicat_col': '|'})
     dataset.materialize()
-    feat = dataset.tensor_frame.feat_dict[stype.multi_categorical]
-    assert torch.equal(feat[0, 0], torch.tensor([1, 0], device=feat.device))
-    assert torch.equal(feat[1, 0], torch.tensor([0, 2, 1], device=feat.device))
+    feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
+    assert torch.equal(feat[0, 0].sort().values,
+                       torch.tensor([1, 0]).sort().values)
+    assert torch.equal(feat[1, 0].sort().values,
+                       torch.tensor([0, 2, 1]).sort().values)
     assert feat[2, 0].numel() == 0
-    assert torch.equal(feat[4, 0], torch.tensor([-1], device=feat.device))
-    assert StatType.COUNT in dataset.col_stats['a']
-    assert dataset.col_stats['a'][StatType.COUNT][0] == ['B', 'A', 'C']
-    assert dataset.col_stats['a'][StatType.COUNT][1] == [3, 2, 1]
+    assert torch.equal(feat[3, 0].sort().values,
+                       torch.tensor([0]).sort().values)
+    assert torch.equal(feat[4, 0].sort().values,
+                       torch.tensor([0, 1]).sort().values)
+    assert torch.equal(feat[5, 0].sort().values,
+                       torch.tensor([-1]).sort().values)
+    assert StatType.MULTI_COUNT in dataset.col_stats['multicat_col']
+    assert (dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][0] == [
+        'B', 'A', 'C'
+    ])
+    assert dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][1] == [
+        4, 3, 1
+    ]
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
@@ -138,3 +151,18 @@ def test_num_classes(with_nan):
     ).materialize()
     assert dataset.num_classes == num_classes
     assert dataset.task_type == task_type
+
+
+def test_canonicalize_col_to_sep():
+    col_to_sep = '|'
+    columns = ['a', 'b']
+    assert {'a': '|', 'b': '|'} == canonicalize_col_to_sep(col_to_sep, columns)
+
+    col_to_sep = {'a': '|', 'b': ','}
+    columns = ['a', 'b']
+    assert {'a': '|', 'b': ','} == canonicalize_col_to_sep(col_to_sep, columns)
+
+    col_to_sep = {'a': '|'}
+    columns = ['a', 'b']
+    with pytest.raises(ValueError, match='col_to_sep needs to specify'):
+        canonicalize_col_to_sep(col_to_sep, columns)
