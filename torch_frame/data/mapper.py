@@ -180,6 +180,7 @@ class TextEmbeddingTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
+        ser = ser.astype(str)
         ser_list = ser.tolist()
         if self.batch_size is None:
             emb = self.text_embedder(ser_list)
