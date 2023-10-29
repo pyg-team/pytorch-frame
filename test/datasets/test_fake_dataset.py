@@ -9,7 +9,7 @@ from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import MultiNestedTensor
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
-from torch_frame.testing.text_tokenizer import WhiteSpaceTokenizer
+from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
@@ -28,7 +28,7 @@ def test_fake_dataset(with_nan):
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels), batch_size=None),
         text_tokenizer_cfg=TextTokenizerConfig(
-            text_tokenizer=WhiteSpaceTokenizer(num_hash_bins=64),
+            text_tokenizer=WhiteSpaceHashTokenizer(num_hash_bins=64),
             batch_size=2),
     )
     assert str(dataset) == 'FakeDataset()'

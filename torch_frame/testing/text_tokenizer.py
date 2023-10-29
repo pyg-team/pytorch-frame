@@ -5,10 +5,10 @@ import torch
 from torch_frame.data import MultiNestedTensor
 
 
-class WhiteSpaceTokenizer:
+class WhiteSpaceHashTokenizer:
     r"""A simple white space tokenizer for testing purposes.
-    It split sentence to tokens via white space and hashes each token into
-    an index modulo :obj:`num_hash`.
+    It split sentence to tokens via white space and hashes each
+    token into an index modulo :obj:`num_hash`.
 
     Args:
         num_hash_bins (int): Number of hash bins to use.
