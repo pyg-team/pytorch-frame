@@ -98,13 +98,13 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
 
 @pytest.mark.parametrize('encoder_cls_kwargs',
                          [(MultiCategoricalEmbeddingEncoder, {
-                             'mode': "mean"
+                             'mode': 'mean'
                          }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': "sum"
+                             'mode': 'sum'
                          }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': "max"
+                             'mode': 'max'
                          })])
-def test_mult_categorical_feature_encoder(encoder_cls_kwargs):
+def test_multicategorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10,
                                    stypes=[stype.multicategorical],
                                    with_nan=False)
@@ -184,6 +184,38 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert feat_num[isnan_mask].isnan().all()
+
+
+@pytest.mark.parametrize('encoder_cls_kwargs',
+                         [(MultiCategoricalEmbeddingEncoder, {
+                             'mode': 'mean'
+                         }), (MultiCategoricalEmbeddingEncoder, {
+                             'mode': 'sum'
+                         }), (MultiCategoricalEmbeddingEncoder, {
+                             'mode': 'max'
+                         })])
+def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
+    dataset: Dataset = FakeDataset(num_rows=10,
+                                   stypes=[stype.multicategorical],
+                                   with_nan=True)
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.multicategorical]
+    ]
+
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.multicategorical,
+                                    **encoder_cls_kwargs[1])
+    feat_multicat = tensor_frame.feat_dict[stype.multicategorical]
+    isnan_mask = feat_multicat.values == -1
+    x = encoder(feat_multicat)
+    assert x.shape == (feat_multicat.size(0), feat_multicat.size(1), 8)
+    # Make sure there's no NaNs in x
+    assert (~torch.isnan(x)).all()
+    # Make sure original data is not modified
+    assert (feat_multicat.values[isnan_mask] == -1).all()
 
 
 def test_text_embedding_encoder():

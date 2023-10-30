@@ -234,7 +234,6 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         self.embs = ModuleList([])
         for stats in self.stats_list:
             num_categories = len(stats[StatType.MULTI_COUNT][0])
-            print("num categories ", num_categories)
             # 0-th category is for NaN.
             self.embs.append(
                 EmbeddingBag(num_categories + 1, self.out_channels,
