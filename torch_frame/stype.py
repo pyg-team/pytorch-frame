@@ -24,6 +24,7 @@ class stype(Enum):
     categorical = 'categorical'
     text_embedded = 'text_embedded'
     multicategorical = 'multicategorical'
+    sequence = 'sequence'
 
     @property
     def is_text_stype(self) -> bool:
@@ -34,10 +35,11 @@ class stype(Enum):
         r""" This property indicates if the data of an stype is stored in
         :class:`torch_frame.data.MultiNestedTensor`.
         """
-        return self in [stype.multicategorical]
+        return self in [stype.multicategorical, self.sequence]
 
 
 numerical = stype('numerical')
 categorical = stype('categorical')
 text_embedded = stype('text_embedded')
 multicategorical = stype('multicategorical')
+sequence = stype('sequence')

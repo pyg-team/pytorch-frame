@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable, List, Optional
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -162,6 +163,61 @@ class MultiCategoricalTensorMapper(TensorMapper):
                 for item in values[offset[i - 1]:offset[i]] if item != -1
             ])
             ser.append(self.sep.join(index))
+        return pd.Series(ser)
+
+
+class SequenceTensorMapper(TensorMapper):
+    r"""Maps any sequence series into an :obj:`torch.Tensor`.
+
+    Args:
+        sep (str): The delimiter for the sequence in each cell.
+        (default: :obj:`,`)
+    """
+    def __init__(
+        self,
+        sep: str = ',',
+    ):
+        super().__init__()
+        self.sep = sep
+
+    def _split_by_sep(self, row: str):
+        if row is None:
+            return []
+        else:
+            return [
+                np.float64(x) if x.strip() != '' else np.nan
+                for x in row.split(self.sep)
+            ]
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> MultiNestedTensor:
+        values = []
+        ser = ser.apply(self._split_by_sep)
+        num_rows = len(ser)
+        offset = ser.apply(len)
+        ser = ser[offset != 0]
+        offset = pd.concat((pd.Series([0]), offset))
+        offset = torch.from_numpy(offset.values)
+        offset = torch.cumsum(offset, dim=0)
+        ser = ser.explode()
+        ser = ser.astype('float64')
+        values = torch.from_numpy(ser.values)
+        return MultiNestedTensor(num_rows=num_rows, num_cols=1, values=values,
+                                 offset=offset)
+
+    def backward(self, tensor: MultiNestedTensor) -> pd.Series:
+        values = tensor.values
+        offset = tensor.offset
+        values = values.tolist()
+        ser = []
+        for i in range(1, len(offset)):
+            val = values[offset[i - 1]:offset[i]]
+            ser.append(','.join(['' if np.isnan(v) else str(v)
+                                 for v in val]) if val else None)
         return pd.Series(ser)
 
 

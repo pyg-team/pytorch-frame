@@ -5,6 +5,7 @@ from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
     NumericalTensorMapper,
+    SequenceTensorMapper,
     TextEmbeddingTensorMapper,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
@@ -63,6 +64,25 @@ def test_multicategorical_tensor_mapper():
     assert out.values[3] == ''
     assert out.values[4] == 'B'
     assert out.values[5] == ''
+
+
+def test_sequence_tensor_mapper():
+    ser = pd.Series(['0.1,0.5', '0.3', '', '0.2,', None])
+    expected_values = torch.tensor([0.1, 0.5, 0.3, torch.nan, 0.2, torch.nan],
+                                   dtype=torch.float64)
+    expected_boundaries = torch.tensor([0, 2, 3, 4, 6, 6])
+    mapper = SequenceTensorMapper(sep=",")
+
+    tensor = mapper.forward(ser)
+    values = tensor.values
+    offset = tensor.offset
+    assert values.dtype == torch.float64
+    assert ((values == expected_values) |
+            (torch.isnan(values) & torch.isnan(expected_values))).all()
+    assert torch.equal(offset, expected_boundaries)
+
+    out = mapper.backward(tensor)
+    pd.testing.assert_series_equal(out, ser)
 
 
 def test_text_embedding_tensor_mapper():
