@@ -21,8 +21,16 @@ def test_multi_nested_tensor_basic():
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
     assert str(multi_nested_tensor
                ) == "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')"
+
+    # Test sizes
     assert multi_nested_tensor.num_rows == num_rows
+    assert multi_nested_tensor.size(0) == num_rows
     assert multi_nested_tensor.num_cols == num_cols
+    assert multi_nested_tensor.size(1) == num_cols
+    with pytest.raises(ValueError, match="not have a fixed length"):
+        multi_nested_tensor.size(2)
+    with pytest.raises(IndexError, match="Dimension out of range"):
+        multi_nested_tensor.size(3)
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
@@ -70,4 +78,3 @@ def test_multi_nested_tensor_different_num_rows():
         match="The length of each row must be the same",
     ):
         MultiNestedTensor.from_tensor_mat(tensor_mat)
-
