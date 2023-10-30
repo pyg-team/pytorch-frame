@@ -167,7 +167,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
 
 class SequenceTensorMapper(TensorMapper):
-    r"""Maps any sequence series into an :obj:`torch.Tensor`.
+    r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
 
     Args:
         sep (str): The delimiter for the sequence in each cell.
