@@ -8,9 +8,9 @@ from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
-from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -206,8 +206,6 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
     concatenates the output embeddings.
 
     Args:
-        out_channels (int, optional): Size of each embedding vector.
-            (default: :obj:`None`)
         mode (str): "sum", "mean" or "max".
             Specifies the way to reduce the bag. (default: :obj:`mean`)
     """
@@ -246,7 +244,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
