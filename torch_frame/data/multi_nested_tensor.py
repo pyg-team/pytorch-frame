@@ -16,8 +16,8 @@ class MultiNestedTensor:
     Args:
         num_rows (int): Number of rows.
         num_cols (int): Number of columns.
-        values (Tensor): The values Tensor.
-        offset (Tensor): The offset Tensor.
+        values (torch.Tensor): The values Tensor of size :obj:
+        offset (torch.Tensor): The offset Tensor.
     """
     def __init__(
         self,
@@ -43,12 +43,25 @@ class MultiNestedTensor:
         :obj:`tensor_mat`.
 
         Args:
-            tensor_mat List[List[Tensor]]: A dictionary of
-                matrix of PyTorch Tensors. :obj:`tensor_mat[i][j]` contains
-                1-dim PyTorch Tensor of :obj:`i`-th row and :obj:`j`-th column.
+            tensor_mat (List[List[Tensor]]): A matrix of :class:`torch.Tensor`.
+                :obj:`tensor_mat[i][j]` contains 1-dim PyTorch Tensor of
+                :obj:`i`-th row and :obj:`j`-th column.
 
         Returns:
-            MultiNestedTensor: Returned the class object.
+            MultiNestedTensor: A :class:`MultiNestedTensor` instance.
+
+        Example:
+            >>> tensor_mat = [
+            ...    [torch.tensor([1, 2, 3]), torch.tensor([4, 5])],
+            ...    [torch.tensor([6, 7]), torch.tensor([8, 9, 10])],
+            ... ]
+            >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
+            >>> out
+            MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
+            >>> out.values
+            tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+            >>> out.offset
+            tensor([ 0,  3,  5,  7, 10])
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -58,6 +71,13 @@ class MultiNestedTensor:
         offset_list.append(accum_idx)
         values_list = []
         for i in range(num_rows):
+            if len(tensor_mat[i]) != num_cols:
+                raise RuntimeError(
+                    f"The length of each row must be the same."
+                    f" tensor_mat[0] has length {num_cols}, but"
+                    f" tensor_mat[{i}] has length {len(tensor_mat[i])}"
+                )
+
             for j in range(num_cols):
                 tensor = tensor_mat[i][j]
                 if not isinstance(tensor, Tensor):
@@ -76,12 +96,11 @@ class MultiNestedTensor:
         return cls(num_rows, num_cols, values, offset)
 
     def __repr__(self) -> str:
-        name = ' '.join([
+        return ' '.join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",
-            f"num_cols={self.num_cols},", f"device={self.values.device})"
+            f"num_cols={self.num_cols},",
+            f"device='{self.values.device}')",
         ])
-
-        return name
 
     def __getitem__(
         self,

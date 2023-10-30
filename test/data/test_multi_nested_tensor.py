@@ -1,6 +1,7 @@
 import random
 
 import torch
+import pytest
 
 from torch_frame.data import MultiNestedTensor
 
@@ -19,7 +20,7 @@ def test_multi_nested_tensor_basic():
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
     assert str(multi_nested_tensor
-               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device=cpu)"
+               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')"
     assert multi_nested_tensor.num_rows == num_rows
     assert multi_nested_tensor.num_cols == num_cols
 
@@ -56,3 +57,17 @@ def test_multi_nested_tensor_basic():
     assert cloned_multi_nested_tensor.values[0] != max_value + 1.0
     multi_nested_tensor.offset[0] = -1
     assert cloned_multi_nested_tensor.values[0] != -1
+
+
+def test_multi_nested_tensor_different_num_rows():
+    tensor_mat = [
+        [torch.tensor([1, 2, 3]), torch.tensor([4, 5])],
+        [torch.tensor([6, 7]), torch.tensor([8, 9, 10]), torch.tensor([11])],
+    ]
+
+    with pytest.raises(
+        RuntimeError,
+        match="The length of each row must be the same",
+    ):
+        MultiNestedTensor.from_tensor_mat(tensor_mat)
+
