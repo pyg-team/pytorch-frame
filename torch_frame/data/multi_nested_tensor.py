@@ -316,7 +316,7 @@ class MultiNestedTensor:
 
     @property
     def ndim(self) -> int:
-        return self.dim()
+        return 3
 
     @property
     def device(self) -> torch.device:
