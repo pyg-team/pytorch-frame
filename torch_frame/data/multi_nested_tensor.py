@@ -16,8 +16,25 @@ class MultiNestedTensor:
     Args:
         num_rows (int): Number of rows.
         num_cols (int): Number of columns.
-        values (torch.Tensor): The values Tensor of size :obj:
+        values (torch.Tensor): The values Tensor that has
         offset (torch.Tensor): The offset Tensor.
+
+    Example:
+        >>> import torch
+        >>> tensor_mat = [
+        ...    [torch.tensor([1, 2]), torch.tensor([3])],
+        ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
+        ...    [torch.tensor([8, 9]), torch.tensor([10])],
+        ... ]
+        >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
+        >>> out.size(0)
+        3
+        >>> out.size(1)
+        2
+        >>> out.size(2)
+        Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+        ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
     """
     def __init__(
         self,
@@ -43,9 +60,10 @@ class MultiNestedTensor:
         :obj:`tensor_mat`.
 
         Args:
-            tensor_mat (List[List[Tensor]]): A matrix of :class:`torch.Tensor`.
-                :obj:`tensor_mat[i][j]` contains 1-dim PyTorch Tensor of
-                :obj:`i`-th row and :obj:`j`-th column.
+            tensor_mat (List[List[Tensor]]): A matrix of
+                :class:`torch.Tensor` objects. :obj:`tensor_mat[i][j]`
+                contains 1-dim :class:`torch.Tensor` of :obj:`i`-th row
+                and :obj:`j`-th column, varying in size.
 
         Returns:
             MultiNestedTensor: A :class:`MultiNestedTensor` instance.
@@ -62,6 +80,10 @@ class MultiNestedTensor:
             tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
             >>> out.offset
             tensor([ 0,  3,  5,  7, 10])
+            >>> tensor_mat[2][0]
+            tensor([8, 9])
+            >>> out[2, 0]
+            tensor([8, 9])
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -217,25 +239,7 @@ class MultiNestedTensor:
         return self.values.device
 
     def size(self, dim: int) -> int:
-        r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
-
-        Example:
-            >>> import torch
-            >>> tensor_mat = [
-            ...    [torch.tensor([1, 2]), torch.tensor([3])],
-            ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
-            ...    [torch.tensor([8, 9]), torch.tensor([10])],
-            ... ]
-            >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
-            >>> out.size(0)
-            3
-            >>> out.size(1)
-            2
-            >>> out.size(2)
-            Traceback (most recent call last):
-            File "<stdin>", line 1, in <module>
-            ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
-        """
+        r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`"""
         if dim < 0:
             dim = self.dim - dim
         if dim == 0:
