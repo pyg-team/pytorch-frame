@@ -8,9 +8,9 @@ from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
-from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -240,15 +240,15 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
         # feat: [batch_size, num_cols]
-        feat = feat + 1
+        feat.values = feat.values + 1
         xs = []
         for i, emb in enumerate(self.embs):
-            xs.append(emb(feat[:, i]))
+            xs.append(emb(feat))
         # [batch_size, num_cols, hidden_channels]
         x = torch.stack(xs, dim=1)
         return x
