@@ -318,16 +318,8 @@ class MultiNestedTensor:
     def ndim(self) -> int:
         return 3
 
-    @property
-    def device(self) -> torch.device:
-        return self.values.device
-
     def dim(self) -> int:
         return self.ndim
-
-    @property
-    def dtype(self) -> torch.dtype:
-        return self.values.dtype
 
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`"""
@@ -367,7 +359,7 @@ class MultiNestedTensor:
             raise NotImplementedError
 
     @staticmethod
-    def cat(xs: List['MultiNestedTensor'] | Tuple['MultiNestedTensor'],
+    def cat(xs: Union[List['MultiNestedTensor'], Tuple['MultiNestedTensor']],
             dim: int = 0) -> 'MultiNestedTensor':
         # TODO: To be implemented
         if len(xs) == 1:
