@@ -92,34 +92,38 @@ class MultiNestedTensor:
             assert len(index) == 2
             if isinstance(index[0], int) and isinstance(index[1], int):
                 # Returns Tensor
-                return MultiNestedTensor.get_tensor(self, index[0], index[1])
+                return self.get_value(index[0], index[1])
             else:
                 # Returns MultiNestedTensor
                 out = self
                 for dim, idx in enumerate(index):
-                    out = MultiNestedTensor.index(out, idx, dim)
+                    out = out.select(idx, dim)
                 return out
         else:
             # Returns MultiNestedTensor
-            return MultiNestedTensor.index(self, index, dim=0)
+            return self.select(index, dim=0)
+
+    def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
+        return self.slice(slice(start, start + length), dim)
 
     def slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
         if dim == 0 or dim == -3:
             return self.row_slice(slice)
         elif dim == 1 or dim == -2:
             return self.col_slice(slice)
+        raise RuntimeError(f"Unsupported dim={dim} for slice.")
 
     def row_slice(self, slice: slice) -> 'MultiNestedTensor':
         r"""Slice along row (dim=0)"""
         if slice.step is not None and slice.step > 1:
             # If step is larger than 1, we reuse index_select along rows.
-            idx = torch.arange(self.num_rows, device=self.device)[slice]
+            idx = torch.tensor(range(self.num_rows)[slice], device=self.device)
             return self.index_select(idx, dim=0)
         else:
             start_idx: int = self._to_positive_index(slice.start or 0, dim=0)
             end_idx: int = self._to_positive_index(slice.stop or self.num_rows,
                                                    dim=0, is_slice_end=True)
-            if start_idx == 0 and end_idx == self.num_rows:
+            if start_idx <= 0 and end_idx >= self.num_rows:
                 # Do nothing, just return the original data
                 return self
             elif start_idx < end_idx:
@@ -227,38 +231,24 @@ class MultiNestedTensor:
                 (default: :obj:`False`)
         """
         assert dim in [0, 1]
+        max_entries = self.num_rows if dim == 0 else self.num_cols
+        idx_name = "Row" if dim == 0 else "Col"
         if isinstance(index, int):
-            if dim == 0:
-                if index < 0:
-                    index = index + self.num_rows
-                if is_slice_end:
-                    if index < 0 or index > self.num_rows:
-                        raise IndexError("Row index out of bounds!")
-                else:
-                    if index < 0 or index >= self.num_rows:
-                        raise IndexError("Row index out of bounds!")
-            else:
-                if index < 0:
-                    index = index + self.num_cols
-                if is_slice_end:
-                    if index < 0 or index > self.num_cols:
-                        raise IndexError("Column index out of bounds!")
-                else:
-                    if index < 0 or index >= self.num_cols:
-                        raise IndexError("Column index out of bounds!")
+            if index < 0:
+                index = index + max_entries
+            if is_slice_end and index < 0 or index > max_entries:
+                raise IndexError(f"{idx_name} index out of bounds!")
+            elif (not is_slice_end) and (index < 0 or index >= max_entries):
+                raise IndexError(f"{idx_name} index out of bounds!")
         elif isinstance(index, Tensor):
             assert not is_slice_end
-            index = index.clone()
             assert index.ndim == 1
             neg_idx = index < 0
-            if dim == 0:
-                index[neg_idx] = self.num_rows + index[neg_idx]
-                if index.min() < 0 or index.max() >= self.num_rows:
-                    raise IndexError("Row index out of bounds!")
-            else:
-                index[neg_idx] = self.num_cols + index[neg_idx]
-                if index.min() < 0 or index.max() >= self.num_cols:
-                    raise IndexError("Column index out of bounds!")
+            if neg_idx.any():
+                index = index.clone()
+                index[neg_idx] = max_entries + index[neg_idx]
+            if index.min() < 0 or index.max() >= max_entries:
+                raise IndexError(f"{idx_name} index out of bounds!")
         return index
 
     @property
@@ -297,10 +287,6 @@ class MultiNestedTensor:
     def dim(self) -> int:
         return self.ndim
 
-    @property
-    def device(self) -> torch.device:
-        return self.values.device
-
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
         """
@@ -325,6 +311,10 @@ class MultiNestedTensor:
     def shape(self) -> Tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)
 
+    @property
+    def dtype(self) -> torch.dtype:
+        return self.values.dtype
+
     # Static methods ##########################################################
     @staticmethod
     def stack(xs: List['MultiNestedTensor'],
@@ -335,9 +325,8 @@ class MultiNestedTensor:
         else:
             raise NotImplementedError
 
-    @staticmethod
-    def index(
-        multi_nested_tensor: 'MultiNestedTensor',
+    def select(
+        self,
         index: Union[int, Tensor, List, slice],
         dim: int,
     ) -> 'MultiNestedTensor':
@@ -351,24 +340,18 @@ class MultiNestedTensor:
             dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
         """
         if isinstance(index, int):
-            return multi_nested_tensor.single_index_select(index, dim=dim)
+            return self.single_index_select(index, dim=dim)
         elif isinstance(index, slice):
-            return multi_nested_tensor.slice(index, dim=dim)
+            return self.slice(index, dim=dim)
         elif isinstance(index, Tensor) and index.ndim == 1:
-            return multi_nested_tensor.index_select(index, dim=dim)
+            return self.index_select(index, dim=dim)
         elif isinstance(index, List):
-            return multi_nested_tensor.index_select(
-                torch.tensor(index, device=multi_nested_tensor.device),
-                dim=dim)
+            return self.index_select(torch.tensor(index, device=self.device),
+                                     dim=dim)
         else:
             raise NotImplementedError
 
-    @staticmethod
-    def get_tensor(
-        multi_nested_tensor: 'MultiNestedTensor',
-        i: int,
-        j: int,
-    ) -> Tensor:
+    def get_value(self, i: int, j: int) -> Tensor:
         r"""Get :obj:`(i, j)`-th :class:`Tensor` object of
         :class:`MultiNestedTensor` object.
 
@@ -378,12 +361,12 @@ class MultiNestedTensor:
             i (int): The row integer index.
             j (int): The column integer index.
         """
-        i = multi_nested_tensor._to_positive_index(i, dim=0)
-        j = multi_nested_tensor._to_positive_index(j, dim=1)
-        idx = i * multi_nested_tensor.num_cols + j
-        start_idx = multi_nested_tensor.offset[idx]
-        end_idx = multi_nested_tensor.offset[idx + 1]
-        out = multi_nested_tensor.values[start_idx:end_idx]
+        i = self._to_positive_index(i, dim=0)
+        j = self._to_positive_index(j, dim=1)
+        idx = i * self.num_cols + j
+        start_idx = self.offset[idx]
+        end_idx = self.offset[idx + 1]
+        out = self.values[start_idx:end_idx]
         return out
 
     def clone(self) -> 'MultiNestedTensor':

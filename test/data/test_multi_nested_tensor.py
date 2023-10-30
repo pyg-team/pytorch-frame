@@ -65,6 +65,10 @@ def test_multi_nested_tensor_basic():
     assert empty_multi_nested_tensor.shape[0] == 0
     assert empty_multi_nested_tensor.shape[1] == num_cols
 
+    # Test row narrow
+    assert_equal(tensor_mat[3:3 + 2],
+                 multi_nested_tensor.narrow(dim=0, start=3, length=2))
+
     # Test multi_nested_tensor[List[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
@@ -94,8 +98,14 @@ def test_multi_nested_tensor_basic():
     with pytest.raises(NotImplementedError):
         # TODO: Add proper test once implemented
         multi_nested_tensor[:, 4:8]
-    cloned_multi_nested_tensor = multi_nested_tensor.clone()
 
+    # Test column narrow
+    with pytest.raises(NotImplementedError):
+        # TODO: Add proper test once implemented
+        multi_nested_tensor.narrow(dim=1, start=3, length=2)
+
+    # Testing clone
+    cloned_multi_nested_tensor = multi_nested_tensor.clone()
     multi_nested_tensor.values[0] = max_value + 1.0
     assert cloned_multi_nested_tensor.values[0] != max_value + 1.0
     multi_nested_tensor.offset[0] = -1
