@@ -207,7 +207,7 @@ class DataFrameToTensorFrameConverter:
         feat_dict = {}
         for stype, xs in xs_dict.items():
             if stype.use_multi_nested_tensor:
-                feat_dict[stype] = MultiNestedTensor.stack(xs, dim=1)
+                feat_dict[stype] = MultiNestedTensor.cat(xs, dim=1)
             elif stype.use_dict_multi_nested_tensor:
                 feat_dict[stype] = {}
                 keys = xs[0].keys()
