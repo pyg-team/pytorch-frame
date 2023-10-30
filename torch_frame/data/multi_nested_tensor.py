@@ -106,7 +106,7 @@ class MultiNestedTensor:
         self,
         index: Any,
     ) -> Union['MultiNestedTensor', Tensor]:
-        if isinstance(index, Tuple):
+        if isinstance(index, tuple):
             # Get an element of (i, j). Returns Tensor
             assert len(index) == 2
             idx_0 = index[0]
@@ -218,6 +218,22 @@ class MultiNestedTensor:
 
     def size(self, dim: int) -> int:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
+
+        Example:
+            >>> tensor_mat = [
+            ...    [torch.tensor([1, 2]), torch.tensor([3])],
+            ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
+            ...    [torch.tensor([8, 9]), torch.tensor([10])],
+            ... ]
+            >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
+            >>> out.size(0)
+            3
+            >>> out.size(1)
+            2
+            >>> out.size(2)
+            Traceback (most recent call last):
+            File "<stdin>", line 1, in <module>
+            ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
         """
         if dim < 0:
             dim = self.dim - dim
