@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
-from torch_frame.data import MultiNestedTensor
+from torch_frame.typing import TensorData
 
 
 @dataclass
@@ -18,5 +18,5 @@ class TextTokenizerConfig:
             be obtained in a full-batch manner. (default: :obj:`None`)
 
     """
-    text_tokenizer: Callable[[List[str]], Dict[str, MultiNestedTensor]]
+    text_tokenizer: Callable[[List[str]], TensorData]
     batch_size: Optional[int] = None

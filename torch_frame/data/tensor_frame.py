@@ -85,23 +85,40 @@ class TensorFrame:
                 empty_stypes.append(stype_name)
 
             # Get any value if feat is a dictionary
-            if isinstance(feat, dict):
-                feat = next(iter(feat.values()))
-
-            if feat.dim() < 2:
-                raise ValueError(
-                    f"feat_dict['{stype_name}'] must be at least 2-dimensional"
-                )
-            if num_cols != feat.size(1):
-                raise ValueError(
-                    f"The expected number of columns for {stype_name} feature "
-                    f"is {num_cols}, which does not align with the column "
-                    f"dimensionality of feat_dict[{stype_name}] (got "
-                    f"{feat.size(1)})")
-            if feat.size(0) != num_rows:
-                raise ValueError(
-                    f"The length of elements in feat_dict are not aligned, "
-                    f"got {feat.size(0)} but expected {num_rows}.")
+            if not isinstance(feat, dict):
+                if feat.dim() < 2:
+                    raise ValueError(f"feat_dict['{stype_name}'] must be at "
+                                     f"least 2-dimensional")
+                if num_cols != feat.size(1):
+                    raise ValueError(
+                        f"The expected number of columns for {stype_name} "
+                        f"feature is {num_cols}, which does not align with "
+                        f"the column dimensionality of "
+                        f"feat_dict[{stype_name}] (got {feat.size(1)})")
+                if feat.size(0) != num_rows:
+                    raise ValueError(
+                        f"The length of elements in feat_dict are "
+                        f"not aligned, got {feat.size(0)} but "
+                        f"expected {num_rows}.")
+            else:
+                feats = feat
+                for key, feat in feats:
+                    if feat.dim() < 2:
+                        raise ValueError(f"feat_dict['{stype_name}']['{key}'] "
+                                         f"must be at least 2-dimensional")
+                    if num_cols != feat.size(1):
+                        raise ValueError(
+                            f"The expected number of columns for {stype_name} "
+                            f"feature is {num_cols}, which does not align "
+                            f"with the column dimensionality of "
+                            f"feat_dict['{stype_name}']['{key}'] "
+                            f"(got {feat.size(1)})")
+                    if feat.size(0) != num_rows:
+                        raise ValueError(
+                            f"The length of elements in "
+                            f"feat_dict['{stype_name}']['{key}']"
+                            f"is not aligned, got {feat.size(0)} but "
+                            f"expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(

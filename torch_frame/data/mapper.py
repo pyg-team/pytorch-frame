@@ -218,8 +218,9 @@ class TextTokenizationTensorMapper(TensorMapper):
     Args:
         text_tokenizer (callable): A callable function that takes list of
             strings and returns a dictionary of :class:`MultiNestedTensor`.
-            The values of the dictionary contains for example tokens and
-            attention masks.
+            The keys of the dictionary are arguments that will be put to the
+            model, including :obj:`input_ids` and :obj:`attention_mask`.
+            The values of the dictionary are tensors corresponding to keys.
         batch_size (int, optional): The mini-batch size used for the text
             tokenizer. If :obj:`None`, we will encode all text in a full-batch
             manner.
