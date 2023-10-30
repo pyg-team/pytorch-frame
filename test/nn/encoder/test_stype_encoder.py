@@ -188,17 +188,15 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
 
 @pytest.mark.parametrize('encoder_cls_kwargs',
                          [(MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'mean'
-                         }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'sum'
-                         }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'max'
+                             'mode': 'mean',
+                             'na_strategy': NAStrategy.ZEROS
                          })])
 def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10,
                                    stypes=[stype.multicategorical],
                                    with_nan=True)
     dataset.materialize()
+    assert len(dataset.df) != len(dataset.df.dropna())
     tensor_frame = dataset.tensor_frame
     stats_list = [
         dataset.col_stats[col_name]

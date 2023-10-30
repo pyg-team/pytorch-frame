@@ -11,6 +11,7 @@ from torch_frame import NAStrategy, stype
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -82,7 +83,7 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, feat: Tensor) -> Tensor:
+    def forward(self, feat: TensorData) -> Tensor:
         # Clone the tensor to avoid in-place modification
         feat = feat.clone()
         # NaN handling of the input Tensor
@@ -95,7 +96,7 @@ class StypeEncoder(Module, ABC):
         return self.post_forward(x)
 
     @abstractmethod
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(self, feat: TensorData) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
         :obj:`[batch_size, num_cols, out_channels]`."""
@@ -115,7 +116,7 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
-    def na_forward(self, feat: Tensor) -> Tensor:
+    def na_forward(self, feat: TensorData) -> TensorData:
         r"""Replace NaN values in input :obj:`Tensor` given :obj:`na_strategy`.
 
         Args:
@@ -130,6 +131,8 @@ class StypeEncoder(Module, ABC):
 
         for col in range(feat.size(1)):
             column_data = feat[:, col]
+            if isinstance(feat, MultiNestedTensor):
+                column_data = column_data.values
             if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data)
             else:
