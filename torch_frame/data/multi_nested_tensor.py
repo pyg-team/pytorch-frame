@@ -116,13 +116,6 @@ class MultiNestedTensor:
 
         return cls(num_rows, num_cols, values, offset)
 
-    def __repr__(self) -> str:
-        return ' '.join([
-            f"{self.__class__.__name__}(num_rows={self.num_rows},",
-            f"num_cols={self.num_cols},",
-            f"device='{self.device}')",
-        ])
-
     def __getitem__(
         self,
         index: Any,
@@ -370,12 +363,9 @@ class MultiNestedTensor:
         index: Union[int, Tensor, List, slice],
         dim: int,
     ) -> 'MultiNestedTensor':
-        r"""Supports all types of row/column-level advanced indexing of input
-        :class:`MultiNestedTensor` object.
+        r"""Supports all types of row/column-level advanced indexing.
 
         Args:
-            multi_nested_tensor (MultiNestedTensor): Input
-                :class:`MultiNestedTensor` object to be indexed.
             index (Union[int, Tensor, List, slice]): Input :obj:`index`.
             dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
         """
@@ -392,12 +382,9 @@ class MultiNestedTensor:
             raise NotImplementedError
 
     def get_value(self, i: int, j: int) -> Tensor:
-        r"""Get :obj:`(i, j)`-th :class:`Tensor` object of
-        :class:`MultiNestedTensor` object.
+        r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
 
         Args:
-            multi_nested_tensor (MultiNestedTensor): Input
-                :class:`MultiNestedTensor` object.
             i (int): The row integer index.
             j (int): The column integer index.
         """
@@ -412,6 +399,13 @@ class MultiNestedTensor:
     def clone(self) -> 'MultiNestedTensor':
         return MultiNestedTensor(self.num_rows, self.num_cols,
                                  self.values.clone(), self.offset.clone())
+
+    def __repr__(self) -> str:
+        return ' '.join([
+            f"{self.__class__.__name__}(num_rows={self.num_rows},",
+            f"num_cols={self.num_cols},",
+            f"device='{self.device}')",
+        ])
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
