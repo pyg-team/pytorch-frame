@@ -8,7 +8,6 @@ from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
-from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
 from torch_frame.typing import TensorData
@@ -62,6 +61,11 @@ class StypeEncoder(Module, ABC):
                     and not self.na_strategy.is_categorical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
+                    " columns.")
+            if (self.stype == stype.multicategorical
+                    and not self.na_strategy.is_multicategorical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on multicategorical"
                     " columns.")
             if self.stype == stype.text_embedded:
                 raise ValueError(f"Only the default `na_strategy` (None) "
@@ -230,6 +234,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         self.embs = ModuleList([])
         for stats in self.stats_list:
             num_categories = len(stats[StatType.MULTI_COUNT][0])
+            print("num categories ", num_categories)
             # 0-th category is for NaN.
             self.embs.append(
                 EmbeddingBag(num_categories + 1, self.out_channels,
@@ -249,7 +254,8 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         feat.values = feat.values + 1
         xs = []
         for i, emb in enumerate(self.embs):
-            xs.append(emb(feat))
+            col_feat = feat[:, i]
+            xs.append(emb(col_feat.values, col_feat.offset[:-1]))
         # [batch_size, num_cols, hidden_channels]
         x = torch.stack(xs, dim=1)
         return x

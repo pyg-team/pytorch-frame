@@ -50,6 +50,10 @@ class NAStrategy(Enum):
         return self == NAStrategy.MOST_FREQUENT
 
     @property
+    def is_multicategorical_strategy(self):
+        return self == NAStrategy.ZEROS
+
+    @property
     def is_numerical_strategy(self):
         return self in [NAStrategy.MEAN, NAStrategy.ZEROS]
 

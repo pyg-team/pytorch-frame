@@ -117,14 +117,15 @@ def test_mult_categorical_feature_encoder(encoder_cls_kwargs):
     encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
                                     stype=stype.multicategorical,
                                     **encoder_cls_kwargs[1])
-    feat_cat = tensor_frame.feat_dict[stype.multicategorical]
-    x = encoder(feat_cat)
-    assert x.shape == (feat_cat.size(0), feat_cat.size(1), 8)
+    feat_multicat = tensor_frame.feat_dict[stype.multicategorical]
+    x = encoder(feat_multicat)
+    assert x.shape == (feat_multicat.size(0), feat_multicat.size(1), 8)
 
     # Perturb the first column
     num_categories = len(stats_list[0][StatType.MULTI_COUNT])
-    feat_cat[:, 0] = (feat_cat[:, 0] + 1) % num_categories
-    x_perturbed = encoder(feat_cat)
+    feat_multicat[:,
+                  0].values = (feat_multicat[:, 0].values + 1) % num_categories
+    x_perturbed = encoder(feat_multicat)
     # Make sure other column embeddings are unchanged
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
