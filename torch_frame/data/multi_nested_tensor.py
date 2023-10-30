@@ -220,6 +220,7 @@ class MultiNestedTensor:
         r"""Dimension of the :class:`torch_frame.data.MultiNestedTensor`
 
         Example:
+            >>> import torch
             >>> tensor_mat = [
             ...    [torch.tensor([1, 2]), torch.tensor([3])],
             ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
