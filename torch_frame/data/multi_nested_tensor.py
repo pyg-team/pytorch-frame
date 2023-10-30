@@ -75,8 +75,7 @@ class MultiNestedTensor:
                 raise RuntimeError(
                     f"The length of each row must be the same."
                     f" tensor_mat[0] has length {num_cols}, but"
-                    f" tensor_mat[{i}] has length {len(tensor_mat[i])}"
-                )
+                    f" tensor_mat[{i}] has length {len(tensor_mat[i])}")
 
             for j in range(num_cols):
                 tensor = tensor_mat[i][j]
