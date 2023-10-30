@@ -204,6 +204,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
     r"""An embedding look-up based encoder for multi_categorical features. It
     applies :class:`torch.nn.EmbeddingBag` for each categorical feature and
     concatenates the output embeddings.
+
     Args:
         out_channels (int, optional): Size of each embedding vector.
             (default: :obj:`None`)
@@ -225,7 +226,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         if mode not in ["mean", "sum", "max"]:
             raise ValueError(
                 f"Unknown mode {mode} for MultiCategoricalEmbeddingEncoder.",
-                "Please use ")
+                "Please use 'mean', 'sum' or 'max'.")
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
