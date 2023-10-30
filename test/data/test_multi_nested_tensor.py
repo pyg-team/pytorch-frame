@@ -32,7 +32,7 @@ def test_multi_nested_tensor_basic():
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
     assert str(multi_nested_tensor
-               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device=cpu)"
+               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')"
 
     # Test sizes
     assert multi_nested_tensor.shape[0] == num_rows
