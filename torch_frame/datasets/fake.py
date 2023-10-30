@@ -69,6 +69,9 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
         if stype.multicategorical in stypes:
+            # TODO: Currently having multiple multi-categorical columns
+            # is not supported. Please add test case for multiple
+            # multi-categorical columns when it's added.
             for col_name in ['mult_1']:
                 arr = np.random.randint(0, 3, size=(num_rows, 2))
                 arr = arr.astype(str)
