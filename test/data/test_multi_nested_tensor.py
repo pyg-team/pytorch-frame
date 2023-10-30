@@ -1,7 +1,7 @@
 import random
 
-import torch
 import pytest
+import torch
 
 from torch_frame.data import MultiNestedTensor
 
@@ -69,12 +69,15 @@ def test_multi_nested_tensor_basic():
 
 def test_multi_nested_tensor_different_num_rows():
     tensor_mat = [
-        [torch.tensor([1, 2, 3]), torch.tensor([4, 5])],
-        [torch.tensor([6, 7]), torch.tensor([8, 9, 10]), torch.tensor([11])],
+        [torch.tensor([1, 2, 3]),
+         torch.tensor([4, 5])],
+        [torch.tensor([6, 7]),
+         torch.tensor([8, 9, 10]),
+         torch.tensor([11])],
     ]
 
     with pytest.raises(
-        RuntimeError,
-        match="The length of each row must be the same",
+            RuntimeError,
+            match="The length of each row must be the same",
     ):
         MultiNestedTensor.from_tensor_mat(tensor_mat)
