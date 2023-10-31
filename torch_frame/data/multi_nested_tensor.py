@@ -223,7 +223,7 @@ class MultiNestedTensor:
 
     def single_index_select(self, index: int, dim: int) -> 'MultiNestedTensor':
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""
-        if dim == 0 or dim + self.ndim + self.ndim == 0:
+        if dim == 0 or dim + self.ndim == 0:
             index = self._to_positive_index(index, dim=0)
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
