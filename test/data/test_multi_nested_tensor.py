@@ -120,14 +120,12 @@ def test_multi_nested_tensor_basic():
             multi_nested_tensor[4:]
         ], dim=0),
     )
-
     assert_equal(
         tensor_mat,
         MultiNestedTensor.cat(
             [multi_nested_tensor[i] for i in range(len(multi_nested_tensor))],
             dim=0),
     )
-
     assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor]))
 
     # Testing clone
