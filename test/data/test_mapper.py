@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import torch
 
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
+    NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
 )
@@ -63,6 +65,26 @@ def test_multicategorical_tensor_mapper():
     assert out.values[3] == ''
     assert out.values[4] == 'B'
     assert out.values[5] == ''
+
+
+def test_numerical_sequence_tensor_mapper():
+    ser = pd.Series([[0.1, 0.5], [0.3], [], [0.2, np.nan], None, np.nan])
+    expected_values = torch.tensor([0.1, 0.5, 0.3, 0.2, torch.nan],
+                                   dtype=torch.float32)
+    expected_offset = torch.tensor([0, 2, 3, 3, 5, 5, 5])
+    mapper = NumericalSequenceTensorMapper()
+
+    tensor = mapper.forward(ser)
+    values = tensor.values
+    offset = tensor.offset
+    assert values.dtype == torch.float32
+    assert ((values == expected_values) |
+            (torch.isnan(values) & torch.isnan(expected_values))).all()
+    assert torch.equal(offset, expected_offset)
+
+    out = mapper.backward(tensor)
+    pd.testing.assert_series_equal(
+        out, pd.Series([[0.1, 0.5], [0.3], None, [0.2, np.nan], None, None]))
 
 
 def test_text_embedding_tensor_mapper():
