@@ -31,23 +31,33 @@ from torch_frame.nn import (
 # Best Val Acc: 0.9543, Best Test Acc: 0.9511
 
 
+# class PretrainedTextEncoder:
+#     def __init__(self, device: torch.device):
+#         self.model = SentenceTransformer('all-distilroberta-v1', device=device)
+#
+#     def __call__(self, sentences: List[str]) -> Tensor:
+#         # Inference on GPU (if available)
+#         embeddings = self.model.encode(sentences, convert_to_numpy=False,
+#                                        convert_to_tensor=True)
+#         # Map back to CPU
+#         return embeddings.cpu()
+
+
 class PretrainedTextEncoder:
     def __init__(self, device: torch.device):
-        self.model = SentenceTransformer('all-distilroberta-v1', device=device)
+        from transformers import AutoTokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        # Inference on GPU (if available)
-        embeddings = self.model.encode(sentences, convert_to_numpy=False,
-                                       convert_to_tensor=True)
-        # Map back to CPU
-        return embeddings.cpu()
+        inputs = self.tokenizer(sentences, truncation=True, padding='max_length', return_tensors="pt")
+        return inputs['input_ids']
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
-parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--batch_size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
@@ -64,7 +74,7 @@ dataset = MultimodalTextBenchmark(
     root=path,
     name=args.dataset,
     text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+                                         batch_size=1000),
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))

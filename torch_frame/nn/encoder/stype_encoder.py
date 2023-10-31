@@ -568,6 +568,56 @@ class LinearEmbeddingEncoder(StypeEncoder):
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
+        from transformers import DistilBertModel
+        self.model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        def make_adapter(in_dim, bottleneck_dim, out_dim):
+            adapter_layers = torch.nn.Sequential(
+                torch.nn.Linear(in_dim, bottleneck_dim),
+                torch.nn.GELU(),
+                torch.nn.Linear(bottleneck_dim, out_dim),
+            )
+            return adapter_layers
+
+        def count_parameters(model):
+            return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        total_size = 0
+        bottleneck_size = 32  # hyperparameter
+
+        for block_idx in range(6):
+            orig_layer_1 = self.model.transformer.layer[block_idx].attention.out_lin
+
+            adapter_layers_1 = make_adapter(
+                in_dim=orig_layer_1.out_features,
+                bottleneck_dim=bottleneck_size,
+                out_dim=orig_layer_1.out_features)
+
+            new_1 = torch.nn.Sequential(orig_layer_1, *adapter_layers_1)
+            self.model.transformer.layer[block_idx].attention.out_lin = new_1
+
+            total_size += count_parameters(adapter_layers_1)
+
+            orig_layer_2 = self.model.transformer.layer[block_idx].ffn.lin2
+
+            adapter_layers_2 = make_adapter(
+                in_dim=orig_layer_2.out_features,
+                bottleneck_dim=bottleneck_size,
+                out_dim=orig_layer_2.out_features)
+
+            new_2 = torch.nn.Sequential(orig_layer_2, *adapter_layers_2)
+            self.model.transformer.layer[block_idx].ffn.lin2 = new_2
+
+            total_size += count_parameters(adapter_layers_2)
+
+        print("Number of adapter parameters added:", total_size)
+
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = self.model.to(device)
+
     def init_modules(self):
         super().init_modules()
         num_cols = len(self.stats_list)
@@ -578,15 +628,17 @@ class LinearEmbeddingEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
+        # self.model.reset_parameters()
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
     def encode_forward(self, feat: Tensor) -> Tensor:
-        # [batch_size, num_cols, in_channels] *
-        # [num_cols, in_channels, out_channels]
-        # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', feat, self.weight)
-        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
-        # -> [batch_size, num_cols, out_channels]
+        feat = feat.squeeze(1)
+        attention_mask = torch.ones_like(feat, dtype=torch.int64)
+        zero_index = (feat == 0)
+        attention_mask[zero_index] = 0
+        outputs = self.model(input_ids=feat, attention_mask=attention_mask)
+        # [batch_size, max_seq_len, embedding_size]
+        x_lin = torch.einsum('ijk,jkl->ijl', outputs.last_hidden_state, self.weight)
         x = x_lin + self.bias
         return x
