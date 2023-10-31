@@ -30,6 +30,8 @@ from torch_frame.nn import (
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9543, Best Test Acc: 0.9511
 
+# DistilBert Finetune with Adapter
+# Val Acc: 0.8018, Test Acc: 0.8004
 
 # class PretrainedTextEncoder:
 #     def __init__(self, device: torch.device):
