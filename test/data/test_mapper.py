@@ -70,17 +70,17 @@ def test_multicategorical_tensor_mapper():
 def test_sequence_tensor_mapper():
     ser = pd.Series([[0.1, 0.5], [0.3], [], [0.2, np.nan], None, np.nan])
     expected_values = torch.tensor([0.1, 0.5, 0.3, 0.2, torch.nan],
-                                   dtype=torch.float64)
-    expected_boundaries = torch.tensor([0, 2, 3, 3, 5, 5, 5])
+                                   dtype=torch.float32)
+    expected_offset = torch.tensor([0, 2, 3, 3, 5, 5, 5])
     mapper = SequenceTensorMapper()
 
     tensor = mapper.forward(ser)
     values = tensor.values
     offset = tensor.offset
-    assert values.dtype == torch.float64
+    assert values.dtype == torch.float32
     assert ((values == expected_values) |
             (torch.isnan(values) & torch.isnan(expected_values))).all()
-    assert torch.equal(offset, expected_boundaries)
+    assert torch.equal(offset, expected_offset)
 
     out = mapper.backward(tensor)
     pd.testing.assert_series_equal(

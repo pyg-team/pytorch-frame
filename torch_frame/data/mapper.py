@@ -190,7 +190,7 @@ class SequenceTensorMapper(TensorMapper):
         offset = torch.from_numpy(offset.values)
         offset = torch.cumsum(offset, dim=0)
         ser = ser.explode()
-        ser = ser.astype('float64')
+        ser = ser.astype('float32')
         values = torch.from_numpy(ser.values)
         return MultiNestedTensor(num_rows=num_rows, num_cols=1, values=values,
                                  offset=offset)
