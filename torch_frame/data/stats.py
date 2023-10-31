@@ -42,8 +42,6 @@ class StatType(Enum):
             ]
         elif stype == torch_frame.text_embedded:
             return []
-        elif stype == torch_frame.text_tokenized:
-            return []
         elif stype == torch_frame.multicategorical:
             return [
                 StatType.MULTI_COUNT,
