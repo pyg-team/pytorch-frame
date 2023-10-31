@@ -350,7 +350,8 @@ class MultiNestedTensor:
 
     # Static methods ##########################################################
     @staticmethod
-    def cat(xs: List['MultiNestedTensor'],
+    def cat(xs: Union[Tuple['MultiNestedTensor', ...],
+                      List['MultiNestedTensor']],
             dim: int = 0) -> 'MultiNestedTensor':
         if dim == 0 or dim == -3:
             num_rows = sum(x.num_rows for x in xs)

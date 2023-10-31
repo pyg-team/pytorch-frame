@@ -115,10 +115,9 @@ def test_multi_nested_tensor_basic():
     # Testing row concat
     assert_equal(
         tensor_mat,
-        MultiNestedTensor.cat([
-            multi_nested_tensor[:2], multi_nested_tensor[2:4],
-            multi_nested_tensor[4:]
-        ], dim=0),
+        MultiNestedTensor.cat(
+            (multi_nested_tensor[:2], multi_nested_tensor[2:4],
+             multi_nested_tensor[4:]), dim=0),
     )
     assert_equal(
         tensor_mat,
