@@ -31,8 +31,8 @@ def test_multi_nested_tensor_basic():
         tensor_mat.append(tensor_list)
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
-    assert str(multi_nested_tensor
-               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')"
+    assert (str(multi_nested_tensor) ==
+            "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')")
 
     # Test sizes
     assert multi_nested_tensor.shape[0] == num_rows
@@ -111,6 +111,24 @@ def test_multi_nested_tensor_basic():
     with pytest.raises(NotImplementedError):
         # TODO: Add proper test once implemented
         multi_nested_tensor.narrow(dim=1, start=3, length=2)
+
+    # Testing row concat
+    assert_equal(
+        tensor_mat,
+        MultiNestedTensor.cat([
+            multi_nested_tensor[:2], multi_nested_tensor[2:4],
+            multi_nested_tensor[4:]
+        ], dim=0),
+    )
+
+    assert_equal(
+        tensor_mat,
+        MultiNestedTensor.cat(
+            [multi_nested_tensor[i] for i in range(len(multi_nested_tensor))],
+            dim=0),
+    )
+
+    assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor]))
 
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()

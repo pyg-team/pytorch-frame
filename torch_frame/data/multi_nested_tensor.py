@@ -350,13 +350,31 @@ class MultiNestedTensor:
 
     # Static methods ##########################################################
     @staticmethod
-    def stack(xs: List['MultiNestedTensor'],
-              dim: int = 0) -> 'MultiNestedTensor':
-        # TODO: To be implemented.
-        if len(xs) == 1:
+    def cat(xs: List['MultiNestedTensor'],
+            dim: int = 0) -> 'MultiNestedTensor':
+        if dim == 0 or dim == -3:
+            num_rows = sum(x.num_rows for x in xs)
+            num_cols = xs[0].num_cols
+            for x in xs:
+                if x.num_cols != num_cols:
+                    raise RuntimeError(
+                        "num_cols must be the same across a list of input "
+                        "multi nested tensors.")
+            values = torch.cat([x.values for x in xs], dim=0)
+            accum_offset = 0
+            offset = []
+            for x in xs[:-1]:
+                offset.append(x.offset[:-1] + accum_offset)
+                accum_offset = accum_offset + x.offset[-1]
+            offset.append(xs[-1].offset + accum_offset)
+            offset = torch.cat(offset, dim=0)
+            return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
+                                     values=values, offset=offset)
+        elif dim == 1 or dim == -2:
+            # TODO Weihua implement this
             return xs[0]
         else:
-            raise NotImplementedError
+            raise RuntimeError(f"Unsupported dim={dim} for slice.")
 
     def select(
         self,
