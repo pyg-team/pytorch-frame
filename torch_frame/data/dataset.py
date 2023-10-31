@@ -189,8 +189,8 @@ class DataFrameToTensorFrameConverter:
                 out = self._get_mapper(col).forward(df[col], device=device)
                 xs_dict[stype].append(out)
         feat_dict = {
-            stype: (torch.stack(xs, dim=1) if not stype.use_multi_nested_tensor
-                    else MultiNestedTensor.stack(xs, dim=1))
+            stype: (MultiNestedTensor.cat(xs, dim=1) if
+                    stype.use_multi_nested_tensor else torch.stack(xs, dim=1))
             for stype, xs in xs_dict.items()
         }
 

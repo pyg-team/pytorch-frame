@@ -76,9 +76,9 @@ class FakeDataset(torch_frame.data.Dataset):
                 arr = np.random.randint(0, 3, size=(num_rows, 2))
                 arr = arr.astype(str)
                 arr = np.apply_along_axis(lambda x: ','.join(x), 1, arr)
-                if with_nan:
-                    arr[1::2] = None
                 df_dict[col_name] = list(arr)
+                if with_nan:
+                    df_dict[col_name][0] = None
                 col_to_stype[col_name] = stype.multicategorical
         if stype.text_embedded in stypes:
             for col_name in ['text_1', 'text_2']:
