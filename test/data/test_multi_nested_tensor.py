@@ -127,6 +127,11 @@ def test_multi_nested_tensor_basic():
             dim=0),
     )
     assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor]))
+    with pytest.raises(RuntimeError, match="num_cols must be the same"):
+        MultiNestedTensor.cat([
+            multi_nested_tensor[:2],
+            multi_nested_tensor[2:4, 0],
+        ], dim=0)
 
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()
