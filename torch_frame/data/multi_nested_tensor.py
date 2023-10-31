@@ -141,48 +141,59 @@ class MultiNestedTensor:
         return self.slice(slice(start, start + length), dim)
 
     def slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
-        if dim == 0 or dim == -3:
-            return self.row_slice(slice)
-        elif dim == 1 or dim == -2:
-            return self.col_slice(slice)
-        raise RuntimeError(f"Unsupported dim={dim} for slice.")
+        if dim < 0:
+            dim = dim + self.ndim
+        if dim not in [0, 1]:
+            raise ValueError(f"Unsupported dim={dim} in slicing.")
 
-    def row_slice(self, slice: slice) -> 'MultiNestedTensor':
-        r"""Slice along row (dim=0)"""
+        num_data = self.num_rows
         if slice.step is not None and slice.step > 1:
             # If step is larger than 1, we reuse index_select along rows.
-            idx = torch.tensor(range(self.num_rows)[slice], device=self.device)
-            return self.index_select(idx, dim=0)
+            idx = torch.tensor(range(num_data)[slice], device=self.device)
+            return self.index_select(idx, dim=dim)
         else:
-            start_idx: int = self._to_positive_index(slice.start or 0, dim=0)
-            end_idx: int = self._to_positive_index(slice.stop or self.num_rows,
-                                                   dim=0, is_slice_end=True)
-            if start_idx <= 0 and end_idx >= self.num_rows:
+            start_idx: int = self._to_positive_index(slice.start or 0, dim=dim)
+            end_idx: int = self._to_positive_index(slice.stop or num_data,
+                                                   dim=dim, is_slice_end=True)
+            if start_idx <= 0 and end_idx >= num_data:
                 # Do nothing, just return the original data
                 return self
             elif start_idx < end_idx:
                 # Calculate offset and values
-                offset = self.offset[start_idx *
-                                     self.num_cols:end_idx * self.num_cols + 1]
-                values = self.values[offset[0]:offset[-1]]
-                offset = offset - offset[0]
-
-                return MultiNestedTensor(num_rows=end_idx - start_idx,
-                                         num_cols=self.num_cols, values=values,
-                                         offset=offset)
+                if dim == 0:
+                    self.row_slice(start_idx, end_idx)
+                else:
+                    self.col_slice(start_idx, end_idx)
             else:
                 # Return Empty MultiNestedTensor
+                if dim == 0:
+                    num_rows = 0
+                    num_cols = self.num_cols
+                else:
+                    num_rows = self.num_rows
+                    num_cols = 0
                 return MultiNestedTensor(
-                    num_rows=0, num_cols=self.num_cols,
+                    num_rows=num_rows, num_cols=num_cols,
                     values=torch.zeros(0, device=self.device,
                                        dtype=self.values.dtype),
                     offset=torch.zeros(1, device=self.device,
                                        dtype=torch.long))
 
-    def col_slice(self, slice: slice) -> 'MultiNestedTensor':
-        r"""Slice along column (dim=1)"""
-        # TODO: Implement
-        raise NotImplementedError
+    def row_slice(self, start_idx: int, end_idx: int) -> 'MultiNestedTensor':
+        r"""Row slice :obj:`[start_idx:end_idx]`, assuming
+        :obj:`start_idx < end_idx`"""
+        offset = self.offset[start_idx *
+                             self.num_cols:end_idx * self.num_cols + 1]
+        values = self.values[offset[0]:offset[-1]]
+        offset = offset - offset[0]
+        return MultiNestedTensor(num_rows=end_idx - start_idx,
+                                 num_cols=self.num_cols, values=values,
+                                 offset=offset)
+
+    def col_slice(self, start_idx: int, end_idx: int) -> 'MultiNestedTensor':
+        r"""Column slice :obj:`[:, start_idx:end_idx]`, assuming
+        :obj:`start_idx < end_idx`"""
+        pass
 
     def index_select(self, index: Tensor, dim: int) -> 'MultiNestedTensor':
         if dim == 0 or dim == -3:
@@ -222,9 +233,14 @@ class MultiNestedTensor:
         start_idx = (index +
                      torch.arange(0, self.num_rows * self.num_cols,
                                   self.num_cols).view(-1, 1)).flatten()
+        offset_start = self.offset[start_idx]
         count = self.offset[start_idx + 1] - self.offset[start_idx]
         offset = count.new_zeros(count.numel() + 1)
         torch.cumsum(count, dim=0, out=offset[1:])
+        batch, arange = batched_arange(count)
+        values = self.values[offset_start[batch] + arange]
+        return MultiNestedTensor(num_rows=self.num_rows, num_cols=len(index),
+                                 values=values, offset=offset)
 
     def single_index_select(self, index: int, dim: int) -> 'MultiNestedTensor':
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""

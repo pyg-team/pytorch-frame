@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Union
 
 import pytest
 import torch
@@ -16,6 +16,19 @@ def assert_equal(tensor_mat: List[List[Tensor]],
         for j in range(multi_nested_tensor.shape[1]):
             tensor = multi_nested_tensor[i, j]
             assert torch.allclose(tensor_mat[i][j], tensor)
+
+
+def column_select(
+    tensor_mat: List[List[Tensor]],
+    index: Union[List[int], slice],
+) -> List[List[Tensor]]:
+    new_tensor_mat = []
+    for tensor_vec in tensor_mat:
+        if isinstance(index, slice):
+            new_tensor_mat.append(tensor_vec[index])
+        else:
+            new_tensor_mat.append([tensor_vec[idx] for idx in index])
+    return new_tensor_mat
 
 
 def test_multi_nested_tensor_basic():
@@ -92,23 +105,28 @@ def test_multi_nested_tensor_basic():
         multi_nested_tensor_col = multi_nested_tensor[:, j]
         assert multi_nested_tensor_col.shape[0] == num_rows
         assert multi_nested_tensor_col.shape[1] == 1
-        for i in range(-num_rows, num_rows):
-            tensor = multi_nested_tensor_col[i, 0]
-            assert isinstance(tensor, torch.Tensor)
-            assert torch.allclose(tensor_mat[i][j], tensor)
+        assert_equal(column_select(tensor_mat, [j]), multi_nested_tensor_col)
 
     # Test column List[int] indexing
-    multi_nested_tensor[:, [2, 4, 6]]
+    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
+        assert_equal(column_select(tensor_mat, index),
+                     multi_nested_tensor[:, index])
 
     # Test column slicing
-    with pytest.raises(NotImplementedError):
-        # TODO: Add proper test once implemented
-        multi_nested_tensor[:, 4:8]
+    assert_equal(tensor_mat, multi_nested_tensor[:])
+    assert_equal(tensor_mat[:3], multi_nested_tensor[:3])
+    assert_equal(tensor_mat[3:], multi_nested_tensor[3:])
+    assert_equal(tensor_mat[3:5], multi_nested_tensor[3:5])
+    assert_equal(tensor_mat[-7:5], multi_nested_tensor[-7:5])
+    assert_equal(tensor_mat[-7:-1], multi_nested_tensor[-7:-1])
+    assert_equal(tensor_mat[1::2], multi_nested_tensor[1::2])
+    empty_multi_nested_tensor = multi_nested_tensor[5:3]
+    assert empty_multi_nested_tensor.shape[0] == 0
+    assert empty_multi_nested_tensor.shape[1] == num_cols
 
     # Test column narrow
-    with pytest.raises(NotImplementedError):
-        # TODO: Add proper test once implemented
-        multi_nested_tensor.narrow(dim=1, start=3, length=2)
+    assert_equal(column_select(tensor_mat, slice(3, 3 + 2)),
+                 multi_nested_tensor.narrow(dim=1, start=3, length=2))
 
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()
