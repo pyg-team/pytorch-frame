@@ -131,6 +131,8 @@ def test_multi_nested_tensor_basic():
             multi_nested_tensor[:2],
             multi_nested_tensor[2:4, 0],
         ], dim=0)
+    with pytest.raises(RuntimeError, match="Cannot concatenate"):
+        MultiNestedTensor.cat([], dim=0)
 
     # Testing col concat
     with pytest.raises(NotImplementedError):

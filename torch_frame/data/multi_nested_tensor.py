@@ -353,6 +353,8 @@ class MultiNestedTensor:
     def cat(xs: Union[Tuple['MultiNestedTensor', ...],
                       List['MultiNestedTensor']],
             dim: int = 0) -> 'MultiNestedTensor':
+        if len(xs) == 0:
+            raise RuntimeError("Cannot concatenate a list of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
         if dim == 0 or dim + xs[0].ndim == 0:
             num_rows = sum(x.num_rows for x in xs)
