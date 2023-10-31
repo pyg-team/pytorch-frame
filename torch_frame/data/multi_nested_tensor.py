@@ -363,13 +363,18 @@ class MultiNestedTensor:
                         "num_cols must be the same across a list of input "
                         "multi nested tensors.")
             values = torch.cat([x.values for x in xs], dim=0)
-            accum_offset = 0
-            offset = []
+
+            offset = torch.empty(num_rows * num_cols + 1, dtype=torch.long,
+                                 device=values.device)
+            accum = 0
+            idx = 0
             for x in xs[:-1]:
-                offset.append(x.offset[:-1] + accum_offset)
-                accum_offset = accum_offset + x.offset[-1]
-            offset.append(xs[-1].offset + accum_offset)
-            offset = torch.cat(offset, dim=0)
+                offset[idx:idx + len(x.offset[:-1])] = x.offset[:-1]
+                offset[idx:idx + len(x.offset[:-1])].add_(accum)
+                accum += x.offset[-1]
+                idx += len(x.offset[:-1])
+            offset[idx:] = xs[-1].offset
+            offset[idx:].add_(accum)
             return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
                                      values=values, offset=offset)
         elif dim == 1 or dim + xs[0].ndim == 1:
