@@ -146,9 +146,9 @@ class MultiNestedTensor:
             return self
         elif length > 0:
             if dim == 0:
-                return self._row_arrow(start, length)
+                return self._row_narrow(start, length)
             else:
-                return self._col_arrow(start, length)
+                return self._col_narrow(start, length)
         else:
             # Return empty MultiNestedTensor if length is 0 or negative
             if dim == 0:
@@ -178,7 +178,7 @@ class MultiNestedTensor:
             return self.narrow(dim=dim, start=start_idx,
                                length=end_idx - start_idx)
 
-    def _row_arrow(self, start: int, length: int) -> 'MultiNestedTensor':
+    def _row_narrow(self, start: int, length: int) -> 'MultiNestedTensor':
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0
         assert length > 0
@@ -190,7 +190,7 @@ class MultiNestedTensor:
         return MultiNestedTensor(num_rows=end - start, num_cols=self.num_cols,
                                  values=values, offset=offset)
 
-    def _col_arrow(self, start: int, length: int) -> 'MultiNestedTensor':
+    def _col_narrow(self, start: int, length: int) -> 'MultiNestedTensor':
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0
         assert length > 0
