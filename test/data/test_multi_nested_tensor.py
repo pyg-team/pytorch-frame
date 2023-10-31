@@ -94,10 +94,7 @@ def test_multi_nested_tensor_basic():
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
         assert multi_nested_tensor_indexed.shape[0] == len(index)
-        if index:
-            assert multi_nested_tensor_indexed.shape[1] == num_cols
-        else:
-            assert multi_nested_tensor_indexed.shape[1] == 0
+        assert multi_nested_tensor_indexed.shape[1] == num_cols
         for i, idx in enumerate(index):
             for j in range(num_cols):
                 tensor = multi_nested_tensor_indexed[i, j]

@@ -221,9 +221,6 @@ class MultiNestedTensor:
         dim = self._check_dim(dim)
         index = self._to_positive_index(index, dim=dim)
         if dim == 0:
-            if index.numel() == 0:
-                return MultiNestedTensor(0, 0, values=torch.tensor([]),
-                                         offset=torch.tensor([0]))
             return self._row_index_select(index)
         else:
             return self._col_index_select(index)
@@ -231,25 +228,29 @@ class MultiNestedTensor:
     def _row_index_select(self, index: Tensor) -> 'MultiNestedTensor':
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values
-        diff = self.offset[(index + 1) *
-                           self.num_cols] - self.offset[index * self.num_cols]
+        index_right = (index + 1) * self.num_cols
+        index_left = index * self.num_cols
+        index_right = index_right.to(torch.long)
+        index_left = index_left.to(torch.long)
+        diff = self.offset[index_right] - self.offset[index_left]
         batch, arange = batched_arange(diff)
-        idx = self.offset[index * self.num_cols][batch] + arange
+        idx = self.offset[index_left][batch] + arange
         values = self.values[idx]
 
         # Calculate offset
         count = torch.full(size=(len(index), ), fill_value=self.num_cols,
                            dtype=torch.long, device=self.device)
-        count[-1] += 1
-        batch, arange = batched_arange(count)
-        idx = (index * self.num_cols)[batch] + arange
-        offset = self.offset[idx] - self.offset[index * self.num_cols][batch]
-        diff = self.offset[(index + 1) *
-                           self.num_cols] - self.offset[index * self.num_cols]
-        diff_cumsum = torch.cumsum(diff, dim=0)
-        diff_cumsum = torch.roll(diff_cumsum, 1)
-        diff_cumsum[0] = 0
-        offset = offset + diff_cumsum[batch]
+        if count.numel() > 0:
+            count[-1] += 1
+            batch, arange = batched_arange(count)
+            idx = index_left[batch] + arange
+            offset = self.offset[idx] - self.offset[index_left][batch]
+            diff_cumsum = torch.cumsum(diff, dim=0)
+            diff_cumsum = torch.roll(diff_cumsum, 1)
+            diff_cumsum[0] = 0
+            offset = offset + diff_cumsum[batch]
+        else:
+            offset = torch.tensor([0], device=self.device)
         return MultiNestedTensor(num_rows=len(index), num_cols=self.num_cols,
                                  values=values, offset=offset)
 
