@@ -111,7 +111,7 @@ def test_multi_nested_tensor_basic():
         assert_equal(column_select(tensor_mat, [j]), multi_nested_tensor_col)
 
     # Test column List[int] indexing
-    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
+    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         assert_equal(column_select(tensor_mat, index),
                      multi_nested_tensor[:, index])
 
