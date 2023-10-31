@@ -142,7 +142,7 @@ class MultiNestedTensor:
         dim = self._check_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if start == 0 and start + length >= num_data:
-            # Do nothing, just return the original data
+            # Do nothing, just return the full data
             return self
         elif length > 0:
             if dim == 0:
@@ -150,7 +150,7 @@ class MultiNestedTensor:
             else:
                 return self.col_narrow(start, length)
         else:
-            # Return empty MultiNestedTensor
+            # Return empty MultiNestedTensor if length is 0 or negative
             if dim == 0:
                 num_rows = 0
                 num_cols = self.num_cols
