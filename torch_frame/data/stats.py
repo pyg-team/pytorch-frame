@@ -30,24 +30,16 @@ class StatType(Enum):
 
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
-        if stype == torch_frame.numerical:
-            return [
+        stats_type = {
+            torch_frame.numerical: [
                 StatType.MEAN,
                 StatType.STD,
                 StatType.QUANTILES,
-            ]
-        elif stype == torch_frame.categorical:
-            return [
-                StatType.COUNT,
-            ]
-        elif stype == torch_frame.text_embedded:
-            return []
-        elif stype == torch_frame.multicategorical:
-            return [
-                StatType.MULTI_COUNT,
-            ]
-
-        raise NotImplementedError(f"Invalid semantic type '{stype.value}'")
+            ],
+            torch_frame.categorical: [StatType.COUNT],
+            torch_frame.multicategorical: [StatType.MULTI_COUNT]
+        }
+        return stats_type.get(stype, [])
 
     def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
@@ -62,6 +54,7 @@ class StatType(Enum):
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
+
         elif self == StatType.MULTI_COUNT:
             assert sep is not None
             ser = ser.apply(
@@ -70,7 +63,6 @@ class StatType(Enum):
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
-        raise NotImplementedError(f"Invalid stat type '{self.value}'")
 
 
 def compute_col_stats(
