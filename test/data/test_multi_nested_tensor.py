@@ -113,16 +113,22 @@ def test_multi_nested_tensor_basic():
                      multi_nested_tensor[:, index])
 
     # Test column slicing
-    assert_equal(tensor_mat, multi_nested_tensor[:])
-    assert_equal(tensor_mat[:3], multi_nested_tensor[:3])
-    assert_equal(tensor_mat[3:], multi_nested_tensor[3:])
-    assert_equal(tensor_mat[3:5], multi_nested_tensor[3:5])
-    assert_equal(tensor_mat[-7:5], multi_nested_tensor[-7:5])
-    assert_equal(tensor_mat[-7:-1], multi_nested_tensor[-7:-1])
-    assert_equal(tensor_mat[1::2], multi_nested_tensor[1::2])
-    empty_multi_nested_tensor = multi_nested_tensor[5:3]
-    assert empty_multi_nested_tensor.shape[0] == 0
-    assert empty_multi_nested_tensor.shape[1] == num_cols
+    assert_equal(tensor_mat, multi_nested_tensor[:, :])
+    assert_equal(column_select(tensor_mat, slice(None, 3)),
+                 multi_nested_tensor[:, :3])
+    assert_equal(column_select(tensor_mat, slice(3, None)),
+                 multi_nested_tensor[:, 3:])
+    assert_equal(column_select(tensor_mat, slice(3, 5)),
+                 multi_nested_tensor[:, 3:5])
+    assert_equal(column_select(tensor_mat, slice(-7, 5)),
+                 multi_nested_tensor[:, -7:5])
+    assert_equal(column_select(tensor_mat, slice(-7, -1)),
+                 multi_nested_tensor[:, -7:-1])
+    assert_equal(column_select(tensor_mat, slice(1, None, 2)),
+                 multi_nested_tensor[:, 1::2])
+    empty_multi_nested_tensor = multi_nested_tensor[:, 5:3]
+    assert empty_multi_nested_tensor.shape[0] == num_rows
+    assert empty_multi_nested_tensor.shape[1] == 0
 
     # Test column narrow
     assert_equal(column_select(tensor_mat, slice(3, 3 + 2)),
