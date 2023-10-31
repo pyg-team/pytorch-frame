@@ -194,19 +194,17 @@ class NumericalSequenceTensorMapper(TensorMapper):
         offset = torch.from_numpy(offset.values)
         offset = torch.cumsum(offset, dim=0)
         ser = ser.explode()
-        ser = ser.astype('float32')
-        values = torch.from_numpy(ser.values)
+        values = torch.from_numpy(ser.values.astype('float32'))
         return MultiNestedTensor(num_rows=num_rows, num_cols=1, values=values,
                                  offset=offset)
 
     def backward(self, tensor: MultiNestedTensor) -> pd.Series:
-        values = tensor.values
+        values = tensor.values.cpu().numpy()
         offset = tensor.offset
-        values = values.tolist()
         ser = []
         for i in range(1, len(offset)):
             val = values[offset[i - 1]:offset[i]]
-            ser.append(val if val else None)
+            ser.append(val if val.size > 0 else None)
         return pd.Series(ser)
 
 
