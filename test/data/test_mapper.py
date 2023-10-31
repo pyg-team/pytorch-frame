@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import torch
 
@@ -67,11 +68,11 @@ def test_multicategorical_tensor_mapper():
 
 
 def test_sequence_tensor_mapper():
-    ser = pd.Series(['0.1,0.5', '0.3', '', '0.2,', None])
-    expected_values = torch.tensor([0.1, 0.5, 0.3, torch.nan, 0.2, torch.nan],
+    ser = pd.Series([[0.1, 0.5], [0.3], [], [0.2, np.nan], None, np.nan])
+    expected_values = torch.tensor([0.1, 0.5, 0.3, 0.2, torch.nan],
                                    dtype=torch.float64)
-    expected_boundaries = torch.tensor([0, 2, 3, 4, 6, 6])
-    mapper = SequenceTensorMapper(sep=",")
+    expected_boundaries = torch.tensor([0, 2, 3, 3, 5, 5, 5])
+    mapper = SequenceTensorMapper()
 
     tensor = mapper.forward(ser)
     values = tensor.values
@@ -82,7 +83,8 @@ def test_sequence_tensor_mapper():
     assert torch.equal(offset, expected_boundaries)
 
     out = mapper.backward(tensor)
-    pd.testing.assert_series_equal(out, ser)
+    pd.testing.assert_series_equal(
+        out, pd.Series([[0.1, 0.5], [0.3], None, [0.2, np.nan], None, None]))
 
 
 def test_text_embedding_tensor_mapper():

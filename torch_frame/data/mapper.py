@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable, List, Optional
 
-import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -173,21 +172,8 @@ class SequenceTensorMapper(TensorMapper):
         sep (str): The delimiter for the sequence in each cell.
         (default: :obj:`,`)
     """
-    def __init__(
-        self,
-        sep: str = ',',
-    ):
+    def __init__(self, ):
         super().__init__()
-        self.sep = sep
-
-    def _split_by_sep(self, row: str):
-        if row is None:
-            return []
-        else:
-            return [
-                np.float64(x) if x.strip() != '' else np.nan
-                for x in row.split(self.sep)
-            ]
 
     def forward(
         self,
@@ -196,9 +182,9 @@ class SequenceTensorMapper(TensorMapper):
         device: Optional[torch.device] = None,
     ) -> MultiNestedTensor:
         values = []
-        ser = ser.apply(self._split_by_sep)
         num_rows = len(ser)
-        offset = ser.apply(len)
+        offset = ser.apply(lambda row: len(row) if row is not None and not (
+            isinstance(row, float) and pd.isna(row)) else 0)
         ser = ser[offset != 0]
         offset = pd.concat((pd.Series([0]), offset))
         offset = torch.from_numpy(offset.values)
@@ -216,8 +202,7 @@ class SequenceTensorMapper(TensorMapper):
         ser = []
         for i in range(1, len(offset)):
             val = values[offset[i - 1]:offset[i]]
-            ser.append(','.join(['' if np.isnan(v) else str(v)
-                                 for v in val]) if val else None)
+            ser.append(val if val else None)
         return pd.Series(ser)
 
 
