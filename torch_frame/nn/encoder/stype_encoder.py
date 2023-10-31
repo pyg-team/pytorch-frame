@@ -4,12 +4,14 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, ModuleList, Parameter, Sequential
+from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
@@ -61,6 +63,11 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
                     " columns.")
+            if (self.stype == stype.multicategorical
+                    and not self.na_strategy.is_multicategorical_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on multicategorical"
+                    " columns.")
             if self.stype == stype.text_embedded:
                 raise ValueError(f"Only the default `na_strategy` (None) "
                                  f"can be used on embedded text columns, but "
@@ -76,7 +83,7 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, feat: Tensor) -> Tensor:
+    def forward(self, feat: TensorData) -> Tensor:
         # Clone the tensor to avoid in-place modification
         feat = feat.clone()
         # NaN handling of the input Tensor
@@ -89,7 +96,7 @@ class StypeEncoder(Module, ABC):
         return self.post_forward(x)
 
     @abstractmethod
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(self, feat: TensorData) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
         :obj:`[batch_size, num_cols, out_channels]`."""
@@ -109,7 +116,7 @@ class StypeEncoder(Module, ABC):
                     f"{out.shape}.")
         return out
 
-    def na_forward(self, feat: Tensor) -> Tensor:
+    def na_forward(self, feat: TensorData) -> TensorData:
         r"""Replace NaN values in input :obj:`Tensor` given :obj:`na_strategy`.
 
         Args:
@@ -124,6 +131,8 @@ class StypeEncoder(Module, ABC):
 
         for col in range(feat.size(1)):
             column_data = feat[:, col]
+            if isinstance(feat, MultiNestedTensor):
+                column_data = column_data.values
             if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data)
             else:
@@ -189,6 +198,65 @@ class EmbeddingEncoder(StypeEncoder):
         xs = []
         for i, emb in enumerate(self.embs):
             xs.append(emb(feat[:, i]))
+        # [batch_size, num_cols, hidden_channels]
+        x = torch.stack(xs, dim=1)
+        return x
+
+
+class MultiCategoricalEmbeddingEncoder(StypeEncoder):
+    r"""An embedding look-up based encoder for multi_categorical features. It
+    applies :class:`torch.nn.EmbeddingBag` for each categorical feature and
+    concatenates the output embeddings.
+
+    Args:
+        mode (str): "sum", "mean" or "max".
+            Specifies the way to reduce the bag. (default: :obj:`mean`)
+    """
+    supported_stypes = {stype.multicategorical}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        mode: str = 'mean',
+    ):
+        self.mode = mode
+        if mode not in ["mean", "sum", "max"]:
+            raise ValueError(
+                f"Unknown mode {mode} for MultiCategoricalEmbeddingEncoder.",
+                "Please use 'mean', 'sum' or 'max'.")
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        self.embs = ModuleList([])
+        for stats in self.stats_list:
+            num_categories = len(stats[StatType.MULTI_COUNT][0])
+            # 0-th category is for NaN.
+            self.embs.append(
+                EmbeddingBag(num_categories + 1, self.out_channels,
+                             padding_idx=0, mode=self.mode))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        for emb in self.embs:
+            emb.reset_parameters()
+
+    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
+        # TODO: Make this more efficient.
+        # Increment the index by one so that NaN index (-1) becomes 0
+        # (padding_idx)
+        # feat: [batch_size, num_cols]
+        feat.values = feat.values + 1
+        xs = []
+        for i, emb in enumerate(self.embs):
+            col_feat = feat[:, i]
+            xs.append(emb(col_feat.values, col_feat.offset[:-1]))
         # [batch_size, num_cols, hidden_channels]
         x = torch.stack(xs, dim=1)
         return x

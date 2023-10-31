@@ -64,7 +64,6 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
         elif self == StatType.MULTI_COUNT:
             assert sep is not None
-            print("sep is ", sep)
             ser = ser.apply(
                 lambda x: set([cat.strip() for cat in x.split(sep)])
                 if (x is not None and x != '') else set())
