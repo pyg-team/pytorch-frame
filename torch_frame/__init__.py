@@ -1,5 +1,5 @@
 from .stype import (stype, numerical, categorical, text_embedded,
-                    multicategorical, sequence)
+                    multicategorical, sequence_numerical)
 from .data import TensorFrame
 from .typing import TaskType, DataFrame, NAStrategy
 from torch_frame.utils import save, load, cat  # noqa
@@ -17,7 +17,7 @@ __all__ = [
     'categorical',
     'text_embedded',
     'multicategorical',
-    'sequence',
+    'sequence_numerical',
     'TaskType',
     'NAStrategy',
     'TensorFrame',

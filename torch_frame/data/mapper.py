@@ -165,7 +165,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         return pd.Series(ser)
 
 
-class SequenceTensorMapper(TensorMapper):
+class NumericalSequenceTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
     """
     def __init__(self, ):

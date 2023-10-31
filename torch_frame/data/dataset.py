@@ -15,8 +15,8 @@ from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
+    NumericalSequenceTensorMapper,
     NumericalTensorMapper,
-    SequenceTensorMapper,
     TensorMapper,
     TextEmbeddingTensorMapper,
 )
@@ -139,8 +139,7 @@ class DataFrameToTensorFrameConverter:
 
         self.col_to_sep = canonicalize_col_to_sep(
             col_to_sep,
-            (self.col_names_dict.get(torch_frame.multicategorical, []) +
-             self.col_names_dict.get(torch_frame.sequence, [])))
+            self.col_names_dict.get(torch_frame.multicategorical, []))
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -168,8 +167,8 @@ class DataFrameToTensorFrameConverter:
                 self.text_embedder_cfg.text_embedder,
                 self.text_embedder_cfg.batch_size,
             )
-        elif stype == torch_frame.sequence:
-            return SequenceTensorMapper(sep=self.col_to_sep[col])
+        elif stype == torch_frame.sequence_numerical:
+            return NumericalSequenceTensorMapper(sep=self.col_to_sep[col])
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -267,7 +266,7 @@ class Dataset(ABC):
         self.text_embedder_cfg = text_embedder_cfg
         self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
             col for col, stype in self.col_to_stype.items()
-            if stype in [torch_frame.multicategorical]
+            if stype == torch_frame.multicategorical
         ])
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
