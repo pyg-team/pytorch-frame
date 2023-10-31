@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added basic `text_tokenized` ([#157](https://github.com/pyg-team/pytorch-frame/pull/157))
 - Added `Mercari` dataset ([#123](https://github.com/pyg-team/pytorch-frame/pull/123/files))
 - Added the model performance benchmark script ([#114](https://github.com/pyg-team/pytorch-frame/pull/114))
 - Added `DataFrameBenchmark` ([#107](https://github.com/pyg-team/pytorch-frame/pull/107))

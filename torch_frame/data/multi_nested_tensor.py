@@ -358,6 +358,23 @@ class MultiNestedTensor:
         else:
             raise NotImplementedError
 
+    @staticmethod
+    def cat(xs: Union[List['MultiNestedTensor'], Tuple['MultiNestedTensor']],
+            dim: int = 0) -> 'MultiNestedTensor':
+        # TODO: To be implemented
+        if len(xs) == 1:
+            return xs[0]
+
+        if dim < 0:
+            dim += xs[0].ndim
+
+        if dim == 0:
+            raise NotImplementedError
+        elif dim == 1:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+
     def select(
         self,
         index: Union[int, Tensor, List, slice],

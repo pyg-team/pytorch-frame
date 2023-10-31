@@ -7,7 +7,7 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
-from torch_frame.typing import IndexSelectType
+from torch_frame.typing import IndexSelectType, TensorData
 
 
 @dataclass(repr=False)
@@ -62,7 +62,7 @@ class TensorFrame:
         # Transfer tensor frame to the GPU:
         tf = tf.to('cuda')
     """
-    feat_dict: Dict[torch_frame.stype, Tensor]
+    feat_dict: Dict[torch_frame.stype, TensorData]
     col_names_dict: Dict[torch_frame.stype, List[str]]
     y: Optional[Tensor] = None
 
@@ -83,20 +83,42 @@ class TensorFrame:
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
-            if feat.dim() < 2:
-                raise ValueError(
-                    f"feat_dict['{stype_name}'] must be at least 2-dimensional"
-                )
-            if num_cols != feat.size(1):
-                raise ValueError(
-                    f"The expected number of columns for {stype_name} feature "
-                    f"is {num_cols}, which does not align with the column "
-                    f"dimensionality of feat_dict[{stype_name}] (got "
-                    f"{feat.size(1)})")
-            if feat.size(0) != num_rows:
-                raise ValueError(
-                    f"The length of elements in feat_dict are not aligned, "
-                    f"got {feat.size(0)} but expected {num_rows}.")
+
+            # Get any value if feat is a dictionary
+            if not isinstance(feat, dict):
+                if feat.dim() < 2:
+                    raise ValueError(f"feat_dict['{stype_name}'] must be at "
+                                     f"least 2-dimensional")
+                if num_cols != feat.size(1):
+                    raise ValueError(
+                        f"The expected number of columns for {stype_name} "
+                        f"feature is {num_cols}, which does not align with "
+                        f"the column dimensionality of "
+                        f"feat_dict[{stype_name}] (got {feat.size(1)})")
+                if feat.size(0) != num_rows:
+                    raise ValueError(
+                        f"The length of elements in feat_dict are "
+                        f"not aligned, got {feat.size(0)} but "
+                        f"expected {num_rows}.")
+            else:
+                feats = feat
+                for key, feat in feats:
+                    if feat.dim() < 2:
+                        raise ValueError(f"feat_dict['{stype_name}']['{key}'] "
+                                         f"must be at least 2-dimensional")
+                    if num_cols != feat.size(1):
+                        raise ValueError(
+                            f"The expected number of columns for {stype_name} "
+                            f"feature is {num_cols}, which does not align "
+                            f"with the column dimensionality of "
+                            f"feat_dict['{stype_name}']['{key}'] "
+                            f"(got {feat.size(1)})")
+                    if feat.size(0) != num_rows:
+                        raise ValueError(
+                            f"The length of elements in "
+                            f"feat_dict['{stype_name}']['{key}']"
+                            f"is not aligned, got {feat.size(0)} but "
+                            f"expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(
