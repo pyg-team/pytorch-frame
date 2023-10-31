@@ -62,11 +62,11 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
 
     Args:
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical or
-            sequence columns. If a string is specified, then the same separator
-            will be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each column.
-            (default: :obj:`,`)
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
         columns (List[str]): A list of multi-categorical columns.
 
     Returns:
@@ -100,11 +100,11 @@ class DataFrameToTensorFrameConverter:
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical or
-            sequence columns. If a string is specified, then the same separator
-            will be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each column.
-            (default: :obj:`,`)
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -215,10 +215,11 @@ class Dataset(ABC):
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical or
-            sequence columns. If a string is specified, then the same separator
-            will be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each column.
+            specifying the separator/delimiter for the multi-categorical
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
             (default: :obj:`,`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
@@ -266,7 +267,7 @@ class Dataset(ABC):
         self.text_embedder_cfg = text_embedder_cfg
         self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
             col for col, stype in self.col_to_stype.items()
-            if stype in [torch_frame.multicategorical, torch_frame.sequence]
+            if stype in [torch_frame.multicategorical]
         ])
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}

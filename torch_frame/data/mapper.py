@@ -167,13 +167,18 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
 class SequenceTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
-
-    Args:
-        sep (str): The delimiter for the sequence in each cell.
-        (default: :obj:`,`)
     """
     def __init__(self, ):
         super().__init__()
+
+    def get_sequence_length(self, row):
+        if isinstance(row, List):
+            return len(row)
+        elif row is None or (isinstance(row, float) and pd.isna(row)):
+            return 0
+        else:
+            raise ValueError(f"{type(row)} is not supported as"
+                             " numerical sequence.")
 
     def forward(
         self,
@@ -183,8 +188,7 @@ class SequenceTensorMapper(TensorMapper):
     ) -> MultiNestedTensor:
         values = []
         num_rows = len(ser)
-        offset = ser.apply(lambda row: len(row) if row is not None and not (
-            isinstance(row, float) and pd.isna(row)) else 0)
+        offset = ser.apply(lambda row: self.get_sequence_length(row))
         ser = ser[offset != 0]
         offset = pd.concat((pd.Series([0]), offset))
         offset = torch.from_numpy(offset.values)
