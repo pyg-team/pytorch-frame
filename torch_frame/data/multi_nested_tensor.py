@@ -138,10 +138,8 @@ class MultiNestedTensor:
             return self.select(index, dim=0)
 
     def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
-        if dim < 0:
-            dim = dim + self.ndim
-        if dim not in [0, 1]:
-            raise ValueError(f"Unsupported dim={dim} in narrow.")
+        dim = self._check_dim(dim)
+
         if length > 0:
             if dim == 0:
                 return self.row_narrow(start, length)
@@ -162,10 +160,7 @@ class MultiNestedTensor:
                 offset=torch.zeros(1, device=self.device, dtype=torch.long))
 
     def slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
-        if dim < 0:
-            dim = dim + self.ndim
-        if dim not in [0, 1]:
-            raise ValueError(f"Unsupported dim={dim} in slicing.")
+        dim = self._check_dim(dim)
 
         num_data = self.num_rows if dim == 0 else self.num_cols
         if slice.step is not None and slice.step > 1:
@@ -222,12 +217,11 @@ class MultiNestedTensor:
                                  values=values, offset=offset)
 
     def index_select(self, index: Tensor, dim: int) -> 'MultiNestedTensor':
-        if dim == 0 or dim + self.ndim == 0:
+        dim = self._check_dim(dim)
+        if dim == 0:
             return self.row_index_select(index)
-        elif dim == 1 or dim + self.ndim == 1:
-            return self.col_index_select(index)
         else:
-            raise RuntimeError(f"Unsupported dim={dim} for index_select.")
+            return self.col_index_select(index)
 
     def row_index_select(self, index: Tensor) -> 'MultiNestedTensor':
         index = self._to_positive_index(index, dim=0)
@@ -271,7 +265,8 @@ class MultiNestedTensor:
 
     def single_index_select(self, index: int, dim: int) -> 'MultiNestedTensor':
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""
-        if dim == 0 or dim + self.ndim == 0:
+        dim = self._check_dim(dim)
+        if dim == 0:
             index = self._to_positive_index(index, dim=0)
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
@@ -280,7 +275,7 @@ class MultiNestedTensor:
             offset = offset - offset[0]
             return MultiNestedTensor(num_rows=1, num_cols=self.num_cols,
                                      values=values, offset=offset)
-        elif dim == 1 or dim + self.ndim == 1:
+        elif dim == 1:
             index = self._to_positive_index(index, dim=1)
             start_idx = torch.arange(index, self.num_rows * self.num_cols,
                                      self.num_cols, device=self.device)
@@ -332,6 +327,16 @@ class MultiNestedTensor:
             if index.min() < 0 or index.max() >= max_entries:
                 raise IndexError(f"{idx_name} index out of bounds!")
         return index
+
+    def _check_dim(self, dim: int) -> int:
+        r"""Check :obj:`dim` argument and make it 0 or 1."""
+        if dim < 0:
+            dim = dim + self.ndim
+        if dim not in [0, 1]:
+            raise ValueError(
+                f"Advanced indexing with dim={dim} is unsupported in "
+                f"MultiNestedTensor. Please use dim=0 or 1.")
+        return dim
 
     @property
     def device(self) -> torch.device:
