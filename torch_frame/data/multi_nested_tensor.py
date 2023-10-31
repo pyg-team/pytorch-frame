@@ -371,10 +371,13 @@ class MultiNestedTensor:
             return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
                                      values=values, offset=offset)
         elif dim == 1 or dim == -2:
-            # TODO Weihua implement this
-            return xs[0]
+            if len(xs) == 1:
+                return xs[0]
+            else:
+                # TODO Weihua implement this
+                raise NotImplementedError
         else:
-            raise RuntimeError(f"Unsupported dim={dim} for slice.")
+            raise RuntimeError(f"Unsupported dim={dim} for concat.")
 
     def select(
         self,
