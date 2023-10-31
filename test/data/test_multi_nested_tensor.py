@@ -91,10 +91,13 @@ def test_multi_nested_tensor_basic():
                  multi_nested_tensor.narrow(dim=0, start=3, length=2))
 
     # Test multi_nested_tensor[List[int]] indexing
-    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0]]:
+    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
         assert multi_nested_tensor_indexed.shape[0] == len(index)
-        assert multi_nested_tensor_indexed.shape[1] == num_cols
+        if index:
+            assert multi_nested_tensor_indexed.shape[1] == num_cols
+        else:
+            assert multi_nested_tensor_indexed.shape[1] == 0
         for i, idx in enumerate(index):
             for j in range(num_cols):
                 tensor = multi_nested_tensor_indexed[i, j]
