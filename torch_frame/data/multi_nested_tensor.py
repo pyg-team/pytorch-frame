@@ -357,7 +357,7 @@ class MultiNestedTensor:
         if dim == 0 or dim + xs[0].ndim == 0:
             num_rows = sum(x.num_rows for x in xs)
             num_cols = xs[0].num_cols
-            for x in xs:
+            for x in xs[1:]:
                 if x.num_cols != num_cols:
                     raise RuntimeError(
                         "num_cols must be the same across a list of input "
