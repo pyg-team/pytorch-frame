@@ -31,8 +31,8 @@ def test_multi_nested_tensor_basic():
         tensor_mat.append(tensor_list)
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
-    assert str(multi_nested_tensor
-               ) == "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')"
+    assert (str(multi_nested_tensor) ==
+            "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')")
 
     # Test sizes
     assert multi_nested_tensor.shape[0] == num_rows
@@ -111,6 +111,36 @@ def test_multi_nested_tensor_basic():
     with pytest.raises(NotImplementedError):
         # TODO: Add proper test once implemented
         multi_nested_tensor.narrow(dim=1, start=3, length=2)
+
+    # Testing row concat
+    assert_equal(
+        tensor_mat,
+        MultiNestedTensor.cat(
+            (multi_nested_tensor[:2], multi_nested_tensor[2:4],
+             multi_nested_tensor[4:]), dim=0),
+    )
+    assert_equal(
+        tensor_mat,
+        MultiNestedTensor.cat([
+            multi_nested_tensor[i] for i in range(multi_nested_tensor.size(0))
+        ], dim=0),
+    )
+    assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor]))
+    with pytest.raises(RuntimeError, match="num_cols must be the same"):
+        MultiNestedTensor.cat([
+            multi_nested_tensor[:2],
+            multi_nested_tensor[2:4, 0],
+        ], dim=0)
+    with pytest.raises(RuntimeError, match="Cannot concatenate"):
+        MultiNestedTensor.cat([], dim=0)
+
+    # Testing col concat
+    with pytest.raises(NotImplementedError):
+        # TODO: Add proper test once implemented
+        MultiNestedTensor.cat([
+            multi_nested_tensor[:, j]
+            for j in range(multi_nested_tensor.size(1))
+        ], dim=1),
 
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()
