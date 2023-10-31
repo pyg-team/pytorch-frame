@@ -138,9 +138,13 @@ class MultiNestedTensor:
             return self.select(index, dim=0)
 
     def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
+        assert start >= 0
         dim = self._check_dim(dim)
-
-        if length > 0:
+        num_data = self.num_rows if dim == 0 else self.num_cols
+        if start == 0 and start + length >= num_data:
+            # Do nothing, just return the original data
+            return self
+        elif length > 0:
             if dim == 0:
                 return self.row_narrow(start, length)
             else:
@@ -171,12 +175,8 @@ class MultiNestedTensor:
             start_idx: int = self._to_positive_index(slice.start or 0, dim=dim)
             end_idx: int = self._to_positive_index(slice.stop or num_data,
                                                    dim=dim, is_slice_end=True)
-            if start_idx <= 0 and end_idx >= num_data:
-                # Do nothing, just return the original data
-                return self
-            else:
-                return self.narrow(dim=dim, start=start_idx,
-                                   length=end_idx - start_idx)
+            return self.narrow(dim=dim, start=start_idx,
+                               length=end_idx - start_idx)
 
     def row_narrow(self, start_idx: int, length: int) -> 'MultiNestedTensor':
         assert length > 0
