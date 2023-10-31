@@ -218,8 +218,13 @@ class MultiNestedTensor:
                                  values=values, offset=offset)
 
     def col_index_select(self, index: Tensor) -> 'MultiNestedTensor':
-        # TODO Implement
-        raise NotImplementedError
+        index = self._to_positive_index(index, dim=1)
+        start_idx = (index +
+                     torch.arange(0, self.num_rows * self.num_cols,
+                                  self.num_cols).view(-1, 1)).flatten()
+        count = self.offset[start_idx + 1] - self.offset[start_idx]
+        offset = count.new_zeros(count.numel() + 1)
+        torch.cumsum(count, dim=0, out=offset[1:])
 
     def single_index_select(self, index: int, dim: int) -> 'MultiNestedTensor':
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""

@@ -98,9 +98,7 @@ def test_multi_nested_tensor_basic():
             assert torch.allclose(tensor_mat[i][j], tensor)
 
     # Test column List[int] indexing
-    with pytest.raises(NotImplementedError):
-        # TODO: Add proper test once implemented
-        multi_nested_tensor[:, [2, 4, 6]]
+    multi_nested_tensor[:, [2, 4, 6]]
 
     # Test column slicing
     with pytest.raises(NotImplementedError):
