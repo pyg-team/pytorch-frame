@@ -235,8 +235,6 @@ class MultiNestedTensor:
                 offset=torch.tensor([0], device=self.device))
         index_right = (index + 1) * self.num_cols
         index_left = index * self.num_cols
-        index_right = index_right.to(torch.long)
-        index_left = index_left.to(torch.long)
         diff = self.offset[index_right] - self.offset[index_left]
         batch, arange = batched_arange(diff)
         idx = self.offset[index_left][batch] + arange
@@ -267,8 +265,6 @@ class MultiNestedTensor:
             index +
             torch.arange(0, self.num_rows * self.num_cols, self.num_cols,
                          device=self.device).view(-1, 1)).flatten()
-        # To accommodate the case where start_idx is empty
-        start_idx = start_idx.to(torch.long)
         offset_start = self.offset[start_idx]
         count = self.offset[start_idx + 1] - self.offset[start_idx]
         offset = count.new_zeros(count.numel() + 1)
