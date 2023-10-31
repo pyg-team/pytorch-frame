@@ -228,6 +228,11 @@ class MultiNestedTensor:
     def _row_index_select(self, index: Tensor) -> 'MultiNestedTensor':
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values
+        if index.numel() == 0:
+            return MultiNestedTensor(
+                num_rows=0, num_cols=self.num_cols,
+                values=torch.tensor([], device=self.device),
+                offset=torch.tensor([0], device=self.device))
         index_right = (index + 1) * self.num_cols
         index_left = index * self.num_cols
         index_right = index_right.to(torch.long)
@@ -240,22 +245,24 @@ class MultiNestedTensor:
         # Calculate offset
         count = torch.full(size=(len(index), ), fill_value=self.num_cols,
                            dtype=torch.long, device=self.device)
-        if count.numel() > 0:
-            count[-1] += 1
-            batch, arange = batched_arange(count)
-            idx = index_left[batch] + arange
-            offset = self.offset[idx] - self.offset[index_left][batch]
-            diff_cumsum = torch.cumsum(diff, dim=0)
-            diff_cumsum = torch.roll(diff_cumsum, 1)
-            diff_cumsum[0] = 0
-            offset = offset + diff_cumsum[batch]
-        else:
-            offset = torch.tensor([0], device=self.device)
+        count[-1] += 1
+        batch, arange = batched_arange(count)
+        idx = index_left[batch] + arange
+        offset = self.offset[idx] - self.offset[index_left][batch]
+        diff_cumsum = torch.cumsum(diff, dim=0)
+        diff_cumsum = torch.roll(diff_cumsum, 1)
+        diff_cumsum[0] = 0
+        offset = offset + diff_cumsum[batch]
         return MultiNestedTensor(num_rows=len(index), num_cols=self.num_cols,
                                  values=values, offset=offset)
 
     def _col_index_select(self, index: Tensor) -> 'MultiNestedTensor':
         r"""Helper function called by :obj:`index_select`."""
+        if index.numel() == 0:
+            return MultiNestedTensor(
+                num_rows=self.num_rows, num_cols=0,
+                values=torch.tensor([], device=self.device),
+                offset=torch.tensor([0], device=self.device))
         start_idx = (
             index +
             torch.arange(0, self.num_rows * self.num_cols, self.num_cols,
