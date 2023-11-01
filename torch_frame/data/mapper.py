@@ -293,7 +293,8 @@ class TextTokenizationTensorMapper(TensorMapper):
                 seq_tokens_dict[key].to(device)
             return seq_tokens_dict
 
-        for i in range(0, len(ser_list), self.batch_size):
+        for i in tqdm(range(0, len(ser_list), self.batch_size),
+                      desc="Tokenizing texts in mini-batch"):
             batch_seq_tokens_dict = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
             for key in batch_seq_tokens_dict:
