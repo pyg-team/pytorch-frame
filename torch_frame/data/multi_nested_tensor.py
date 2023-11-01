@@ -410,7 +410,9 @@ class MultiNestedTensor:
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a list of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
-        if dim == 0 or dim + xs[0].ndim == 0:
+        dim = xs[0]._check_dim(dim)
+        device = xs[0].device
+        if dim == 0:
             num_rows = sum(x.num_rows for x in xs)
             num_cols = xs[0].num_cols
             for x in xs[1:]:
@@ -421,7 +423,7 @@ class MultiNestedTensor:
             values = torch.cat([x.values for x in xs], dim=0)
 
             offset = torch.empty(num_rows * num_cols + 1, dtype=torch.long,
-                                 device=values.device)
+                                 device=device)
             accum = 0
             idx = 0
             for x in xs[:-1]:
@@ -433,14 +435,48 @@ class MultiNestedTensor:
             offset[idx:].add_(accum)
             return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
                                      values=values, offset=offset)
-        elif dim == 1 or dim + xs[0].ndim == 1:
-            if len(xs) == 1:
-                return xs[0]
-            else:
-                # TODO Weihua implement this
-                raise NotImplementedError
         else:
-            raise RuntimeError(f"Unsupported dim={dim} for concat.")
+            num_rows = xs[0].num_rows
+            num_cols = sum(x.num_cols for x in xs)
+            for x in xs[1:]:
+                if x.num_rows != num_rows:
+                    raise RuntimeError(
+                        "num_rows must be the same across a list of input "
+                        "multi nested tensors.")
+
+            # (i,j)-th element stores the length of its stored Tensor
+            elem_length_mat = torch.empty(num_rows, num_cols, dtype=torch.long,
+                                          device=device)
+            col_start_idx = 0
+            for x in xs:
+                elem_count = x.offset[1:] - x.offset[:-1]
+                elem_length_mat[:, col_start_idx:col_start_idx +
+                                x.num_cols] = elem_count.reshape(
+                                    x.num_rows, x.num_cols)
+                col_start_idx += x.num_cols
+
+            # Compute offset
+            offset = torch.empty(num_rows * num_cols + 1, dtype=torch.long,
+                                 device=device)
+            torch.cumsum(elem_length_mat.flatten(), dim=0, out=offset[1:])
+
+            # Compute values
+            values = torch.empty(sum([x.values.numel() for x in xs]),
+                                 dtype=x[0].values.dtype, device=device)
+            col_start_idx = 0
+            for x in xs:
+                offset_start_idx = col_start_idx + torch.arange(
+                    0, num_rows * num_cols, num_cols, device=device)
+                offset_start = offset[offset_start_idx]
+                offset_end_idx = offset_start_idx + x.num_cols
+                offset_end = offset[offset_end_idx]
+                count = offset_end - offset_start
+                batch, arange = batched_arange(count)
+                values[offset_start[batch] + arange] = x.values
+                col_start_idx += x.num_cols
+
+            return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
+                                     values=values, offset=offset)
 
     def select(
         self,
