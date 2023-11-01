@@ -638,7 +638,12 @@ class LinearEmbeddingEncoder(StypeEncoder):
         zero_index = (feat == 0)
         attention_mask[zero_index] = 0
         outputs = self.model(input_ids=feat, attention_mask=attention_mask)
-        # [batch_size, max_seq_len, embedding_size]
-        x_lin = torch.einsum('ijk,jkl->ijl', outputs.last_hidden_state, self.weight)
+        # embedding = outputs.last_hidden_state[:, 0, :][:, None, :]
+        embedding = outputs.last_hidden_state
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(embedding.size()).float()
+        embedding = torch.sum(embedding * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+        embedding = embedding[:, None, :]
+        # [batch_size, 1, embedding_size]
+        x_lin = torch.einsum('ijk,jkl->ijl', embedding, self.weight)
         x = x_lin + self.bias
         return x
