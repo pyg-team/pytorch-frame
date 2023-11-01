@@ -164,6 +164,10 @@ def test_multi_nested_tensor_basic():
             for j in range(multi_nested_tensor.size(1))
         ], dim=1),
 
+    # Testing set item
+    with pytest.raises(RuntimeError, match="read-only"):
+        multi_nested_tensor[0, 0] = torch.zeros(3)
+
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()
     multi_nested_tensor.values[0] = max_value + 1.0
