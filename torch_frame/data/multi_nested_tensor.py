@@ -142,9 +142,58 @@ class MultiNestedTensor:
             # Returns MultiNestedTensor
             return self.select(index, dim=0)
 
+    def get_value(self, i: int, j: int) -> Tensor:
+        r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
+
+        Args:
+            i (int): The row integer index.
+            j (int): The column integer index.
+        """
+        i = self._to_positive_index(i, dim=0)
+        j = self._to_positive_index(j, dim=1)
+        idx = i * self.num_cols + j
+        start_idx = self.offset[idx]
+        end_idx = self.offset[idx + 1]
+        out = self.values[start_idx:end_idx]
+        return out
+
+    def select(
+        self,
+        index: Union[int, Tensor, List, slice],
+        dim: int,
+    ) -> 'MultiNestedTensor':
+        r"""Supports all types of row/column-level advanced indexing.
+
+        Args:
+            index (Union[int, Tensor, List, slice]): Input :obj:`index`.
+            dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
+        """
+        if isinstance(index, int):
+            return self.single_index_select(index, dim=dim)
+        elif isinstance(index, slice):
+            return self.slice(index, dim=dim)
+        elif isinstance(index, Tensor) and index.ndim == 1:
+            return self.index_select(index, dim=dim)
+        elif isinstance(index, List):
+            return self.index_select(torch.tensor(index, device=self.device),
+                                     dim=dim)
+        else:
+            raise NotImplementedError
+
+    def clone(self) -> 'MultiNestedTensor':
+        return MultiNestedTensor(self.num_rows, self.num_cols,
+                                 self.values.clone(), self.offset.clone())
+
+    def __repr__(self) -> str:
+        return ' '.join([
+            f"{self.__class__.__name__}(num_rows={self.num_rows},",
+            f"num_cols={self.num_cols},",
+            f"device='{self.device}')",
+        ])
+
     def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
         assert start >= 0
-        dim = self._check_dim(dim)
+        dim = MultiNestedTensor._check_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if start == 0 and start + length >= num_data:
             # Do nothing, just return the full data
@@ -169,7 +218,7 @@ class MultiNestedTensor:
                 offset=torch.zeros(1, device=self.device, dtype=torch.long))
 
     def slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
-        dim = self._check_dim(dim)
+        dim = MultiNestedTensor._check_dim(dim)
 
         num_data = self.num_rows if dim == 0 else self.num_cols
         if slice.step is not None and slice.step > 1:
@@ -223,7 +272,7 @@ class MultiNestedTensor:
                                  values=values, offset=offset)
 
     def index_select(self, index: Tensor, dim: int) -> 'MultiNestedTensor':
-        dim = self._check_dim(dim)
+        dim = MultiNestedTensor._check_dim(dim)
         index = self._to_positive_index(index, dim=dim)
         if dim == 0:
             return self._row_index_select(index)
@@ -281,7 +330,7 @@ class MultiNestedTensor:
 
     def single_index_select(self, index: int, dim: int) -> 'MultiNestedTensor':
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""
-        dim = self._check_dim(dim)
+        dim = MultiNestedTensor._check_dim(dim)
         index = self._to_positive_index(index, dim=dim)
         if dim == 0:
             start_idx = index * self.num_cols
@@ -344,10 +393,11 @@ class MultiNestedTensor:
                 raise IndexError(f"{idx_name} index out of bounds!")
         return index
 
+    @classmethod
     def _check_dim(self, dim: int) -> int:
         r"""Check :obj:`dim` argument and make it 0 or 1."""
         if dim < 0:
-            dim = dim + self.ndim
+            dim = dim + 3
         if dim not in [0, 1]:
             raise ValueError(
                 f"Advanced indexing with dim={dim} is unsupported in "
@@ -425,7 +475,7 @@ class MultiNestedTensor:
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a list of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
-        dim = xs[0]._check_dim(dim)
+        dim = MultiNestedTensor._check_dim(dim)
         device = xs[0].device
         if dim == 0:
             num_rows = sum(x.num_rows for x in xs)
@@ -492,55 +542,6 @@ class MultiNestedTensor:
 
             return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
                                      values=values, offset=offset)
-
-    def select(
-        self,
-        index: Union[int, Tensor, List, slice],
-        dim: int,
-    ) -> 'MultiNestedTensor':
-        r"""Supports all types of row/column-level advanced indexing.
-
-        Args:
-            index (Union[int, Tensor, List, slice]): Input :obj:`index`.
-            dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
-        """
-        if isinstance(index, int):
-            return self.single_index_select(index, dim=dim)
-        elif isinstance(index, slice):
-            return self.slice(index, dim=dim)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-        elif isinstance(index, List):
-            return self.index_select(torch.tensor(index, device=self.device),
-                                     dim=dim)
-        else:
-            raise NotImplementedError
-
-    def get_value(self, i: int, j: int) -> Tensor:
-        r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
-
-        Args:
-            i (int): The row integer index.
-            j (int): The column integer index.
-        """
-        i = self._to_positive_index(i, dim=0)
-        j = self._to_positive_index(j, dim=1)
-        idx = i * self.num_cols + j
-        start_idx = self.offset[idx]
-        end_idx = self.offset[idx + 1]
-        out = self.values[start_idx:end_idx]
-        return out
-
-    def clone(self) -> 'MultiNestedTensor':
-        return MultiNestedTensor(self.num_rows, self.num_cols,
-                                 self.values.clone(), self.offset.clone())
-
-    def __repr__(self) -> str:
-        return ' '.join([
-            f"{self.__class__.__name__}(num_rows={self.num_rows},",
-            f"num_cols={self.num_cols},",
-            f"device='{self.device}')",
-        ])
 
 
 def batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
