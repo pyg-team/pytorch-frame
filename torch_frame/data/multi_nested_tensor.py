@@ -466,7 +466,7 @@ class MultiNestedTensor:
                 col_start_idx += x.num_cols
 
             # Compute offset
-            offset = torch.empty(num_rows * num_cols + 1, dtype=torch.long,
+            offset = torch.zeros(num_rows * num_cols + 1, dtype=torch.long,
                                  device=device)
             torch.cumsum(elem_length_mat.flatten(), dim=0, out=offset[1:])
 
