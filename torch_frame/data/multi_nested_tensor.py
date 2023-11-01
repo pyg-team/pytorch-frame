@@ -116,6 +116,11 @@ class MultiNestedTensor:
 
         return cls(num_rows, num_cols, values, offset)
 
+    def __setitem__(self, index: Any, values: Any):
+        raise RuntimeError(
+            "MultiNestedTensor object does not support setting values. "
+            "It should be used for read-only. ")
+
     def __getitem__(
         self,
         index: Any,
