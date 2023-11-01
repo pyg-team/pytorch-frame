@@ -15,6 +15,7 @@ from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
+    NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
     TextEmbeddingTensorMapper,
@@ -63,10 +64,10 @@ def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
     Args:
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. If a dictionary
-            is given, we use a separator specified for each column.
-            (default: :obj:`,`)
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
         columns (List[str]): A list of multi-categorical columns.
 
     Returns:
@@ -101,10 +102,10 @@ class DataFrameToTensorFrameConverter:
             (default: :obj:`None`)
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. If a dictionary
-            is given, we use a separator specified for each column.
-            (default: :obj:`,`)
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
         text_embedder_cfg
             (:class:`torch_frame.config.TextEmbedderConfig`, optional):
             A text embedder config specifying :obj:`text_embedder` that
@@ -185,6 +186,8 @@ class DataFrameToTensorFrameConverter:
                 self.text_tokenizer_cfg.text_tokenizer,
                 self.text_tokenizer_cfg.batch_size,
             )
+        elif stype == torch_frame.sequence_numerical:
+            return NumericalSequenceTensorMapper(sep=self.col_to_sep[col])
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -239,9 +242,10 @@ class Dataset(ABC):
             :obj:`2`. (default: :obj:`None`).
         col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will be
-            used throughout all the multi-categorical columns. If a dictionary
-            is given, we use a separator specified for each column.
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. (default: :obj:`,`)
             (default: :obj:`,`)
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns

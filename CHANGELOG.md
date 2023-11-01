@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Supported advanced indexing for `MultiNestedTensor` ([#150](https://github.com/pyg-team/pytorch-frame/pull/150))
+- Added `sequence_numerical` stype ([#159](https://github.com/pyg-team/pytorch-frame/pull/159))
+- Added `MultiCategoricalEmbeddingEncoder` ([#155](https://github.com/pyg-team/pytorch-frame/pull/155))
+- Added advanced indexing for `MultiNestedTensor` ([#150](https://github.com/pyg-team/pytorch-frame/pull/150), [#161](https://github.com/pyg-team/pytorch-frame/pull/161), [#163](https://github.com/pyg-team/pytorch-frame/pull/163), [#165](https://github.com/pyg-team/pytorch-frame/pull/165))
 - Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128), [#151](https://github.com/pyg-team/pytorch-frame/pull/151))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 

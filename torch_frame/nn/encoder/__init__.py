@@ -3,6 +3,7 @@ from .stypewise_encoder import StypeWiseFeatureEncoder
 from .stype_encoder import (
     StypeEncoder,
     EmbeddingEncoder,
+    MultiCategoricalEmbeddingEncoder,
     LinearEncoder,
     LinearBucketEncoder,
     LinearPeriodicEncoder,
@@ -16,6 +17,7 @@ __all__ = classes = [
     'StypeWiseFeatureEncoder',
     'StypeEncoder',
     'EmbeddingEncoder',
+    'MultiCategoricalEmbeddingEncoder',
     'LinearEncoder',
     'LinearBucketEncoder',
     'LinearPeriodicEncoder',

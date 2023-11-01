@@ -165,6 +165,49 @@ class MultiCategoricalTensorMapper(TensorMapper):
         return pd.Series(ser)
 
 
+class NumericalSequenceTensorMapper(TensorMapper):
+    r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
+    """
+    def __init__(self, ):
+        super().__init__()
+
+    def get_sequence_length(self, row):
+        if isinstance(row, List):
+            return len(row)
+        elif row is None or (isinstance(row, float) and pd.isna(row)):
+            return 0
+        else:
+            raise ValueError(f"{type(row)} is not supported as"
+                             " numerical sequence.")
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> MultiNestedTensor:
+        values = []
+        num_rows = len(ser)
+        offset = ser.apply(lambda row: self.get_sequence_length(row))
+        ser = ser[offset != 0]
+        offset = pd.concat((pd.Series([0]), offset))
+        offset = torch.from_numpy(offset.values)
+        offset = torch.cumsum(offset, dim=0)
+        ser = ser.explode()
+        values = torch.from_numpy(ser.values.astype('float32'))
+        return MultiNestedTensor(num_rows=num_rows, num_cols=1, values=values,
+                                 offset=offset)
+
+    def backward(self, tensor: MultiNestedTensor) -> pd.Series:
+        values = tensor.values.cpu().numpy()
+        offset = tensor.offset
+        ser = []
+        for i in range(1, len(offset)):
+            val = values[offset[i - 1]:offset[i]]
+            ser.append(val if val.size > 0 else None)
+        return pd.Series(ser)
+
+
 class TextEmbeddingTensorMapper(TensorMapper):
     r"""Embed any text series into tensor.
 
