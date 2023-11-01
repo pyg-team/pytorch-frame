@@ -37,7 +37,12 @@ class StatType(Enum):
                 StatType.QUANTILES,
             ],
             torch_frame.categorical: [StatType.COUNT],
-            torch_frame.multicategorical: [StatType.MULTI_COUNT]
+            torch_frame.multicategorical: [StatType.MULTI_COUNT],
+            torch_frame.sequence_numerical: [
+                StatType.MEAN,
+                StatType.STD,
+                StatType.QUANTILES,
+            ]
         }
         return stats_type.get(stype, [])
 

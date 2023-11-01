@@ -80,6 +80,16 @@ class FakeDataset(torch_frame.data.Dataset):
                 if with_nan:
                     df_dict[col_name][0] = None
                 col_to_stype[col_name] = stype.multicategorical
+        if stype.sequence_numerical in stypes:
+            for col_name in ['seq_1', 'seq_2']:
+                arr = []
+                for i in range(num_rows):
+                    list_len = np.random.randint(1, 3)
+                    arr.append(np.random.randint(0, 3, size=list_len).tolist())
+                df_dict[col_name] = arr
+                if with_nan:
+                    df_dict[col_name][0] = None
+                col_to_stype[col_name] = stype.sequence_numerical
         if stype.text_embedded in stypes:
             for col_name in ['text_1', 'text_2']:
                 arr = ['Hello world!'] * num_rows
