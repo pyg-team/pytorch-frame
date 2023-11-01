@@ -147,7 +147,8 @@ def test_multi_nested_tensor_basic():
             multi_nested_tensor[i] for i in range(multi_nested_tensor.size(0))
         ], dim=0),
     )
-    assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor]))
+    assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor],
+                                                   dim=0))
     with pytest.raises(RuntimeError, match="num_cols must be the same"):
         MultiNestedTensor.cat([
             multi_nested_tensor[:2],
@@ -157,12 +158,28 @@ def test_multi_nested_tensor_basic():
         MultiNestedTensor.cat([], dim=0)
 
     # Testing col concat
-    with pytest.raises(NotImplementedError):
-        # TODO: Add proper test once implemented
+    assert_equal(
+        tensor_mat,
+        MultiNestedTensor.cat(
+            (multi_nested_tensor[:, :2], multi_nested_tensor[:, 2:4],
+             multi_nested_tensor[:, 4:]), dim=1),
+    )
+    assert_equal(
+        tensor_mat,
         MultiNestedTensor.cat([
-            multi_nested_tensor[:, j]
-            for j in range(multi_nested_tensor.size(1))
+            multi_nested_tensor[:, i]
+            for i in range(multi_nested_tensor.size(1))
         ], dim=1),
+    )
+    assert_equal(tensor_mat, MultiNestedTensor.cat([multi_nested_tensor],
+                                                   dim=1))
+    with pytest.raises(RuntimeError, match="num_rows must be the same"):
+        MultiNestedTensor.cat([
+            multi_nested_tensor[1:],
+            multi_nested_tensor,
+        ], dim=1)
+    with pytest.raises(RuntimeError, match="Cannot concatenate"):
+        MultiNestedTensor.cat([], dim=1)
 
     # Testing set item
     with pytest.raises(RuntimeError, match="read-only"):
