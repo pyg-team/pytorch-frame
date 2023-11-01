@@ -48,13 +48,16 @@ class StatType(Enum):
 
     def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
-            return np.mean(ser.values).item()
+            flattened = np.hstack(np.hstack(ser.values))
+            return np.mean(flattened).item()
 
         elif self == StatType.STD:
-            return np.std(ser.values).item()
+            flattened = np.hstack(np.hstack(ser.values))
+            return np.std(flattened).item()
 
         elif self == StatType.QUANTILES:
-            return np.quantile(ser.values, [0, 0.25, 0.5, 0.75, 1]).tolist()
+            flattened = np.hstack(np.hstack(ser.values))
+            return np.quantile(flattened, [0, 0.25, 0.5, 0.75, 1]).tolist()
 
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
