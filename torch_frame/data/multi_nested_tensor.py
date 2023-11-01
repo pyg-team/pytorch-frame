@@ -180,17 +180,6 @@ class MultiNestedTensor:
         else:
             raise NotImplementedError
 
-    def clone(self) -> 'MultiNestedTensor':
-        return MultiNestedTensor(self.num_rows, self.num_cols,
-                                 self.values.clone(), self.offset.clone())
-
-    def __repr__(self) -> str:
-        return ' '.join([
-            f"{self.__class__.__name__}(num_rows={self.num_rows},",
-            f"num_cols={self.num_cols},",
-            f"device='{self.device}')",
-        ])
-
     def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
         assert start >= 0
         dim = MultiNestedTensor._check_dim(dim)
@@ -410,6 +399,17 @@ class MultiNestedTensor:
 
     def __len__(self):
         return self.num_rows
+
+    def clone(self) -> 'MultiNestedTensor':
+        return MultiNestedTensor(self.num_rows, self.num_cols,
+                                 self.values.clone(), self.offset.clone())
+
+    def __repr__(self) -> str:
+        return ' '.join([
+            f"{self.__class__.__name__}(num_rows={self.num_rows},",
+            f"num_cols={self.num_cols},",
+            f"device='{self.device}')",
+        ])
 
     # Device Transfer #########################################################
 
