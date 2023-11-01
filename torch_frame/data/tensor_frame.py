@@ -79,13 +79,17 @@ class TensorFrame:
 
         num_rows = self.num_rows
         empty_stypes: List[stype] = []
-        for stype_name, feat in self.feat_dict.items():
+        for stype_name, feats in self.feat_dict.items():
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            # Get any value if feat is a dictionary
-            if not isinstance(feat, dict):
+            if not isinstance(feats, dict):
+                feats = [feats]
+            else:
+                feats = [feat for feat in feats.values()]
+
+            for feat in feats:
                 if feat.dim() < 2:
                     raise ValueError(f"feat_dict['{stype_name}'] must be at "
                                      f"least 2-dimensional")
@@ -100,25 +104,6 @@ class TensorFrame:
                         f"The length of elements in feat_dict are "
                         f"not aligned, got {feat.size(0)} but "
                         f"expected {num_rows}.")
-            else:
-                feats = feat
-                for key, feat in feats:
-                    if feat.dim() < 2:
-                        raise ValueError(f"feat_dict['{stype_name}']['{key}'] "
-                                         f"must be at least 2-dimensional")
-                    if num_cols != feat.size(1):
-                        raise ValueError(
-                            f"The expected number of columns for {stype_name} "
-                            f"feature is {num_cols}, which does not align "
-                            f"with the column dimensionality of "
-                            f"feat_dict['{stype_name}']['{key}'] "
-                            f"(got {feat.size(1)})")
-                    if feat.size(0) != num_rows:
-                        raise ValueError(
-                            f"The length of elements in "
-                            f"feat_dict['{stype_name}']['{key}']"
-                            f"is not aligned, got {feat.size(0)} but "
-                            f"expected {num_rows}.")
 
         if len(empty_stypes) > 0:
             raise RuntimeError(

@@ -286,7 +286,7 @@ class TextTokenizationTensorMapper(TensorMapper):
         ser = ser.astype(str)
         ser_list = ser.tolist()
 
-        seq_tokens_dict: Optional[Dict[str, MultiNestedTensor]] = None
+        seq_tokens_dict = {}
         if self.batch_size is None:
             seq_tokens_dict = self.text_tokenizer(ser_list)
             for key in seq_tokens_dict:
@@ -296,15 +296,14 @@ class TextTokenizationTensorMapper(TensorMapper):
         for i in range(0, len(ser_list), self.batch_size):
             batch_seq_tokens_dict = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
-            if seq_tokens_dict is None or len(seq_tokens_dict) == 0:
-                seq_tokens_dict = batch_seq_tokens_dict
-            else:
-                for key in seq_tokens_dict:
-                    seq_tokens_dict[key] = MultiNestedTensor.cat(
-                        [seq_tokens_dict[key], batch_seq_tokens_dict[key]],
-                        dim=0)
+            for key in batch_seq_tokens_dict:
+                if key not in seq_tokens_dict:
+                    seq_tokens_dict[key] = [batch_seq_tokens_dict[key]]
+                else:
+                    seq_tokens_dict[key].append(batch_seq_tokens_dict[key])
         for key in seq_tokens_dict:
-            seq_tokens_dict[key].to(device)
+            seq_tokens_dict[key] = MultiNestedTensor.cat(
+                seq_tokens_dict[key], dim=0).to(device)
         return seq_tokens_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:
