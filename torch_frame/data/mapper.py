@@ -289,22 +289,22 @@ class TextTokenizationTensorMapper(TensorMapper):
         seq_tokens_dict = {}
         if self.batch_size is None:
             seq_tokens_dict = self.text_tokenizer(ser_list)
-            for key in seq_tokens_dict:
-                seq_tokens_dict[key].to(device)
+            for key, value in seq_tokens_dict.items():
+                seq_tokens_dict[key] = value.to(device)
             return seq_tokens_dict
 
         for i in tqdm(range(0, len(ser_list), self.batch_size),
                       desc="Tokenizing texts in mini-batch"):
             batch_seq_tokens_dict = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
-            for key in batch_seq_tokens_dict:
+            for key, value in batch_seq_tokens_dict.items():
                 if key not in seq_tokens_dict:
-                    seq_tokens_dict[key] = [batch_seq_tokens_dict[key]]
+                    seq_tokens_dict[key] = [value]
                 else:
-                    seq_tokens_dict[key].append(batch_seq_tokens_dict[key])
-        for key in seq_tokens_dict:
-            seq_tokens_dict[key] = MultiNestedTensor.cat(
-                seq_tokens_dict[key], dim=0).to(device)
+                    seq_tokens_dict[key].append(value)
+        for key, values in seq_tokens_dict.items():
+            seq_tokens_dict[key] = MultiNestedTensor.cat(values,
+                                                         dim=0).to(device)
         return seq_tokens_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:
