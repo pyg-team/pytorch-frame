@@ -568,8 +568,9 @@ class LinearEmbeddingEncoder(StypeEncoder):
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
-        from transformers import DistilBertModel
-        self.model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+        from transformers import DistilBertModel, BertModel
+        # self.model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+        self.model = BertModel.from_pretrained("bert-base-uncased")
 
         for param in self.model.parameters():
             param.requires_grad = False
@@ -586,33 +587,54 @@ class LinearEmbeddingEncoder(StypeEncoder):
             return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
         total_size = 0
-        bottleneck_size = 32  # hyperparameter
+        # bottleneck_size = 32  # hyperparameter
 
-        for block_idx in range(6):
-            orig_layer_1 = self.model.transformer.layer[block_idx].attention.out_lin
+        # for block_idx in range(6):
+        #     orig_layer_1 = self.model.transformer.layer[block_idx].attention.out_lin
 
-            adapter_layers_1 = make_adapter(
-                in_dim=orig_layer_1.out_features,
-                bottleneck_dim=bottleneck_size,
-                out_dim=orig_layer_1.out_features)
+        #     adapter_layers_1 = make_adapter(
+        #         in_dim=orig_layer_1.out_features,
+        #         bottleneck_dim=bottleneck_size,
+        #         out_dim=orig_layer_1.out_features)
 
-            new_1 = torch.nn.Sequential(orig_layer_1, *adapter_layers_1)
-            self.model.transformer.layer[block_idx].attention.out_lin = new_1
+        #     new_1 = torch.nn.Sequential(orig_layer_1, *adapter_layers_1)
+        #     self.model.transformer.layer[block_idx].attention.out_lin = new_1
 
-            total_size += count_parameters(adapter_layers_1)
+        #     total_size += count_parameters(adapter_layers_1)
 
-            orig_layer_2 = self.model.transformer.layer[block_idx].ffn.lin2
+        #     orig_layer_2 = self.model.transformer.layer[block_idx].ffn.lin2
 
-            adapter_layers_2 = make_adapter(
-                in_dim=orig_layer_2.out_features,
-                bottleneck_dim=bottleneck_size,
-                out_dim=orig_layer_2.out_features)
+        #     adapter_layers_2 = make_adapter(
+        #         in_dim=orig_layer_2.out_features,
+        #         bottleneck_dim=bottleneck_size,
+        #         out_dim=orig_layer_2.out_features)
 
-            new_2 = torch.nn.Sequential(orig_layer_2, *adapter_layers_2)
-            self.model.transformer.layer[block_idx].ffn.lin2 = new_2
+        #     new_2 = torch.nn.Sequential(orig_layer_2, *adapter_layers_2)
+        #     self.model.transformer.layer[block_idx].ffn.lin2 = new_2
 
-            total_size += count_parameters(adapter_layers_2)
+        #     total_size += count_parameters(adapter_layers_2)
 
+        from peft import LoraConfig, get_peft_model, TaskType
+
+        peft_config = LoraConfig(
+            task_type=TaskType.FEATURE_EXTRACTION,
+            r=32,
+            lora_alpha=32,
+            inference_mode=False,
+            lora_dropout=0.1,
+            bias='none',
+            target_modules=['intermediate.dense'],
+        )
+        self.model = get_peft_model(self.model, peft_config)
+        # for block_idx in range(6):
+        #     total_size += count_parameters(self.model.transformer.layer[block_idx].ffn.lin1.lora_A)
+        #     total_size += count_parameters(self.model.transformer.layer[block_idx].ffn.lin1.lora_B)
+        #     total_size += count_parameters(self.model.transformer.layer[block_idx].ffn.lin2.lora_A)
+        #     total_size += count_parameters(self.model.transformer.layer[block_idx].ffn.lin2.lora_B)
+
+        for block_idx in range(12):
+            total_size += count_parameters(self.model.model.encoder.layer[block_idx].intermediate.dense.lora_A)
+            total_size += count_parameters(self.model.model.encoder.layer[block_idx].intermediate.dense.lora_B)
         print("Number of adapter parameters added:", total_size)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

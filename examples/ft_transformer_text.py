@@ -48,7 +48,8 @@ from torch_frame.nn import (
 class PretrainedTextEncoder:
     def __init__(self, device: torch.device):
         from transformers import AutoTokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        # self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
     def __call__(self, sentences: List[str]) -> Tensor:
         inputs = self.tokenizer(sentences, truncation=True, padding='max_length', return_tensors="pt")
