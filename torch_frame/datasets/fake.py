@@ -1,3 +1,4 @@
+import random
 from typing import List, Optional
 
 import numpy as np
@@ -85,6 +86,21 @@ class FakeDataset(torch_frame.data.Dataset):
                 if with_nan:
                     df_dict[col_name][0] = None
                 col_to_stype[col_name] = stype.multicategorical
+        if stype.sequence_numerical in stypes:
+            for col_name in ['seq_num_1', 'seq_num_2']:
+                arr = []
+                for i in range(num_rows):
+                    sequence_length = random.randint(1, 5)
+                    sequence = [
+                        random.random() for _ in range(sequence_length)
+                    ]
+                    nan_idx = random.randint(0, sequence_length - 1)
+                    sequence[nan_idx] = np.nan
+                    arr.append(sequence)
+                df_dict[col_name] = arr
+                if with_nan:
+                    df_dict[col_name][0] = None
+                col_to_stype[col_name] = stype.sequence_numerical
         if stype.text_embedded in stypes:
             for col_name in ['text_embedded_1', 'text_embedded_2']:
                 arr = ['Hello world!'] * num_rows
