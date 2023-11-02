@@ -61,4 +61,6 @@ def test_stypewise_feature_encoder(
     )
     x, col_names = encoder(tensor_frame)
     assert x.shape == (num_rows, tensor_frame.num_cols, out_channels)
-    assert col_names == ['a', 'b', 'c', 'x', 'y', 'text_1', 'text_2']
+    assert col_names == [
+        'a', 'b', 'c', 'x', 'y', 'text_embedded_1', 'text_embedded_2'
+    ]
