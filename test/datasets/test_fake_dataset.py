@@ -28,7 +28,8 @@ def test_fake_dataset(with_nan):
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
     assert dataset.feat_cols == [
-        'a', 'b', 'c', 'x', 'y', 'mult_1', 'seq_1', 'seq_2', 'text_1', 'text_2'
+        'a', 'b', 'c', 'x', 'y', 'mult_1', 'seq_num_1', 'seq_num_2', 'text_1',
+        'text_2'
     ]
     assert dataset.target_col == 'target'
 
