@@ -3,6 +3,7 @@ import torch
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
@@ -17,6 +18,8 @@ def test_fake_dataset(with_nan):
         stypes=[
             torch_frame.numerical,
             torch_frame.categorical,
+            torch_frame.multicategorical,
+            torch_frame.sequence_numerical,
             torch_frame.text_embedded,
         ],
         text_embedder_cfg=TextEmbedderConfig(
@@ -24,7 +27,10 @@ def test_fake_dataset(with_nan):
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
-    assert dataset.feat_cols == ['a', 'b', 'c', 'x', 'y', 'text_1', 'text_2']
+    assert dataset.feat_cols == [
+        'a', 'b', 'c', 'x', 'y', 'mult_1', 'seq_num_1', 'seq_num_2', 'text_1',
+        'text_2'
+    ]
     assert dataset.target_col == 'target'
 
     dataset = dataset.materialize()
@@ -44,6 +50,17 @@ def test_fake_dataset(with_nan):
         assert (feat_cat == -1).any()
     else:
         assert (feat_cat >= 0).all()
+
+    feat_multicat = tensor_frame.feat_dict[torch_frame.multicategorical]
+    assert isinstance(feat_multicat, MultiNestedTensor)
+    assert feat_multicat.size(0) == num_rows
+    assert feat_multicat.size(1) == 1
+
+    feat_sequence_numerical = tensor_frame.feat_dict[
+        torch_frame.sequence_numerical]
+    assert isinstance(feat_sequence_numerical, MultiNestedTensor)
+    assert feat_sequence_numerical.size(0) == num_rows
+    assert feat_sequence_numerical.size(1) == 2
 
     feat_text_embedded = tensor_frame.feat_dict[torch_frame.text_embedded]
     assert feat_text_embedded.dtype == torch.float

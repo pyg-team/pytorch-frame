@@ -168,7 +168,7 @@ class DataFrameToTensorFrameConverter:
                 self.text_embedder_cfg.batch_size,
             )
         elif stype == torch_frame.sequence_numerical:
-            return NumericalSequenceTensorMapper(sep=self.col_to_sep[col])
+            return NumericalSequenceTensorMapper()
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
