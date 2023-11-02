@@ -1,8 +1,7 @@
 from typing import Dict, List, Optional
 
 import torch
-
-from torch_frame.data import MultiNestedTensor
+from torch import Tensor
 
 
 class WhiteSpaceHashTokenizer:
@@ -21,13 +20,11 @@ class WhiteSpaceHashTokenizer:
         self.device = device
         self.num_hash_bins = num_hash_bins
 
-    def __call__(self, sentences: List[str]) -> Dict[str, MultiNestedTensor]:
+    def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
         res = []
         for s in sentences:
             tokens = s.split(' ')
             idx = torch.LongTensor(
                 [hash(t) % self.num_hash_bins for t in tokens])
-            res.append([idx])
-        return {
-            'input_ids': MultiNestedTensor.from_tensor_mat(res).to(self.device)
-        }
+            res.append({'input_ids': idx})
+        return res

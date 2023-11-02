@@ -86,14 +86,14 @@ class FakeDataset(torch_frame.data.Dataset):
                     df_dict[col_name][0] = None
                 col_to_stype[col_name] = stype.multicategorical
         if stype.text_embedded in stypes:
-            for col_name in ['text_1', 'text_2']:
+            for col_name in ['text_embedded_1', 'text_embedded_2']:
                 arr = ['Hello world!'] * num_rows
                 if with_nan:
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_embedded
         if stype.text_tokenized in stypes:
-            for col_name in ['text_3', 'text_4']:
+            for col_name in ['text_tokenized_1', 'text_tokenized_2']:
                 arr = ['Hello world!'] * (num_rows - 1)
                 arr += ['Hello!']
                 if with_nan:

@@ -4,6 +4,7 @@ import torch
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
+from torch_frame.data import MultiNestedTensor
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
@@ -31,7 +32,8 @@ def test_fake_dataset(with_nan):
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
     assert dataset.feat_cols == [
-        'a', 'b', 'c', 'x', 'y', 'text_1', 'text_2', 'text_3', 'text_4'
+        'a', 'b', 'c', 'x', 'y', 'text_embedded_1', 'text_embedded_2',
+        'text_tokenized_1', 'text_tokenized_2'
     ]
     assert dataset.target_col == 'target'
 
@@ -60,5 +62,6 @@ def test_fake_dataset(with_nan):
         out_channels)
 
     feat_text_tokenized = tensor_frame.feat_dict[torch_frame.text_tokenized]
+    assert isinstance(feat_text_tokenized['input_ids'], MultiNestedTensor)
     assert feat_text_tokenized['input_ids'].dtype == torch.int64
     assert feat_text_tokenized['input_ids'].shape == (num_rows, 2, -1)

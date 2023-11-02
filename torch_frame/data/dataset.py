@@ -115,8 +115,11 @@ class DataFrameToTensorFrameConverter:
         text_tokenizer_cfg
             (:class:`torch_frame.config.TextTokenizerConfig`, optional):
             A text tokenizer config specifying :obj:`text_tokenizer` that
-            maps sentences into tensor of tokens and
-            :obj:`batch_size` that specifies the mini-batch size for
+            maps sentences into a list of dictionary of tensors. Each
+            element in the list corresponds to each sentence, keys are
+            input arguments to the model such as :obj:`input_ids`, and
+            values are tensors such as tokens.
+            :obj:`batch_size` specifies the mini-batch size for
             :obj:`text_tokenizer`. (default: :obj:`None`)
     """
     def __init__(
@@ -212,9 +215,8 @@ class DataFrameToTensorFrameConverter:
             if stype.use_multi_nested_tensor:
                 feat_dict[stype] = MultiNestedTensor.cat(xs, dim=1)
             elif stype.use_dict_multi_nested_tensor:
-                feat_dict[stype] = {}
-                keys = xs[0].keys()
-                for key in keys:
+                feat_dict[stype]: Dict[str, MultiNestedTensor] = {}
+                for key in xs[0].keys():
                     feat_dict[stype][key] = MultiNestedTensor.cat(
                         [x[key] for x in xs], dim=1)
             else:
@@ -250,9 +252,14 @@ class Dataset(ABC):
         text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
             configuration that specifies the text embedder to map text columns
             into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
-        text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
-            configuration the specifies the text tokenizer to map text columns
-            into maps sentences into tensor of tokens (default: :obj:`None`)
+        text_tokenizer_cfg (TextTokenizerConfig, optional):
+            A text tokenizer config specifying :obj:`text_tokenizer` that
+            maps sentences into a list of dictionary of tensors. Each
+            element in the list corresponds to each sentence, keys are
+            input arguments to the model such as :obj:`input_ids`, and
+            values are tensors such as tokens.
+            :obj:`batch_size` specifies the mini-batch size for
+            :obj:`text_tokenizer`. (default: :obj:`None`)
     """
     def __init__(
         self,
