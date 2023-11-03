@@ -348,6 +348,7 @@ class MultiNestedTensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.
         Args:
             fill_value (Union[int, float]): Fill values.
+
         Returns:
             Tensor: Padded PyTorch Tensor object with shape
                 :obj:`(num_rows, num_cols, max_length)`
@@ -355,9 +356,8 @@ class MultiNestedTensor:
         count = self.offset[1:] - self.offset[:-1]
         max_length = count.max()
         batch, arange = batched_arange(count)
-        dense = torch.full((self.num_rows, self.num_cols, max_length),
-                           fill_value=fill_value, dtype=self.values.dtype,
-                           device=self.values.device)
+        dense = self.values.new_full(
+            (self.num_rows, self.num_cols, max_length), fill_value=fill_value)
         row = batch // self.num_cols
         col = batch % self.num_cols
         dense[row, col, arange] = self.values
