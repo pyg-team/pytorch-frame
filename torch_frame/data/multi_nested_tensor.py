@@ -344,6 +344,25 @@ class MultiNestedTensor:
         else:
             raise RuntimeError(f"Unsupported dim={dim} for index_select.")
 
+    def to_dense(self, fill_value: Union[int, float]) -> Tensor:
+        """Map MultiNestedTensor into dense Tensor representation with padding.
+        Args:
+            fill_value (Union[int, float]): Fill values.
+        Returns:
+            Tensor: Padded PyTorch Tensor object with shape
+                :obj:`(num_rows, num_cols, max_length)`
+        """
+        count = self.offset[1:] - self.offset[:-1]
+        max_length = count.max()
+        batch, arange = batched_arange(count)
+        dense = torch.full((self.num_rows, self.num_cols, max_length),
+                           fill_value=fill_value, dtype=self.values.dtype,
+                           device=self.values.device)
+        row = batch // self.num_cols
+        col = batch % self.num_cols
+        dense[row, col, arange] = self.values
+        return dense
+
     def _to_positive_index(
         self,
         index: Union[int, Tensor],

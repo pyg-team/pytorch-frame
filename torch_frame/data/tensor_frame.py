@@ -131,11 +131,17 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         r"""The number of rows in the :class:`TensorFrame`."""
-        return len(next(iter(self.feat_dict.values())))
+        feat = next(iter(self.feat_dict.values()))
+        if isinstance(feat, dict):
+            return len(next(iter(feat.values())))
+        return len(feat)
 
     @property
     def device(self) -> torch.device:
-        return next(iter(self.feat_dict.values())).device
+        feat = next(iter(self.feat_dict.values()))
+        if isinstance(feat, dict):
+            return next(iter(feat.values())).device
+        return feat.device
 
     # Python Built-ins ########################################################
 
@@ -192,7 +198,16 @@ class TensorFrame:
         if isinstance(index, int):
             index = [index]
 
-        return self._apply(lambda x: x[index])
+        def f(x):
+            if isinstance(x, dict):
+                y = {}
+                for key in x:
+                    y[key] = x[key][index]
+            else:
+                return x[index]
+            return y
+
+        return self._apply(f)
 
     def __copy__(self) -> 'TensorFrame':
         out = self.__class__.__new__(self.__class__)
@@ -207,13 +222,37 @@ class TensorFrame:
     # Device Transfer #########################################################
 
     def to(self, *args, **kwargs):
-        return self._apply(lambda x: x.to(*args, **kwargs))
+        def f(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].to(*args, **kwargs)
+            else:
+                x = x.to(*args, **kwargs)
+            return x
+
+        return self._apply(f)
 
     def cpu(self, *args, **kwargs):
-        return self._apply(lambda x: x.cpu(*args, **kwargs))
+        def f(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].cpu(*args, **kwargs)
+            else:
+                x = x.cpu(*args, **kwargs)
+            return x
+
+        return self._apply(f)
 
     def cuda(self, *args, **kwargs):
-        return self._apply(lambda x: x.cuda(*args, **kwargs))
+        def f(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].cuda(*args, **kwargs)
+            else:
+                x = x.cuda(*args, **kwargs)
+            return x
+
+        return self._apply(f)
 
     # Helper Functions ########################################################
 

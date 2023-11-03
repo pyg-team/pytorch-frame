@@ -85,7 +85,10 @@ class StypeEncoder(Module, ABC):
 
     def forward(self, feat: TensorData) -> Tensor:
         # Clone the tensor to avoid in-place modification
-        feat = feat.clone()
+        if not isinstance(feat, dict):
+            feat = feat.clone()
+        else:
+            feat = {key: value.clone() for key, value in feat.items()}
         # NaN handling of the input Tensor
         feat = self.na_forward(feat)
         # Main encoding into column embeddings
@@ -541,7 +544,8 @@ class LinearEmbeddingEncoder(StypeEncoder):
     It applies a linear layer :obj:`torch.nn.Linear(in_channels, out_channels)`
     on each embedding feature (:obj:`in_channels` is the dimensionality of the
     embedding) and concatenates the output embeddings. Note that the
-    implementation does this for all numerical features in a batched manner.
+    implementation does this for all :obj:`text_embedded` features in a
+    batched manner.
 
     Args:
         in_channels (int): The dimensionality of the embedding feature. Needs
@@ -582,6 +586,70 @@ class LinearEmbeddingEncoder(StypeEncoder):
         torch.nn.init.zeros_(self.bias)
 
     def encode_forward(self, feat: Tensor) -> Tensor:
+        # [batch_size, num_cols, in_channels] *
+        # [num_cols, in_channels, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x_lin = torch.einsum('ijk,jkl->ijl', feat, self.weight)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x = x_lin + self.bias
+        return x
+
+
+class LinearEmbeddingModelEncoder(StypeEncoder):
+    r"""Linear function based encoder with a specified model outputs embedding
+    features. It applies a linear layer :obj:`torch.nn.Linear(in_channels,
+    out_channels)` on each embedding feature (:obj:`in_channels` is the
+    dimensionality of the embedding) and concatenates the output embeddings.
+    Note that the implementation does this for all :obj:`text_tokenized`
+    features in a batched manner.
+
+    Args:
+        in_channels (int): The dimensionality of the embedding feature. Needs
+            to be specified manually.
+        model (torch.nn.Module): The model outputs embedding features that will
+            be input into the linear layer.
+    """
+    # NOTE: We currently support text embeddings but in principle, this encoder
+    # can support any model outputs embeddings, including image/audio/graph
+    # embeddings.
+    supported_stypes = {stype.text_tokenized}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        in_channels: Optional[int] = None,
+        model: Optional[torch.nn.Module] = None,
+    ):
+        if in_channels is None:
+            raise ValueError("Please manuallly specify the `in_channels`, "
+                             "which is the text embedding dimensionality.")
+        self.in_channels = in_channels
+
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+        self.model = model
+
+    def init_modules(self):
+        super().init_modules()
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, self.in_channels, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.01)
+        torch.nn.init.zeros_(self.bias)
+        self.model.reset_parameters()
+
+    def encode_forward(self, feat: TensorData) -> Tensor:
+        x = self.model(feat)
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
