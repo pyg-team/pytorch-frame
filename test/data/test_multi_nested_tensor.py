@@ -58,12 +58,17 @@ def test_multi_nested_tensor_basic():
         multi_nested_tensor.size(3)
 
     dense_multi_nested_tensor = multi_nested_tensor.to_dense(fill_value=-1)
+    max_len = 0
     for i in range(multi_nested_tensor.num_rows):
         for j in range(multi_nested_tensor.num_cols):
             tensor = tensor_mat[i][j]
+            if len(tensor) > max_len:
+                max_len = len(tensor)
             assert (torch.allclose(
                 dense_multi_nested_tensor[i, j][:len(tensor)], tensor))
             assert (dense_multi_nested_tensor[i, j][len(tensor):] == -1).all()
+    assert dense_multi_nested_tensor.shape == (multi_nested_tensor.shape[:-1] +
+                                               (max_len, ))
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
