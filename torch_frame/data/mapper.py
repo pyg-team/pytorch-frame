@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import pandas as pd
 import torch
@@ -7,7 +7,7 @@ from torch import Tensor
 from tqdm import tqdm
 
 from torch_frame.data import MultiNestedTensor
-from torch_frame.typing import Series, TensorData
+from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
 
 class TensorMapper(ABC):
@@ -249,6 +249,63 @@ class TextEmbeddingTensorMapper(TensorMapper):
             emb = self.text_embedder(ser_list[i:i + self.batch_size])
             emb_list.append(emb.to(device))
         return torch.cat(emb_list, dim=0)
+
+    def backward(self, tensor: Tensor) -> pd.Series:
+        raise NotImplementedError
+
+
+class TextTokenizationTensorMapper(TensorMapper):
+    r"""Tokenize any text series into a dictionary of
+    :class:`MultiNestedTensor`.
+
+    Args:
+        text_tokenizer (callable): A callable function that takes list of
+            strings and returns list of dictionary. The keys of the dictionary
+            are arguments that will be put to the model, including
+            :obj:`input_ids` and :obj:`attention_mask`. The values of the
+            dictionary are tensors corresponding to keys.
+        batch_size (int, optional): The mini-batch size used for the text
+            tokenizer. If :obj:`None`, we will encode all text in a full-batch
+            manner.
+    """
+    def __init__(
+        self,
+        text_tokenizer: Callable[[List[str]], TextTokenizationOutputs],
+        batch_size: Optional[int],
+    ):
+        super().__init__()
+        self.text_tokenizer = text_tokenizer
+        self.batch_size = batch_size
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> Dict[str, MultiNestedTensor]:
+        ser = ser.astype(str)
+        ser_list = ser.tolist()
+
+        feat_dict = {}
+        if self.batch_size is None:
+            tokenized_list: TextTokenizationOutputs = self.text_tokenizer(
+                ser_list)
+            for key in tokenized_list[0]:
+                xs = [[item[key]] for item in tokenized_list]
+                feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(
+                    device)
+            return feat_dict
+
+        tokenized_list: TextTokenizationOutputs = []
+        for i in tqdm(range(0, len(ser_list), self.batch_size),
+                      desc="Tokenizing texts in mini-batch"):
+            tokenized_batch: TextTokenizationOutputs = self.text_tokenizer(
+                ser_list[i:i + self.batch_size])
+            tokenized_list.extend(tokenized_batch)
+        for key in tokenized_list[0]:
+            xs = [[item[key]] for item in tokenized_list]
+            feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(device)
+        return feat_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError

@@ -11,7 +11,7 @@ class TextEmbedderConfig:
 
     Args:
         text_embedder (callable): A callable text embedder that takes a list
-            of strings as input and output the PyTorch Tensor embeddings for
+            of strings as input and outputs the PyTorch Tensor embeddings for
             that list of strings.
         batch_size (int, optional): Batch size to use when encoding the
             sentences. If set to :obj:`None`, the text embeddings will

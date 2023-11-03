@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union
+from typing import Dict, List, Union
 
 import pandas as pd
 from torch import Tensor
@@ -63,4 +63,5 @@ DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
-TensorData = Union[Tensor, MultiNestedTensor]
+TextTokenizationOutputs = List[Dict[str, Tensor]]
+TensorData = Union[Tensor, MultiNestedTensor, Dict[str, MultiNestedTensor]]
