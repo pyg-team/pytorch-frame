@@ -181,6 +181,9 @@ for epoch in range(50):
 ```
 </details>
 
+Currently, PyTorch Frame support the following semantic types: `numerical`, `categorical`, `multicategorical`, `text_embedded`. [Here](https://github.com/pyg-team/pytorch-frame/blob/master/examples/mercari.py) is an example of how to train a model on dataset with all four semantic types.
+
+
 ## Implemented Deep Tabular Models
 
 We list currently supported deep tabular models:
