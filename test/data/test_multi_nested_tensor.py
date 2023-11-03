@@ -57,6 +57,14 @@ def test_multi_nested_tensor_basic():
     with pytest.raises(IndexError, match="Dimension out of range"):
         multi_nested_tensor.size(3)
 
+    dense_multi_nested_tensor = multi_nested_tensor.to_dense(fill_value=-1)
+    for i in range(multi_nested_tensor.num_rows):
+        for j in range(multi_nested_tensor.num_cols):
+            tensor = tensor_mat[i][j]
+            assert (torch.allclose(
+                dense_multi_nested_tensor[i, j][:len(tensor)], tensor))
+            assert (dense_multi_nested_tensor[i, j][len(tensor):] == -1).all()
+
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
         for j in range(num_cols):
