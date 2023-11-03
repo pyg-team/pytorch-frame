@@ -1,11 +1,17 @@
+'''
+Train Loss: 540.2466, Train RMSE: 22.6720, Val RMSE: 26.2494
+Private Score: 0.50207 Public Score: 0.50156
+'''
 import argparse
 import os.path as osp
 from typing import List
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
 from torch import Tensor
+from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 
 from torch_frame import stype
@@ -23,7 +29,7 @@ from torch_frame.nn.encoder.stype_encoder import \
 
 
 class PretrainedTextEncoder:
-    def __init__(self, device: torch.device):
+    def __init__(self, device: torch.device) -> None:
         self.model = SentenceTransformer('all-distilroberta-v1', device=device)
 
     def __call__(self, sentences: List[str]) -> Tensor:
@@ -39,7 +45,7 @@ parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -51,7 +57,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'mercari')
 text_encoder = PretrainedTextEncoder(device=device)
 dataset = Mercari(
     root=path,
-    # num_rows=5000,  # delete the argument to use the full dataset
+    # num_rows=5000,  # set num_rows to use a subset of the dataset
     text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
                                          batch_size=5),
 )
@@ -94,7 +100,8 @@ model = FTTransformer(
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 
 def train(epoch: int) -> float:
@@ -149,6 +156,8 @@ else:
     best_val_metric = float('inf')
     best_test_metric = float('inf')
 
+best_model_state = None
+
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
     train_metric = test(train_loader)
@@ -156,19 +165,31 @@ for epoch in range(1, args.epochs + 1):
 
     if is_classification and val_metric > best_val_metric:
         best_val_metric = val_metric
+        best_model_state = model.state_dict()
     elif not is_classification and val_metric < best_val_metric:
         best_val_metric = val_metric
+        best_model_state = model.state_dict()
+        torch.save(best_model_state, osp.join(path, 'best_model.pth'))
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}')
+    lr_scheduler.step()
 
 print(f'Best Val {metric}: {best_val_metric:.4f}, ')
 
 # Generate prediction csv
-tf = test_tensor_frame.to(device)
-pred = model(tf)
+model.load_state_dict(best_model_state)
+with torch.inference_mode():
+    model.eval()
+    accum = total_count = 0
+    all_preds = []
+    for tf in test_loader:
+        tf = tf.to(device)
+        pred = model(tf)
+        all_preds.append(pred.cpu().numpy())
+pred = np.concatenate(all_preds).flatten()
 df = dataset.df[dataset.df['split_col'] == 2]
 df = df[["test_id"]]
 df["test_id"] = df["test_id"].astype(int)
-df[dataset.target_col] = pred.cpu().detach().numpy()
+df[dataset.target_col] = pred
 df.to_csv('submission.csv')
