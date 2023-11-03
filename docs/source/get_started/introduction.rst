@@ -76,6 +76,7 @@ Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype
 
 - :class:`~torch_frame.stype.categorical` denotes categorical columns.
 - :obj:`~torch_frame.stype.numerical` denotes numerical columns.
+- :obj:`~torch_frame.stype.multicategorical` denotes multi_categorical columns.
 - :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some text encoder.
 
 A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
