@@ -1,8 +1,8 @@
 from typing import List, Optional
-from torch_frame.typing import TextTokenizationOutput
-
 
 import torch
+
+from torch_frame.typing import TextTokenizationOutput
 
 
 class WhiteSpaceHashTokenizer:
