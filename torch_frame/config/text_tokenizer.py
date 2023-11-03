@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
-from torch import Tensor
+from torch_frame.typing import TextTokenizationOutput
 
 
 @dataclass
@@ -10,13 +10,15 @@ class TextTokenizerConfig:
     dictionary of :class:`MultiNestedTensor`.
 
     Args:
-        text_tokenizer (callable): A callable text tokenizer that takes a list
-            of strings as input and output the dictionary of
-            :class:`MultiNestedTensor`.
-        batch_size (int, optional): Batch size to use when encoding the
+        text_tokenizer (callable): A callable text tokenizer that takes a
+            list of strings as input and outputs a list of dictionaries.
+            Each dictionary contains keys that are arguments to the text
+            encoder model and values are corresponding tensors such as
+            tokens and attention masks.
+        batch_size (int, optional): Batch size to use when tokenizing the
             sentences. If set to :obj:`None`, the text embeddings will
             be obtained in a full-batch manner. (default: :obj:`None`)
 
     """
-    text_tokenizer: Callable[[List[str]], List[Dict[str, Tensor]]]
+    text_tokenizer: Callable[[List[str]], TextTokenizationOutput]
     batch_size: Optional[int] = None

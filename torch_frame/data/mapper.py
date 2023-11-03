@@ -7,7 +7,7 @@ from torch import Tensor
 from tqdm import tqdm
 
 from torch_frame.data import MultiNestedTensor
-from torch_frame.typing import Series, TensorData
+from torch_frame.typing import Series, TensorData, TextTokenizationOutput
 
 
 class TensorMapper(ABC):
@@ -270,7 +270,7 @@ class TextTokenizationTensorMapper(TensorMapper):
     """
     def __init__(
         self,
-        text_tokenizer: Callable[[List[str]], List[Dict[str, Tensor]]],
+        text_tokenizer: Callable[[List[str]], TextTokenizationOutput],
         batch_size: Optional[int],
     ):
         super().__init__()
@@ -286,32 +286,29 @@ class TextTokenizationTensorMapper(TensorMapper):
         ser = ser.astype(str)
         ser_list = ser.tolist()
 
-        seq_dict = {}
+        feat_dict = {}
         if self.batch_size is None:
-            list_dict: List[Dict[str, Tensor]] = self.text_tokenizer(ser_list)
-            for key in list_dict[0]:
-                xs = [[item[key]] for item in list_dict]
-                seq_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
-            for key, value in seq_dict.items():
-                seq_dict[key] = value.to(device)
-            return seq_dict
+            sentences_dict: TextTokenizationOutput = self.text_tokenizer(
+                ser_list)
+            for key in sentences_dict[0]:
+                xs = [[item[key]] for item in sentences_dict]
+                feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(
+                    device)
+            return feat_dict
 
+        sentences_dict: TextTokenizationOutput = []
         for i in tqdm(range(0, len(ser_list), self.batch_size),
                       desc="Tokenizing texts in mini-batch"):
-            list_batch_dict: List[Dict[str, Tensor]] = self.text_tokenizer(
+            batch_sentences_dict: TextTokenizationOutput = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
-            batch_tokens_dict: Dict[str, MultiNestedTensor] = {}
-            for key in list_batch_dict[0]:
-                xs = [[item[key]] for item in list_batch_dict]
-                batch_tokens_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
-            for key, value in batch_tokens_dict.items():
-                if key not in seq_dict:
-                    seq_dict[key] = [value]
-                else:
-                    seq_dict[key].append(value)
-        for key, values in seq_dict.items():
-            seq_dict[key] = MultiNestedTensor.cat(values, dim=0).to(device)
-        return seq_dict
+            if len(sentences_dict) == 0:
+                sentences_dict = batch_sentences_dict
+            else:
+                sentences_dict.extend(batch_sentences_dict)
+        for key in sentences_dict[0]:
+            xs = [[item[key]] for item in sentences_dict]
+            feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(device)
+        return feat_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
