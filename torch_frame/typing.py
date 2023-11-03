@@ -63,5 +63,5 @@ DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
-TextTokenizationOutput = List[Dict[str, Tensor]]
+TextTokenizationOutputs = List[Dict[str, Tensor]]
 TensorData = Union[Tensor, MultiNestedTensor, Dict[str, MultiNestedTensor]]

@@ -1,8 +1,8 @@
 from typing import List, Optional
-from torch_frame.typing import TextTokenizationOutput
-
 
 import torch
+
+from torch_frame.typing import TextTokenizationOutputs
 
 
 class WhiteSpaceHashTokenizer:
@@ -21,7 +21,7 @@ class WhiteSpaceHashTokenizer:
         self.device = device
         self.num_hash_bins = num_hash_bins
 
-    def __call__(self, sentences: List[str]) -> TextTokenizationOutput:
+    def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
         res = []
         for s in sentences:
             tokens = s.split(' ')

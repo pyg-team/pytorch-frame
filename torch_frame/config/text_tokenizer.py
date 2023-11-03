@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from torch_frame.typing import TextTokenizationOutput
+from torch_frame.typing import TextTokenizationOutputs
 
 
 @dataclass
@@ -20,5 +20,5 @@ class TextTokenizerConfig:
             be obtained in a full-batch manner. (default: :obj:`None`)
 
     """
-    text_tokenizer: Callable[[List[str]], TextTokenizationOutput]
+    text_tokenizer: Callable[[List[str]], TextTokenizationOutputs]
     batch_size: Optional[int] = None
