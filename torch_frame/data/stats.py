@@ -82,11 +82,9 @@ def compute_col_stats(
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
 
-    stats = {
+    return {
         stat_type: (
             np.nan if ser.isnull().all() else stat_type.compute(ser.dropna(), sep)
         )
         for stat_type in StatType.stats_for_stype(stype)
     }
-
-    return stats
