@@ -4,8 +4,6 @@ from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
-# Please run `pip install -U sentence-transformers` to install the package
-from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
@@ -26,18 +24,22 @@ from torch_frame.nn import (
 )
 from torch_frame.typing import TensorData
 
+
 # Text Embedded (all-distilroberta-v1):
 # ============== wine_reviews ===============
-# Best Val Acc: 0.7946, Best Test Acc: 0.7878
+# Best Val Acc: 0.7968, Best Test Acc: 0.7926
 # ===== product_sentiment_machine_hack ======
-# Best Val Acc: 0.9334, Best Test Acc: 0.8814
+# Best Val Acc: 0.9155, Best Test Acc: 0.8885
 # ======== jigsaw_unintended_bias100K =======
-# Best Val Acc: 0.9543, Best Test Acc: 0.9511
-
+# Best Val Acc: 0.9470, Best Test Acc: 0.9488
 
 # Text Tokenized (distilbert-base-uncased):
 # ============== wine_reviews ===============
 # Best Val Acc: 0.8314, Best Test Acc: 0.8230
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9096, Best Test Acc: 0.8908
+# ======== jigsaw_unintended_bias100K =======
+# Best Val Acc: 0.9672, Best Test Acc: 0.9644
 
 
 parser = argparse.ArgumentParser()
@@ -50,7 +52,7 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--finetune', action='store_true')
 parser.add_argument('--model', type=str,
-                    default='sentence-transformers/all-distilroberta-v1',
+                    default='distilbert-base-uncased',
                     choices=['distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'])
 parser.add_argument('--pooling', type=str, default='mean',
                     choices=['mean', 'cls'])
@@ -58,33 +60,51 @@ args = parser.parse_args()
 
 
 class PretrainedTextEncoder:
-    def __init__(self, device: torch.device):
-        self.model = SentenceTransformer('all-distilroberta-v1', device=device)
+    def __init__(self, model: str, pooling: str, device: torch.device):
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
+        self.model = AutoModel.from_pretrained(model).to(device)
+        self.device = device
+        self.pooling = pooling
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        # Inference on GPU (if available)
-        embeddings = self.model.encode(sentences, convert_to_numpy=False,
-                                       convert_to_tensor=True)
-        # Map back to CPU
-        return embeddings.cpu()
+        inputs = self.tokenizer(sentences, truncation=True, padding='max_length', return_tensors='pt')
+        for key in inputs:
+            if isinstance(inputs[key], Tensor):
+                inputs[key] = inputs[key].to(self.device)
+        out = self.model(**inputs)
+        mask = inputs['attention_mask']
+        if self.pooling == 'mean':
+            return mean_pooling(out.last_hidden_state.detach(), mask).squeeze(1).cpu()
+        elif self.pooling == 'cls':
+            return out.last_hidden_state[:, 0, :].detach().cpu()
+        else:
+            raise ValueError(f'{self.pooling} is not supported.')
 
 
 class TextTokenizer:
-    def __init__(self, model_name: str):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+    def __init__(self, model: str):
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
 
     def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
         res = []
         for s in sentences:
-            inputs = self.tokenizer(s, return_tensors='pt')
+            inputs = self.tokenizer(s, truncation=True, padding=False, return_tensors='pt')
             res.append(inputs)
         return res
 
 
 class TextEncoder(torch.nn.Module):
-    def __init__(self, model_name: str, pooling: str = 'mean'):
+    def __init__(self, model: str, pooling: str = 'mean'):
         super().__init__()
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model)
+
+        if model == 'distilbert-base-uncased':
+            target_modules = ['ffn.lin1']
+        elif model == 'sentence-transformers/all-distilroberta-v1':
+            target_modules = ['intermediate.dense']
+        else:
+            raise ValueError(f'Model {model} is not specified.')
+
         peft_config = LoraConfig(
             task_type=TaskType.FEATURE_EXTRACTION,
             r=32,
@@ -92,7 +112,7 @@ class TextEncoder(torch.nn.Module):
             inference_mode=False,
             lora_dropout=0.1,
             bias='none',
-            target_modules=['ffn.lin1'],
+            target_modules=target_modules,
         )
         self.model = get_peft_model(self.model, peft_config)
         self.pooling = pooling
@@ -135,7 +155,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 
 # Prepare text columns
 if not args.finetune:
-    text_encoder = PretrainedTextEncoder(device=device)
+    text_encoder = PretrainedTextEncoder(model=args.model, pooling=args.pooling, device=device)
     text_stype = torch_frame.text_embedded
     text_stype_encoder = LinearEmbeddingEncoder(in_channels=768)
     kwargs = {
@@ -145,8 +165,8 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
 else:
-    text_tokenizer = TextTokenizer(model_name=args.model)
-    text_encoder = TextEncoder(model_name=args.model,
+    text_tokenizer = TextTokenizer(model=args.model)
+    text_encoder = TextEncoder(model=args.model,
                                pooling=args.pooling)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearEmbeddingModelEncoder(in_channels=768,
