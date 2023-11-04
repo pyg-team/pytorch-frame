@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 from torch import Tensor
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
+from peft import LoraConfig, get_peft_model, TaskType
 
 import torch_frame
 from torch_frame import stype
@@ -25,15 +26,35 @@ from torch_frame.nn import (
 )
 from torch_frame.typing import TensorData
 
-# Text embedded:
+# Text Embedded (all-distilroberta-v1):
 # ============== wine_reviews ===============
 # Best Val Acc: 0.7946, Best Test Acc: 0.7878
 # ===== product_sentiment_machine_hack ======
 # Best Val Acc: 0.9334, Best Test Acc: 0.8814
-# ========== data_scientist_salary ==========
-# Best Val Acc: 0.5355, Best Test Acc: 0.4582
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9543, Best Test Acc: 0.9511
+
+
+# Text Tokenized (distilbert-base-uncased):
+# ============== wine_reviews ===============
+# Best Val Acc: 0.8314, Best Test Acc: 0.8230
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, default='wine_reviews')
+parser.add_argument('--channels', type=int, default=256)
+parser.add_argument('--num_layers', type=int, default=4)
+parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--finetune', action='store_true')
+parser.add_argument('--model', type=str,
+                    default='sentence-transformers/all-distilroberta-v1',
+                    choices=['distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'])
+parser.add_argument('--pooling', type=str, default='mean',
+                    choices=['mean', 'cls'])
+args = parser.parse_args()
 
 
 class PretrainedTextEncoder:
@@ -64,53 +85,46 @@ class TextEncoder(torch.nn.Module):
     def __init__(self, model_name: str, pooling: str = 'mean'):
         super().__init__()
         self.model = AutoModel.from_pretrained(model_name)
+        peft_config = LoraConfig(
+            task_type=TaskType.FEATURE_EXTRACTION,
+            r=32,
+            lora_alpha=32,
+            inference_mode=False,
+            lora_dropout=0.1,
+            bias='none',
+            target_modules=['ffn.lin1'],
+        )
+        self.model = get_peft_model(self.model, peft_config)
         self.pooling = pooling
 
     def forward(self, feat: TensorData) -> Tensor:
         input_ids = feat['input_ids'].to_dense(fill_value=0)
-        attention_mask = feat['attention_mask'].to_dense(fill_value=0)
+        mask = feat['attention_mask'].to_dense(fill_value=0)
         outs = []
         for i in range(input_ids.shape[1]):
             out = self.model(input_ids=input_ids[:, i, :],
-                             attention_mask=attention_mask[:, i, :])
+                             attention_mask=mask[:, i, :])
             if self.pooling == 'mean':
                 outs.append(
-                    self.mean_pooling(out.last_hidden_state,
-                                      attention_mask[:, i, :]))
+                    mean_pooling(out.last_hidden_state,
+                                      mask[:, i, :]))
             elif self.pooling == 'cls':
                 outs.append(out.last_hidden_state[:, 0, :])
             else:
                 raise ValueError(f'{self.pooling} is not supported.')
+        # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
-
-    def mean_pooling(self, last_hidden_state: Tensor,
-                     attention_mask) -> Tensor:
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(
-            last_hidden_state.size()).float()
-        embedding = torch.sum(
-            last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
-                input_mask_expanded.sum(1), min=1e-9)
-        return embedding.unsqueeze(1)
 
     def reset_parameters(self):
         pass
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='wine_reviews')
-parser.add_argument('--channels', type=int, default=256)
-parser.add_argument('--num_layers', type=int, default=4)
-parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--finetune', action='store_true')
-parser.add_argument('--text_model', type=str,
-                    default='distilbert-base-uncased',
-                    choices=['distilbert-base-uncased'])
-parser.add_argument('--pooling', type=str, default='mean',
-                    choices=['mean', 'cls'])
-args = parser.parse_args()
+def mean_pooling(last_hidden_state: Tensor,
+                 attention_mask) -> Tensor:
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
+    embedding = torch.sum(last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
+        input_mask_expanded.sum(1), min=1e-9)
+    return embedding.unsqueeze(1)
 
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -131,8 +145,8 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
 else:
-    text_tokenizer = TextTokenizer(model_name=args.text_model)
-    text_encoder = TextEncoder(model_name=args.text_model,
+    text_tokenizer = TextTokenizer(model_name=args.model)
+    text_encoder = TextEncoder(model_name=args.model,
                                pooling=args.pooling)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearEmbeddingModelEncoder(in_channels=768,
@@ -147,8 +161,6 @@ else:
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
-
-print(dataset._tensor_frame.feat_dict[torch_frame.text_tokenized])
 
 is_classification = dataset.task_type.is_classification
 
