@@ -174,7 +174,8 @@ if not args.finetune:
     }
 else:
     text_tokenizer = TextTokenizer(model=args.model)
-    text_encoder = TextEncoder(model=args.model, pooling=args.pooling, lora=args.lora)
+    text_encoder = TextEncoder(model=args.model, pooling=args.pooling,
+                               lora=args.lora)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearEmbeddingModelEncoder(in_channels=768,
                                                      model=text_encoder)
