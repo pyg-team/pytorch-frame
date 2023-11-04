@@ -171,10 +171,24 @@ class TensorFrame:
         for stype_name in self.feat_dict.keys():
             self_feat = self.feat_dict[stype_name]
             other_feat = other.feat_dict[stype_name]
-            if self_feat.shape != other_feat.shape:
+            if type(self_feat) != type(other_feat):
                 return False
-            if not torch.allclose(self_feat, other_feat):
-                return False
+            if not isinstance(self_feat, dict):
+                if self_feat.shape != other_feat.shape:
+                    return False
+                if not torch.allclose(self_feat, other_feat):
+                    return False
+            else:
+                for key in self_feat:
+                    self_feat_value = self_feat[key]
+                    other_feat_value = other_feat[key]
+                    if self_feat_value.shape != other_feat_value.shape:
+                        return False
+                    # TODO: Support allclose for MultiNestedTensor
+                    if isinstance(self_feat_value,
+                                  Tensor) and not torch.allclose(
+                                      self_feat_value, other_feat_value):
+                        return False
         return True
 
     def __neq__(self, other: Any) -> bool:

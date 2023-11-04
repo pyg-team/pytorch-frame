@@ -27,5 +27,6 @@ class WhiteSpaceHashTokenizer:
             tokens = s.split(' ')
             idx = torch.LongTensor(
                 [hash(t) % self.num_hash_bins for t in tokens])
-            res.append({'input_ids': idx})
+            mask = torch.LongTensor([1] * len(tokens))
+            res.append({'input_ids': idx, 'attention_mask': mask})
         return res

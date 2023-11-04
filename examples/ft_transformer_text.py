@@ -24,7 +24,8 @@ from torch_frame.nn import (
 )
 from torch_frame.typing import TensorData
 
-# Text Embedded (all-distilroberta-v1):
+# Text Embedded
+# all-distilroberta-v1
 # ============== wine_reviews ===============
 # Best Val Acc: 0.7968, Best Test Acc: 0.7926
 # ===== product_sentiment_machine_hack ======
@@ -32,7 +33,8 @@ from torch_frame.typing import TensorData
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9470, Best Test Acc: 0.9488
 
-# Text Tokenized (distilbert-base-uncased):
+# Text Tokenized
+# distilbert-base-uncased + LoRA
 # ============== wine_reviews ===============
 # Best Val Acc: 0.8314, Best Test Acc: 0.8230
 # ===== product_sentiment_machine_hack ======
@@ -49,6 +51,7 @@ parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--finetune', action='store_true')
+parser.add_argument('--lora', action='store_true')
 parser.add_argument(
     '--model', type=str, default='distilbert-base-uncased', choices=[
         'distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'
@@ -96,28 +99,29 @@ class TextTokenizer:
 
 
 class TextEncoder(torch.nn.Module):
-    def __init__(self, model: str, pooling: str = 'mean'):
+    def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
         super().__init__()
         self.model = AutoModel.from_pretrained(model)
 
-        if model == 'distilbert-base-uncased':
-            target_modules = ['ffn.lin1']
-        elif model == 'sentence-transformers/all-distilroberta-v1':
-            target_modules = ['intermediate.dense']
-        else:
-            raise ValueError(f'Model {model} is not specified for '
-                             f'LoRA finetuning.')
+        if lora:
+            if model == 'distilbert-base-uncased':
+                target_modules = ['ffn.lin1']
+            elif model == 'sentence-transformers/all-distilroberta-v1':
+                target_modules = ['intermediate.dense']
+            else:
+                raise ValueError(f'Model {model} is not specified for '
+                                 f'LoRA finetuning.')
 
-        peft_config = LoraConfig(
-            task_type=TaskType.FEATURE_EXTRACTION,
-            r=32,
-            lora_alpha=32,
-            inference_mode=False,
-            lora_dropout=0.1,
-            bias='none',
-            target_modules=target_modules,
-        )
-        self.model = get_peft_model(self.model, peft_config)
+            peft_config = LoraConfig(
+                task_type=TaskType.FEATURE_EXTRACTION,
+                r=32,
+                lora_alpha=32,
+                inference_mode=False,
+                lora_dropout=0.1,
+                bias='none',
+                target_modules=target_modules,
+            )
+            self.model = get_peft_model(self.model, peft_config)
         self.pooling = pooling
 
     def forward(self, feat: TensorData) -> Tensor:
