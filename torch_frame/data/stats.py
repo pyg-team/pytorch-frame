@@ -18,18 +18,18 @@ class StatType(Enum):
         COUNT: The count of each category in a categorical column.
     """
     # Numerical:
-    MEAN = 'MEAN'
-    STD = 'STD'
-    QUANTILES = 'QUANTILES'
+    MEAN = "MEAN"
+    STD = "STD"
+    QUANTILES = "QUANTILES"
 
     # Categorical:
-    COUNT = 'COUNT'
+    COUNT = "COUNT"
 
     # Multicategorical:
-    MULTI_COUNT = 'MULTI_COUNT'
+    MULTI_COUNT = "MULTI_COUNT"
 
     @staticmethod
-    def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
+    def stats_for_stype(stype: torch_frame.stype) -> List["StatType"]:
         stats_type = {
             torch_frame.numerical: [
                 StatType.MEAN,
@@ -42,7 +42,7 @@ class StatType(Enum):
                 StatType.MEAN,
                 StatType.STD,
                 StatType.QUANTILES,
-            ]
+            ],
         }
         return stats_type.get(stype, [])
 
@@ -67,7 +67,9 @@ class StatType(Enum):
             assert sep is not None
             ser = ser.apply(
                 lambda x: set([cat.strip() for cat in x.split(sep)])
-                if (x is not None and x != '') else set())
+                if (x is not None and x != "")
+                else set()
+            )
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
