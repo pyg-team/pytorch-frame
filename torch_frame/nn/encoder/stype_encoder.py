@@ -653,7 +653,7 @@ class LinearEmbeddingModelEncoder(StypeEncoder):
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', feat, self.weight)
+        x_lin = torch.einsum('ijk,jkl->ijl', x, self.weight)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
