@@ -105,7 +105,8 @@ class TextEncoder(torch.nn.Module):
         elif model == 'sentence-transformers/all-distilroberta-v1':
             target_modules = ['intermediate.dense']
         else:
-            raise ValueError(f'Model {model} is not specified.')
+            raise ValueError(f'Model {model} is not specified for '
+                             f'LoRA finetuning.')
 
         peft_config = LoraConfig(
             task_type=TaskType.FEATURE_EXTRACTION,
