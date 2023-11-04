@@ -4,10 +4,10 @@ from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
+from peft import LoraConfig, TaskType, get_peft_model
 from torch import Tensor
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
-from peft import LoraConfig, get_peft_model, TaskType
 
 import torch_frame
 from torch_frame import stype
@@ -23,7 +23,6 @@ from torch_frame.nn import (
     LinearEncoder,
 )
 from torch_frame.typing import TensorData
-
 
 # Text Embedded (all-distilroberta-v1):
 # ============== wine_reviews ===============
@@ -41,7 +40,6 @@ from torch_frame.typing import TensorData
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9672, Best Test Acc: 0.9644
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--channels', type=int, default=256)
@@ -51,9 +49,10 @@ parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--finetune', action='store_true')
-parser.add_argument('--model', type=str,
-                    default='distilbert-base-uncased',
-                    choices=['distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'])
+parser.add_argument(
+    '--model', type=str, default='distilbert-base-uncased', choices=[
+        'distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'
+    ])
 parser.add_argument('--pooling', type=str, default='mean',
                     choices=['mean', 'cls'])
 args = parser.parse_args()
@@ -67,14 +66,16 @@ class PretrainedTextEncoder:
         self.pooling = pooling
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        inputs = self.tokenizer(sentences, truncation=True, padding='max_length', return_tensors='pt')
+        inputs = self.tokenizer(sentences, truncation=True,
+                                padding='max_length', return_tensors='pt')
         for key in inputs:
             if isinstance(inputs[key], Tensor):
                 inputs[key] = inputs[key].to(self.device)
         out = self.model(**inputs)
         mask = inputs['attention_mask']
         if self.pooling == 'mean':
-            return mean_pooling(out.last_hidden_state.detach(), mask).squeeze(1).cpu()
+            return mean_pooling(out.last_hidden_state.detach(),
+                                mask).squeeze(1).cpu()
         elif self.pooling == 'cls':
             return out.last_hidden_state[:, 0, :].detach().cpu()
         else:
@@ -88,7 +89,8 @@ class TextTokenizer:
     def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
         res = []
         for s in sentences:
-            inputs = self.tokenizer(s, truncation=True, padding=False, return_tensors='pt')
+            inputs = self.tokenizer(s, truncation=True, padding=False,
+                                    return_tensors='pt')
             res.append(inputs)
         return res
 
@@ -125,9 +127,7 @@ class TextEncoder(torch.nn.Module):
             out = self.model(input_ids=input_ids[:, i, :],
                              attention_mask=mask[:, i, :])
             if self.pooling == 'mean':
-                outs.append(
-                    mean_pooling(out.last_hidden_state,
-                                      mask[:, i, :]))
+                outs.append(mean_pooling(out.last_hidden_state, mask[:, i, :]))
             elif self.pooling == 'cls':
                 outs.append(out.last_hidden_state[:, 0, :])
             else:
@@ -139,12 +139,14 @@ class TextEncoder(torch.nn.Module):
         pass
 
 
-def mean_pooling(last_hidden_state: Tensor,
-                 attention_mask) -> Tensor:
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
-    embedding = torch.sum(last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
-        input_mask_expanded.sum(1), min=1e-9)
+def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(
+        last_hidden_state.size()).float()
+    embedding = torch.sum(
+        last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
+            input_mask_expanded.sum(1), min=1e-9)
     return embedding.unsqueeze(1)
+
 
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -155,7 +157,8 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 
 # Prepare text columns
 if not args.finetune:
-    text_encoder = PretrainedTextEncoder(model=args.model, pooling=args.pooling, device=device)
+    text_encoder = PretrainedTextEncoder(model=args.model,
+                                         pooling=args.pooling, device=device)
     text_stype = torch_frame.text_embedded
     text_stype_encoder = LinearEmbeddingEncoder(in_channels=768)
     kwargs = {
@@ -166,8 +169,7 @@ if not args.finetune:
     }
 else:
     text_tokenizer = TextTokenizer(model=args.model)
-    text_encoder = TextEncoder(model=args.model,
-                               pooling=args.pooling)
+    text_encoder = TextEncoder(model=args.model, pooling=args.pooling)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearEmbeddingModelEncoder(in_channels=768,
                                                      model=text_encoder)

@@ -346,6 +346,7 @@ class MultiNestedTensor:
 
     def to_dense(self, fill_value: Union[int, float]) -> Tensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.
+
         Args:
             fill_value (Union[int, float]): Fill values.
 

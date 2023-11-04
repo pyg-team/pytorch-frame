@@ -198,7 +198,7 @@ class TensorFrame:
         if isinstance(index, int):
             index = [index]
 
-        def f(x):
+        def fn(x):
             if isinstance(x, dict):
                 y = {}
                 for key in x:
@@ -207,7 +207,7 @@ class TensorFrame:
                 return x[index]
             return y
 
-        return self._apply(f)
+        return self._apply(fn)
 
     def __copy__(self) -> 'TensorFrame':
         out = self.__class__.__new__(self.__class__)
@@ -222,7 +222,7 @@ class TensorFrame:
     # Device Transfer #########################################################
 
     def to(self, *args, **kwargs):
-        def f(x):
+        def fn(x):
             if isinstance(x, dict):
                 for key in x:
                     x[key] = x[key].to(*args, **kwargs)
@@ -230,10 +230,10 @@ class TensorFrame:
                 x = x.to(*args, **kwargs)
             return x
 
-        return self._apply(f)
+        return self._apply(fn)
 
     def cpu(self, *args, **kwargs):
-        def f(x):
+        def fn(x):
             if isinstance(x, dict):
                 for key in x:
                     x[key] = x[key].cpu(*args, **kwargs)
@@ -241,10 +241,10 @@ class TensorFrame:
                 x = x.cpu(*args, **kwargs)
             return x
 
-        return self._apply(f)
+        return self._apply(fn)
 
     def cuda(self, *args, **kwargs):
-        def f(x):
+        def fn(x):
             if isinstance(x, dict):
                 for key in x:
                     x[key] = x[key].cuda(*args, **kwargs)
@@ -252,7 +252,7 @@ class TensorFrame:
                 x = x.cuda(*args, **kwargs)
             return x
 
-        return self._apply(f)
+        return self._apply(fn)
 
     # Helper Functions ########################################################
 
