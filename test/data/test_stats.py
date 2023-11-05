@@ -1,8 +1,14 @@
 import numpy as np
 import pandas as pd
 
-from torch_frame.data.stats import compute_col_stats, StatType
-from torch_frame.stype import numerical, categorical, multicategorical, sequence_numerical
+from torch_frame.data.stats import StatType, compute_col_stats
+from torch_frame.stype import (
+    categorical,
+    multicategorical,
+    numerical,
+    sequence_numerical,
+)
+
 
 def test_compute_col_stats_all_numerical():
     ser = pd.Series([1, 2, 3])
@@ -13,6 +19,7 @@ def test_compute_col_stats_all_numerical():
         StatType.QUANTILES: [1.0, 1.5, 2.0, 2.5, 3.0],
     }
 
+
 def test_compute_col_stats_all_categorical():
     ser = pd.Series(['a', 'a', 'a', 'b', 'c'])
     stype = categorical
@@ -20,13 +27,15 @@ def test_compute_col_stats_all_categorical():
         StatType.COUNT: (['a', 'b', 'c'], [3, 1, 1]),
     }
 
+
 def test_compute_col_stats_all_multi_categorical():
     ser = pd.Series(['a|b', 'a|c', 'c|a', 'a|b|c', np.nan])
     stype = multicategorical
     assert compute_col_stats(ser, stype, sep='|') == {
         StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
     }
-    
+
+
 def test_compute_col_stats_all_sequence_numerical():
     ser = pd.Series([[1, 2, 3], [4, 5, 6]])
     stype = sequence_numerical
@@ -35,6 +44,7 @@ def test_compute_col_stats_all_sequence_numerical():
         StatType.STD: 1.707825127659933,
         StatType.QUANTILES: [1.0, 2.25, 3.5, 4.75, 6.0],
     }
+
 
 def test_compute_col_stats_numerical_with_inf():
     ser = pd.Series([1, 2, 3, np.inf, -np.inf])
@@ -45,6 +55,7 @@ def test_compute_col_stats_numerical_with_inf():
         StatType.QUANTILES: [1.0, 1.5, 2.0, 2.5, 3.0],
     }
 
+
 def test_compute_col_stats_numerical_with_nan():
     ser = pd.Series([1, 2, 3, np.nan])
     stype = numerical
@@ -53,6 +64,7 @@ def test_compute_col_stats_numerical_with_nan():
         StatType.STD: 0.816496580927726,
         StatType.QUANTILES: [1.0, 1.5, 2.0, 2.5, 3.0],
     }
+
 
 def test_compute_col_stats_numerical_all_nan():
     ser = pd.Series([np.nan, np.nan, np.nan, np.nan])

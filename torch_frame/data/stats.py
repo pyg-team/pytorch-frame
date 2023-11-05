@@ -72,13 +72,15 @@ class StatType(Enum):
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
 
+
 _default_values = {
-        StatType.MEAN: np.nan,
-        StatType.STD: np.nan,
-        StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
-        StatType.COUNT: ([], []),
-        StatType.MULTI_COUNT: ([], [])
-    }
+    StatType.MEAN: np.nan,
+    StatType.STD: np.nan,
+    StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
+    StatType.COUNT: ([], []),
+    StatType.MULTI_COUNT: ([], [])
+}
+
 
 def compute_col_stats(
     ser: Series,
@@ -94,10 +96,9 @@ def compute_col_stats(
             stat_type: _default_values[stat_type]
             for stat_type in StatType.stats_for_stype(stype)
         }
-    else: 
+    else:
         stats = {
-            stat_type: stat_type.compute(
-                ser.dropna(), sep)
+            stat_type: stat_type.compute(ser.dropna(), sep)
             for stat_type in StatType.stats_for_stype(stype)
         }
 
