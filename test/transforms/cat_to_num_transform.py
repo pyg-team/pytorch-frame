@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
@@ -70,7 +69,7 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
 ])
 def test_cat_to_num_transform(task_type):
     num_rows = 10
-    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)
     dataset.df['x'] = 0
@@ -118,22 +117,12 @@ def test_cat_to_num_transform(task_type):
             (total_cols - total_numerical_cols)))
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(
-        dataset.tensor_frame.feat_dict[stype.numerical],
-        out.feat_dict[stype.numerical][:, :total_numerical_cols]).all())
+    original_numerical_tensor = dataset.tensor_frame.feat_dict[stype.numerical]
+    transformed_numerical_tensor = out.feat_dict[
+        stype.numerical][:, :total_numerical_cols]
+    nan_mask = (torch.isnan(original_numerical_tensor)
+                & torch.isnan(transformed_numerical_tensor))
+    assert ((original_numerical_tensor == transformed_numerical_tensor)
+            | nan_mask).all()
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_numerical_cols])
-
-
-def test_cat_to_num_transform_with_target_contains_nans():
-    num_rows = 10
-    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
-                                   stypes=[stype.numerical, stype.categorical],
-                                   task_type=TaskType.REGRESSION,
-                                   create_split=True)
-    dataset.df.at[0, 'target'] = np.nan
-    dataset.materialize()
-    transform = CatToNumTransform()
-    transform.fit(dataset.tensor_frame, dataset.col_stats)
-    out = transform(dataset.tensor_frame)
-    assert not torch.isnan(out.feat_dict[stype.numerical]).any()

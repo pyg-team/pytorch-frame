@@ -60,7 +60,7 @@ class CatToNumTransform(FittableBaseTransform):
             num_classes = 2
             target = tf_train.y.unsqueeze(1)
             mask = ~torch.isnan(target)
-            if torch.isnan(target).any():
+            if (~mask).any():
                 target = target[mask]
                 if target.numel() == 0:
                     raise ValueError("Target value contains only nans.")

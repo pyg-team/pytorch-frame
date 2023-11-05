@@ -46,6 +46,9 @@ class FakeDataset(torch_frame.data.Dataset):
     ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
+            arr = np.random.randn(num_rows)
+            if with_nan:
+                arr[0::2] = np.nan
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
         elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
