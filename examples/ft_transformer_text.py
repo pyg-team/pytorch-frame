@@ -54,7 +54,8 @@ parser.add_argument('--finetune', action='store_true')
 parser.add_argument('--lora', action='store_true')
 parser.add_argument(
     '--model', type=str, default='distilbert-base-uncased', choices=[
-        'distilbert-base-uncased', 'sentence-transformers/all-distilroberta-v1'
+        'distilbert-base-uncased',
+        'sentence-transformers/all-distilroberta-v1',
     ])
 parser.add_argument('--pooling', type=str, default='mean',
                     choices=['mean', 'cls'])
@@ -125,9 +126,11 @@ class TextEncoder(torch.nn.Module):
         self.pooling = pooling
 
     def forward(self, feat: TensorData) -> Tensor:
+        # [batch_size, num_cols, out_channels]
         input_ids = feat['input_ids'].to_dense(fill_value=0)
         mask = feat['attention_mask'].to_dense(fill_value=0)
         outs = []
+        # Get text embeddings over each column
         for i in range(input_ids.shape[1]):
             out = self.model(input_ids=input_ids[:, i, :],
                              attention_mask=mask[:, i, :])
