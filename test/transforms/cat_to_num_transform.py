@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
@@ -10,8 +11,7 @@ from torch_frame.transforms import CatToNumTransform
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
-        with_nan):
+def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     num_rows = 10
     dataset: Dataset = FakeDataset(
         num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
@@ -68,7 +68,7 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
     TaskType.BINARY_CLASSIFICATION
 ])
-def test_ordered_target_statistics_encoder(task_type):
+def test_cat_to_num_transform(task_type):
     num_rows = 10
     dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
                                    stypes=[stype.numerical, stype.categorical],
@@ -123,3 +123,17 @@ def test_ordered_target_statistics_encoder(task_type):
         out.feat_dict[stype.numerical][:, :total_numerical_cols]).all())
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_numerical_cols])
+
+
+def test_cat_to_num_transform_with_target_contains_nans():
+    num_rows = 10
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
+                                   stypes=[stype.numerical, stype.categorical],
+                                   task_type=TaskType.REGRESSION,
+                                   create_split=True)
+    dataset.df['target'].iloc[0] = np.nan
+    dataset.materialize()
+    transform = CatToNumTransform()
+    transform.fit(dataset.tensor_frame, dataset.col_stats)
+    out = transform(dataset.tensor_frame)
+    assert not torch.isnan(out).any()
