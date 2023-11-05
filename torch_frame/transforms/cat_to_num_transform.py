@@ -59,6 +59,11 @@ class CatToNumTransform(FittableBaseTransform):
         else:
             num_classes = 2
             target = tf_train.y.unsqueeze(1)
+            mask = ~torch.isnan(target)
+            if (~mask).any():
+                target = target[mask]
+                if target.numel() == 0:
+                    raise ValueError("Target value contains only nans.")
             self.target_mean = torch.mean(target.float())
             transformed_tensor = torch.zeros_like(
                 tf_train.feat_dict[stype.categorical], dtype=torch.float32)

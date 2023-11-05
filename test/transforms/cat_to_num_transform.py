@@ -10,8 +10,7 @@ from torch_frame.transforms import CatToNumTransform
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
-        with_nan):
+def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     num_rows = 10
     dataset: Dataset = FakeDataset(
         num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
@@ -68,9 +67,9 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
     TaskType.BINARY_CLASSIFICATION
 ])
-def test_ordered_target_statistics_encoder(task_type):
+def test_cat_to_num_transform(task_type):
     num_rows = 10
-    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)
     dataset.df['x'] = 0
@@ -118,8 +117,12 @@ def test_ordered_target_statistics_encoder(task_type):
             (total_cols - total_numerical_cols)))
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(
-        dataset.tensor_frame.feat_dict[stype.numerical],
-        out.feat_dict[stype.numerical][:, :total_numerical_cols]).all())
+    original_numerical_tensor = dataset.tensor_frame.feat_dict[stype.numerical]
+    transformed_numerical_tensor = out.feat_dict[
+        stype.numerical][:, :total_numerical_cols]
+    nan_mask = (torch.isnan(original_numerical_tensor)
+                & torch.isnan(transformed_numerical_tensor))
+    assert ((original_numerical_tensor == transformed_numerical_tensor)
+            | nan_mask).all()
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_numerical_cols])
