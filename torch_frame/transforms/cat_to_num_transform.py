@@ -83,7 +83,6 @@ class CatToNumTransform(FittableBaseTransform):
         self.new_columns = columns
         transformed_df = pd.DataFrame(transformed_tensor.cpu().numpy(),
                                       columns=columns)
-
         transformed_col_stats = dict()
         if stype.numerical in tf_train.col_names_dict:
             for col in tf_train.col_names_dict[stype.numerical]:

@@ -47,6 +47,8 @@ class StatType(Enum):
         return stats_type.get(stype, [])
 
     def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
+        if len(ser) == 0:
+            return np.nan
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
             return np.mean(flattened).item()

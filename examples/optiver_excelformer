@@ -1,0 +1,213 @@
+import random
+import pandas as pd
+import os.path as osp
+
+import torch
+import torch.nn.functional as F
+from torch.optim.lr_scheduler import ExponentialLR
+from torch_frame import stype
+from torch_frame.data.dataset import Dataset
+from torch_frame.nn.models import FTTransformerLSTM
+from torch_frame.data import DataLoader
+import argparse
+import numpy as np
+from tqdm import tqdm
+from torch_frame.nn.models.excelformer import ExcelFormer
+from torch_frame.transforms.cat_to_num_transform import CatToNumTransform
+
+from torch_frame.transforms.mutual_information_sort import MutualInformationSort
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--channels', type=int, default=256)
+parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--num_heads', type=int, default=4)
+parser.add_argument('--num_layers', type=int, default=5)
+parser.add_argument('--lr', type=float, default=0.00001)
+parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--seed', type=int, default=0)
+args = parser.parse_args()
+torch.manual_seed(args.seed)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+data = pd.read_csv("data/optiver/train.csv")
+date_tf = dict()
+num_stocks = 200
+date_to_tf = {}
+stock_target = {}
+path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
+                'optiver')
+for i in range(num_stocks):
+    stock_target[f'stock_{i}'] = []
+for date in data['date_id'].unique():
+    df = data[data['date_id'] == date]
+    #price = df[["stock_id", "target", "seconds_in_bucket"]]
+    #price["seconds_in_bucket"] = price["seconds_in_bucket"]//10
+    #new_index = range(0, 55)
+    #for i in range(num_stocks):
+    #    full_time_range_price = price[price["stock_id"] == i].set_index("seconds_in_bucket")
+    #    stock_target[f"stock_{i}"].append(full_time_range_price.reindex(new_index)['target'].values)
+    columns = [
+        "date_id", "imbalance_buy_sell_flag",
+        "seconds_in_bucket", "imbalance_size", "reference_price",
+        "matched_size", "far_price", "near_price", "bid_price", "bid_size",
+        "ask_price", "ask_size", "wap", "target"]
+    covariates = pd.DataFrame(columns=columns) #df[columns]
+    col_to_stype = {"imbalance_buy_sell_flag": stype.categorical, "seconds_in_bucket": stype.numerical,
+                    "imbalance_size": stype.numerical, "reference_price": stype.numerical,
+                    "matched_size": stype.numerical, "far_price": stype.numerical,
+                    "near_price": stype.numerical, "bid_price": stype.numerical,
+                    "bid_size": stype.numerical, "ask_price": stype.numerical,
+                    "ask_size": stype.numerical, "wap": stype.numerical,
+                    "target": stype.numerical}
+
+    covariates_dataset = Dataset(covariates, col_to_stype, target_col="target")
+    covariates_dataset.materialize(device=device, path=osp.join(path, f'day_{date}.pt'))
+    date_to_tf[date] = covariates_dataset
+
+#for i in range(num_stocks):
+#    stock_target[f'stock_{i}'] = np.hstack(stock_target[f'stock_{i}'])
+#price = pd.DataFrame(stock_target)
+
+#price.to_csv(osp.join(path, "price.csv"))
+price = pd.read_csv(osp.join(path, "price.csv"))
+col_to_stype = {f"stock_{i}": stype.numerical for i in range(200)}
+price_dataset = Dataset(price, col_to_stype)
+price_dataset.materialize(device=device, path=osp.join(path, 'price.pt'))
+print(price_dataset.df)
+col_to_stype = {"imbalance_buy_sell_flag": stype.categorical, "seconds_in_bucket": stype.numerical,
+                    "imbalance_size": stype.numerical, "reference_price": stype.numerical,
+                    "matched_size": stype.numerical, "far_price": stype.numerical,
+                    "near_price": stype.numerical, "bid_price": stype.numerical,
+                    "bid_size": stype.numerical, "ask_price": stype.numerical,
+                    "ask_size": stype.numerical, "wap": stype.numerical,
+                    "target": stype.numerical}
+entire_data = Dataset(data, col_to_stype, target_col="target")
+entire_data.materialize(device=device, path=osp.join(path, 'data.pt'))
+col_stats = torch.load(osp.join(path, 'col_stats.pt'))
+print(col_stats)
+
+dates = list(date_to_tf.keys())
+random.shuffle(dates)
+cutoff1 = int(0.8 * len(dates))
+cutoff2 = int(0.9 * len(dates))
+train_dates, val_dates, test_dates = dates[:cutoff1], dates[cutoff1:cutoff2], dates[cutoff2:] 
+price = price_dataset.tensor_frame.to(device)
+
+train_dataset, val_dataset, test_dataset = entire_data[:0.8], entire_data[0.8:0.9], entire_data[0.9:]
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
+
+categorical_transform = CatToNumTransform()
+categorical_transform.fit(entire_data.tensor_frame, entire_data.col_stats)
+train_tensor_frame = categorical_transform(train_tensor_frame)
+val_tensor_frame = categorical_transform(val_tensor_frame)
+test_tensor_frame = categorical_transform(test_tensor_frame)
+entire_tensor_frame = categorical_transform(entire_data.tensor_frame)
+print(entire_tensor_frame.feat_dict[stype.numerical])
+mutual_info_sort = MutualInformationSort(task_type=entire_data.task_type)
+mutual_info_sort.fit(entire_tensor_frame, col_stats)
+train_tensor_frame = mutual_info_sort(train_tensor_frame)
+val_tensor_frame = mutual_info_sort(val_tensor_frame)
+test_tensor_frame = mutual_info_sort(test_tensor_frame)
+
+train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
+                          shuffle=True)
+val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
+test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
+
+
+is_classification = entire_data.task_type.is_classification
+if is_classification:
+    out_channels = entire_data.num_classes
+else:
+    out_channels = 1
+
+model = ExcelFormer(
+    in_channels=args.channels,
+    out_channels=out_channels,
+    num_layers=args.num_layers,
+    num_cols=train_tensor_frame.num_cols,
+    num_heads=args.num_heads,
+    residual_dropout=0.,
+    diam_dropout=0.3,
+    aium_dropout=0.,
+    col_stats=mutual_info_sort.transformed_stats,
+    col_names_dict=train_tensor_frame.col_names_dict,
+).to(device)
+
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
+
+
+def train(epoch: int) -> float:
+    model.train()
+    loss_accum = total_count = 0
+
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+        tf = tf.to(device)
+        pred_mixedup, y_mixedup = model.forward_mixup(tf)
+        if is_classification:
+            loss = F.cross_entropy(pred_mixedup, y_mixedup)
+        else:
+            loss = F.mse_loss(pred_mixedup.view(-1), y_mixedup.view(-1))
+        optimizer.zero_grad()
+        loss.backward()
+        loss_accum += float(loss) * len(y_mixedup)
+        total_count += len(y_mixedup)
+        optimizer.step()
+    return loss_accum / total_count
+
+
+@torch.no_grad()
+def test(loader: DataLoader) -> float:
+    model.eval()
+    accum = total_count = 0
+
+    for tf in loader:
+        tf = tf.to(device)
+        pred = model(tf)
+        if is_classification:
+            pred_class = pred.argmax(dim=-1)
+            accum += float((tf.y == pred_class).sum())
+        else:
+            accum += float(
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
+        total_count += len(tf.y)
+
+    if is_classification:
+        accuracy = accum / total_count
+        return accuracy
+    else:
+        rmse = (accum / total_count)**0.5
+        return rmse
+
+
+if is_classification:
+    metric = 'Acc'
+    best_val_metric = 0
+    best_test_metric = 0
+else:
+    metric = 'RMSE'
+    best_val_metric = float('inf')
+    best_test_metric = float('inf')
+
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_metric = test(train_loader)
+    val_metric = test(val_loader)
+    test_metric = test(test_loader)
+
+    if is_classification and val_metric > best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+    elif not is_classification and val_metric < best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+
+    print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
+          f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+    lr_scheduler.step()
+
+print(f'Best Val {metric}: {best_val_metric:.4f}, '
+      f'Best Test {metric}: {best_test_metric:.4f}')
