@@ -14,6 +14,7 @@ from torch_frame.nn.conv import ExcelFormerConv
 from torch_frame.nn.decoder import ExcelFormerDecoder
 from torch_frame.nn.encoder.stype_encoder import ExcelFormerEncoder
 from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
+from torch_frame.typing import NAStrategy
 
 
 def feature_mixup(
@@ -125,7 +126,8 @@ class ExcelFormer(Module):
             col_stats=col_stats,
             col_names_dict=col_names_dict,
             stype_encoder_dict={
-                stype.numerical: ExcelFormerEncoder(out_channels)
+                stype.numerical:
+                ExcelFormerEncoder(out_channels, na_strategy=NAStrategy.MEAN)
             },
         )
         self.excelformer_convs = ModuleList([
