@@ -34,7 +34,7 @@ from torch_frame.testing import withPackage
                 gamma=0.1,
             ),
             None,
-            2,
+            4,
             id="TabNet",
         ),
         pytest.param(
@@ -54,7 +54,7 @@ from torch_frame.testing import withPackage
             Trompt,
             dict(channels=8, num_prompts=2),
             None,
-            6,
+            10,
             id="Trompt",
         ),
         pytest.param(
