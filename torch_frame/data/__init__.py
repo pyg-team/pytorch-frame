@@ -2,6 +2,7 @@
 
 from .tensor_frame import TensorFrame
 from .multi_nested_tensor import MultiNestedTensor
+from .multi_embedding_tensor import MultiEmbeddingTensor
 from .stats import StatType
 from .dataset import Dataset, DataFrameToTensorFrameConverter
 from .loader import DataLoader
@@ -9,6 +10,7 @@ from .download import download_url
 
 data_classes = [
     'TensorFrame',
+    "MultiEmbeddingTensor",
     'MultiNestedTensor',
     'Dataset',
 ]

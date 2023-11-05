@@ -16,8 +16,8 @@ class MultiNestedTensor:
     Args:
         num_rows (int): Number of rows.
         num_cols (int): Number of columns.
-        values (torch.Tensor): The values Tensor that has
-        offset (torch.Tensor): The offset Tensor.
+        values (torch.Tensor): The values Tensor of size :obj:`[numel,]`.
+        offset (torch.Tensor): The offset Tensor of size :obj:`[num_rows*num_cols+1,]`.
 
     Example:
         >>> import torch

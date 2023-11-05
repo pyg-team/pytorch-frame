@@ -6,7 +6,7 @@ import torch
 from torch import Tensor
 from tqdm import tqdm
 
-from torch_frame.data import MultiNestedTensor
+from torch_frame.data import MultiNestedTensor, MultiEmbeddingTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
 
@@ -308,4 +308,29 @@ class TextTokenizationTensorMapper(TensorMapper):
         return feat_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:
+        raise NotImplementedError
+
+
+class EmbeddingTensorMapper(TensorMapper):
+    r"""Embed any embedding series into tensor."""
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> MultiEmbeddingTensor:
+        ser = ser.astype(str)
+        ser_list = ser.tolist()
+        return MultiEmbeddingTensor(
+            num_rows=len(ser_list),
+            num_cols=1,
+            values=torch.tensor(ser_list),
+            offset=torch.tensor([0, len(ser_list)]),
+        )
+
+    def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
+        # TODO(akihironitta): Implement this
         raise NotImplementedError
