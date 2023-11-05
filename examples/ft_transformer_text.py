@@ -139,7 +139,7 @@ class TextEncoder(torch.nn.Module):
             if self.pooling == 'mean':
                 outs.append(mean_pooling(out.last_hidden_state, mask[:, i, :]))
             elif self.pooling == 'cls':
-                outs.append(out.last_hidden_state[:, 0, :])
+                outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
             else:
                 raise ValueError(f'{self.pooling} is not supported.')
         # Concatenate output embeddings for different columns
