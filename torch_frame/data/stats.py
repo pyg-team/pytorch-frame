@@ -73,6 +73,15 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
 
+_default_values = {
+    StatType.MEAN: np.nan,
+    StatType.STD: np.nan,
+    StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
+    StatType.COUNT: ([], []),
+    StatType.MULTI_COUNT: ([], [])
+}
+
+
 def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
@@ -81,9 +90,16 @@ def compute_col_stats(
 
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
-    ser = ser.dropna()
 
-    return {
-        stat_type: stat_type.compute(ser, sep)
-        for stat_type in StatType.stats_for_stype(stype)
-    }
+    if ser.isnull().all():
+        stats = {
+            stat_type: _default_values[stat_type]
+            for stat_type in StatType.stats_for_stype(stype)
+        }
+    else:
+        stats = {
+            stat_type: stat_type.compute(ser.dropna(), sep)
+            for stat_type in StatType.stats_for_stype(stype)
+        }
+
+    return stats
