@@ -4,9 +4,11 @@ from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
+# Please run `pip install peft` to install the package
 from peft import LoraConfig, TaskType, get_peft_model
 from torch import Tensor
 from tqdm import tqdm
+# Please run `pip install transformers` to install the package
 from transformers import AutoModel, AutoTokenizer
 
 import torch_frame
