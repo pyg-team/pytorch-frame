@@ -74,6 +74,7 @@ class FittableBaseTransform(BaseTransform):
         """
         if path is not None and osp.isfile(path):
             self._load(path)
+            self._is_fitted = True
         else:
             self._fit(tf, col_stats)
             self._is_fitted = True

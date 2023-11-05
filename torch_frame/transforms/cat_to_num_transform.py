@@ -144,9 +144,9 @@ class CatToNumTransform(FittableBaseTransform):
         return tf
 
     def _save(self, path: str):
-        torch.save((self.target_mean, self._transformed_stats,
+        torch.save((self.target_mean, self.col_stats, self._transformed_stats,
                     self.new_columns, self.data_size), path)
 
     def _load(self, path: str):
-        (self.target_mean, self._transformed_stats, self.new_columns,
-         self.data_size) = torch.load(path)
+        (self.target_mean, self.col_stats, self._transformed_stats,
+         self.new_columns, self.data_size) = torch.load(path)
