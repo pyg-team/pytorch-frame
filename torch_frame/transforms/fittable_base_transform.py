@@ -1,6 +1,7 @@
 import copy
+import os.path as osp
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import torch
 from torch import Tensor
@@ -63,6 +64,7 @@ class FittableBaseTransform(BaseTransform):
         self,
         tf: TensorFrame,
         col_stats: Dict[str, Dict[StatType, Any]],
+        path: Optional[str] = None,
     ):
         r"""Fit the transform with train data.
 
@@ -72,8 +74,13 @@ class FittableBaseTransform(BaseTransform):
             col_stats (Dict[str, Dict[StatType, Any]], optional): The column
                 stats of the input :class:`TensorFrame`.
         """
-        self._fit(tf, col_stats)
-        self._is_fitted = True
+        if path is not None and osp.isfile(path):
+            self._load(path)
+        else:
+            self._fit(tf, col_stats)
+            self._is_fitted = True
+            if path is not None:
+                self._save(path)
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         if not self.is_fitted:
@@ -91,4 +98,12 @@ class FittableBaseTransform(BaseTransform):
 
     @abstractmethod
     def _forward(self, tf: TensorFrame) -> TensorFrame:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _save(self, path: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _load(self) -> None:
         raise NotImplementedError
