@@ -131,9 +131,9 @@ def test_cat_to_num_transform_with_target_contains_nans():
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=TaskType.REGRESSION,
                                    create_split=True)
-    dataset.df['target'].iloc[0] = np.nan
+    dataset.df.at[0, 'target'] = np.nan
     dataset.materialize()
     transform = CatToNumTransform()
     transform.fit(dataset.tensor_frame, dataset.col_stats)
     out = transform(dataset.tensor_frame)
-    assert not torch.isnan(out).any()
+    assert not torch.isnan(out.feat_dict[stype.numerical]).any()
