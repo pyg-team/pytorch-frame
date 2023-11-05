@@ -96,6 +96,8 @@ class CatToNumTransform(FittableBaseTransform):
         self._transformed_stats = transformed_col_stats
 
     def _forward(self, tf: TensorFrame) -> TensorFrame:
+        print("new columns ", self.new_columns)
+        print("transformed ", self.transformed_stats.keys())
         if stype.categorical not in tf.col_names_dict:
             logging.info(
                 "The input TensorFrame does not contain any categorical "
@@ -143,9 +145,9 @@ class CatToNumTransform(FittableBaseTransform):
         return tf
 
     def _save(self, path: str):
-        torch.save((self.target_mean, self._transformed_stats,
+        torch.save((self.target_mean, self.col_stats, self._transformed_stats,
                     self.new_columns, self.data_size), path)
 
     def _load(self, path: str):
-        (self.target_mean, self._transformed_stats, self.new_columns,
+        (self.target_mean, self.col_stats, self._transformed_stats, self.new_columns,
          self.data_size) = torch.load(path)

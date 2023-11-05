@@ -18,12 +18,12 @@ from torch_frame.transforms.cat_to_num_transform import CatToNumTransform
 from torch_frame.transforms.mutual_information_sort import MutualInformationSort
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--channels', type=int, default=256)
+parser.add_argument('--channels', type=int, default=32)
 parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--num_heads', type=int, default=4)
-parser.add_argument('--num_layers', type=int, default=5)
-parser.add_argument('--lr', type=float, default=0.00001)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--num_heads', type=int, default=8)
+parser.add_argument('--num_layers', type=int, default=2)
+parser.add_argument('--lr', type=float, default=0.001)
+parser.add_argument('--epochs', type=int, default=30)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 torch.manual_seed(args.seed)
@@ -73,7 +73,6 @@ price = pd.read_csv(osp.join(path, "price.csv"))
 col_to_stype = {f"stock_{i}": stype.numerical for i in range(200)}
 price_dataset = Dataset(price, col_to_stype)
 price_dataset.materialize(device=device, path=osp.join(path, 'price.pt'))
-print(price_dataset.df)
 col_to_stype = {"imbalance_buy_sell_flag": stype.categorical, "seconds_in_bucket": stype.numerical,
                     "imbalance_size": stype.numerical, "reference_price": stype.numerical,
                     "matched_size": stype.numerical, "far_price": stype.numerical,
@@ -81,9 +80,11 @@ col_to_stype = {"imbalance_buy_sell_flag": stype.categorical, "seconds_in_bucket
                     "bid_size": stype.numerical, "ask_price": stype.numerical,
                     "ask_size": stype.numerical, "wap": stype.numerical,
                     "target": stype.numerical}
+data = data.dropna(subset=['target'])
 entire_data = Dataset(data, col_to_stype, target_col="target")
 entire_data.materialize(device=device, path=osp.join(path, 'data.pt'))
-col_stats = torch.load(osp.join(path, 'col_stats.pt'))
+col_stats = entire_data.col_stats
+print(entire_data.df)
 print(col_stats)
 
 dates = list(date_to_tf.keys())
@@ -99,14 +100,15 @@ val_tensor_frame = val_dataset.tensor_frame
 test_tensor_frame = test_dataset.tensor_frame
 
 categorical_transform = CatToNumTransform()
-categorical_transform.fit(entire_data.tensor_frame, entire_data.col_stats)
+categorical_transform.fit(entire_data.tensor_frame, entire_data.col_stats, path=osp.join(path, 'cat_to_num_transform.pt'))
 train_tensor_frame = categorical_transform(train_tensor_frame)
 val_tensor_frame = categorical_transform(val_tensor_frame)
 test_tensor_frame = categorical_transform(test_tensor_frame)
 entire_tensor_frame = categorical_transform(entire_data.tensor_frame)
-print(entire_tensor_frame.feat_dict[stype.numerical])
+col_stats = categorical_transform.transformed_stats
+
 mutual_info_sort = MutualInformationSort(task_type=entire_data.task_type)
-mutual_info_sort.fit(entire_tensor_frame, col_stats)
+mutual_info_sort.fit(entire_tensor_frame, col_stats, path=osp.join(path, 'mutual_information_sort.pt'))
 train_tensor_frame = mutual_info_sort(train_tensor_frame)
 val_tensor_frame = mutual_info_sort(val_tensor_frame)
 test_tensor_frame = mutual_info_sort(test_tensor_frame)
@@ -151,10 +153,13 @@ def train(epoch: int) -> float:
             loss = F.cross_entropy(pred_mixedup, y_mixedup)
         else:
             loss = F.mse_loss(pred_mixedup.view(-1), y_mixedup.view(-1))
+        import pdb
+        #pdb.set_trace()
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss) * len(y_mixedup)
         total_count += len(y_mixedup)
+        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
     return loss_accum / total_count
 
@@ -201,9 +206,13 @@ for epoch in range(1, args.epochs + 1):
     if is_classification and val_metric > best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
+        best_model_state = model.state_dict()
+        torch.save(best_model_state, osp.join(path, 'best_model.pth'))
     elif not is_classification and val_metric < best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
+        best_model_state = model.state_dict()
+        torch.save(best_model_state, osp.join(path, 'best_model.pth'))
 
     print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
           f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')

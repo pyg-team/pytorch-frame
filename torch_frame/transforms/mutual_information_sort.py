@@ -58,7 +58,7 @@ class MutualInformationSort(FittableBaseTransform):
         if torch.isnan(feat_train).any():
             feat_train = self._replace_nans(feat_train, self.na_strategy)
         if torch.isnan(tf_train.y).any():
-            y_train = self._replace_nans(y_train, self.na_strategy)
+            y_train = self._replace_nans(y_train.view(-1, 1), self.na_strategy).squeeze(1)
         mi_scores = self.mi_func(feat_train.cpu(), y_train.cpu())
         self.mi_ranks = np.argsort(-mi_scores)
         col_names = tf_train.col_names_dict[stype.numerical]
