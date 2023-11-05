@@ -142,3 +142,11 @@ class CatToNumTransform(FittableBaseTransform):
         tf.feat_dict.pop(stype.categorical)
 
         return tf
+
+    def _save(self, path: str):
+        torch.save((self.target_mean, self._transformed_stats,
+                    self.new_columns, self.data_size), path)
+
+    def _load(self, path: str):
+        (self.target_mean, self._transformed_stats, self.new_columns,
+         self.data_size) = torch.load(path)
