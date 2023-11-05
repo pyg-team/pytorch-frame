@@ -294,9 +294,9 @@ class TextTokenizationTensorMapper(TensorMapper):
                 xs = []
                 for item in tokenized_list:
                     if item[key].ndim == 1:
-                        xs.append(item[key])
+                        xs.append([item[key]])
                     elif item[key].ndim == 2:
-                        xs.append(item[key].squeeze(0))
+                        xs.append([row for row in item[key]])
                     else:
                         raise ValueError(f'{key} has `ndim` not '
                                          f'equal to 1 or 2.')

@@ -566,7 +566,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
         in_channels: Optional[int] = None,
     ):
         if in_channels is None:
-            raise ValueError("Please manuallly specify the `in_channels`, "
+            raise ValueError("Please manually specify the `in_channels`, "
                              "which is the text embedding dimensionality.")
         self.in_channels = in_channels
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -626,8 +626,13 @@ class LinearEmbeddingModelEncoder(StypeEncoder):
         model: Optional[torch.nn.Module] = None,
     ):
         if in_channels is None:
-            raise ValueError("Please manuallly specify the `in_channels`, "
+            raise ValueError("Please manually specify the `in_channels`, "
                              "which is the text embedding dimensionality.")
+        if model is None:
+            raise ValueError("Please manually specify the `model`, "
+                             "which outputs embeddings that will be feed "
+                             "to the linear layer.")
+
         self.in_channels = in_channels
 
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -646,7 +651,6 @@ class LinearEmbeddingModelEncoder(StypeEncoder):
         super().reset_parameters()
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
-        self.model.reset_parameters()
 
     def encode_forward(self, feat: TensorData) -> Tensor:
         x = self.model(feat)

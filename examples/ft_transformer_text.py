@@ -143,9 +143,6 @@ class TextEncoder(torch.nn.Module):
         # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
 
-    def reset_parameters(self):
-        pass
-
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(
