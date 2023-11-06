@@ -81,7 +81,7 @@ class Trompt(Module):
                         stype.numerical:
                         LinearEncoder(
                             post_module=Sequential(ReLU(),
-                                                   LayerNorm(channels)),
+                                                   LayerNorm(channels), ),
                             na_strategy=NAStrategy.MEAN),
                     },
                 ))
