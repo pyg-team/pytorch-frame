@@ -59,6 +59,9 @@ class MutualInformationSort(FittableBaseTransform):
             feat_train = self._replace_nans(feat_train, self.na_strategy)
         if torch.isnan(tf_train.y).any():
             not_nan_indices = ~torch.isnan(y_train)
+            if not not_nan_indices.any():
+                raise ValueError("The transform cannot be performed when"
+                                 " all target values are nan.")
             y_train = y_train[not_nan_indices]
             feat_train = feat_train[not_nan_indices]
         mi_scores = self.mi_func(feat_train.cpu(), y_train.cpu())
