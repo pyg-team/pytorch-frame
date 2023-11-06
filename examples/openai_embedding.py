@@ -2,6 +2,7 @@ import argparse
 import os.path as osp
 from typing import List
 
+# Please run `pip install openai` to install the package
 import openai
 import torch
 import torch.nn.functional as F
@@ -19,7 +20,7 @@ from torch_frame.nn import (
     LinearEncoder,
 )
 
-# Run `export OPENAI_API_KEY=...` before running the code
+# Please run `export OPENAI_API_KEY=...` before running the code
 # Notice that there are 568,454 rows and 2 text columns, it will
 # cost some money to get the text embeddings by using OpenAI API
 
