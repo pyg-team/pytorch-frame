@@ -87,11 +87,9 @@ stype_encoder_dict = {
     stype.text_embedded: LinearEmbeddingEncoder(in_channels=args.emb_size)
 }
 
-output_channels = dataset.num_classes
-
 model = FTTransformer(
     channels=args.channels,
-    out_channels=output_channels,
+    out_channels=dataset.num_classes,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
