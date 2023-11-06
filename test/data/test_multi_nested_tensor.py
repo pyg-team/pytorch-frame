@@ -52,7 +52,7 @@ def test_multi_nested_tensor_basic():
     assert multi_nested_tensor.size(0) == num_rows
     assert multi_nested_tensor.shape[1] == num_cols
     assert multi_nested_tensor.size(1) == num_cols
-    with pytest.raises(ValueError, match="not have a fixed length"):
+    with pytest.raises(IndexError, match="not have a fixed length"):
         multi_nested_tensor.size(2)
     with pytest.raises(IndexError, match="Dimension out of range"):
         multi_nested_tensor.size(3)
