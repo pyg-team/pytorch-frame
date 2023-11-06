@@ -80,9 +80,10 @@ class Trompt(Module):
                                          na_strategy=NAStrategy.MOST_FREQUENT),
                         stype.numerical:
                         LinearEncoder(
-                            post_module=Sequential(ReLU(),
-                                                   LayerNorm(channels), ),
-                            na_strategy=NAStrategy.MEAN),
+                            post_module=Sequential(
+                                ReLU(),
+                                LayerNorm(channels),
+                            ), na_strategy=NAStrategy.MEAN),
                     },
                 ))
             self.trompt_convs.append(
