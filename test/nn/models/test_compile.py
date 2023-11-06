@@ -61,7 +61,7 @@ from torch_frame.testing import withPackage
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
             [stype.numerical],
-            3,
+            4,
             id="ExcelFormer",
         ),
     ],
