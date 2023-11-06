@@ -60,7 +60,7 @@ text_encoder = OpenAIEmbedding(model=args.model)
 dataset = AmazonFineFoodReviews(
     root=path,
     text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+                                         batch_size=5, ),
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
