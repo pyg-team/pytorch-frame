@@ -59,8 +59,10 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 text_encoder = OpenAIEmbedding(model=args.model)
 dataset = AmazonFineFoodReviews(
     root=path,
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5, ),
+    text_embedder_cfg=TextEmbedderConfig(
+        text_embedder=text_encoder,
+        batch_size=5,
+    ),
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
