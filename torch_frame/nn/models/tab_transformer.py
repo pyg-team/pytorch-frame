@@ -19,6 +19,7 @@ from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn import EmbeddingEncoder, StackEncoder
 from torch_frame.nn.conv import TabTransformerConv
+from torch_frame.typing import NAStrategy
 
 
 class TabTransformer(Module):
@@ -81,7 +82,8 @@ class TabTransformer(Module):
             categorical_col_len = len(self.col_names_dict[stype.categorical])
             self.cat_encoder = EmbeddingEncoder(
                 out_channels=channels - encoder_pad_size,
-                stats_list=categorical_stats_list, stype=stype.categorical)
+                stats_list=categorical_stats_list, stype=stype.categorical,
+                na_strategy=NAStrategy.MOST_FREQUENT)
             # Use the categorical embedding with EmbeddingEncoder and
             # added contextual padding to the end of each feature.
             self.pad_embedding = Embedding(categorical_col_len,
