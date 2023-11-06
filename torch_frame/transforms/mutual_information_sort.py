@@ -51,8 +51,8 @@ class MutualInformationSort(FittableBaseTransform):
                 " is None.")
         if (stype.categorical in tf_train.col_names_dict
                 and len(tf_train.col_names_dict[stype.categorical]) != 0):
-            raise ValueError("The transform can be only used on TensorFrame"
-                             " with numerical only features.")
+            raise ValueError(f"'{self.__class__.__name__}' can be only used"
+                             " on TensorFrame with numerical only features.")
         feat_train = tf_train.feat_dict[stype.numerical]
         y_train = tf_train.y
         if torch.isnan(feat_train).any():
@@ -60,8 +60,9 @@ class MutualInformationSort(FittableBaseTransform):
         if torch.isnan(tf_train.y).any():
             not_nan_indices = ~torch.isnan(y_train)
             if not not_nan_indices.any():
-                raise ValueError("The transform cannot be performed when"
-                                 " all target values are nan.")
+                raise ValueError(f"'{self.__class__.__name__}' cannot be"
+                                 "performed when all target values are"
+                                 " nan.")
             y_train = y_train[not_nan_indices]
             feat_train = feat_train[not_nan_indices]
         mi_scores = self.mi_func(feat_train.cpu(), y_train.cpu())
