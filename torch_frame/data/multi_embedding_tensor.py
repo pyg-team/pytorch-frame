@@ -1,4 +1,4 @@
-from typing import Sequence, List, Union, Any
+from typing import Any, List, Sequence, Union
 
 import torch
 from torch import Tensor
@@ -52,7 +52,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         index: Any,
     ) -> Union['MultiEmbeddingTensor', Tensor]:
         # TODO: normalize index
-        if isinstance(index, tuple) and len(index) == 2 and isinstance(index[0], int) and isinstance(index[1], int):
+        if isinstance(index, tuple) and len(index) == 2 and isinstance(
+                index[0], int) and isinstance(index[1], int):
             # return self.values[self.offset[index[1]]:self.offset[index[1] + 1]]
             # self.values: [num_rows, dim1+dim2+...+dimN]
             i = index[0]
@@ -94,9 +95,13 @@ class MultiEmbeddingTensor(_MultiTensor):
         num_rows = tensor_list[0].size(0)
         device = tensor_list[0].device
         for tensor in tensor_list:
-            assert isinstance(tensor, torch.Tensor), "tensor_list must be a list of tensors."
-            assert tensor.dim() == 2, "tensor_list must be a list of 2D tensors."
-            assert tensor.size(0) == num_rows, "num_rows must be the same across a list of input tensors."
+            assert isinstance(
+                tensor, torch.Tensor), "tensor_list must be a list of tensors."
+            assert tensor.dim(
+            ) == 2, "tensor_list must be a list of 2D tensors."
+            assert tensor.size(
+                0
+            ) == num_rows, "num_rows must be the same across a list of input tensors."
             assert tensor.device == device, "device must be the same across a list of input tensors."
 
         offset_list = []
