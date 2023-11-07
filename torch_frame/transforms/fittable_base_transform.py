@@ -98,13 +98,8 @@ class FittableBaseTransform(BaseTransform):
         raise NotImplementedError
 
     def state_dict(self) -> Dict[str, Any]:
-        fittable_transform_state_dict = dict()
-        for name, value in self.__dict__.items():
-            fittable_transform_state_dict[name] = copy.deepcopy(value)
-        return fittable_transform_state_dict
+        return self.__dict__
 
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any]) -> None:
-        obj = cls(**state_dict)
-        obj._is_fitted = True
-        return obj
+    def load_state_dict(self, state_dict: Dict[str, Any]):
+        self.__dict__.update(state_dict)
+        return self
