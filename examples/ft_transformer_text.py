@@ -63,6 +63,10 @@ parser.add_argument('--pooling', type=str, default='mean',
                     choices=['mean', 'cls'])
 args = parser.parse_args()
 
+if args.lora and not args.finetune:
+    raise ValueError('Please also specify finetune when '
+                     'choosing LoRA finetuning.')
+
 
 class PretrainedTextEncoder:
     def __init__(self, model: str, pooling: str, device: torch.device):
