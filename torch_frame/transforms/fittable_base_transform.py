@@ -59,7 +59,11 @@ class FittableBaseTransform(BaseTransform):
             column_data[nan_mask] = fill_value
         return x
 
-    def fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
+    def fit(
+        self,
+        tf: TensorFrame,
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         r"""Fit the transform with train data.
 
         Args:
