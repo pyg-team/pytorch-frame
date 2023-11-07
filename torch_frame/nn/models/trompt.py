@@ -15,6 +15,7 @@ from torch_frame.nn import (
 )
 from torch_frame.nn.conv import TromptConv
 from torch_frame.nn.decoder import TromptDecoder
+from torch_frame.typing import NAStrategy
 
 
 class Trompt(Module):
@@ -75,10 +76,14 @@ class Trompt(Module):
                     col_names_dict=col_names_dict,
                     stype_encoder_dict={
                         stype.categorical:
-                        EmbeddingEncoder(post_module=LayerNorm(channels)),
+                        EmbeddingEncoder(post_module=LayerNorm(channels),
+                                         na_strategy=NAStrategy.MOST_FREQUENT),
                         stype.numerical:
-                        LinearEncoder(post_module=Sequential(
-                            ReLU(), LayerNorm(channels))),
+                        LinearEncoder(
+                            post_module=Sequential(
+                                ReLU(),
+                                LayerNorm(channels),
+                            ), na_strategy=NAStrategy.MEAN),
                     },
                 ))
             self.trompt_convs.append(
