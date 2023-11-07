@@ -1,11 +1,12 @@
 import argparse
+import os
 import os.path as osp
 from typing import List
 
-# Please run `pip install openai` to install the package
-import openai
 import torch
 import torch.nn.functional as F
+# Please run `pip install openai` to install the package
+from openai import OpenAI
 from torch import Tensor
 from tqdm import tqdm
 
@@ -20,25 +21,6 @@ from torch_frame.nn import (
     LinearEncoder,
 )
 
-# Please run `export OPENAI_API_KEY=...` before running the code
-# Notice that there are 568,454 rows and 2 text columns, it will
-# cost some money to get the text embeddings by using OpenAI API
-
-
-class OpenAIEmbedding:
-    def __init__(self, model: str = 'text-embedding-ada-002'):
-        self.model = model
-
-    def __call__(self, sentences: List[str]) -> Tensor:
-        items = openai.Embedding.create(input=sentences,
-                                        model=self.model)['data']
-        assert len(items) == len(sentences)
-        embeddings = [
-            torch.FloatTensor(item['embedding']).view(1, -1) for item in items
-        ]
-        return torch.cat(embeddings, dim=0)
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
@@ -48,7 +30,30 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--model', type=str, default='text-embedding-ada-002')
 parser.add_argument('--emb_size', type=int, default=1536)
+parser.add_argument('--openai_api_key', type=str, default=None)
 args = parser.parse_args()
+
+# Notice that there are 568,454 rows and 2 text columns, it will
+# cost some money to get the text embeddings by using OpenAI API
+openai_api_key = args.openai_api_key or os.environ.get('OPENAI_API_KEY', None)
+if openai_api_key is None:
+    raise ValueError('OpenAI API key is not specified.')
+
+
+class OpenAIEmbedding:
+    def __init__(self, model: str = 'text-embedding-ada-002'):
+        self.client = OpenAI()
+        self.model = model
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        items = self.client.embeddings.create(input=sentences,
+                                              model=self.model).data
+        assert len(items) == len(sentences)
+        embeddings = [
+            torch.FloatTensor(item.embedding).view(1, -1) for item in items
+        ]
+        return torch.cat(embeddings, dim=0)
+
 
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -56,12 +61,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 'amazon_fine_food_reviews')
+os.makedirs(path, exist_ok=True)
 text_encoder = OpenAIEmbedding(model=args.model)
 dataset = AmazonFineFoodReviews(
     root=path,
     text_embedder_cfg=TextEmbedderConfig(
         text_embedder=text_encoder,
-        batch_size=5,
+        batch_size=20,
     ),
 )
 
@@ -73,13 +79,10 @@ train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
     0.8:0.9], dataset[0.9:]
 
 # Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame
-val_tensor_frame = val_dataset.tensor_frame
-test_tensor_frame = test_dataset.tensor_frame
-train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
-                          shuffle=True)
-val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
-test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
+train_loader = DataLoader(train_dataset.tensor_frame,
+                          batch_size=args.batch_size, shuffle=True)
+val_loader = DataLoader(val_dataset.tensor_frame, batch_size=args.batch_size)
+test_loader = DataLoader(test_dataset.tensor_frame, batch_size=args.batch_size)
 
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
@@ -92,7 +95,7 @@ model = FTTransformer(
     out_channels=dataset.num_classes,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
-    col_names_dict=train_tensor_frame.col_names_dict,
+    col_names_dict=train_dataset.tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
 
