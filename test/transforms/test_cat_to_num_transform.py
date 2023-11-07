@@ -105,8 +105,16 @@ def test_cat_to_num_transform_with_loading(task_type):
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict.keys())
     assert (stype.categorical not in out.feat_dict.keys())
-    assert (out.col_names_dict.keys() == loaded_out.col_names_dict.keys())
+    assert (out.col_names_dict == loaded_out.col_names_dict)
     assert (out.feat_dict.keys() == loaded_out.feat_dict.keys())
+
+    # assert that loaded_out and out are the same
+    assert torch.allclose(out.feat_dict[stype.numerical],
+                          loaded_out.feat_dict[stype.numerical],
+                          equal_nan=True)
+    assert out.col_names_dict[stype.numerical] == loaded_out.col_names_dict[
+        stype.numerical]
+    assert torch.allclose(out.y, loaded_out.y, equal_nan=True)
 
     if task_type != TaskType.MULTICLASS_CLASSIFICATION:
         # assert that all features are numerical
@@ -115,9 +123,6 @@ def test_cat_to_num_transform_with_loading(task_type):
             dataset.tensor_frame.col_names_dict[stype.categorical])
         assert (dataset_num_categorical_cols == len(
             out.col_names_dict[stype.numerical][total_numerical_cols:]))
-        assert (len(loaded_out.col_names_dict[stype.numerical]) == total_cols)
-        assert (dataset_num_categorical_cols == len(
-            loaded_out.col_names_dict[stype.numerical][total_numerical_cols:]))
 
         # The first categorical column, x, is changed to all 0's initially.
         # This assert statement makes sure that transform is correct.
@@ -128,11 +133,6 @@ def test_cat_to_num_transform_with_loading(task_type):
         # task.
         assert torch.allclose(
             out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
-            torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
-                         (num_rows + 1), device=out.device).repeat(num_rows))
-        assert torch.allclose(
-            loaded_out.feat_dict[stype.numerical]
-            [:, total_numerical_cols].float(),
             torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
                          (num_rows + 1), device=out.device).repeat(num_rows))
     else:
@@ -156,11 +156,3 @@ def test_cat_to_num_transform_with_loading(task_type):
             | nan_mask).all()
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_numerical_cols])
-
-    # assert that loaded_out and out are the same
-    assert torch.allclose(out.feat_dict[stype.numerical],
-                          loaded_out.feat_dict[stype.numerical],
-                          equal_nan=True)
-    assert out.col_names_dict[stype.numerical] == loaded_out.col_names_dict[
-        stype.numerical]
-    assert torch.allclose(out.y, loaded_out.y, equal_nan=True)
