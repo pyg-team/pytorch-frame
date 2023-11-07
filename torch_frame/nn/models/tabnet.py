@@ -15,6 +15,7 @@ from torch_frame.nn import (
     StackEncoder,
     StypeWiseFeatureEncoder,
 )
+from torch_frame.typing import NAStrategy
 
 
 class TabNet(Module):
@@ -86,8 +87,10 @@ class TabNet(Module):
             col_stats=col_stats,
             col_names_dict=col_names_dict,
             stype_encoder_dict={
-                stype.categorical: EmbeddingEncoder(),
-                stype.numerical: StackEncoder(),
+                stype.categorical:
+                EmbeddingEncoder(na_strategy=NAStrategy.MOST_FREQUENT),
+                stype.numerical:
+                StackEncoder(na_strategy=NAStrategy.MEAN),
             },
         )
 
