@@ -80,7 +80,11 @@ class FittableBaseTransform(BaseTransform):
         return transformed_tf
 
     @abstractmethod
-    def _fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
+    def _fit(
+        self,
+        tf: TensorFrame,
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         raise NotImplementedError
 
     @abstractmethod

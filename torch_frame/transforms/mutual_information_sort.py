@@ -78,12 +78,3 @@ class MutualInformationSort(FittableBaseTransform):
         tf.col_names_dict[stype.numerical] = self.reordered_col_names
 
         return tf
-
-    def _save(self, path: str):
-        torch.save(
-            (self.mi_ranks, self._transformed_stats, self.reordered_col_names),
-            path)
-
-    def _load(self, path: str):
-        (self.mi_ranks, self._transformed_stats,
-         self.reordered_col_names) = torch.load(path)
