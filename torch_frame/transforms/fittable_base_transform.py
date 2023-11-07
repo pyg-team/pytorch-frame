@@ -47,6 +47,8 @@ class FittableBaseTransform(BaseTransform):
                 nan_mask = torch.isnan(column_data)
             else:
                 nan_mask = column_data < 0
+            if nan_mask.all():
+                raise ValueError("Column contains only nan values.")
             if not nan_mask.any():
                 continue
             valid_data = column_data[~nan_mask]
@@ -84,9 +86,20 @@ class FittableBaseTransform(BaseTransform):
         return transformed_tf
 
     @abstractmethod
-    def _fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
+    def _fit(
+        self,
+        tf: TensorFrame,
+        col_stats: Dict[str, Dict[StatType, Any]],
+    ):
         raise NotImplementedError
 
     @abstractmethod
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         raise NotImplementedError
+
+    def state_dict(self) -> Dict[str, Any]:
+        return self.__dict__
+
+    def load_state_dict(self, state_dict: Dict[str, Any]):
+        self.__dict__.update(state_dict)
+        return self

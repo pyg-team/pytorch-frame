@@ -14,6 +14,7 @@ from .kdd_census_income import KDDCensusIncome
 from .multimodal_text_benchmark import MultimodalTextBenchmark
 from .data_frame_benchmark import DataFrameBenchmark
 from .mercari import Mercari
+from .amazon_fine_food_reviews import AmazonFineFoodReviews
 
 real_world_datasets = [
     'Titanic',
@@ -29,6 +30,7 @@ real_world_datasets = [
     'MultimodalTextBenchmark',
     'DataFrameBenchmark',
     'Mercari',
+    'AmazonFineFoodReviews',
 ]
 
 synthetic_datasets = [

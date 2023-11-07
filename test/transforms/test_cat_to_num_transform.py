@@ -1,3 +1,6 @@
+import os.path as osp
+import tempfile
+
 import pytest
 import torch
 import torch.nn.functional as F
@@ -10,8 +13,7 @@ from torch_frame.transforms import CatToNumTransform
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
-        with_nan):
+def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     num_rows = 10
     dataset: Dataset = FakeDataset(
         num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
@@ -68,9 +70,9 @@ def test_ordered_target_statistics_encoder_on_categorical_only_dataset(
     TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
     TaskType.BINARY_CLASSIFICATION
 ])
-def test_ordered_target_statistics_encoder(task_type):
+def test_cat_to_num_transform_with_loading(task_type):
     num_rows = 10
-    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=False,
+    dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)
     dataset.df['x'] = 0
@@ -89,23 +91,45 @@ def test_ordered_target_statistics_encoder(task_type):
             assert (stat in transformed_col_stats[col])
         for stat in StatType.stats_for_stype(stype.categorical):
             assert (stat not in transformed_col_stats[col])
+
     out = transform(tensor_frame)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        torch.save(transform.state_dict(), osp.join(temp_dir, 'transform.pt'))
+        loaded_transform = CatToNumTransform()
+        loaded_transform.load_state_dict(
+            torch.load(osp.join(temp_dir, 'transform.pt')))
+
+    loaded_out = loaded_transform(tensor_frame)
+
     # assert that there are no categorical features
-    assert (stype.categorical not in out.col_names_dict)
-    assert (stype.categorical not in out.feat_dict)
+    assert (stype.categorical not in out.col_names_dict.keys())
+    assert (stype.categorical not in out.feat_dict.keys())
+    assert (out.col_names_dict == loaded_out.col_names_dict)
+    assert (out.feat_dict.keys() == loaded_out.feat_dict.keys())
+
+    # assert that loaded_out and out are the same
+    assert torch.allclose(out.feat_dict[stype.numerical],
+                          loaded_out.feat_dict[stype.numerical],
+                          equal_nan=True)
+    assert out.col_names_dict[stype.numerical] == loaded_out.col_names_dict[
+        stype.numerical]
+    assert torch.allclose(out.y, loaded_out.y, equal_nan=True)
 
     if task_type != TaskType.MULTICLASS_CLASSIFICATION:
         # assert that all features are numerical
         assert (len(out.col_names_dict[stype.numerical]) == total_cols)
-        assert (len(
+        assert len(
             dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
-                out.col_names_dict[stype.numerical][total_numerical_cols:]))
+                out.col_names_dict[stype.numerical][total_numerical_cols:])
 
         # The first categorical column, x, is changed to all 0's initially.
         # This assert statement makes sure that transform is correct.
         # The transform uses m-target estimation, where each categorical
-        # feature is transformed to (num_count + target_mean)/(num_rows + 1).
-        # This test tests the correctness in multiclass classification task.
+        # feature is transformed to
+        # (num_count + target_mean)/(num_rows + 1).
+        # This test tests the correctness in multiclass classification
+        # task.
         assert torch.allclose(
             out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
             torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
@@ -118,8 +142,12 @@ def test_ordered_target_statistics_encoder(task_type):
             (total_cols - total_numerical_cols)))
 
     # assert that the numerical features are unchanged
-    assert (torch.eq(
-        dataset.tensor_frame.feat_dict[stype.numerical],
-        out.feat_dict[stype.numerical][:, :total_numerical_cols]).all())
+    original_numerical_tensor = dataset.tensor_frame.feat_dict[stype.numerical]
+    transformed_numerical_tensor = out.feat_dict[
+        stype.numerical][:, :total_numerical_cols]
+    nan_mask = (torch.isnan(original_numerical_tensor)
+                & torch.isnan(transformed_numerical_tensor))
+    assert ((original_numerical_tensor == transformed_numerical_tensor)
+            | nan_mask).all()
     assert (dataset.tensor_frame.col_names_dict[stype.numerical] ==
             out.col_names_dict[stype.numerical][:total_numerical_cols])
