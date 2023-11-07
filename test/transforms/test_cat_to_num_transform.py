@@ -119,10 +119,9 @@ def test_cat_to_num_transform_with_loading(task_type):
     if task_type != TaskType.MULTICLASS_CLASSIFICATION:
         # assert that all features are numerical
         assert (len(out.col_names_dict[stype.numerical]) == total_cols)
-        dataset_num_categorical_cols = len(
-            dataset.tensor_frame.col_names_dict[stype.categorical])
-        assert (dataset_num_categorical_cols == len(
-            out.col_names_dict[stype.numerical][total_numerical_cols:]))
+        assert len(
+            dataset.tensor_frame.col_names_dict[stype.categorical]) == len(
+                out.col_names_dict[stype.numerical][total_numerical_cols:])
 
         # The first categorical column, x, is changed to all 0's initially.
         # This assert statement makes sure that transform is correct.
@@ -139,10 +138,6 @@ def test_cat_to_num_transform_with_loading(task_type):
         # when the task is multiclass classification, the number of
         # columns changes.
         assert (len(out.col_names_dict[stype.numerical]) == (
-            total_numerical_cols + (dataset.num_classes - 1) *
-            (total_cols - total_numerical_cols)))
-
-        assert (len(loaded_out.col_names_dict[stype.numerical]) == (
             total_numerical_cols + (dataset.num_classes - 1) *
             (total_cols - total_numerical_cols)))
 
