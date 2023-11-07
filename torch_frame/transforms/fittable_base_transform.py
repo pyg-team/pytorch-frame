@@ -1,7 +1,6 @@
 import copy
-import os.path as osp
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import torch
 from torch import Tensor
@@ -58,12 +57,7 @@ class FittableBaseTransform(BaseTransform):
             column_data[nan_mask] = fill_value
         return x
 
-    def fit(
-        self,
-        tf: TensorFrame,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        path: Optional[str] = None,
-    ):
+    def fit(self, tf: TensorFrame, col_stats: Dict[str, Dict[StatType, Any]]):
         r"""Fit the transform with train data.
 
         Args:
@@ -72,14 +66,8 @@ class FittableBaseTransform(BaseTransform):
             col_stats (Dict[str, Dict[StatType, Any]], optional): The column
                 stats of the input :class:`TensorFrame`.
         """
-        if path is not None and osp.isfile(path):
-            self._load(path)
-            self._is_fitted = True
-        else:
-            self._fit(tf, col_stats)
-            self._is_fitted = True
-            if path is not None:
-                self._save(path)
+        self._fit(tf, col_stats)
+        self._is_fitted = True
 
     def forward(self, tf: TensorFrame) -> TensorFrame:
         if not self.is_fitted:
@@ -99,10 +87,14 @@ class FittableBaseTransform(BaseTransform):
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         raise NotImplementedError
 
-    @abstractmethod
-    def _save(self, path: str) -> None:
-        raise NotImplementedError
+    def state_dict(self) -> Dict[str, Any]:
+        fittable_transform_state_dict = dict()
+        for name, value in self.__dict__.items():
+            fittable_transform_state_dict[name] = copy.deepcopy(value)
+        return fittable_transform_state_dict
 
-    @abstractmethod
-    def _load(self) -> None:
-        raise NotImplementedError
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any]) -> None:
+        obj = cls(**state_dict)
+        obj._is_fitted = True
+        return obj
