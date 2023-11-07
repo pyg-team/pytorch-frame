@@ -43,7 +43,7 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
           - 0.0%
     """
 
-    url = ""
+    url = "https://data.pyg.org/datasets/tables/amazon_fine_food_reviews.zip"
 
     def __init__(self, root: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
