@@ -94,7 +94,7 @@ class _MultiTensor:
             IndexError: If :obj:`dim` is out of range [-2, 1].
         """
         if dim < 0:
-            dim = dim + 3
+            dim = dim + cls.ndim
         if dim == 2:
             raise IndexError(
                 "Dimension out of range (expected to be in range of [-2, 1],"
