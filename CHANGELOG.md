@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `MultivariateLSTMEncoder` ([#188](https://github.com/pyg-team/pytorch-frame/pull/188))
 - Added Cohere embedding example ([#186](https://github.com/pyg-team/pytorch-frame/pull/186))
 - Added `AmazonFineFoodReviews` dataset and OpenAI embedding example ([#182](https://github.com/pyg-team/pytorch-frame/pull/182))
 - Added save and load logic for `FittableBaseTransform` ([#178](https://github.com/pyg-team/pytorch-frame/pull/178))
