@@ -84,7 +84,7 @@ In the first example, we implement a simple `ExampleTransformer` following the m
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 <details>
-<summary>Expand to see the Python implementation of `ExampleTransformer`.</summary>
+<summary>Expand to see the Python implementation of <code>ExampleTransformer</code>.</summary>
 
 ```python
 from typing import Any, Dict, List
@@ -198,13 +198,13 @@ We support the following (but not limited to):
       <a href="https://platform.openai.com/docs/guides/embeddings">
         <img src="docs/source/_figures/OpenAI_Logo.png" alt="OpenAI" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/openai_embedding.py">OpenAI Embedding Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">OpenAI Embedding Code Example</a>
     </td>
     <td align="center">
       <a href="https://cohere.com/embeddings">
         <img src="docs/source/_figures/cohere-logo.png" alt="Cohere" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/openai_embedding.py">Cohere Embed v3 Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
     <td align="center">
       <a href="https://huggingface.co/sentence-transformers">
