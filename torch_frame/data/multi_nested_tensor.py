@@ -128,9 +128,10 @@ class MultiNestedTensor(_MultiTensor):
                 return self._get_value(index[0], index[1])
             else:
                 # Returns MultiNestedTensor
+                out = self
                 for dim, idx in enumerate(index):
-                    self = self.select(idx, dim)
-                return self
+                    out = out.select(idx, dim)
+                return out
         else:
             # Returns MultiNestedTensor
             return self.select(index, dim=0)

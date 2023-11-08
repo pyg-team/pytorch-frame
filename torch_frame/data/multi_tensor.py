@@ -51,17 +51,6 @@ class _MultiTensor:
     def __len__(self):
         return self.num_rows
 
-    # Device Transfer #########################################################
-
-    def to(self, *args, **kwargs):
-        return self._apply(lambda x: x.to(*args, **kwargs))
-
-    def cpu(self, *args, **kwargs):
-        return self._apply(lambda x: x.cpu(*args, **kwargs))
-
-    def cuda(self, *args, **kwargs):
-        return self._apply(lambda x: x.cuda(*args, **kwargs))
-
     @property
     def device(self) -> torch.device:
         return self.values.device
@@ -77,6 +66,17 @@ class _MultiTensor:
             self.values.clone(),
             self.offset.clone(),
         )
+
+    # Device Transfer #########################################################
+
+    def to(self, *args, **kwargs):
+        return self._apply(lambda x: x.to(*args, **kwargs))
+
+    def cpu(self, *args, **kwargs):
+        return self._apply(lambda x: x.cpu(*args, **kwargs))
+
+    def cuda(self, *args, **kwargs):
+        return self._apply(lambda x: x.cuda(*args, **kwargs))
 
     # Helper Functions ########################################################
 
