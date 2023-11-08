@@ -30,7 +30,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         ...    torch.tensor([[6, 7], [8, 9]]),        # col1
         ...    torch.tensor([[10], [11]]),            # col2
         ... ]
-        >>> out = MultiEmbeddingTensor.from_list(tensor_list)
+        >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
         >>> out
         MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
         >>> out[0, 2]
@@ -46,6 +46,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         super().__init__(num_rows, num_cols, values, offset)
         assert offset[0] == 0
         assert len(offset) == num_cols + 1
+        assert values.size() == (num_rows, offset[-1])
 
     def __getitem__(
         self,
@@ -61,7 +62,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         raise NotImplementedError
 
     @classmethod
-    def from_list(
+    def from_tensor_list(
         cls,
         tensor_list: List[Tensor],
     ) -> 'MultiEmbeddingTensor':
@@ -83,7 +84,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             ...    torch.tensor([[6, 7], [8, 9]]),        # col1
             ...    torch.tensor([[10], [11]]),            # col2
             ... ]
-            >>> out = MultiEmbeddingTensor.from_list(tensor_list)
+            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
             >>> out
             MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
             >>> out[0, 0]
@@ -111,6 +112,5 @@ class MultiEmbeddingTensor(_MultiTensor):
 
         num_cols = len(tensor_list)
         values = torch.cat(tensor_list, dim=1)
-        assert values.size() == (num_rows, offset_list[-1])
         offset = torch.LongTensor(offset_list)
         return cls(num_rows, num_cols, values, offset)
