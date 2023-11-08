@@ -207,10 +207,10 @@ We support the following (but not limited to):
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
     <td align="center">
-      <a href="https://huggingface.co/sentence-transformers">
+      <a href="https://huggingface.co/">
         <img src="docs/source/_figures/hf-logo-with-title.png" alt="Hugging Face" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py">Sentence Transformers Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Hugging Face Code Example</a>
     </td>
   </tr>
 </table>
