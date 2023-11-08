@@ -1,16 +1,20 @@
 import argparse
 import os.path as osp
-from typing import List
+from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
-# Please run `pip install -U sentence-transformers` to install the package
-from sentence_transformers import SentenceTransformer
+# Please run `pip install peft` to install the package
+from peft import LoraConfig, TaskType, get_peft_model
 from torch import Tensor
 from tqdm import tqdm
+# Please run `pip install transformers` to install the package
+from transformers import AutoModel, AutoTokenizer
 
+import torch_frame
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import DataLoader
 from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
@@ -18,30 +22,27 @@ from torch_frame.nn import (
     FTTransformer,
     LinearEmbeddingEncoder,
     LinearEncoder,
+    LinearModelEncoder,
 )
+from torch_frame.typing import TensorData
 
-# Text embedded:
+# Text Embedded
+# all-distilroberta-v1
 # ============== wine_reviews ===============
-# Best Val Acc: 0.7946, Best Test Acc: 0.7878
+# Best Val Acc: 0.7968, Best Test Acc: 0.7926
 # ===== product_sentiment_machine_hack ======
-# Best Val Acc: 0.9334, Best Test Acc: 0.8814
-# ========== data_scientist_salary ==========
-# Best Val Acc: 0.5355, Best Test Acc: 0.4582
+# Best Val Acc: 0.9155, Best Test Acc: 0.8885
 # ======== jigsaw_unintended_bias100K =======
-# Best Val Acc: 0.9543, Best Test Acc: 0.9511
+# Best Val Acc: 0.9470, Best Test Acc: 0.9488
 
-
-class PretrainedTextEncoder:
-    def __init__(self, device: torch.device):
-        self.model = SentenceTransformer('all-distilroberta-v1', device=device)
-
-    def __call__(self, sentences: List[str]) -> Tensor:
-        # Inference on GPU (if available)
-        embeddings = self.model.encode(sentences, convert_to_numpy=False,
-                                       convert_to_tensor=True)
-        # Map back to CPU
-        return embeddings.cpu()
-
+# Text Tokenized
+# distilbert-base-uncased + LoRA
+# ============== wine_reviews ===============
+# Best Val Acc: 0.8314, Best Test Acc: 0.8230
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9096, Best Test Acc: 0.8908
+# ======== jigsaw_unintended_bias100K =======
+# Best Val Acc: 0.9672, Best Test Acc: 0.9644
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='wine_reviews')
@@ -51,7 +52,124 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--finetune', action='store_true')
+parser.add_argument('--lora', action='store_true')
+parser.add_argument(
+    '--model', type=str, default='distilbert-base-uncased', choices=[
+        'distilbert-base-uncased',
+        'sentence-transformers/all-distilroberta-v1',
+    ])
+parser.add_argument('--pooling', type=str, default='mean',
+                    choices=['mean', 'cls'])
 args = parser.parse_args()
+
+if args.lora and not args.finetune:
+    raise ValueError('Please also specify finetune when '
+                     'choosing LoRA finetuning.')
+
+
+class TextToEmbedding:
+    def __init__(self, model: str, pooling: str, device: torch.device):
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
+        self.model = AutoModel.from_pretrained(model).to(device)
+        self.device = device
+        self.pooling = pooling
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        inputs = self.tokenizer(sentences, truncation=True,
+                                padding='max_length', return_tensors='pt')
+        for key in inputs:
+            if isinstance(inputs[key], Tensor):
+                inputs[key] = inputs[key].to(self.device)
+        out = self.model(**inputs)
+        mask = inputs['attention_mask']
+        if self.pooling == 'mean':
+            return mean_pooling(out.last_hidden_state.detach(),
+                                mask).squeeze(1).cpu()
+        elif self.pooling == 'cls':
+            return out.last_hidden_state[:, 0, :].detach().cpu()
+        else:
+            raise ValueError(f'{self.pooling} is not supported.')
+
+
+class TextTokenizer:
+    def __init__(self, model: str):
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
+
+    def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
+        res = []
+        # Tokenize batches of sentences
+        inputs = self.tokenizer(sentences, truncation=True, padding=True,
+                                return_tensors='pt')
+        res.append(inputs)
+        return res
+
+
+class TokenToEmbedding(torch.nn.Module):
+    r"""Convert tokens to embeddings with a text model, whose parameters
+    will also be finetuned during the tabular learning.
+
+    Args:
+        model (str): Model name to load by using :obj:`transformers`,
+            such as :obj:`distilbert-base-uncased` and
+            :obj:`sentence-transformers/all-distilroberta-v1`.
+        pooling (str): Pooling strategy to pool context embeddings into
+            sentence level embedding. (default: :obj:`'mean'`)
+        lora (bool): Whether using LoRA to finetune the text model.
+            (default: :obj:`False`)
+    """
+    def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
+        super().__init__()
+        self.model = AutoModel.from_pretrained(model)
+
+        if lora:
+            if model == 'distilbert-base-uncased':
+                target_modules = ['ffn.lin1']
+            elif model == 'sentence-transformers/all-distilroberta-v1':
+                target_modules = ['intermediate.dense']
+            else:
+                raise ValueError(f'Model {model} is not specified for '
+                                 f'LoRA finetuning.')
+
+            peft_config = LoraConfig(
+                task_type=TaskType.FEATURE_EXTRACTION,
+                r=32,
+                lora_alpha=32,
+                inference_mode=False,
+                lora_dropout=0.1,
+                bias='none',
+                target_modules=target_modules,
+            )
+            self.model = get_peft_model(self.model, peft_config)
+        self.pooling = pooling
+
+    def forward(self, feat: TensorData) -> Tensor:
+        # [batch_size, num_cols, batch_max_seq_len]
+        input_ids = feat['input_ids'].to_dense(fill_value=0)
+        mask = feat['attention_mask'].to_dense(fill_value=0)
+        outs = []
+        # Get text embeddings over each column
+        for i in range(input_ids.shape[1]):
+            out = self.model(input_ids=input_ids[:, i, :],
+                             attention_mask=mask[:, i, :])
+            if self.pooling == 'mean':
+                outs.append(mean_pooling(out.last_hidden_state, mask[:, i, :]))
+            elif self.pooling == 'cls':
+                outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
+            else:
+                raise ValueError(f'{self.pooling} is not supported.')
+        # Concatenate output embeddings for different columns
+        return torch.cat(outs, dim=1)
+
+
+def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(
+        last_hidden_state.size()).float()
+    embedding = torch.sum(
+        last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
+            input_mask_expanded.sum(1), min=1e-9)
+    return embedding.unsqueeze(1)
+
 
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -59,13 +177,34 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-text_encoder = PretrainedTextEncoder(device=device)
-dataset = MultimodalTextBenchmark(
-    root=path,
-    name=args.dataset,
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
-)
+
+# Prepare text columns
+if not args.finetune:
+    text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
+                                   device=device)
+    text_stype = torch_frame.text_embedded
+    text_stype_encoder = LinearEmbeddingEncoder(in_channels=768)
+    kwargs = {
+        'text_stype':
+        text_stype,
+        'text_embedder_cfg':
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
+    }
+else:
+    text_tokenizer = TextTokenizer(model=args.model)
+    text_encoder = TokenToEmbedding(model=args.model, pooling=args.pooling,
+                                    lora=args.lora)
+    text_stype = torch_frame.text_tokenized
+    text_stype_encoder = LinearModelEncoder(in_channels=768,
+                                            model=text_encoder)
+    kwargs = {
+        'text_stype':
+        text_stype,
+        'text_tokenizer_cfg':
+        TextTokenizerConfig(text_tokenizer=text_tokenizer, batch_size=10000),
+    }
+
+dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
 
@@ -87,7 +226,7 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
+    text_stype: text_stype_encoder,
 }
 
 if is_classification:

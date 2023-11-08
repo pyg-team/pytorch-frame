@@ -131,11 +131,17 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         r"""The number of rows in the :class:`TensorFrame`."""
-        return len(next(iter(self.feat_dict.values())))
+        feat = next(iter(self.feat_dict.values()))
+        if isinstance(feat, dict):
+            return len(next(iter(feat.values())))
+        return len(feat)
 
     @property
     def device(self) -> torch.device:
-        return next(iter(self.feat_dict.values())).device
+        feat = next(iter(self.feat_dict.values()))
+        if isinstance(feat, dict):
+            return next(iter(feat.values())).device
+        return feat.device
 
     # Python Built-ins ########################################################
 
@@ -165,10 +171,24 @@ class TensorFrame:
         for stype_name in self.feat_dict.keys():
             self_feat = self.feat_dict[stype_name]
             other_feat = other.feat_dict[stype_name]
-            if self_feat.shape != other_feat.shape:
+            if type(self_feat) != type(other_feat):
                 return False
-            if not torch.allclose(self_feat, other_feat):
-                return False
+            if not isinstance(self_feat, dict):
+                if self_feat.shape != other_feat.shape:
+                    return False
+                if not torch.allclose(self_feat, other_feat):
+                    return False
+            else:
+                for key in self_feat:
+                    self_feat_value = self_feat[key]
+                    other_feat_value = other_feat[key]
+                    if self_feat_value.shape != other_feat_value.shape:
+                        return False
+                    # TODO: Support allclose for MultiNestedTensor
+                    if isinstance(self_feat_value,
+                                  Tensor) and not torch.allclose(
+                                      self_feat_value, other_feat_value):
+                        return False
         return True
 
     def __neq__(self, other: Any) -> bool:
@@ -192,7 +212,16 @@ class TensorFrame:
         if isinstance(index, int):
             index = [index]
 
-        return self._apply(lambda x: x[index])
+        def fn(x):
+            if isinstance(x, dict):
+                y = {}
+                for key in x:
+                    y[key] = x[key][index]
+            else:
+                return x[index]
+            return y
+
+        return self._apply(fn)
 
     def __copy__(self) -> 'TensorFrame':
         out = self.__class__.__new__(self.__class__)
@@ -207,13 +236,37 @@ class TensorFrame:
     # Device Transfer #########################################################
 
     def to(self, *args, **kwargs):
-        return self._apply(lambda x: x.to(*args, **kwargs))
+        def fn(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].to(*args, **kwargs)
+            else:
+                x = x.to(*args, **kwargs)
+            return x
+
+        return self._apply(fn)
 
     def cpu(self, *args, **kwargs):
-        return self._apply(lambda x: x.cpu(*args, **kwargs))
+        def fn(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].cpu(*args, **kwargs)
+            else:
+                x = x.cpu(*args, **kwargs)
+            return x
+
+        return self._apply(fn)
 
     def cuda(self, *args, **kwargs):
-        return self._apply(lambda x: x.cuda(*args, **kwargs))
+        def fn(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].cuda(*args, **kwargs)
+            else:
+                x = x.cuda(*args, **kwargs)
+            return x
+
+        return self._apply(fn)
 
     # Helper Functions ########################################################
 

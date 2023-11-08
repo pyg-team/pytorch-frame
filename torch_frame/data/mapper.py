@@ -291,7 +291,15 @@ class TextTokenizationTensorMapper(TensorMapper):
             tokenized_list: TextTokenizationOutputs = self.text_tokenizer(
                 ser_list)
             for key in tokenized_list[0]:
-                xs = [[item[key]] for item in tokenized_list]
+                xs = []
+                for item in tokenized_list:
+                    if item[key].ndim == 1:
+                        xs.append([item[key]])
+                    elif item[key].ndim == 2:
+                        xs.append([row for row in item[key]])
+                    else:
+                        raise ValueError(f'{key} has `ndim` not '
+                                         f'equal to 1 or 2.')
                 feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(
                     device)
             return feat_dict
@@ -303,7 +311,16 @@ class TextTokenizationTensorMapper(TensorMapper):
                 ser_list[i:i + self.batch_size])
             tokenized_list.extend(tokenized_batch)
         for key in tokenized_list[0]:
-            xs = [[item[key]] for item in tokenized_list]
+            xs = []
+            for item in tokenized_list:
+                if item[key].ndim == 1:
+                    xs.append([item[key]])
+                elif item[key].ndim == 2:
+                    for row in item[key]:
+                        xs.append([row])
+                else:
+                    raise ValueError(f'{key} has `ndim` not '
+                                     f'equal to 1 or 2.')
             feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(device)
         return feat_dict
 

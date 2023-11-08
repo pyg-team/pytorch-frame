@@ -6,6 +6,7 @@ import pandas as pd
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 
@@ -425,7 +426,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def __init__(self, root: str, name: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 text_embedder_cfg: Optional[TextEmbedderConfig] = None):
+                 text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+                 text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
         self.name = name
@@ -482,4 +484,5 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                     col_to_stype[col] = stype
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split',
-                         text_embedder_cfg=text_embedder_cfg)
+                         text_embedder_cfg=text_embedder_cfg,
+                         text_tokenizer_cfg=text_tokenizer_cfg)

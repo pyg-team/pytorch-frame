@@ -25,6 +25,7 @@ def test_fake_dataset(with_nan):
             torch_frame.text_embedded,
             torch_frame.text_tokenized,
         ],
+        create_split=True,
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels), batch_size=None),
         text_tokenizer_cfg=TextTokenizerConfig(
@@ -88,3 +89,9 @@ def test_fake_dataset(with_nan):
     assert isinstance(feat_text_tokenized['input_ids'], MultiNestedTensor)
     assert feat_text_tokenized['input_ids'].dtype == torch.int64
     assert feat_text_tokenized['input_ids'].shape == (num_rows, 2, -1)
+
+    # Test dataset split
+    train_dataset, val_dataset, test_dataset = dataset.split()
+    assert train_dataset.num_rows == num_rows - 2
+    assert val_dataset.num_rows == 1
+    assert test_dataset.num_rows == 1
