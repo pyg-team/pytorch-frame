@@ -551,13 +551,10 @@ class Dataset(ABC):
 
     def split(self) -> Tuple['Dataset', 'Dataset', 'Dataset']:
         r"""Splits the dataset into training, validation and test splits."""
-        train_split = self.get_split('train')
-        val_split = self.get_split('val')
-        test_split = self.get_split('test')
         return (
-            train_split,
-            val_split,
-            test_split,
+            self.get_split('train'),
+            self.get_split('val'),
+            self.get_split('test'),
         )
 
     @property

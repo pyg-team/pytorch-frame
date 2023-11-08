@@ -14,8 +14,8 @@ from torch_frame.nn import (
     ExcelFormerEncoder,
     LinearBucketEncoder,
     LinearEmbeddingEncoder,
-    LinearEmbeddingModelEncoder,
     LinearEncoder,
+    LinearModelEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StackEncoder,
@@ -274,10 +274,10 @@ def test_text_tokenized_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
     ]
-    model = SimpleTextModel(
+    model = RandomTextModel(
         text_emb_channels=text_emb_channels,
         num_cols=len(tensor_frame.col_names_dict[stype.text_tokenized]))
-    encoder = LinearEmbeddingModelEncoder(
+    encoder = LinearModelEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.text_tokenized,
@@ -291,7 +291,7 @@ def test_text_tokenized_encoder():
                        out_channels)
 
 
-class SimpleTextModel(torch.nn.Module):
+class RandomTextModel(torch.nn.Module):
     def __init__(self, text_emb_channels: int, num_cols: int):
         self.text_emb_channels = text_emb_channels
         self.num_cols = num_cols

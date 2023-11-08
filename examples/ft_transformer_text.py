@@ -21,8 +21,8 @@ from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
     LinearEmbeddingEncoder,
-    LinearEmbeddingModelEncoder,
     LinearEncoder,
+    LinearModelEncoder,
 )
 from torch_frame.typing import TensorData
 
@@ -68,7 +68,7 @@ if args.lora and not args.finetune:
                      'choosing LoRA finetuning.')
 
 
-class PretrainedTextEncoder:
+class TextToEmbedding:
     def __init__(self, model: str, pooling: str, device: torch.device):
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model).to(device)
@@ -98,14 +98,26 @@ class TextTokenizer:
 
     def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
         res = []
-        for s in sentences:
-            inputs = self.tokenizer(s, truncation=True, padding=False,
-                                    return_tensors='pt')
-            res.append(inputs)
+        # Tokenize batches of sentences
+        inputs = self.tokenizer(sentences, truncation=True, padding=True,
+                                return_tensors='pt')
+        res.append(inputs)
         return res
 
 
-class TextEncoder(torch.nn.Module):
+class TokenToEmbedding(torch.nn.Module):
+    r"""Convert tokens to embeddings with a text model, whose parameters
+    will also be finetuned during the tabular learning.
+
+    Args:
+        model (str): Model name to load by using :obj:`transformers`,
+            such as :obj:`distilbert-base-uncased` and
+            :obj:`sentence-transformers/all-distilroberta-v1`.
+        pooling (str): Pooling strategy to pool context embeddings into
+            sentence level embedding. (default: :obj:`'mean'`)
+        lora (bool): Whether using LoRA to finetune the text model.
+            (default: :obj:`False`)
+    """
     def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
         super().__init__()
         self.model = AutoModel.from_pretrained(model)
@@ -132,7 +144,7 @@ class TextEncoder(torch.nn.Module):
         self.pooling = pooling
 
     def forward(self, feat: TensorData) -> Tensor:
-        # [batch_size, num_cols, out_channels]
+        # [batch_size, num_cols, batch_max_seq_len]
         input_ids = feat['input_ids'].to_dense(fill_value=0)
         mask = feat['attention_mask'].to_dense(fill_value=0)
         outs = []
@@ -168,8 +180,8 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
 
 # Prepare text columns
 if not args.finetune:
-    text_encoder = PretrainedTextEncoder(model=args.model,
-                                         pooling=args.pooling, device=device)
+    text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
+                                   device=device)
     text_stype = torch_frame.text_embedded
     text_stype_encoder = LinearEmbeddingEncoder(in_channels=768)
     kwargs = {
@@ -180,11 +192,11 @@ if not args.finetune:
     }
 else:
     text_tokenizer = TextTokenizer(model=args.model)
-    text_encoder = TextEncoder(model=args.model, pooling=args.pooling,
-                               lora=args.lora)
+    text_encoder = TokenToEmbedding(model=args.model, pooling=args.pooling,
+                                    lora=args.lora)
     text_stype = torch_frame.text_tokenized
-    text_stype_encoder = LinearEmbeddingModelEncoder(in_channels=768,
-                                                     model=text_encoder)
+    text_stype_encoder = LinearModelEncoder(in_channels=768,
+                                            model=text_encoder)
     kwargs = {
         'text_stype':
         text_stype,

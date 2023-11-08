@@ -596,19 +596,21 @@ class LinearEmbeddingEncoder(StypeEncoder):
         return x
 
 
-class LinearEmbeddingModelEncoder(StypeEncoder):
+class LinearModelEncoder(StypeEncoder):
     r"""Linear function based encoder with a specified model outputs embedding
     features. It applies a linear layer :obj:`torch.nn.Linear(in_channels,
     out_channels)` on each embedding feature (:obj:`in_channels` is the
     dimensionality of the embedding) and concatenates the output embeddings.
+    The :obj:`model` will also be trained together with the linear layer.
     Note that the implementation does this for all :obj:`text_tokenized`
     features in a batched manner.
 
     Args:
-        in_channels (int): The dimensionality of the embedding feature. Needs
-            to be specified manually.
-        model (torch.nn.Module): The model outputs embedding features that will
-            be input into the linear layer.
+        in_channels (int): The dimensionality of the embedding feature.
+            Needs to be specified manually.
+        model (torch.nn.Module): Input to the model is a dictionary of
+            :obj:`MultiNestedTensor` and model outputs three-dimensional
+            embedding features that will be input into the linear layer.
     """
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
