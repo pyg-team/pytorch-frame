@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added Cohere embedding example ([#186](https://github.com/pyg-team/pytorch-frame/pull/186))
 - Added `AmazonFineFoodReviews` dataset and OpenAI embedding example ([#182](https://github.com/pyg-team/pytorch-frame/pull/182))
 - Added save and load logic for `FittableBaseTransform` ([#178](https://github.com/pyg-team/pytorch-frame/pull/178))
+- Added `MultiEmbeddingTensor` ([#181](https://github.com/pyg-team/pytorch-frame/pull/181))
 - Added `to_dense()` for `MultiNestedTensor` ([#170](https://github.com/pyg-team/pytorch-frame/pull/170))
 - Added example for `multicategorical` stype ([#162](https://github.com/pyg-team/pytorch-frame/pull/162))
 - Added `sequence_numerical` stype ([#159](https://github.com/pyg-team/pytorch-frame/pull/159))
