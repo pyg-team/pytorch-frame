@@ -16,6 +16,7 @@ from torch_frame.nn import (
     LinearEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
+    MultivariateLSTMEncoder,
     StackEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
@@ -94,6 +95,26 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
     x_perturbed = encoder(feat_num)
     # Make sure other column embeddings are unchanged
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
+
+
+@pytest.mark.parametrize('encoder_cls_kwargs', [
+    (MultivariateLSTMEncoder, {}),
+])
+def test_lstm_feature_encoder(encoder_cls_kwargs):
+    dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.numerical]
+    ]
+    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
+                                    stype=stype.numerical,
+                                    **encoder_cls_kwargs[1])
+    feat_num = tensor_frame.feat_dict[stype.numerical]
+    x = encoder(feat_num)
+    assert x.shape == (1, 8)
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs',

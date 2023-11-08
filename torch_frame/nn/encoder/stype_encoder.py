@@ -4,7 +4,15 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
+from torch.nn import (
+    LSTM,
+    Embedding,
+    EmbeddingBag,
+    Linear,
+    ModuleList,
+    Parameter,
+    Sequential,
+)
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
@@ -590,3 +598,65 @@ class LinearEmbeddingEncoder(StypeEncoder):
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
         return x
+
+
+class MultivariateLSTMEncoder(StypeEncoder):
+    r"""An LSTM for numerical features. The columns represent different
+    input variables and each row represent a timestamp. The encoder
+    generates one embedding of size `out_channels` for the entire
+    multi-variate timeseries. The structure of LSTM is described in
+    `"Long Short-Term Memory"
+    <https://dl.acm.org/doi/10.1162/neco.1997.9.8.1735>`_ paper.
+
+    Args:
+        hidden_channels (int, optional): Hidden channels of LSTM.
+            (default: 16)
+        num_layers (int, optional): Number of layers in LSTM.
+            (default: 2)
+
+    Returns:
+        torch.Tensor: The output embeddings of size
+            [1, out_channels].
+    """
+    supported_stypes = {stype.numerical}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        hidden_channels: Optional[int] = 16,
+        num_layers: Optional[int] = 2,
+    ):
+        self.hidden_channels = hidden_channels
+        self.num_layers = num_layers
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        num_cols = len(self.stats_list)
+        self.lstm = LSTM(num_cols, self.hidden_channels, self.num_layers,
+                         batch_first=True)
+        self.fc = Linear(self.hidden_channels, self.out_channels)
+        mean = torch.tensor(
+            [stats[StatType.MEAN] for stats in self.stats_list])
+        self.register_buffer('mean', mean)
+        std = torch.tensor([stats[StatType.STD]
+                            for stats in self.stats_list]) + 1e-6
+        self.register_buffer('std', std)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        self.lstm.reset_parameters()
+        self.fc.reset_parameters()
+
+    def encode_forward(self, feat: Tensor) -> Tensor:
+        feat = (feat - self.mean) / self.std
+        feat = feat.unsqueeze(0)
+        out, _ = self.lstm(feat)
+        out = self.fc(out[:, -1, :])
+        return out
