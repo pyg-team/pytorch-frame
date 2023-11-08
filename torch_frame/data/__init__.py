@@ -1,6 +1,7 @@
 # flake8: noqa
 
 from .tensor_frame import TensorFrame
+from .multi_embedding_tensor import MultiEmbeddingTensor
 from .multi_nested_tensor import MultiNestedTensor
 from .stats import StatType
 from .dataset import Dataset, DataFrameToTensorFrameConverter
@@ -9,6 +10,7 @@ from .download import download_url
 
 data_classes = [
     'TensorFrame',
+    'MultiEmbeddingTensor',
     'MultiNestedTensor',
     'Dataset',
 ]
