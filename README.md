@@ -198,22 +198,19 @@ We support the following (but not limited to):
       <a href="https://platform.openai.com/docs/guides/embeddings">
         <img src="docs/source/_figures/OpenAI_Logo.png" alt="OpenAI" width="100px"/>
       </a>
-      <br />OpenAI Embeddings
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/blob/d71c91d76989688c090e78ac270f74fe2e048463/examples/openai_embedding.py">OpenAI Embedding Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/openai_embedding.py">OpenAI Embedding Code Example</a>
     </td>
     <td align="center">
       <a href="https://cohere.com/embeddings">
         <img src="docs/source/_figures/cohere-logo.png" alt="Cohere" width="100px"/>
       </a>
-      <br />Cohere Embed v3
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py">Cohere Embedding Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/openai_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
     <td align="center">
       <a href="https://huggingface.co/sentence-transformers">
         <img src="docs/source/_figures/hf-logo-with-title.png" alt="Hugging Face" width="100px"/>
       </a>
-      <br />Hugging Face Sentence Transformers
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py">Sentence Transformer Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py">Sentence Transformers Code Example</a>
     </td>
   </tr>
 </table>
