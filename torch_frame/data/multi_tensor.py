@@ -97,9 +97,8 @@ class _MultiTensor:
             dim = dim + cls.ndim
         if dim == 2:
             raise IndexError(
-                "Dimension out of range (expected to be in range of [-2, 1],"
-                f" but got {dim}. {cls.__name__} does not have a"
-                " fixed length on the third dimension.")
+                f"{cls.__name__} does not have a fixed length on the third"
+                "dimension.")
         if dim not in [0, 1]:
             raise IndexError(
                 "Dimension out of range (expected to be in range of [-2, 1],"
