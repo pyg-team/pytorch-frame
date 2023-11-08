@@ -330,13 +330,6 @@ class TextTokenizationTensorMapper(TensorMapper):
 
 class EmbeddingTensorMapper(TensorMapper):
     r"""Maps embedding columns into tensors.
-
-    Args:
-        batch_size (int, optional): The mini-batch size used for the text
-            embedder. If :obj:`None`, we will encode all text in a full-batch
-            manner. If you use heavy text embedding model with GPU, we
-            recommend you setting :obj:`batch_size` to a reasonable number to
-            avoid the GPU OOM issue.
     """
     def __init__(self) -> None:
         super().__init__()
@@ -347,18 +340,8 @@ class EmbeddingTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        ser = ser.astype(str)
-        ser_list = ser.tolist()
-        if self.batch_size is None:
-            emb = self.text_embedder(ser_list)
-            return emb.to(device)
-
-        emb_list = []
-        for i in tqdm(range(0, len(ser_list), self.batch_size),
-                      desc="Embedding texts in mini-batch"):
-            emb = self.text_embedder(ser_list[i:i + self.batch_size])
-            emb_list.append(emb.to(device))
-        return torch.cat(emb_list, dim=0)
+        # FIXME: impelemnt here
+        pass
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
