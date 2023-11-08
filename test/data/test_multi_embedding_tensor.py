@@ -87,7 +87,8 @@ def test_from_tensor_list():
 
     # case: list of tensors having different num_rows
     with pytest.raises(AssertionError):
-        MultiEmbeddingTensor.from_tensor_list([torch.rand(2, 1), torch.rand(3, 1)])
+        MultiEmbeddingTensor.from_tensor_list(
+            [torch.rand(2, 1), torch.rand(3, 1)])
 
     # case: list of tensors on different devices
     with pytest.raises(AssertionError):
