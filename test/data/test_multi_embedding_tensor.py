@@ -29,7 +29,7 @@ def get_fake_multi_embedding_tensor(
         embedding_dim = random.randint(1, 5)
         tensor = torch.randn((num_rows, embedding_dim))
         tensor_list.append(tensor)
-    return MultiEmbeddingTensor.from_list(tensor_list), tensor_list
+    return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
 
 
 def test_size():
@@ -57,7 +57,7 @@ def test_size():
     assert met.shape[2] == -1
 
 
-def test_from_list():
+def test_from_tensor_list():
     num_rows = 2
     num_cols = 3
     tensor_list = [
@@ -65,7 +65,7 @@ def test_from_list():
         torch.tensor([[6, 7], [8, 9]]),
         torch.tensor([[10], [11]]),
     ]
-    met = MultiEmbeddingTensor.from_list(tensor_list)
+    met = MultiEmbeddingTensor.from_tensor_list(tensor_list)
     assert met.num_rows == num_rows
     assert met.num_cols == num_cols
     expected_values = torch.tensor([
@@ -79,19 +79,19 @@ def test_from_list():
 
     # case: empty list
     with pytest.raises(AssertionError):
-        MultiEmbeddingTensor.from_list([])
+        MultiEmbeddingTensor.from_tensor_list([])
 
     # case: list of non-2d tensors
     with pytest.raises(AssertionError):
-        MultiEmbeddingTensor.from_list([torch.rand(1)])
+        MultiEmbeddingTensor.from_tensor_list([torch.rand(1)])
 
     # case: list of tensors having different num_rows
     with pytest.raises(AssertionError):
-        MultiEmbeddingTensor.from_list([torch.rand(2, 1), torch.rand(3, 1)])
+        MultiEmbeddingTensor.from_tensor_list([torch.rand(2, 1), torch.rand(3, 1)])
 
     # case: list of tensors on different devices
     with pytest.raises(AssertionError):
-        MultiEmbeddingTensor.from_list([
+        MultiEmbeddingTensor.from_tensor_list([
             torch.rand(2, 1, device="cpu"),
             torch.rand(2, 1, device="meta"),
         ])
