@@ -5,8 +5,6 @@ from typing import List
 
 import torch
 import torch.nn.functional as F
-# Please run `pip install openai` to install the package
-from openai import OpenAI
 from torch import Tensor
 from tqdm import tqdm
 
@@ -28,21 +26,33 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--service', type=str, default='cohere',
+                    choices=['openai', 'cohere'])
 parser.add_argument('--model', type=str, default='text-embedding-ada-002')
-parser.add_argument('--emb_size', type=int, default=1536)
 parser.add_argument('--openai_api_key', type=str, default=None)
+parser.add_argument('--cohere_api_key', type=str, default=None)
 args = parser.parse_args()
 
 # Notice that there are 568,454 rows and 2 text columns, it will
 # cost some money to get the text embeddings by using OpenAI API
-openai_api_key = args.openai_api_key or os.environ.get('OPENAI_API_KEY', None)
-if openai_api_key is None:
-    raise ValueError('OpenAI API key is not specified.')
+if args.service == 'openai':
+    api_key = args.openai_api_key or os.environ.get('OPENAI_API_KEY', None)
+    if api_key is None:
+        raise ValueError('OpenAI API key is not specified.')
+else:
+    api_key = args.cohere_api_key or os.environ.get('COHERE_API_KEY', None)
+    if api_key is None:
+        raise ValueError('Cohere API key is not specified.')
 
 
 class OpenAIEmbedding:
+    dimension: int = 1536
+    text_embedder_batch_size: int = 25
+
     def __init__(self, model: str = 'text-embedding-ada-002'):
-        self.client = OpenAI()
+        # Please run `pip install openai` to install the package
+        from openai import OpenAI
+        self.client = OpenAI(api_key=api_key)
         self.model = model
 
     def __call__(self, sentences: List[str]) -> Tensor:
@@ -55,6 +65,24 @@ class OpenAIEmbedding:
         return torch.cat(embeddings, dim=0)
 
 
+class CohereEmbedding:
+    dimension: int = 1024
+    text_embedder_batch_size: int = 1000
+
+    def __init__(self, model: str = 'embed-english-v3.0'):
+        # Please run `pip install cohere` to install the package
+        import cohere  # noqa
+        self.model = model
+        self.co = cohere.Client(api_key)
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        items = self.co.embed(model=self.model, texts=sentences,
+                              input_type="classification")
+        assert len(items) == len(sentences)
+        embeddings = torch.tensor(items.embeddings)
+        return embeddings
+
+
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -62,12 +90,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 'amazon_fine_food_reviews')
 os.makedirs(path, exist_ok=True)
-text_encoder = OpenAIEmbedding(model=args.model)
+text_encoder = OpenAIEmbedding(
+    model=args.model) if args.service == 'openai' else CohereEmbedding()
 dataset = AmazonFineFoodReviews(
     root=path,
     text_embedder_cfg=TextEmbedderConfig(
         text_embedder=text_encoder,
-        batch_size=20,
+        batch_size=text_encoder.text_embedder_batch_size,
     ),
 )
 
@@ -87,7 +116,8 @@ test_loader = DataLoader(test_dataset.tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(in_channels=args.emb_size)
+    stype.text_embedded:
+    LinearEmbeddingEncoder(in_channels=text_encoder.dimension)
 }
 
 model = FTTransformer(

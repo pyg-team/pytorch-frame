@@ -1,4 +1,5 @@
 import argparse
+import os
 import os.path as osp
 from typing import List
 
@@ -30,8 +31,32 @@ from torch_frame.nn import (
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9543, Best Test Acc: 0.9511
 
+# Text embeded with Cohere's embed-english-v3.0
+# ============== wine_reviews ===============
+# Best Val Acc: 0.8263
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, default='wine_reviews')
+parser.add_argument('--channels', type=int, default=256)
+parser.add_argument('--num_layers', type=int, default=4)
+parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--embedding_source', type=str, default='huggingface',
+                    choices=["huggingface", "cohere"])
+parser.add_argument('--cohere_api_key', type=str, default=None)
+args = parser.parse_args()
+
+cohere_api_key = args.cohere_api_key or os.environ.get('COHERE_API_KEY', None)
+if args.embedding_source == 'cohere' and cohere_api_key is None:
+    raise ValueError('Cohere API key is not specified.')
+
 
 class PretrainedTextEncoder:
+    dimension: int = 768
+    text_embedder_batch_size: int = 5
+
     def __init__(self, device: torch.device):
         self.model = SentenceTransformer('all-distilroberta-v1', device=device)
 
@@ -43,15 +68,22 @@ class PretrainedTextEncoder:
         return embeddings.cpu()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='wine_reviews')
-parser.add_argument('--channels', type=int, default=256)
-parser.add_argument('--num_layers', type=int, default=4)
-parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--seed', type=int, default=0)
-args = parser.parse_args()
+class CohereEmbedding:
+    dimension: int = 1024
+    text_embedder_batch_size: int = 1000
+
+    def __init__(self, model: str = 'embed-english-v3.0'):
+        import cohere  # noqa
+        self.model = model
+        self.co = cohere.Client(cohere_api_key)
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        items = self.co.embed(model=self.model, texts=sentences,
+                              input_type="classification")
+        assert len(items) == len(sentences)
+        embeddings = torch.tensor(items.embeddings)
+        return embeddings
+
 
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -59,12 +91,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
-text_encoder = PretrainedTextEncoder(device=device)
+text_encoder = (CohereEmbedding() if args.embedding_source == 'cohere' else
+                PretrainedTextEncoder(device=device))
+
 dataset = MultimodalTextBenchmark(
     root=path,
     name=args.dataset,
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+    text_embedder_cfg=TextEmbedderConfig(
+        text_embedder=text_encoder,
+        batch_size=text_encoder.text_embedder_batch_size),
 )
 
 dataset.materialize(path=osp.join(path, 'data.pt'))
@@ -87,7 +122,8 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
+    stype.text_embedded:
+    LinearEmbeddingEncoder(in_channels=text_encoder.dimension)
 }
 
 if is_classification:
