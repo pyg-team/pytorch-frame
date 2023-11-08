@@ -316,7 +316,8 @@ class TextTokenizationTensorMapper(TensorMapper):
                 if item[key].ndim == 1:
                     xs.append([item[key]])
                 elif item[key].ndim == 2:
-                    xs.append([row] for row in item[key])
+                    for row in item[key]:
+                        xs.append([row])
                 else:
                     raise ValueError(f'{key} has `ndim` not '
                                      f'equal to 1 or 2.')
