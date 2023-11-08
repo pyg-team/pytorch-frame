@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple
 
 import pytest
 import torch
@@ -20,16 +20,16 @@ def assert_equal(
             assert torch.allclose(tensor_list[j][i], met[i, j])
 
 
-def get_fake_multi_tensor_embedding(
+def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
-) -> MultiEmbeddingTensor:
+) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = random.randint(1, 5)
         tensor = torch.randn((num_rows, embedding_dim))
         tensor_list.append(tensor)
-    return MultiEmbeddingTensor.from_list(tensor_list)
+    return MultiEmbeddingTensor.from_list(tensor_list), tensor_list
 
 
 def test_size():
@@ -98,22 +98,17 @@ def test_from_list():
 
 
 def test_index():
-    num_rows = 2
-    num_cols = 3
-    tensor_list = [
-        torch.tensor([[0, 1, 2], [3, 4, 5]]),
-        torch.tensor([[6, 7], [8, 9]]),
-        torch.tensor([[10], [11]]),
-    ]
-    met = MultiEmbeddingTensor.from_list(tensor_list)
-
-    # case: a tuple of two integers
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    # case met[i, j]: a tuple of two integers
     assert_equal(tensor_list, met)
 
 
 def test_clone():
-    met = get_fake_multi_tensor_embedding(
-        num_rows=3,
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
         num_cols=3,
     )
     met_clone = met.clone()
