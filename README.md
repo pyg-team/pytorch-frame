@@ -84,7 +84,7 @@ In the first example, we implement a simple `ExampleTransformer` following the m
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 <details>
-<summary>Here is the python code for the example.</summary>
+<summary>Expand to see the Python implementation of `ExampleTransformer`.</summary>
 
 ```python
 from typing import Any, Dict, List
