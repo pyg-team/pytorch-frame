@@ -28,19 +28,17 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--service', type=str, default='cohere',
                     choices=['openai', 'cohere'])
-parser.add_argument('--model', type=str, default='text-embedding-ada-002')
-parser.add_argument('--openai_api_key', type=str, default=None)
-parser.add_argument('--cohere_api_key', type=str, default=None)
+parser.add_argument('--api_key', type=str, default=None)
 args = parser.parse_args()
 
 # Notice that there are 568,454 rows and 2 text columns, it will
 # cost some money to get the text embeddings by using OpenAI API
 if args.service == 'openai':
-    api_key = args.openai_api_key or os.environ.get('OPENAI_API_KEY', None)
+    api_key = args.api_key or os.environ.get('OPENAI_API_KEY', None)
     if api_key is None:
         raise ValueError('OpenAI API key is not specified.')
 else:
-    api_key = args.cohere_api_key or os.environ.get('COHERE_API_KEY', None)
+    api_key = args.api_key or os.environ.get('COHERE_API_KEY', None)
     if api_key is None:
         raise ValueError('Cohere API key is not specified.')
 
