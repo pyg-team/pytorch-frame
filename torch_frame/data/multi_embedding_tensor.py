@@ -53,8 +53,6 @@ class MultiEmbeddingTensor(_MultiTensor):
     ) -> Union['MultiEmbeddingTensor', Tensor]:
         if isinstance(index, tuple) and len(index) == 2 and isinstance(
                 index[0], int) and isinstance(index[1], int):
-            # return self.values[self.offset[index[1]]:self.offset[index[1] + 1]]
-            # self.values: [num_rows, dim1+dim2+...+dimN]
             i = index[0]
             j = index[1]
             return self.values[i, self.offset[j]:self.offset[j + 1]]
