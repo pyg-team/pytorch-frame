@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Union
+from typing import Any, List, Union
 
 import torch
 from torch import Tensor
@@ -65,7 +65,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         cls,
         tensor_list: List[Tensor],
     ) -> 'MultiEmbeddingTensor':
-        r"""Creates a :class:`MultiEmbeddingTensor` from a list of :class:`torch.Tensor`.
+        r"""Creates a :class:`MultiEmbeddingTensor` from a list of
+        :class:`torch.Tensor`.
 
         Args:
             tensor_list (List[Tensor]): A list of tensors, where each tensor
