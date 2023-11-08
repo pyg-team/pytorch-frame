@@ -219,6 +219,8 @@ class DataFrameToTensorFrameConverter:
                 for key in xs[0].keys():
                     feat_dict[stype][key] = MultiNestedTensor.cat(
                         [x[key] for x in xs], dim=1)
+            elif stype.use_multi_embedding_tensor:
+                # FIXME: Implement here
             else:
                 feat_dict[stype] = torch.stack(xs, dim=1)
 
