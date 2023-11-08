@@ -609,9 +609,9 @@ class MultivariateLSTMEncoder(StypeEncoder):
     <https://dl.acm.org/doi/10.1162/neco.1997.9.8.1735>`_ paper.
 
     Args:
-        hidden_channels (int, optional): Hidden channels of LSTM.
+        hidden_channels (int): Hidden channels of LSTM.
             (default: 16)
-        num_layers (int, optional): Number of layers in LSTM.
+        num_layers (int): Number of layers in LSTM.
             (default: 2)
 
     Returns:
@@ -627,8 +627,8 @@ class MultivariateLSTMEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
-        hidden_channels: Optional[int] = 16,
-        num_layers: Optional[int] = 2,
+        hidden_channels: int = 16,
+        num_layers: int = 2,
     ):
         self.hidden_channels = hidden_channels
         self.num_layers = num_layers
