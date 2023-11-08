@@ -11,9 +11,9 @@ class MultiEmbeddingTensor(_MultiTensor):
     :obj:`[num_rows, num_cols, *]`, where the size of last dimension can be
     different for different column.
 
-    Note that the last dimension is the same within each column across rows while
-    in :class:`MultiNestedTensor`, the last dimension can be different across both
-    rows and columns.
+    Note that the last dimension is the same within each column across rows
+    while in :class:`MultiNestedTensor`, the last dimension can be different
+    across both rows and columns.
 
     Args:
         num_rows (int): Number of rows.
@@ -33,8 +33,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         >>> out = MultiEmbeddingTensor.from_list(tensor_list)
         >>> out
         MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-        >>> out[0, 0]
-        tensor([0, 1, 2]
+        >>> out[0, 2]
+        tensor([10])
     """
     def __init__(
         self,
@@ -51,7 +51,6 @@ class MultiEmbeddingTensor(_MultiTensor):
         self,
         index: Any,
     ) -> Union['MultiEmbeddingTensor', Tensor]:
-        # TODO: normalize index
         if isinstance(index, tuple) and len(index) == 2 and isinstance(
                 index[0], int) and isinstance(index[1], int):
             # return self.values[self.offset[index[1]]:self.offset[index[1] + 1]]
@@ -60,7 +59,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             j = index[1]
             return self.values[i, self.offset[j]:self.offset[j + 1]]
 
-        # TODO: Support more index types.
+        # TODO(akihironitta): Support more index types
         raise NotImplementedError
 
     @classmethod
@@ -95,14 +94,14 @@ class MultiEmbeddingTensor(_MultiTensor):
         num_rows = tensor_list[0].size(0)
         device = tensor_list[0].device
         for tensor in tensor_list:
-            assert isinstance(
-                tensor, torch.Tensor), "tensor_list must be a list of tensors."
-            assert tensor.dim(
-            ) == 2, "tensor_list must be a list of 2D tensors."
-            assert tensor.size(
-                0
-            ) == num_rows, "num_rows must be the same across a list of input tensors."
-            assert tensor.device == device, "device must be the same across a list of input tensors."
+            msg = "tensor_list must be a list of tensors."
+            assert isinstance(tensor, torch.Tensor), msg
+            msg = "tensor_list must be a list of 2D tensors."
+            assert tensor.dim() == 2, msg
+            msg = "num_rows must be the same across a list of input tensors."
+            assert tensor.size(0) == num_rows, msg
+            msg = "device must be the same across a list of input tensors."
+            assert tensor.device == device, msg
 
         offset_list = []
         accum_idx = 0
@@ -112,8 +111,6 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset_list.append(accum_idx)
 
         num_cols = len(tensor_list)
-        # input: [num_rows, dim1], [num_rows, dim2], ..., [num_rows, dimN]
-        # output: [num_rows, dim1+dim2+...+dimN]
         values = torch.cat(tensor_list, dim=1)
         assert values.size() == (num_rows, offset_list[-1])
         offset = torch.LongTensor(offset_list)

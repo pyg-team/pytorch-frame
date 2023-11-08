@@ -15,7 +15,8 @@ def assert_equal(
     assert len(tensor_list[0]) == met.num_rows
     for i in range(met.num_rows):
         for j in range(met.num_cols):
-            # compare tensor at (row_i, col_j)
+            # Note: tensor_list[j] is a tensor of j-th column of size
+            # [num_rows, dim_emb_j]. See the docs for more info.
             assert torch.allclose(tensor_list[j][i], met[i, j])
 
 
