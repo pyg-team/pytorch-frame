@@ -52,14 +52,14 @@ class StatType(Enum):
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return np.nan
-            return np.mean(flattened[finite_mask])
+            return np.mean(flattened[finite_mask]).item()
 
         elif self == StatType.STD:
             flattened = np.hstack(np.hstack(ser.values))
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return np.nan
-            return np.std(flattened[finite_mask])
+            return np.std(flattened[finite_mask]).item()
 
         elif self == StatType.QUANTILES:
             flattened = np.hstack(np.hstack(ser.values))
