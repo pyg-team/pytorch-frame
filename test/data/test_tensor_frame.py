@@ -101,7 +101,8 @@ def test_empty_tensor_frame():
 
 
 def test_equal_tensor_frame(get_fake_tensor_frame):
-    tf1 = get_fake_tensor_frame(num_rows=10)
+    tf1 = get_fake_tensor_frame(num_rows=10, with_text_embedded=True,
+                                with_text_tokenized=True)
 
     # Test equal
     tf2 = copy.copy(tf1)

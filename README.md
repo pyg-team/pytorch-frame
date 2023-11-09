@@ -52,7 +52,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 * **Datasets**:
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
-* **Pytorch integration**:
+* **PyTorch integration**:
   Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating end-to-end training of PyTorch Frame with downstream PyTorch models.
 
 ## Architecture Overview
@@ -207,10 +207,10 @@ We support the following (but not limited to):
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
     <td align="center">
-      <a href="https://huggingface.co/sentence-transformers">
+      <a href="https://huggingface.co/">
         <img src="docs/source/_figures/hf-logo-with-title.png" alt="Hugging Face" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/ft_transformer_text.py">Sentence Transformers Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Hugging Face Code Example</a>
     </td>
   </tr>
 </table>

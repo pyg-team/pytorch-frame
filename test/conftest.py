@@ -59,6 +59,7 @@ def get_fake_tensor_frame() -> Callable:
                     len(col_names_dict[torch_frame.multicategorical]))
             ] for _ in range(num_rows)]),
         }
+
         y = torch.randn(num_rows)
 
         return TensorFrame(

@@ -5,6 +5,7 @@ from torch.nn import ReLU
 import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
@@ -14,11 +15,14 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEmbeddingEncoder,
     LinearEncoder,
+    LinearModelEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StackEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
+from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
+from torch_frame.typing import TensorData
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -216,7 +220,7 @@ def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (feat_multicat.values[isnan_mask] == -1).all()
 
 
-def test_text_embedding_encoder():
+def test_text_embedded_encoder():
     num_rows = 20
     text_emb_channels = 10
     out_channels = 5
@@ -246,3 +250,55 @@ def test_text_embedding_encoder():
     assert x.shape == (num_rows,
                        len(tensor_frame.col_names_dict[stype.text_embedded]),
                        out_channels)
+
+
+def test_text_tokenized_encoder():
+    num_rows = 20
+    num_hash_bins = 10
+    out_channels = 5
+    text_emb_channels = 20
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=[
+            torch_frame.numerical,
+            torch_frame.categorical,
+            torch_frame.text_tokenized,
+        ],
+        text_tokenizer_cfg=TextTokenizerConfig(
+            text_tokenizer=WhiteSpaceHashTokenizer(
+                num_hash_bins=num_hash_bins), batch_size=None),
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
+    ]
+    model = RandomTextModel(
+        text_emb_channels=text_emb_channels,
+        num_cols=len(tensor_frame.col_names_dict[stype.text_tokenized]))
+    encoder = LinearModelEncoder(
+        out_channels=out_channels,
+        stats_list=stats_list,
+        stype=stype.text_tokenized,
+        in_channels=text_emb_channels,
+        model=model,
+    )
+    x_text = tensor_frame.feat_dict[stype.text_tokenized]
+    x = encoder(x_text)
+    assert x.shape == (num_rows,
+                       len(tensor_frame.col_names_dict[stype.text_tokenized]),
+                       out_channels)
+
+
+class RandomTextModel(torch.nn.Module):
+    def __init__(self, text_emb_channels: int, num_cols: int):
+        self.text_emb_channels = text_emb_channels
+        self.num_cols = num_cols
+        super().__init__()
+
+    def forward(self, feat: TensorData):
+        input_ids = feat['input_ids'].to_dense(fill_value=0)
+        _ = feat['attention_mask'].to_dense(fill_value=0)
+        return torch.rand(size=(input_ids.shape[0], self.num_cols,
+                                self.text_emb_channels))
