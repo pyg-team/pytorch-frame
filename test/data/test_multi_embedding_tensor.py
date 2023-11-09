@@ -159,7 +159,7 @@ def test_cat():
         assert torch.allclose(met_cat.offset, met1.offset)
         assert torch.allclose(met_cat.offset, met2.offset)
 
-    # case: dim=0, different num_cols
+    # case: dim=0 with different num_cols should raise error
     met1, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
         num_cols=3,
@@ -197,7 +197,7 @@ def test_cat():
         expected_offset = torch.tensor([0, 3, 5, 6, 10])
         assert torch.allclose(met_cat.offset, expected_offset)
 
-    # case: dim=0, different num_cols
+    # case: dim=0 with different num_cols should raise error
     met1, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
         num_cols=3,
@@ -211,7 +211,7 @@ def test_cat():
     with pytest.raises(RuntimeError, match="num_rows must be the same"):
         MultiEmbeddingTensor.cat([met1, met2], dim=1)
 
-    # case: different devices
+    # case: different devices should raise error
     met, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
         num_cols=3,
@@ -219,7 +219,7 @@ def test_cat():
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.cat([met.to("cpu"), met.to("meta")], dim=0)
 
-    # case: copy data
+    # case: output should be a copy
     met1, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
         num_cols=3,
@@ -237,3 +237,11 @@ def test_cat():
         assert met1.values[0, 0] != 12345.
         met_cat.offset[0] = -1
         assert met1.offset[0] != -1
+
+    # case: list of non-MultiEmbeddingTensor should raise error
+    with pytest.raises(AssertionError):
+        MultiEmbeddingTensor.cat([object()], dim=0)
+
+    # case: empty list should raise error
+    with pytest.raises(RuntimeError, match="Cannot concatenate"):
+        MultiEmbeddingTensor.cat([], dim=0)

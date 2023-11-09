@@ -114,14 +114,14 @@ class MultiEmbeddingTensor(_MultiTensor):
         dim: int = 0,
     ) -> 'MultiEmbeddingTensor':
         if len(xs) == 0:
-            raise ValueError('Cannot concatenate a sequence of length 0.')
+            raise RuntimeError('Cannot concatenate a sequence of length 0.')
 
-        device = xs[0].device
         for x in xs:
             msg = "xs must be a list of MultiEmbeddingTensor."
             assert isinstance(x, MultiEmbeddingTensor), msg
-            msg = "device must be the same across a sequence of MultiEmbeddingTensor."
-            assert x.device == device, msg
+            msg = ("device must be the same across a sequence of"
+                   " MultiEmbeddingTensor.")
+            assert x.device == xs[0].device, msg
 
         dim = MultiEmbeddingTensor._normalize_dim(dim)
 
