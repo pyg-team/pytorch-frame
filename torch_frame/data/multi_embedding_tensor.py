@@ -113,6 +113,43 @@ class MultiEmbeddingTensor(_MultiTensor):
         xs: Sequence['MultiEmbeddingTensor'],
         dim: int = 0,
     ) -> 'MultiEmbeddingTensor':
+        """Concatenates a sequence of :class:`MultiEmbeddingTensor` along the
+        specified dimension.
+
+        Args:
+            xs (Sequence[MultiEmbeddingTensor]): A sequence of
+                :class:`MultiEmbeddingTensor` to be concatenated.
+            dim (int): The dimension to concatenate along.
+
+        Returns:
+            MultiEmbeddingTensor: Concatenated multi embedding tensor.
+
+        Example:
+            >>> from torch_frame.data import MultiEmbeddingTensor
+            >>> tensor_list1 = [
+            ...     torch.tensor([[0, 1, 2], [6, 7, 8]]),  # col1
+            ...     torch.tensor([[3, 4], [9, 10]]),       # col2
+            ...     torch.tensor([[5], [11]]),             # col3
+            ... ]
+            >>> tenosor_list2 = [
+            ...     torch.tensor([[12, 13, 14]]),          # col1
+            ...     torch.tensor([[15, 16]]),              # col2
+            ...     torch.tensor([[17]]),                  # col3
+            ... ]
+            >>> met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
+            >>> met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
+            >>> met1
+            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
+            >>> met2
+            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
+            >>> out = MultiEmbeddingTensor.cat([met1, met2], dim=0)
+            >>> out
+            MultiEmbeddingTensor(num_rows=3, num_cols=3, device='cpu')
+            >>> out.values
+            tensor([[ 0,  1,  2,  3,  4,  5],
+                    [ 6,  7,  8,  9, 10, 11],
+                    [12, 13, 14, 15, 16, 17]])
+        """
         if len(xs) == 0:
             raise RuntimeError('Cannot concatenate a sequence of length 0.')
 
