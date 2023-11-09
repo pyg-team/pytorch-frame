@@ -197,7 +197,7 @@ def test_cat():
         expected_offset = torch.tensor([0, 3, 5, 6, 10])
         assert torch.allclose(met_cat.offset, expected_offset)
 
-    # case: dim=0 with different num_cols should raise error
+    # case: dim=1 with different num_cols should raise error
     met1, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
         num_cols=3,
@@ -245,3 +245,11 @@ def test_cat():
     # case: empty list should raise error
     with pytest.raises(RuntimeError, match="Cannot concatenate"):
         MultiEmbeddingTensor.cat([], dim=0)
+
+    # case: unsupported dim should raise error
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    with pytest.raises(IndexError, match="Dimension out of range"):
+        MultiEmbeddingTensor.cat([met], dim=3)
