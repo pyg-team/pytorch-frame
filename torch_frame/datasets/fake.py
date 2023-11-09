@@ -81,7 +81,7 @@ class FakeDataset(torch_frame.data.Dataset):
             # TODO: Currently having multiple multi-categorical columns
             # is not supported. Please add test case for multiple
             # multi-categorical columns when it's added.
-            for col_name in ['multicat_1']:
+            for col_name in ['multicat_1', 'multicat_2']:
                 arr = np.random.randint(0, 3, size=(num_rows, 2))
                 arr = arr.astype(str)
                 arr = np.apply_along_axis(lambda x: ','.join(x), 1, arr)

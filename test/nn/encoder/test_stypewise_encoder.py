@@ -106,4 +106,5 @@ def test_stypewise_feature_encoder(
         'text_tokenized_1',
         'text_tokenized_2',
         'multicat_1',
+        'multicat_2',
     ]
