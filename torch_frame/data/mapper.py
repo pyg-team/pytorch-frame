@@ -6,8 +6,8 @@ import torch
 from torch import Tensor
 from tqdm import tqdm
 
-from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
 
