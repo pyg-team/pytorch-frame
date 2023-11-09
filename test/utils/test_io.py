@@ -21,8 +21,11 @@ def teardown_module():
         shutil.rmtree(TEST_DIR.name, ignore_errors=True)
 
 
-def get_fake_dataset(num_rows: int, text_embedder_cfg: TextEmbedderConfig,
-                     text_tokenizer_cfg: TextTokenizerConfig) -> FakeDataset:
+def get_fake_dataset(
+    num_rows: int,
+    text_embedder_cfg: TextEmbedderConfig,
+    text_tokenizer_cfg: TextTokenizerConfig,
+) -> FakeDataset:
     stypes = [
         torch_frame.numerical,
         torch_frame.categorical,
@@ -47,9 +50,7 @@ def test_dataset_cache():
     text_embedder_cfg = TextEmbedderConfig(
         text_embedder=HashTextEmbedder(out_channels))
     text_tokenizer_cfg = TextTokenizerConfig(
-        text_tokenizer=WhiteSpaceHashTokenizer(),
-        batch_size=None,
-    )
+        text_tokenizer=WhiteSpaceHashTokenizer())
     dataset = get_fake_dataset(
         num_rows,
         text_embedder_cfg,
