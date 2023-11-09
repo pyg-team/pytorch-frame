@@ -183,8 +183,8 @@ class TensorFrame:
                     return False
                 if not MultiNestedTensor.allclose(self_feat, other_feat):
                     return False
-            elif isinstance(self_feat, Dict):
-                if not isinstance(other_feat, Dict):
+            elif isinstance(self_feat, dict):
+                if not isinstance(other_feat, dict):
                     return False
                 if self_feat.keys() != other_feat.keys():
                     return False
