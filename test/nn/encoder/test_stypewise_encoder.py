@@ -2,6 +2,7 @@ import pytest
 
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
@@ -9,10 +10,16 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEmbeddingEncoder,
     LinearEncoder,
+    LinearModelEncoder,
     LinearPeriodicEncoder,
+    MultiCategoricalEmbeddingEncoder,
     StypeWiseFeatureEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
+from torch_frame.testing.text_tokenizer import (
+    RandomTextModel,
+    WhiteSpaceHashTokenizer,
+)
 
 
 @pytest.mark.parametrize('encoder_cat_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -23,24 +30,45 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
         'n_bins': 4
     }),
 ])
+@pytest.mark.parametrize('encoder_multicategorical_cls_kwargs', [
+    (MultiCategoricalEmbeddingEncoder, {}),
+])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
     (LinearEmbeddingEncoder, {
         'in_channels': 12
     }),
 ])
+@pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
+    (LinearModelEncoder, {
+        'model': RandomTextModel(12, 2),
+        'in_channels': 12,
+    }),
+])
 def test_stypewise_feature_encoder(
     encoder_cat_cls_kwargs,
     encoder_num_cls_kwargs,
+    encoder_multicategorical_cls_kwargs,
     encoder_text_embedded_cls_kwargs,
+    encoder_text_tokenized_cls_kwargs,
 ):
     num_rows = 10
     dataset: Dataset = FakeDataset(
-        num_rows=num_rows, with_nan=False,
-        stypes=[stype.categorical, stype.numerical,
-                stype.text_embedded], text_embedder_cfg=TextEmbedderConfig(
-                    text_embedder=HashTextEmbedder(
-                        encoder_text_embedded_cls_kwargs[1]['in_channels']),
-                    batch_size=None))
+        num_rows=num_rows,
+        with_nan=False,
+        stypes=[
+            stype.categorical, stype.numerical, stype.multicategorical,
+            stype.text_embedded, stype.text_tokenized
+        ],
+        text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(
+                encoder_text_embedded_cls_kwargs[1]['in_channels']),
+            batch_size=None,
+        ),
+        text_tokenizer_cfg=TextTokenizerConfig(
+            text_tokenizer=WhiteSpaceHashTokenizer(),
+            batch_size=None,
+        ),
+    )
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
     out_channels = 8
@@ -54,9 +82,15 @@ def test_stypewise_feature_encoder(
             encoder_cat_cls_kwargs[0](**encoder_cat_cls_kwargs[1]),
             stype.numerical:
             encoder_num_cls_kwargs[0](**encoder_num_cls_kwargs[1]),
+            stype.multicategorical:
+            encoder_multicategorical_cls_kwargs[0](
+                **encoder_multicategorical_cls_kwargs[1]),
             stype.text_embedded:
             encoder_text_embedded_cls_kwargs[0](
                 **encoder_text_embedded_cls_kwargs[1]),
+            stype.text_tokenized:
+            encoder_text_tokenized_cls_kwargs[0](
+                **encoder_text_tokenized_cls_kwargs[1]),
         },
     )
     x, col_names = encoder(tensor_frame)
@@ -67,11 +101,9 @@ def test_stypewise_feature_encoder(
         'num_3',
         'cat_1',
         'cat_2',
-        'multicat_1',
-        'seq_num_1',
-        'seq_num_2',
         'text_embedded_1',
         'text_embedded_2',
         'text_tokenized_1',
         'text_tokenized_2',
+        'multicat_1',
     ]

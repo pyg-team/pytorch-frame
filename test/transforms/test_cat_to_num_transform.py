@@ -18,7 +18,8 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     dataset: Dataset = FakeDataset(
         num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
         task_type=TaskType.MULTICLASS_CLASSIFICATION, create_split=True)
-    dataset.df['x'] = 0
+    # (TODO) Check why we did this
+    dataset.df['cat_1'] = 0
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     categorical_features = dataset.tensor_frame.col_names_dict[
@@ -75,7 +76,8 @@ def test_cat_to_num_transform_with_loading(task_type):
     dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)
-    dataset.df['x'] = 0
+    # (TODO) Check why we did this
+    dataset.df['cat_1'] = 0
     dataset.materialize()
     total_cols = len(dataset.feat_cols)
     total_numerical_cols = len(

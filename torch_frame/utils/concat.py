@@ -5,7 +5,9 @@ import torch
 from torch import Tensor
 
 import torch_frame
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.tensor_frame import TensorFrame
+from torch_frame.typing import TensorData
 
 
 def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:
@@ -35,6 +37,30 @@ def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:
             f"`along` must be either 'row' or 'col' (got {along}).")
 
 
+def _cat_heler(
+    tf_list: List[TensorFrame],
+    dim: int,
+) -> Dict[torch_frame.stype, TensorData]:
+    feat_list_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
+    for tf in tf_list:
+        for stype in tf.col_names_dict.keys():
+            feat_list_dict[stype].append(tf.feat_dict[stype])
+
+    feat_dict: Dict[torch_frame.stype, TensorData] = {}
+    for stype, feat_list in feat_list_dict.items():
+        if stype.use_multi_nested_tensor:
+            feat_dict[stype] = MultiNestedTensor.cat(feat_list, dim=dim)
+        elif stype.use_dict_multi_nested_tensor:
+            feat: Dict[str, MultiNestedTensor] = {}
+            for name in feat_list[0].keys():
+                feat[name] = MultiNestedTensor.cat(
+                    [feat[name] for feat in feat_list], dim=dim)
+            feat_dict[stype] = feat
+        else:
+            feat_dict[stype] = torch.cat(feat_list, dim=dim)
+    return feat_dict
+
+
 def _cat_row(tf_list: List[TensorFrame]) -> TensorFrame:
     col_names_dict = tf_list[0].col_names_dict
     for tf in tf_list[1:]:
@@ -56,14 +82,10 @@ def _cat_row(tf_list: List[TensorFrame]) -> TensorFrame:
                 "types of given tensor frames do not match (expect all "
                 "`Tensor`).")
 
-    feat_dict: Dict[torch_frame.stype, List[Tensor]] = {}
-    for stype in col_names_dict.keys():
-        feat_dict[stype] = torch.cat([tf.feat_dict[stype] for tf in tf_list],
-                                     dim=0)
     y = None
     if tf_list[0].y is not None:
         y = torch.cat([tf.y for tf in tf_list], dim=0)
-    return TensorFrame(feat_dict=feat_dict,
+    return TensorFrame(feat_dict=_cat_heler(tf_list, dim=0),
                        col_names_dict=tf_list[0].col_names_dict, y=y)
 
 
@@ -86,12 +108,9 @@ def _cat_col(tf_list: List[TensorFrame]) -> TensorFrame:
             "Cannot perform cat(..., along='col') since given tensor frames "
             "contain more than one tensor frame with non-None y attribute.")
 
-    # Gather all stypes
-    feat_list_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
     col_names_dict: Dict[torch_frame.stype, List[str]] = defaultdict(list)
     for tf in tf_list:
         for stype in tf.col_names_dict.keys():
-            feat_list_dict[stype].append(tf.feat_dict[stype])
             col_names_dict[stype].extend(tf.col_names_dict[stype])
     # Check duplicates in col_names_dict
     for stype, col_names in col_names_dict.items():
@@ -100,8 +119,6 @@ def _cat_col(tf_list: List[TensorFrame]) -> TensorFrame:
             raise RuntimeError(
                 f"Cannot perform cat(..., along='col') since {stype} contains "
                 f"duplicated column names: {duplicates}.")
-    feat_dict = {
-        stype: torch.cat(feat_list, dim=1)
-        for stype, feat_list in feat_list_dict.items()
-    }
-    return TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict, y=y)
+
+    return TensorFrame(feat_dict=_cat_heler(tf_list, dim=1),
+                       col_names_dict=col_names_dict, y=y)
