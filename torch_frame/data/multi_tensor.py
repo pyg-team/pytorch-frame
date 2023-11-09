@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Tuple
 
 import torch
 from torch import Tensor
@@ -138,11 +138,3 @@ class _MultiTensor:
                               equal_nan=equal_nan):
             return False
         return True
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            'num_rows': self.num_rows,
-            'num_cols': self.num_cols,
-            'values': self.values,
-            'offset': self.offset
-        }
