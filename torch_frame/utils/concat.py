@@ -112,6 +112,7 @@ def _cat_col(tf_list: List[TensorFrame]) -> TensorFrame:
     for tf in tf_list:
         for stype in tf.col_names_dict.keys():
             col_names_dict[stype].extend(tf.col_names_dict[stype])
+
     # Check duplicates in col_names_dict
     for stype, col_names in col_names_dict.items():
         duplicates = _get_duplicates(col_names)
