@@ -51,6 +51,7 @@ class StatType(Enum):
             flattened = np.hstack(np.hstack(ser.values))
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
+                # NOTE: We may just error out here if eveything is NaN
                 return np.nan
             return np.mean(flattened[finite_mask]).item()
 
@@ -104,6 +105,7 @@ def compute_col_stats(
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
 
     if ser.isnull().all():
+        # NOTE: We may just error out here if eveything is NaN
         stats = {
             stat_type: _default_values[stat_type]
             for stat_type in StatType.stats_for_stype(stype)
