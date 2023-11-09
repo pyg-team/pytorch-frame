@@ -1,4 +1,4 @@
-from typing import Any, List, Union
+from typing import Any, List, Sequence, Union
 
 import torch
 from torch import Tensor
@@ -114,3 +114,51 @@ class MultiEmbeddingTensor(_MultiTensor):
         values = torch.cat(tensor_list, dim=1)
         offset = torch.LongTensor(offset_list)
         return cls(num_rows, num_cols, values, offset)
+
+    @staticmethod
+    def cat(
+        xs: Sequence['MultiEmbeddingTensor'],
+        dim: int = 0,
+    ) -> 'MultiEmbeddingTensor':
+        if len(xs) == 0:
+            raise ValueError('Cannot concatenate a sequence of length 0.')
+
+        device = xs[0].device
+        for x in xs:
+            msg = "xs must be a list of MultiEmbeddingTensor."
+            assert isinstance(x, MultiEmbeddingTensor), msg
+            msg = "device must be the same across a sequence of MultiEmbeddingTensor."
+            assert x.device == device, msg
+
+        dim = MultiEmbeddingTensor._normalize_dim(dim)
+
+        if dim == 0:
+            # values: [num_rows_1, dim1+dim2], [num_rows_2, dim1+dim2]
+            # values: [num_rows_1+num_rows_2, dim1+dim2]
+            num_rows = sum(x.num_rows for x in xs)
+            num_cols = xs[0].num_cols
+            for x in xs[1:]:
+                if x.num_cols != num_cols:
+                    raise RuntimeError(
+                        "num_cols must be the same across a list of input "
+                        "multi embedding tensors.")
+            values = torch.cat([x.values for x in xs], dim=0)
+            offset = xs[0].offset  # TODO: clone()
+            return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
+
+        elif dim == 1:
+            # values: [num_rows, dim1], [num_rows, dim2]
+            # values: [num_rows, dim1+dim2]
+            num_rows = xs[0].num_rows
+            for x in xs[1:]:
+                if x.num_rows != num_rows:
+                    raise RuntimeError(
+                        "num_rows must be the same across a list of input "
+                        "multi embedding tensors.")
+            num_cols = sum(x.num_cols for x in xs)
+            values = torch.cat([x.values for x in xs], dim=1)
+            offset_list = [0]
+            for x in xs:
+                offset_list.extend(x.offset[1:] + offset_list[-1])
+            offset = torch.LongTensor(offset_list)
+            return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
