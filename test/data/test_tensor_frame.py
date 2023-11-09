@@ -10,16 +10,16 @@ from torch_frame import TensorFrame
 def test_tensor_frame_basics(get_fake_tensor_frame):
     tf = get_fake_tensor_frame(num_rows=10)
     assert tf.num_rows == len(tf) == 10
-
     assert str(tf) == (
         "TensorFrame(\n"
-        "  num_cols=12,\n"
+        "  num_cols=14,\n"
         "  num_rows=10,\n"
         "  categorical (3): ['cat_1', 'cat_2', 'cat_3'],\n"
         "  numerical (2): ['num_1', 'num_2'],\n"
         "  multicategorical (2): ['multicat_1', 'multicat_2'],\n"
         "  text_embedded (3): ['text_embedded_1', 'text_embedded_2',"
         " 'text_embedded_3'],\n"
+        "  text_tokenized (2): ['text_tokenized_1', 'text_tokenized_2'],\n"
         "  sequence_numerical (2): ['seq_num_1', 'seq_num_2'],\n"
         "  has_target=True,\n"
         "  device='cpu',\n"

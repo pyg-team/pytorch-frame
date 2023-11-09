@@ -18,8 +18,8 @@ def get_fake_tensor_frame() -> Callable:
             torch_frame.multicategorical: ['multicat_1', 'multicat_2'],
             torch_frame.text_embedded:
             ['text_embedded_1', 'text_embedded_2', 'text_embedded_3'],
-            # torch_frame.text_tokenized:
-            # ['text_tokenized_1', 'text_tokenized_2'],
+            torch_frame.text_tokenized:
+            ['text_tokenized_1', 'text_tokenized_2'],
             torch_frame.sequence_numerical: ['seq_num_1', 'seq_num_2'],
         }
         feat_dict = {
@@ -39,20 +39,20 @@ def get_fake_tensor_frame() -> Callable:
             torch.randn(size=(num_rows,
                               len(col_names_dict[torch_frame.text_embedded]),
                               16)),
-            # torch_frame.text_tokenized: {
-            #     'input_id':
-            #     MultiNestedTensor.from_tensor_mat([[
-            #         torch.randint(0, 5, size=(random.randint(0, 10), ))
-            #         for _ in range(
-            #             len(col_names_dict[torch_frame.text_tokenized]))
-            #     ] for _ in range(num_rows)]),
-            #     'mask':
-            #     MultiNestedTensor.from_tensor_mat([[
-            #         torch.randint(0, 5, size=(random.randint(0, 10), ))
-            #         for _ in range(
-            #             len(col_names_dict[torch_frame.text_tokenized]))
-            #     ] for _ in range(num_rows)]),
-            # },
+            torch_frame.text_tokenized: {
+                'input_id':
+                MultiNestedTensor.from_tensor_mat([[
+                    torch.randint(0, 5, size=(random.randint(0, 10), ))
+                    for _ in range(
+                        len(col_names_dict[torch_frame.text_tokenized]))
+                ] for _ in range(num_rows)]),
+                'mask':
+                MultiNestedTensor.from_tensor_mat([[
+                    torch.randint(0, 5, size=(random.randint(0, 10), ))
+                    for _ in range(
+                        len(col_names_dict[torch_frame.text_tokenized]))
+                ] for _ in range(num_rows)]),
+            },
             torch_frame.sequence_numerical:
             MultiNestedTensor.from_tensor_mat([[
                 torch.randn(random.randint(0, 10)) for _ in range(

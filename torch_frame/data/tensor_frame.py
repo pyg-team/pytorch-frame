@@ -186,7 +186,7 @@ class TensorFrame:
             elif isinstance(self_feat, Dict):
                 if not isinstance(other_feat, Dict):
                     return False
-                if not self_feat.keys() != other_feat.keys():
+                if self_feat.keys() != other_feat.keys():
                     return False
                 for feat_name in self_feat.keys():
                     if not MultiNestedTensor.allclose(self_feat[feat_name],
