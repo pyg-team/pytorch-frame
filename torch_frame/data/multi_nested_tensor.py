@@ -39,17 +39,10 @@ class MultiNestedTensor(_MultiTensor):
         File "<stdin>", line 1, in <module>
         ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
     """
-    def __init__(
-        self,
-        num_rows: int,
-        num_cols: int,
-        values: Tensor,
-        offset: Tensor,
-    ) -> None:
-        super().__init__(num_rows, num_cols, values, offset)
-        assert offset[0] == 0
-        assert offset[-1] == len(values)
-        assert len(offset) == num_rows * num_cols + 1
+    def validate(self):
+        assert self.offset[0] == 0
+        assert self.offset[-1] == len(self.values)
+        assert len(self.offset) == self.num_rows * self.num_cols + 1
 
     @classmethod
     def from_tensor_mat(

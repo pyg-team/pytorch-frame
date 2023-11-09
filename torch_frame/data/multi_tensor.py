@@ -1,22 +1,24 @@
 import copy
-from typing import Any, Callable, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 from torch import Tensor
 
 
+@dataclass(repr=False)
 class _MultiTensor:
-    def __init__(
-        self,
-        num_rows: int,
-        num_cols: int,
-        values: Tensor,
-        offset: Tensor,
-    ) -> None:
-        self.num_rows = num_rows
-        self.num_cols = num_cols
-        self.values = values
-        self.offset = offset
+    num_rows: int
+    num_cols: int
+    values: Tensor
+    offset: Tensor
+
+    def __post_init__(self):
+        self.validate()
+
+    def validate(self):
+        r"""Validates the :class:`_MultiTensor` object."""
+        pass
 
     def __setitem__(self, index: Any, values: Any) -> None:
         raise RuntimeError(
@@ -110,12 +112,15 @@ class _MultiTensor:
         cls,
         tensor1: '_MultiTensor',
         tensor2: '_MultiTensor',
+        equal_nan: bool = False,
     ) -> bool:
         r"""Returns whether given two tensors are all close or not.
 
         Args:
             tensor1 (_MultiTensor): The first tensor.
             tensor2 (_MultiTensor): The second tensor.
+            equal_nan (bool): If :obj:`True`, then two :obj:`NaN`s will be
+                considered equal (default: :obj:`False`).
 
         Returns:
             bool: Whether the given two tensors are close or not.
@@ -124,10 +129,20 @@ class _MultiTensor:
             return False
         if tensor1.values.shape != tensor2.values.shape:
             return False
-        if not torch.allclose(tensor1.values, tensor2.values):
+        if not torch.allclose(tensor1.values, tensor2.values,
+                              equal_nan=equal_nan):
             return False
         if tensor1.offset.shape != tensor2.offset.shape:
             return False
-        if not torch.allclose(tensor1.offset, tensor2.offset):
+        if not torch.allclose(tensor1.offset, tensor2.offset,
+                              equal_nan=equal_nan):
             return False
         return True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'num_rows': self.num_rows,
+            'num_cols': self.num_cols,
+            'values': self.values,
+            'offset': self.offset
+        }

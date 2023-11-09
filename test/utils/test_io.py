@@ -3,13 +3,10 @@ import os.path as osp
 import shutil
 import tempfile
 
-import torch
-
 import torch_frame
 from torch_frame import load, save
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
-from torch_frame.data import TensorFrame
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
@@ -22,16 +19,6 @@ TEST_SAVE_LOAD_NAME = 'tf.pt'
 def teardown_module():
     if osp.exists(TEST_DIR.name):
         shutil.rmtree(TEST_DIR.name, ignore_errors=True)
-
-
-def compare_tfs(tf_a: TensorFrame, tf_b: TensorFrame):
-    assert torch.equal(tf_a.y, tf_b.y)
-    assert len(tf_a.feat_dict) == len(tf_b.feat_dict)
-    for stype in tf_a.feat_dict:
-        assert torch.equal(tf_a.feat_dict[stype], tf_b.feat_dict[stype])
-    assert len(tf_a.col_names_dict) == len(tf_b.col_names_dict)
-    for stype in tf_a.col_names_dict:
-        assert tf_a.col_names_dict[stype] == tf_b.col_names_dict[stype]
 
 
 def get_fake_dataset(num_rows: int, text_embedder_cfg: TextEmbedderConfig,
@@ -83,11 +70,11 @@ def test_dataset_cache():
     new_dataset.materialize(path=path)
     assert new_dataset.is_materialized
     assert dataset.col_stats == new_dataset.col_stats
-    compare_tfs(dataset.tensor_frame, new_dataset.tensor_frame)
+    assert dataset.tensor_frame == new_dataset.tensor_frame
 
     # Test `tensor_frame` converter
     tf = new_dataset._to_tensor_frame_converter(dataset.df)
-    compare_tfs(dataset.tensor_frame, tf)
+    assert dataset.tensor_frame == tf
 
     # Remove saved tensor frame object
     os.remove(path)
@@ -123,4 +110,4 @@ def test_save_load_tensor_frame():
 
     tf, col_stats = load(path)
     assert dataset.col_stats == col_stats
-    compare_tfs(dataset.tensor_frame, tf)
+    assert dataset.tensor_frame == tf
