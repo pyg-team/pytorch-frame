@@ -345,12 +345,13 @@ class EmbeddingTensorMapper(TensorMapper):
         # TODO Think of a "less hacky" way to do this.
         dtype = str(torch.get_default_dtype()).split('.')[-1]
         values = ser.explode().astype(dtype).values
-        values = torch.tensor(values).view(len(ser), -1).contiguous()
+        values = torch.from_numpy(values).view(len(ser), -1)
         return MultiEmbeddingTensor(
             num_rows=len(ser),
             num_cols=1,
             values=values,
             offset=torch.tensor([0, len(ser[0])]),
-        )
-    def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
+        ).to(device)
+
+    def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
