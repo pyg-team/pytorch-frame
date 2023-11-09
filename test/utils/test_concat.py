@@ -22,10 +22,22 @@ def test_cat_tensor_frames_along_col(get_fake_tensor_frame):
     col_names_dict1 = {}
     col_names_dict2 = {}
     for stype in stypes:
-        feat_dict1[stype] = tf.feat_dict[stype][:, :1]
-        col_names_dict1[stype] = tf.col_names_dict[stype][:1]
-        feat_dict2[stype] = tf.feat_dict[stype][:, 1:]
-        col_names_dict2[stype] = tf.col_names_dict[stype][1:]
+        if stype.use_dict_multi_nested_tensor:
+            feat_dict1[stype] = {
+                name: tf.feat_dict[stype][name][:, :1]
+                for name in tf.feat_dict[stype].keys()
+            }
+            col_names_dict1[stype] = tf.col_names_dict[stype][:1]
+            feat_dict2[stype] = {
+                name: tf.feat_dict[stype][name][:, 1:]
+                for name in tf.feat_dict[stype].keys()
+            }
+            col_names_dict2[stype] = tf.col_names_dict[stype][1:]
+        else:
+            feat_dict1[stype] = tf.feat_dict[stype][:, :1]
+            col_names_dict1[stype] = tf.col_names_dict[stype][:1]
+            feat_dict2[stype] = tf.feat_dict[stype][:, 1:]
+            col_names_dict2[stype] = tf.col_names_dict[stype][1:]
 
     tf1 = TensorFrame(feat_dict1, col_names_dict1, tf.y)
     tf2 = TensorFrame(feat_dict2, col_names_dict2, None)

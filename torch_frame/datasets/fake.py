@@ -63,14 +63,14 @@ class FakeDataset(torch_frame.data.Dataset):
                 "multiclass classification or regression type, but"
                 f" got {task_type}")
         if stype.numerical in stypes:
-            for col_name in ['a', 'b', 'c']:
+            for col_name in ['num_1', 'num_2', 'num_3']:
                 arr = np.random.randn(num_rows)
                 if with_nan:
                     arr[0::2] = np.nan
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.numerical
         if stype.categorical in stypes:
-            for col_name in ['x', 'y']:
+            for col_name in ['cat_1', 'cat_2']:
                 arr = np.random.randint(0, 3, size=(num_rows, ))
                 if with_nan:
                     arr = arr.astype(np.float32)
@@ -81,7 +81,7 @@ class FakeDataset(torch_frame.data.Dataset):
             # TODO: Currently having multiple multi-categorical columns
             # is not supported. Please add test case for multiple
             # multi-categorical columns when it's added.
-            for col_name in ['mult_1']:
+            for col_name in ['multicat_1', 'multicat_2']:
                 arr = np.random.randint(0, 3, size=(num_rows, 2))
                 arr = arr.astype(str)
                 arr = np.apply_along_axis(lambda x: ','.join(x), 1, arr)

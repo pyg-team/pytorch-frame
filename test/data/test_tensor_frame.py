@@ -10,15 +10,20 @@ from torch_frame import TensorFrame
 def test_tensor_frame_basics(get_fake_tensor_frame):
     tf = get_fake_tensor_frame(num_rows=10)
     assert tf.num_rows == len(tf) == 10
-
-    assert str(tf) == ("TensorFrame(\n"
-                       "  num_cols=5,\n"
-                       "  num_rows=10,\n"
-                       "  categorical (3): ['a', 'b', 'c'],\n"
-                       "  numerical (2): ['x', 'y'],\n"
-                       "  has_target=True,\n"
-                       "  device='cpu',\n"
-                       ")")
+    assert str(tf) == (
+        "TensorFrame(\n"
+        "  num_cols=14,\n"
+        "  num_rows=10,\n"
+        "  categorical (3): ['cat_1', 'cat_2', 'cat_3'],\n"
+        "  numerical (2): ['num_1', 'num_2'],\n"
+        "  multicategorical (2): ['multicat_1', 'multicat_2'],\n"
+        "  text_embedded (3): ['text_embedded_1', 'text_embedded_2',"
+        " 'text_embedded_3'],\n"
+        "  text_tokenized (2): ['text_tokenized_1', 'text_tokenized_2'],\n"
+        "  sequence_numerical (2): ['seq_num_1', 'seq_num_2'],\n"
+        "  has_target=True,\n"
+        "  device='cpu',\n"
+        ")")
 
 
 def test_tensor_frame_error():
@@ -27,8 +32,8 @@ def test_tensor_frame_error():
         torch_frame.numerical: torch.randn(size=(10, 2)),
     }
     col_names_dict = {
-        torch_frame.categorical: ['a', 'b', 'c'],
-        torch_frame.numerical: ['x', 'y'],
+        torch_frame.categorical: ['cat_1', 'cat_2', 'cat_3'],
+        torch_frame.numerical: ['num_1', 'num_2'],
     }
     y = torch.randn(10)
 
@@ -83,21 +88,20 @@ def test_empty_tensor_frame():
     }
     col_names_dict = {
         torch_frame.categorical: [],
-        torch_frame.numerical: ['x', 'y'],
+        torch_frame.numerical: ['num_1', 'num_2'],
     }
     with pytest.raises(RuntimeError, match='Empty columns'):
         TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
 
     col_names_dict = {
-        torch_frame.numerical: ['x', 'y'],
+        torch_frame.numerical: ['num_1', 'num_2'],
     }
     with pytest.raises(RuntimeError, match='The keys of feat_dict'):
         TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
 
 
 def test_equal_tensor_frame(get_fake_tensor_frame):
-    tf1 = get_fake_tensor_frame(num_rows=10, with_text_embedded=True,
-                                with_text_tokenized=True)
+    tf1 = get_fake_tensor_frame(num_rows=10)
 
     # Test equal
     tf2 = copy.copy(tf1)

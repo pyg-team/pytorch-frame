@@ -104,3 +104,30 @@ class _MultiTensor:
                 "Dimension out of range (expected to be in range of [-2, 1],"
                 f" but got {dim}.")
         return dim
+
+    @classmethod
+    def allclose(
+        cls,
+        tensor1: '_MultiTensor',
+        tensor2: '_MultiTensor',
+    ) -> bool:
+        r"""Returns whether given two tensors are all close or not.
+
+        Args:
+            tensor1 (_MultiTensor): The first tensor.
+            tensor2 (_MultiTensor): The second tensor.
+
+        Returns:
+            bool: Whether the given two tensors are close or not.
+        """
+        if tensor1.shape != tensor2.shape:
+            return False
+        if tensor1.values.shape != tensor2.values.shape:
+            return False
+        if not torch.allclose(tensor1.values, tensor2.values):
+            return False
+        if tensor1.offset.shape != tensor2.offset.shape:
+            return False
+        if not torch.allclose(tensor1.offset, tensor2.offset):
+            return False
+        return True

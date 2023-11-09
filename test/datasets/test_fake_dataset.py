@@ -35,12 +35,13 @@ def test_fake_dataset(with_nan):
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
     assert dataset.feat_cols == [
-        'a',
-        'b',
-        'c',
-        'x',
-        'y',
-        'mult_1',
+        'num_1',
+        'num_2',
+        'num_3',
+        'cat_1',
+        'cat_2',
+        'multicat_1',
+        'multicat_2',
         'seq_num_1',
         'seq_num_2',
         'text_embedded_1',
@@ -71,7 +72,7 @@ def test_fake_dataset(with_nan):
     feat_multicat = tensor_frame.feat_dict[torch_frame.multicategorical]
     assert isinstance(feat_multicat, MultiNestedTensor)
     assert feat_multicat.size(0) == num_rows
-    assert feat_multicat.size(1) == 1
+    assert feat_multicat.size(1) == 2
 
     feat_sequence_numerical = tensor_frame.feat_dict[
         torch_frame.sequence_numerical]

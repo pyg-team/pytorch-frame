@@ -7,6 +7,7 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
@@ -45,8 +46,8 @@ class TensorFrame:
                 torch_frame.categorical: torch.randint(0, 5, (10, 3)),
             },
             col_names_dict = {
-                torch_frame.numerical: ['x', 'y'],
-                torch_frame.categorical: ['a', 'b', 'c'],
+                torch_frame.numerical: ['num_1', 'num_2'],
+                torch_frame.categorical: ['cat_1', 'cat_2', 'cat_3'],
 
             },
         })
@@ -168,26 +169,28 @@ class TensorFrame:
         if self.col_names_dict != other.col_names_dict:
             return False
         # Match feat_dict
-        for stype_name in self.feat_dict.keys():
-            self_feat = self.feat_dict[stype_name]
+        for stype_name, self_feat in self.feat_dict.items():
             other_feat = other.feat_dict[stype_name]
-            if type(self_feat) != type(other_feat):
-                return False
-            if not isinstance(self_feat, dict):
+            if isinstance(self_feat, Tensor):
+                if not isinstance(other_feat, Tensor):
+                    return False
                 if self_feat.shape != other_feat.shape:
                     return False
                 if not torch.allclose(self_feat, other_feat):
                     return False
-            else:
-                for key in self_feat:
-                    self_feat_value = self_feat[key]
-                    other_feat_value = other_feat[key]
-                    if self_feat_value.shape != other_feat_value.shape:
-                        return False
-                    # TODO: Support allclose for MultiNestedTensor
-                    if isinstance(self_feat_value,
-                                  Tensor) and not torch.allclose(
-                                      self_feat_value, other_feat_value):
+            elif isinstance(self_feat, MultiNestedTensor):
+                if not isinstance(other_feat, MultiNestedTensor):
+                    return False
+                if not MultiNestedTensor.allclose(self_feat, other_feat):
+                    return False
+            elif isinstance(self_feat, dict):
+                if not isinstance(other_feat, dict):
+                    return False
+                if self_feat.keys() != other_feat.keys():
+                    return False
+                for feat_name in self_feat.keys():
+                    if not MultiNestedTensor.allclose(self_feat[feat_name],
+                                                      other_feat[feat_name]):
                         return False
         return True
 

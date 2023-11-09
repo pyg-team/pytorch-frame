@@ -21,8 +21,10 @@ from torch_frame.nn import (
     StackEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
-from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
-from torch_frame.typing import TensorData
+from torch_frame.testing.text_tokenizer import (
+    RandomTextModel,
+    WhiteSpaceHashTokenizer,
+)
 
 
 @pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
@@ -289,16 +291,3 @@ def test_text_tokenized_encoder():
     assert x.shape == (num_rows,
                        len(tensor_frame.col_names_dict[stype.text_tokenized]),
                        out_channels)
-
-
-class RandomTextModel(torch.nn.Module):
-    def __init__(self, text_emb_channels: int, num_cols: int):
-        self.text_emb_channels = text_emb_channels
-        self.num_cols = num_cols
-        super().__init__()
-
-    def forward(self, feat: TensorData):
-        input_ids = feat['input_ids'].to_dense(fill_value=0)
-        _ = feat['attention_mask'].to_dense(fill_value=0)
-        return torch.rand(size=(input_ids.shape[0], self.num_cols,
-                                self.text_emb_channels))
