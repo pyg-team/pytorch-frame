@@ -125,9 +125,10 @@ class MultiEmbeddingTensor(_MultiTensor):
 
         dim = MultiEmbeddingTensor._normalize_dim(dim)
 
+        if len(xs) == 1:
+            return xs[0].clone()
+
         if dim == 0:
-            # values: [num_rows_1, dim1+dim2], [num_rows_2, dim1+dim2]
-            # values: [num_rows_1+num_rows_2, dim1+dim2]
             num_rows = sum(x.num_rows for x in xs)
             num_cols = xs[0].num_cols
             for x in xs[1:]:
@@ -136,12 +137,10 @@ class MultiEmbeddingTensor(_MultiTensor):
                         "num_cols must be the same across a list of input "
                         "multi embedding tensors.")
             values = torch.cat([x.values for x in xs], dim=0)
-            offset = xs[0].offset  # TODO: clone()
+            offset = xs[0].offset.clone()
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
 
         elif dim == 1:
-            # values: [num_rows, dim1], [num_rows, dim2]
-            # values: [num_rows, dim1+dim2]
             num_rows = xs[0].num_rows
             for x in xs[1:]:
                 if x.num_rows != num_rows:

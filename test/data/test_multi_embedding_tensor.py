@@ -23,10 +23,11 @@ def assert_equal(
 def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
+    embedding_dim: Optional[int] = None,
 ) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
-        embedding_dim = random.randint(1, 5)
+        embedding_dim = embedding_dim or random.randint(1, 5)
         tensor = torch.randn((num_rows, embedding_dim))
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
@@ -158,6 +159,20 @@ def test_cat():
         assert torch.allclose(met_cat.offset, met1.offset)
         assert torch.allclose(met_cat.offset, met2.offset)
 
+    # case: dim=0, different num_cols
+    met1, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    met2, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=4,
+        embedding_dim=1,
+    )
+    with pytest.raises(RuntimeError, match="num_cols must be the same"):
+        MultiEmbeddingTensor.cat([met1, met2], dim=0)
+
     # case: dim=1
     tensor_list1 = [
         torch.tensor([[0, 1, 2], [10, 11, 12]]),
@@ -181,3 +196,44 @@ def test_cat():
         assert torch.allclose(met_cat.values, expected_values)
         expected_offset = torch.tensor([0, 3, 5, 6, 10])
         assert torch.allclose(met_cat.offset, expected_offset)
+
+    # case: dim=0, different num_cols
+    met1, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    met2, _ = get_fake_multi_embedding_tensor(
+        num_rows=3,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    with pytest.raises(RuntimeError, match="num_rows must be the same"):
+        MultiEmbeddingTensor.cat([met1, met2], dim=1)
+
+    # case: different devices
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    with pytest.raises(AssertionError):
+        MultiEmbeddingTensor.cat([met.to("cpu"), met.to("meta")], dim=0)
+
+    # case: copy data
+    met1, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    met2, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    for dim in [0, 1]:
+        met_cat = MultiEmbeddingTensor.cat([met1, met2], dim=dim)
+        assert met_cat.values[0, 0] == met1.values[0, 0]
+        met_cat.values[0, 0] = 12345.
+        assert met1.values[0, 0] != 12345.
+        met_cat.offset[0] = -1
+        assert met1.offset[0] != -1
