@@ -3,7 +3,6 @@ from torch_frame.data import DataLoader, TensorFrame
 
 def test_data_loader(get_fake_tensor_frame):
     tf = get_fake_tensor_frame(num_rows=10)
-
     loader = DataLoader(tf, batch_size=3)
     assert len(loader) == 4
 

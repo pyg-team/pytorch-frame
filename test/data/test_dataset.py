@@ -30,12 +30,15 @@ def test_index_select():
 
 
 def test_shuffle():
-    df = pd.DataFrame({'A': np.arange(10), 'B': np.arange(10)})
-    col_to_stype = {'A': torch_frame.categorical, 'B': torch_frame.categorical}
-    dataset = Dataset(df, col_to_stype, target_col='B').materialize()
+    df = pd.DataFrame({'cat_1': np.arange(10), 'cat_2': np.arange(10)})
+    col_to_stype = {
+        'cat_1': torch_frame.categorical,
+        'cat_2': torch_frame.categorical
+    }
+    dataset = Dataset(df, col_to_stype, target_col='cat_2').materialize()
 
     dataset, perm = dataset.shuffle(return_perm=True)
-    assert torch.equal(torch.from_numpy(dataset.df['A'].values), perm)
+    assert torch.equal(torch.from_numpy(dataset.df['cat_1'].values), perm)
     feat = dataset.tensor_frame.feat_dict[torch_frame.categorical].view(-1)
     assert torch.equal(feat, perm)
 
@@ -51,12 +54,15 @@ def test_col_select():
 
 def test_categorical_target_order():
     # Ensures that we do not swap labels in binary classification tasks.
-    df = pd.DataFrame({'A': [0, 1, 1, 1], 'B': [0, 1, 1, 1]})
-    col_to_stype = {'A': torch_frame.categorical, 'B': torch_frame.categorical}
-    dataset = Dataset(df, col_to_stype, target_col='B').materialize()
+    df = pd.DataFrame({'cat_1': [0, 1, 1, 1], 'cat_2': [0, 1, 1, 1]})
+    col_to_stype = {
+        'cat_1': torch_frame.categorical,
+        'cat_2': torch_frame.categorical
+    }
+    dataset = Dataset(df, col_to_stype, target_col='cat_2').materialize()
 
-    assert dataset.col_stats['A'][StatType.COUNT] == ([1, 0], [3, 1])
-    assert dataset.col_stats['B'][StatType.COUNT] == ([0, 1], [1, 3])
+    assert dataset.col_stats['cat_1'][StatType.COUNT] == ([1, 0], [3, 1])
+    assert dataset.col_stats['cat_2'][StatType.COUNT] == ([0, 1], [1, 3])
 
     assert torch.equal(
         dataset.tensor_frame.feat_dict[torch_frame.categorical],
@@ -70,16 +76,16 @@ def test_dataset_inductive_transform():
 
     df = dataset.df
     assert dataset.convert_to_tensor_frame.col_names_dict[
-        torch_frame.numerical] == ['a', 'b', 'c']
+        torch_frame.numerical] == ['num_1', 'num_2', 'num_3']
     assert dataset.convert_to_tensor_frame.col_names_dict[
-        torch_frame.categorical] == ['x', 'y']
+        torch_frame.categorical] == ['cat_1', 'cat_2']
     mapped_tensor_frame = dataset.convert_to_tensor_frame(df)
     for key in dataset.tensor_frame.feat_dict.keys():
         assert torch.equal(mapped_tensor_frame.feat_dict[key],
                            dataset.tensor_frame.feat_dict[key])
 
     # A new dataframe with an unseen categorical column
-    df['x'] = 999
+    df['cat_1'] = 999
     unseen_tensor_frame = dataset.convert_to_tensor_frame(df)
     assert torch.eq(
         unseen_tensor_frame.feat_dict[torch_frame.categorical][:, 0],
@@ -103,10 +109,10 @@ def test_converter():
 
 
 def test_multicategorical_materialization():
-    data = {'multicat_col': ['A|B', 'B|C|A', '', 'B', 'B|A|A', None]}
+    data = {'multicat': ['A|B', 'B|C|A', '', 'B', 'B|A|A', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'multicat_col': stype.multicategorical},
-                      col_to_sep={'multicat_col': '|'})
+    dataset = Dataset(df, {'multicat': stype.multicategorical},
+                      col_to_sep={'multicat': '|'})
     dataset.materialize()
     feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
     assert torch.equal(feat[0, 0].sort().values,
@@ -120,13 +126,11 @@ def test_multicategorical_materialization():
                        torch.tensor([0, 1]).sort().values)
     assert torch.equal(feat[5, 0].sort().values,
                        torch.tensor([-1]).sort().values)
-    assert StatType.MULTI_COUNT in dataset.col_stats['multicat_col']
-    assert (dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][0] == [
+    assert StatType.MULTI_COUNT in dataset.col_stats['multicat']
+    assert (dataset.col_stats['multicat'][StatType.MULTI_COUNT][0] == [
         'B', 'A', 'C'
     ])
-    assert dataset.col_stats['multicat_col'][StatType.MULTI_COUNT][1] == [
-        4, 3, 1
-    ]
+    assert dataset.col_stats['multicat'][StatType.MULTI_COUNT][1] == [4, 3, 1]
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
@@ -141,12 +145,12 @@ def test_num_classes(with_nan):
         target[num_classes_with_nan:] = np.nan
         num_classes = num_classes_with_nan
         task_type = TaskType.BINARY_CLASSIFICATION
-    df = pd.DataFrame({"target": target, "x": x})
+    df = pd.DataFrame({"target": target, "num": x})
     dataset = Dataset(
         df,
         col_to_stype={
             "target": torch_frame.categorical,
-            "x": torch_frame.numerical
+            "num": torch_frame.numerical
         },
         target_col="target",
     ).materialize()
@@ -156,14 +160,20 @@ def test_num_classes(with_nan):
 
 def test_canonicalize_col_to_sep():
     col_to_sep = '|'
-    columns = ['a', 'b']
-    assert {'a': '|', 'b': '|'} == canonicalize_col_to_sep(col_to_sep, columns)
+    columns = ['col_1', 'col_2']
+    assert {
+        'col_1': '|',
+        'col_2': '|'
+    } == canonicalize_col_to_sep(col_to_sep, columns)
 
-    col_to_sep = {'a': '|', 'b': ','}
-    columns = ['a', 'b']
-    assert {'a': '|', 'b': ','} == canonicalize_col_to_sep(col_to_sep, columns)
+    col_to_sep = {'col_1': '|', 'col_2': ','}
+    columns = ['col_1', 'col_2']
+    assert {
+        'col_1': '|',
+        'col_2': ','
+    } == canonicalize_col_to_sep(col_to_sep, columns)
 
-    col_to_sep = {'a': '|'}
-    columns = ['a', 'b']
+    col_to_sep = {'col_1': '|'}
+    columns = ['col_1', 'col_2']
     with pytest.raises(ValueError, match='col_to_sep needs to specify'):
         canonicalize_col_to_sep(col_to_sep, columns)

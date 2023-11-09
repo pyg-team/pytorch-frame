@@ -173,6 +173,12 @@ class MultiNestedTensor(_MultiTensor):
                 torch.tensor(index, device=self.device),
                 dim=dim,
             )
+        elif isinstance(index, range):
+            step = None
+            if index.step > 1:
+                step = index.step
+            index = slice(index.start, index.stop, step)
+            return self._slice(index, dim=dim)
         else:
             raise NotImplementedError
 

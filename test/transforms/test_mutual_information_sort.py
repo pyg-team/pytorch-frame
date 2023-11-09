@@ -15,7 +15,7 @@ def test_mutual_information_sort(with_nan):
                                    task_type=task_type)
     # modify the FakeDataset so column c would have highest mutual information
     # score
-    dataset.df['c'] = dataset.df['target'].astype(float)
+    dataset.df['num_1'] = dataset.df['target'].astype(float)
     dataset.materialize()
 
     tensor_frame: TensorFrame = dataset.tensor_frame
@@ -25,7 +25,7 @@ def test_mutual_information_sort(with_nan):
     out = transform(tensor_frame)
 
     # column c ranks the first
-    assert (out.col_names_dict[stype.numerical][0] == 'c')
+    assert (out.col_names_dict[stype.numerical][0] == 'num_1')
     actual_first_col = out.feat_dict[stype.numerical][:, 0]
     actual_first_col_nan_mask = torch.isnan(actual_first_col)
     expected_first_col = torch.tensor(dataset.df['c'].values,

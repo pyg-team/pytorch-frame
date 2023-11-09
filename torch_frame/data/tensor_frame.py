@@ -7,6 +7,7 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
@@ -45,8 +46,8 @@ class TensorFrame:
                 torch_frame.categorical: torch.randint(0, 5, (10, 3)),
             },
             col_names_dict = {
-                torch_frame.numerical: ['x', 'y'],
-                torch_frame.categorical: ['a', 'b', 'c'],
+                torch_frame.numerical: ['num_1', 'num_2'],
+                torch_frame.categorical: ['cat_1', 'cat_2', 'cat_3'],
 
             },
         })
@@ -162,13 +163,21 @@ class TensorFrame:
         if self.col_names_dict != other.col_names_dict:
             return False
         # Match feat_dict
-        for stype_name in self.feat_dict.keys():
-            self_feat = self.feat_dict[stype_name]
+        for stype_name, self_feat in self.feat_dict.items():
             other_feat = other.feat_dict[stype_name]
-            if self_feat.shape != other_feat.shape:
-                return False
-            if not torch.allclose(self_feat, other_feat):
-                return False
+            if isinstance(self_feat, Tensor):
+                if not isinstance(other_feat, Tensor):
+                    return False
+                if self_feat.shape != other_feat.shape:
+                    return False
+                if not torch.allclose(self_feat, other_feat):
+                    return False
+            elif isinstance(self_feat, MultiNestedTensor):
+                if not isinstance(other_feat, MultiNestedTensor):
+                    return False
+                if not MultiNestedTensor.allclose(self_feat, other_feat):
+                    return False
+
         return True
 
     def __neq__(self, other: Any) -> bool:

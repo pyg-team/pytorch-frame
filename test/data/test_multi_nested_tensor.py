@@ -31,7 +31,7 @@ def column_select(
     return new_tensor_mat
 
 
-def test_multi_nested_tensor_basic():
+def test_multi_nested_tensor_basics():
     num_rows = 8
     num_cols = 10
     max_value = 100
@@ -87,6 +87,13 @@ def test_multi_nested_tensor_basic():
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_mat[i][j], tensor)
 
+    # Test row range
+    multi_nested_tensor_range = multi_nested_tensor[range(2, 6)]
+    for idx, i in enumerate(range(2, 6)):
+        for j in range(num_cols):
+            assert torch.allclose(tensor_mat[i][j],
+                                  multi_nested_tensor_range[idx, j])
+
     # Test row slicing
     assert_equal(tensor_mat, multi_nested_tensor[:])
     assert_equal(tensor_mat[:3], multi_nested_tensor[:3])
@@ -124,6 +131,13 @@ def test_multi_nested_tensor_basic():
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         assert_equal(column_select(tensor_mat, index),
                      multi_nested_tensor[:, index])
+
+    # Test row range
+    multi_nested_tensor_range = multi_nested_tensor[:, range(2, 6)]
+    for i in range(num_rows):
+        for idx, j in enumerate(range(2, 6)):
+            assert torch.allclose(tensor_mat[i][j],
+                                  multi_nested_tensor_range[i, idx])
 
     # Test column slicing
     assert_equal(tensor_mat, multi_nested_tensor[:, :])
@@ -200,10 +214,14 @@ def test_multi_nested_tensor_basic():
 
     # Testing clone
     cloned_multi_nested_tensor = multi_nested_tensor.clone()
-    multi_nested_tensor.values[0] = max_value + 1.0
-    assert cloned_multi_nested_tensor.values[0] != max_value + 1.0
-    multi_nested_tensor.offset[0] = -1
-    assert cloned_multi_nested_tensor.values[0] != -1
+    assert MultiNestedTensor.allclose(multi_nested_tensor,
+                                      cloned_multi_nested_tensor)
+    cloned_multi_nested_tensor.values[0] = max_value + 1.0
+    assert multi_nested_tensor.values[0] != max_value + 1.0
+    cloned_multi_nested_tensor.values[0] = -1
+    assert multi_nested_tensor.values[0] != -1
+    assert not MultiNestedTensor.allclose(multi_nested_tensor,
+                                          cloned_multi_nested_tensor)
 
 
 def test_multi_nested_tensor_different_num_rows():
