@@ -37,14 +37,17 @@ def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:
             f"`along` must be either 'row' or 'col' (got {along}).")
 
 
-def _cat_heler(
+def _cat_helper(
     tf_list: List[TensorFrame],
     dim: int,
 ) -> Dict[torch_frame.stype, TensorData]:
+    r"""Helper function that takes a list of :class:`TensorFrame` objects and
+    returns :obj:`feat_dict` of the concatenated :class:`TensorFrame` object.
+    """
     feat_list_dict: Dict[torch_frame.stype, List[Tensor]] = defaultdict(list)
     for tf in tf_list:
-        for stype in tf.col_names_dict.keys():
-            feat_list_dict[stype].append(tf.feat_dict[stype])
+        for stype, feat in tf.feat_dict.items():
+            feat_list_dict[stype].append(feat)
 
     feat_dict: Dict[torch_frame.stype, TensorData] = {}
     for stype, feat_list in feat_list_dict.items():
@@ -58,6 +61,7 @@ def _cat_heler(
             feat_dict[stype] = feat
         else:
             feat_dict[stype] = torch.cat(feat_list, dim=dim)
+
     return feat_dict
 
 
@@ -85,7 +89,7 @@ def _cat_row(tf_list: List[TensorFrame]) -> TensorFrame:
     y = None
     if tf_list[0].y is not None:
         y = torch.cat([tf.y for tf in tf_list], dim=0)
-    return TensorFrame(feat_dict=_cat_heler(tf_list, dim=0),
+    return TensorFrame(feat_dict=_cat_helper(tf_list, dim=0),
                        col_names_dict=tf_list[0].col_names_dict, y=y)
 
 
@@ -121,5 +125,5 @@ def _cat_col(tf_list: List[TensorFrame]) -> TensorFrame:
                 f"Cannot perform cat(..., along='col') since {stype} contains "
                 f"duplicated column names: {duplicates}.")
 
-    return TensorFrame(feat_dict=_cat_heler(tf_list, dim=1),
+    return TensorFrame(feat_dict=_cat_helper(tf_list, dim=1),
                        col_names_dict=col_names_dict, y=y)
