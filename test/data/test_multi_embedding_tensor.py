@@ -27,7 +27,6 @@ def get_fake_multi_embedding_tensor(
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = random.randint(1, 5)
-        print(embedding_dim)
         tensor = torch.randn((num_rows, embedding_dim))
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
