@@ -138,13 +138,11 @@ def test_cat():
         met_cat = MultiEmbeddingTensor.cat(xs, dim=0)
         assert met_cat.num_rows == met1.num_rows + met2.num_rows
         assert met_cat.num_cols == met1.num_cols == met2.num_cols
-        expected_values = torch.tensor(
-            [
-                [0, 1, 2, 3, 4, 5],
-                [6, 7, 8, 9, 10, 11],
-                [12, 13, 14, 15, 16, 17],
-            ]
-        )
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10, 11],
+            [12, 13, 14, 15, 16, 17],
+        ])
         assert torch.allclose(met_cat.values, expected_values)
         assert torch.allclose(met_cat.offset, met1.offset)
         assert torch.allclose(met_cat.offset, met2.offset)
@@ -152,13 +150,11 @@ def test_cat():
         met_cat = MultiEmbeddingTensor.cat((met1, met2), dim=0)
         assert met_cat.num_rows == met1.num_rows + met2.num_rows
         assert met_cat.num_cols == met1.num_cols == met2.num_cols
-        expected_values = torch.tensor(
-            [
-                [0, 1, 2, 3, 4, 5],
-                [6, 7, 8, 9, 10, 11],
-                [12, 13, 14, 15, 16, 17],
-            ]
-        )
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10, 11],
+            [12, 13, 14, 15, 16, 17],
+        ])
         assert torch.allclose(met_cat.values, expected_values)
         assert torch.allclose(met_cat.offset, met1.offset)
         assert torch.allclose(met_cat.offset, met2.offset)
@@ -179,12 +175,10 @@ def test_cat():
         assert met_cat.num_rows == met1.num_rows
         assert met_cat.num_rows == met2.num_rows
         assert met_cat.num_cols == met1.num_cols + met2.num_cols
-        expected_values = torch.tensor(
-            [
-                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            ]
-        )
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+        ])
         assert torch.allclose(met_cat.values, expected_values)
         expected_offset = torch.tensor([0, 3, 5, 6, 10])
         assert torch.allclose(met_cat.offset, expected_offset)
