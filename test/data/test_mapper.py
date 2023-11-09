@@ -4,6 +4,7 @@ import torch
 
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
+    EmbeddingTensorMapper,
     MultiCategoricalTensorMapper,
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
@@ -99,3 +100,12 @@ def test_text_embedding_tensor_mapper():
     mapper.batch_size = None
     emb2 = mapper.forward(ser)
     assert torch.allclose(emb, emb2)
+
+
+def test_embedding_tensor_mapper():
+    emb_list = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
+    ser = pd.Series(emb_list)
+    mapper = EmbeddingTensorMapper()
+    met = mapper.forward(ser)
+    assert torch.allclose(met.values, torch.tensor(emb_list))
+    assert torch.allclose(met.offset, torch.tensor([0, 2]))

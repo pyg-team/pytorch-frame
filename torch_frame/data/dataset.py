@@ -14,6 +14,7 @@ from torch_frame.config import TextEmbedderConfig, TextTokenizerConfig
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
+    EmbeddingTensorMapper,
     MultiCategoricalTensorMapper,
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
@@ -21,6 +22,7 @@ from torch_frame.data.mapper import (
     TextEmbeddingTensorMapper,
     TextTokenizationTensorMapper,
 )
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
@@ -191,6 +193,8 @@ class DataFrameToTensorFrameConverter:
             )
         elif stype == torch_frame.sequence_numerical:
             return NumericalSequenceTensorMapper()
+        elif stype == torch_frame.embedding:
+            return EmbeddingTensorMapper()
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
@@ -220,7 +224,7 @@ class DataFrameToTensorFrameConverter:
                     feat_dict[stype][key] = MultiNestedTensor.cat(
                         [x[key] for x in xs], dim=1)
             elif stype.use_multi_embedding_tensor:
-                # FIXME: Implement here
+                feat_dict[stype] = MultiEmbeddingTensor.cat(xs, dim=1)  # noqa
             else:
                 feat_dict[stype] = torch.stack(xs, dim=1)
 

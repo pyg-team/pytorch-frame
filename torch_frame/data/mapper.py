@@ -6,7 +6,8 @@ import torch
 from torch import Tensor
 from tqdm import tqdm
 
-from torch_frame.data import MultiNestedTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
 
@@ -329,8 +330,7 @@ class TextTokenizationTensorMapper(TensorMapper):
 
 
 class EmbeddingTensorMapper(TensorMapper):
-    r"""Maps embedding columns into tensors.
-    """
+    r"""Maps embedding columns into tensors."""
     def __init__(self) -> None:
         super().__init__()
 
@@ -339,9 +339,18 @@ class EmbeddingTensorMapper(TensorMapper):
         ser: Series,
         *,
         device: Optional[torch.device] = None,
-    ) -> Tensor:
-        # FIXME: impelemnt here
-        pass
-
-    def backward(self, tensor: Tensor) -> pd.Series:
+    ) -> MultiEmbeddingTensor:
+        # NOTE We are converting the default PyTorch dtype into a string
+        # representation that can be understood by numpy.
+        # TODO Think of a "less hacky" way to do this.
+        dtype = str(torch.get_default_dtype()).split('.')[-1]
+        values = ser.explode().astype(dtype).values
+        values = torch.tensor(values).view(len(ser), -1).contiguous()
+        return MultiEmbeddingTensor(
+            num_rows=len(ser),
+            num_cols=1,
+            values=values,
+            offset=torch.tensor([0, len(ser[0])]),
+        )
+    def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
         raise NotImplementedError
