@@ -45,11 +45,21 @@ class MultiEmbeddingTensor(_MultiTensor):
         self,
         index: Any,
     ) -> Union['MultiEmbeddingTensor', Tensor]:
+
         if isinstance(index, tuple) and len(index) == 2 and isinstance(
                 index[0], int) and isinstance(index[1], int):
-            i = index[0]
-            j = index[1]
+            i = self._normalize_index(index[0], dim=0)
+            j = self._normalize_index(index[1], dim=1)
             return self.values[i, self.offset[j]:self.offset[j + 1]]
+
+        if isinstance(index, int):
+            index = self._normalize_index(index, dim=0)
+            return MultiEmbeddingTensor(
+                num_rows=1,
+                num_cols=self.num_cols,
+                values=self.values[index].view(1, -1),
+                offset=self.offset,
+            )
 
         # TODO(akihironitta): Support more index types
         raise NotImplementedError

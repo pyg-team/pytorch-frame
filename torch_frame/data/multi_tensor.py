@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -106,6 +106,44 @@ class _MultiTensor:
                 "Dimension out of range (expected to be in range of [-2, 1],"
                 f" but got {dim}.")
         return dim
+
+    def _normalize_index(
+        self,
+        index: Union[int, Tensor],
+        dim: int,
+        is_slice_end: bool = False,
+    ) -> Union[int, Tensor]:
+        """Helper function to map negative indices to positive indices and
+        raise :obj:`IndexError` when necessary.
+
+        Args:
+            index: Union[int, Tensor]: Input :obj:`index` with potentially
+                negative elements.
+            is_slice_end (bool): Whether a given index (int) is slice end or
+                not. If :obj:`True`, we have more lenient :obj:`IndexError`.
+                (default: :obj:`False`)
+        """
+        dim = self._normalize_dim(dim)
+        max_entries = self.num_rows if dim == 0 else self.num_cols
+        idx_name = "Row" if dim == 0 else "Col"
+        if isinstance(index, int):
+            if index < 0:
+                index = index + max_entries
+            if is_slice_end and index < 0 or index > max_entries:
+                raise IndexError(f"{idx_name} index out of bounds!")
+            elif (not is_slice_end) and (index < 0 or index >= max_entries):
+                raise IndexError(f"{idx_name} index out of bounds!")
+        elif isinstance(index, Tensor):
+            assert not is_slice_end
+            assert index.ndim == 1
+            neg_idx = index < 0
+            if neg_idx.any():
+                index = index.clone()
+                index[neg_idx] = max_entries + index[neg_idx]
+            if index.numel() != 0 and (index.min() < 0
+                                       or index.max() >= max_entries):
+                raise IndexError(f"{idx_name} index out of bounds!")
+        return index
 
     @classmethod
     def allclose(
