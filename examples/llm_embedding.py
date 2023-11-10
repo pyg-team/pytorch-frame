@@ -26,8 +26,8 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--service', type=str, default='cohere',
-                    choices=['openai', 'cohere'])
+parser.add_argument('--service', type=str, default='voyageai',
+                    choices=['openai', 'cohere', 'voyageai'])
 parser.add_argument('--api_key', type=str, default=None)
 args = parser.parse_args()
 
@@ -37,10 +37,14 @@ if args.service == 'openai':
     api_key = args.api_key or os.environ.get('OPENAI_API_KEY', None)
     if api_key is None:
         raise ValueError('OpenAI API key is not specified.')
-else:
+elif args.service == 'cohere':
     api_key = args.api_key or os.environ.get('COHERE_API_KEY', None)
     if api_key is None:
         raise ValueError('Cohere API key is not specified.')
+else:
+    api_key = args.api_key or os.environ.get('VOYAGE_API_KEY', None)
+    if api_key is None:
+        raise ValueError('Voyageai API key is not specified.')
 
 
 class OpenAIEmbedding:
@@ -81,6 +85,24 @@ class CohereEmbedding:
         return embeddings
 
 
+class VoyageaiEmbedding:
+    dimension: int = 4096
+    text_embedder_batch_size: int = 8
+
+    def __init__(self, model: str = 'voyage-01'):
+        # Please run `pip install voyageai` to install the package
+        self.model = model
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        import voyageai
+        voyageai.api_key = api_key
+        from voyageai import get_embeddings
+        items = get_embeddings(sentences, model=self.model)
+        assert len(items) == len(sentences)
+        embeddings = [torch.FloatTensor(item).view(1, -1) for item in items]
+        return torch.cat(embeddings, dim=0)
+
+
 torch.manual_seed(args.seed)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -88,8 +110,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 'amazon_fine_food_reviews')
 os.makedirs(path, exist_ok=True)
-text_encoder = OpenAIEmbedding(
-    model=args.model) if args.service == 'openai' else CohereEmbedding()
+if args.service == 'openai':
+    text_encoder = OpenAIEmbedding()
+elif args.service == 'cohere':
+    text_encoder = CohereEmbedding()
+else:
+    text_encoder = VoyageaiEmbedding()
+
 dataset = AmazonFineFoodReviews(
     root=path,
     text_embedder_cfg=TextEmbedderConfig(
@@ -98,7 +125,7 @@ dataset = AmazonFineFoodReviews(
     ),
 )
 
-dataset.materialize(path=osp.join(path, 'data.pt'))
+dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
 
 # Shuffle the dataset
 dataset = dataset.shuffle()
