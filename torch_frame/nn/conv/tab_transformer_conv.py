@@ -7,7 +7,7 @@ from torch_frame.nn.conv import TableConv
 
 
 class GEGLU(Module):
-    r"""GEGLU activation proposed in https://arxiv.org/abs/2002.05202"""
+    r"""GEGLU activation proposed in https://arxiv.org/abs/2002.05202."""
     def forward(self, x: Tensor) -> Tensor:
         x, gates = x.chunk(2, dim=-1)
         return x * F.gelu(gates)

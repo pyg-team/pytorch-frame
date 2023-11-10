@@ -323,7 +323,7 @@ class AttentiveTransformer(Module):
 
 
 class GhostBatchNorm1d(torch.nn.Module):
-    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741"""
+    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741."""
     def __init__(
         self,
         input_dim: int,

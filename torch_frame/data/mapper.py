@@ -170,8 +170,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
 
 class NumericalSequenceTensorMapper(TensorMapper):
-    r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
-    """
+    r"""Maps any sequence series into an :obj:`MultiNestedTensor`."""
     def __init__(self, ):
         super().__init__()
 

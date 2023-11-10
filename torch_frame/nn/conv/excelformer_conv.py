@@ -17,7 +17,7 @@ def init_attenuated(linear: Linear):
 
 
 class AiuM(Module):
-    r"""Attentive Intra-feature Update Module
+    r"""Attentive Intra-feature Update Module.
 
     Args:
         channels (int): Input channel dimensionality
@@ -40,7 +40,7 @@ class AiuM(Module):
 
 
 class DiaM(Module):
-    r"""Directed Inter-feature Attention Module
+    r"""Directed Inter-feature Attention Module.
 
     Args:
         channels (int): Input channel dimensionality

@@ -12,7 +12,7 @@ def attenuated_kaiming_uniform_(
     mode: str = 'fan_in',
     nonlinearity: str = 'leaky_relu',
 ) -> Tensor:
-    r"""Attenuated Kaiming Uniform Initialization
+    r"""Attenuated Kaiming Uniform Initialization.
 
     Args:
         x (tensor): Input tensor to be initialized
