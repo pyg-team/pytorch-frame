@@ -7,8 +7,8 @@ from torch import Tensor
 
 import torch_frame
 from torch_frame import stype
-from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
