@@ -12,6 +12,8 @@ from torch_frame.data.mapper import (
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+
 
 def test_numerical_tensor_mapper():
     ser = pd.Series([0.0, 10.0, float('NaN'), 30.0])
@@ -107,5 +109,5 @@ def test_embedding_tensor_mapper():
     ser = pd.Series(emb_list)
     mapper = EmbeddingTensorMapper()
     met = mapper.forward(ser)
-    assert torch.allclose(met.values, torch.tensor(emb_list))
-    assert torch.allclose(met.offset, torch.tensor([0, 2]))
+    expected = MultiEmbeddingTensor.from_tensor_list([torch.tensor(emb_list)])
+    assert MultiEmbeddingTensor.allclose(met, expected)
