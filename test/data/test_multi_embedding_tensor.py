@@ -123,8 +123,6 @@ def test_index():
             tensor = met_row[0, j]
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
-            break
-        break
 
 
 def test_clone():
