@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added support for saving and loading of `TensorFrame` with complex `stypes`. ([#197](https://github.com/pyg-team/pytorch-frame/pull/197))
+- Added `stype.embedding` ((#194)[https://github.com/pyg-team/pytorch-frame/pull/194])
 - Added `TensorFrame` concatenation of complex stypes. ([#190](https://github.com/pyg-team/pytorch-frame/pull/190))
 - Added `text_tokenized` example ([#174](https://github.com/pyg-team/pytorch-frame/pull/174))
 - Added Cohere embedding example ([#186](https://github.com/pyg-team/pytorch-frame/pull/186))
