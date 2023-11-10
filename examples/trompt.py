@@ -1,5 +1,4 @@
-"""
-Reported (reproduced) results of of Trompt model based on Tables 9--20 of the
+"""Reported (reproduced) results of of Trompt model based on Tables 9--20 of the
 original paper: https://arxiv.org/abs/2305.18446
 
 electricity (A4): 84.50 (84.17)

@@ -1,5 +1,4 @@
-"""
-Reported (reproduced) results of Tuned XGBoost on TabularBenchmark of
+"""Reported (reproduced) results of Tuned XGBoost on TabularBenchmark of
 the Trompt paper: https://arxiv.org/abs/2305.18446
 Requires "--use_acc" flag.
 

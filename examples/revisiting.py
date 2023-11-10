@@ -1,5 +1,4 @@
-"""
-Reported (reproduced) results of FT-Transformer
+"""Reported (reproduced) results of FT-Transformer
 https://arxiv.org/abs/2106.11959
 
 adult 85.9 (85.5)
