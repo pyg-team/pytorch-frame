@@ -119,8 +119,8 @@ class _MultiTensor:
         Args:
             index: Union[int, Tensor]: Input :obj:`index` with potentially
                 negative elements.
-            is_slice_end (bool): Whether a given index (int) is slice or not.
-                If :obj:`True`, we have more lenient :obj:`IndexError`.
+            is_slice_end (bool): Whether a given index (int) is slice end or
+                not. If :obj:`True`, we have more lenient :obj:`IndexError`.
                 (default: :obj:`False`)
         """
         dim = self._normalize_dim(dim)
