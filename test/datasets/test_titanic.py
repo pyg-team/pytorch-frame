@@ -22,8 +22,8 @@ def test_titanic(tmp_path):
     assert tensor_frame.feat_dict[torch_frame.categorical].dtype == torch.long
     assert tensor_frame.feat_dict[torch_frame.categorical].size() == (891, 3)
     assert tensor_frame.col_names_dict == {
-        torch_frame.categorical: ['Pclass', 'Sex', 'Embarked'],
-        torch_frame.numerical: ['Age', 'SibSp', 'Parch', 'Fare'],
+        torch_frame.categorical: ['Embarked', 'Pclass', 'Sex'],
+        torch_frame.numerical: ['Age', 'Fare', 'Parch', 'SibSp'],
     }
     assert tensor_frame.y.size() == (891, )
     assert tensor_frame.y.min() == 0 and tensor_frame.y.max() == 1
