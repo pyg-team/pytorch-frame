@@ -49,15 +49,28 @@ class StatType(Enum):
     def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
-            return np.mean(flattened).item()
+            finite_mask = np.isfinite(flattened)
+            if not finite_mask.any():
+                # NOTE: We may just error out here if eveything is NaN
+                return np.nan
+            return np.mean(flattened[finite_mask]).item()
 
         elif self == StatType.STD:
             flattened = np.hstack(np.hstack(ser.values))
-            return np.std(flattened).item()
+            finite_mask = np.isfinite(flattened)
+            if not finite_mask.any():
+                return np.nan
+            return np.std(flattened[finite_mask]).item()
 
         elif self == StatType.QUANTILES:
             flattened = np.hstack(np.hstack(ser.values))
-            return np.quantile(flattened, [0, 0.25, 0.5, 0.75, 1]).tolist()
+            finite_mask = np.isfinite(flattened)
+            if not finite_mask.any():
+                return [np.nan, np.nan, np.nan, np.nan, np.nan]
+            return np.quantile(
+                flattened[finite_mask],
+                q=[0, 0.25, 0.5, 0.75, 1],
+            ).tolist()
 
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
@@ -92,6 +105,7 @@ def compute_col_stats(
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
 
     if ser.isnull().all():
+        # NOTE: We may just error out here if eveything is NaN
         stats = {
             stat_type: _default_values[stat_type]
             for stat_type in StatType.stats_for_stype(stype)

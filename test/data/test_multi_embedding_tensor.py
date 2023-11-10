@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pytest
 import torch
@@ -23,10 +23,11 @@ def assert_equal(
 def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
+    embedding_dim: Optional[int] = None,
 ) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
-        embedding_dim = random.randint(1, 5)
+        embedding_dim = embedding_dim or random.randint(1, 5)
         tensor = torch.randn((num_rows, embedding_dim))
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
@@ -117,3 +118,119 @@ def test_clone():
     assert met_clone.values[0, 0] != 12345.
     met.offset[0] = -1
     assert met_clone.offset[0] != -1
+
+
+def test_cat():
+    # case: dim=0
+    tensor_list1 = [
+        torch.tensor([[0, 1, 2], [6, 7, 8]]),
+        torch.tensor([[3, 4], [9, 10]]),
+        torch.tensor([[5], [11]]),
+    ]
+    met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
+    tensor_list2 = [
+        torch.tensor([[12, 13, 14]]),
+        torch.tensor([[15, 16]]),
+        torch.tensor([[17]]),
+    ]
+    met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
+    for xs in [[met1, met2], (met1, met2)]:
+        met_cat = MultiEmbeddingTensor.cat(xs, dim=0)
+        assert met_cat.num_rows == met1.num_rows + met2.num_rows
+        assert met_cat.num_cols == met1.num_cols == met2.num_cols
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10, 11],
+            [12, 13, 14, 15, 16, 17],
+        ])
+        assert torch.allclose(met_cat.values, expected_values)
+        assert torch.allclose(met_cat.offset, met1.offset)
+        assert torch.allclose(met_cat.offset, met2.offset)
+
+        met_cat = MultiEmbeddingTensor.cat((met1, met2), dim=0)
+        assert met_cat.num_rows == met1.num_rows + met2.num_rows
+        assert met_cat.num_cols == met1.num_cols == met2.num_cols
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10, 11],
+            [12, 13, 14, 15, 16, 17],
+        ])
+        assert torch.allclose(met_cat.values, expected_values)
+        assert torch.allclose(met_cat.offset, met1.offset)
+        assert torch.allclose(met_cat.offset, met2.offset)
+
+    # case: dim=0 with different num_cols should raise error
+    met1, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    met2, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=4,
+        embedding_dim=1,
+    )
+    with pytest.raises(RuntimeError, match="num_cols must be the same"):
+        MultiEmbeddingTensor.cat([met1, met2], dim=0)
+
+    # case: dim=1
+    tensor_list1 = [
+        torch.tensor([[0, 1, 2], [10, 11, 12]]),
+        torch.tensor([[3, 4], [13, 14]]),
+        torch.tensor([[5], [15]]),
+    ]
+    met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
+    tensor_list2 = [
+        torch.tensor([[6, 7, 8, 9], [16, 17, 18, 19]]),
+    ]
+    met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
+    for xs in [[met1, met2], (met1, met2)]:
+        met_cat = MultiEmbeddingTensor.cat(xs, dim=1)
+        assert met_cat.num_rows == met1.num_rows
+        assert met_cat.num_rows == met2.num_rows
+        assert met_cat.num_cols == met1.num_cols + met2.num_cols
+        expected_values = torch.tensor([
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+        ])
+        assert torch.allclose(met_cat.values, expected_values)
+        expected_offset = torch.tensor([0, 3, 5, 6, 10])
+        assert torch.allclose(met_cat.offset, expected_offset)
+
+    # case: dim=1 with different num_cols should raise error
+    met1, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    met2, _ = get_fake_multi_embedding_tensor(
+        num_rows=3,
+        num_cols=3,
+        embedding_dim=1,
+    )
+    with pytest.raises(RuntimeError, match="num_rows must be the same"):
+        MultiEmbeddingTensor.cat([met1, met2], dim=1)
+
+    # case: different devices should raise error
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    with pytest.raises(AssertionError):
+        MultiEmbeddingTensor.cat([met.to("cpu"), met.to("meta")], dim=0)
+
+    # case: list of non-MultiEmbeddingTensor should raise error
+    with pytest.raises(AssertionError):
+        MultiEmbeddingTensor.cat([object()], dim=0)
+
+    # case: empty list should raise error
+    with pytest.raises(RuntimeError, match="Cannot concatenate"):
+        MultiEmbeddingTensor.cat([], dim=0)
+
+    # case: unsupported dim should raise error
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    with pytest.raises(IndexError, match="Dimension out of range"):
+        MultiEmbeddingTensor.cat([met], dim=3)

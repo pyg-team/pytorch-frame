@@ -1,4 +1,4 @@
-from typing import Any, List, Union
+from typing import Any, List, Sequence, Union
 
 import torch
 from torch import Tensor
@@ -36,17 +36,10 @@ class MultiEmbeddingTensor(_MultiTensor):
         >>> out[0, 2]
         tensor([10])
     """
-    def __init__(
-        self,
-        num_rows: int,
-        num_cols: int,
-        values: Tensor,
-        offset: Tensor,
-    ) -> None:
-        super().__init__(num_rows, num_cols, values, offset)
-        assert offset[0] == 0
-        assert len(offset) == num_cols + 1
-        assert values.size() == (num_rows, offset[-1])
+    def validate(self):
+        assert self.offset[0] == 0
+        assert len(self.offset) == self.num_cols + 1
+        assert self.values.size() == (self.num_rows, self.offset[-1])
 
     def __getitem__(
         self,
@@ -114,3 +107,92 @@ class MultiEmbeddingTensor(_MultiTensor):
         values = torch.cat(tensor_list, dim=1)
         offset = torch.LongTensor(offset_list)
         return cls(num_rows, num_cols, values, offset)
+
+    @staticmethod
+    def cat(
+        xs: Sequence['MultiEmbeddingTensor'],
+        dim: int = 0,
+    ) -> 'MultiEmbeddingTensor':
+        """Concatenates a sequence of :class:`MultiEmbeddingTensor` along the
+        specified dimension.
+
+        Args:
+            xs (Sequence[MultiEmbeddingTensor]): A sequence of
+                :class:`MultiEmbeddingTensor` to be concatenated.
+            dim (int): The dimension to concatenate along.
+
+        Returns:
+            MultiEmbeddingTensor: Concatenated multi embedding tensor that
+                shares the same data as the input multi embedding tensors.
+
+        Example:
+            >>> from torch_frame.data import MultiEmbeddingTensor
+            >>> tensor_list1 = [
+            ...     torch.tensor([[0, 1, 2], [6, 7, 8]]),  # col1
+            ...     torch.tensor([[3, 4], [9, 10]]),       # col2
+            ...     torch.tensor([[5], [11]]),             # col3
+            ... ]
+            >>> tenosor_list2 = [
+            ...     torch.tensor([[12, 13, 14]]),          # col1
+            ...     torch.tensor([[15, 16]]),              # col2
+            ...     torch.tensor([[17]]),                  # col3
+            ... ]
+            >>> met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
+            >>> met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
+            >>> met1
+            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
+            >>> met2
+            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
+            >>> out = MultiEmbeddingTensor.cat([met1, met2], dim=0)
+            >>> out
+            MultiEmbeddingTensor(num_rows=3, num_cols=3, device='cpu')
+            >>> out.values
+            tensor([[ 0,  1,  2,  3,  4,  5],
+                    [ 6,  7,  8,  9, 10, 11],
+                    [12, 13, 14, 15, 16, 17]])
+        """
+        if len(xs) == 0:
+            raise RuntimeError('Cannot concatenate a sequence of length 0.')
+
+        for x in xs:
+            msg = "`xs` must be a list of MultiEmbeddingTensor."
+            assert isinstance(x, MultiEmbeddingTensor), msg
+            msg = ("device must be the same across a sequence of"
+                   " MultiEmbeddingTensor.")
+            assert x.device == xs[0].device, msg
+
+        dim = MultiEmbeddingTensor._normalize_dim(dim)
+
+        if len(xs) == 1:
+            return xs[0]
+
+        if dim == 0:
+            num_rows = sum(x.num_rows for x in xs)
+            num_cols = xs[0].num_cols
+            for x in xs[1:]:
+                if x.num_cols != num_cols:
+                    raise RuntimeError(
+                        "num_cols must be the same across a list of input "
+                        "multi embedding tensors.")
+            values = torch.cat([x.values for x in xs], dim=0)
+            # NOTE: offset shares the same data with the input's offset,
+            # which is inconsistent with when dim=1
+            offset = xs[0].offset
+            return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
+
+        elif dim == 1:
+            num_rows = xs[0].num_rows
+            for x in xs[1:]:
+                if x.num_rows != num_rows:
+                    raise RuntimeError(
+                        "num_rows must be the same across a list of input "
+                        "multi embedding tensors.")
+            num_cols = sum(x.num_cols for x in xs)
+            values = torch.cat([x.values for x in xs], dim=1)
+            offset_list = [0]
+            for x in xs:
+                offset_list.extend(x.offset[1:] + offset_list[-1])
+            # NOTE: offset is a data copy of the input's offset,
+            # which is inconsistent with when dim=0
+            offset = torch.LongTensor(offset_list)
+            return MultiEmbeddingTensor(num_rows, num_cols, values, offset)

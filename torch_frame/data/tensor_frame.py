@@ -181,7 +181,8 @@ class TensorFrame:
             elif isinstance(self_feat, MultiNestedTensor):
                 if not isinstance(other_feat, MultiNestedTensor):
                     return False
-                if not MultiNestedTensor.allclose(self_feat, other_feat):
+                if not MultiNestedTensor.allclose(self_feat, other_feat,
+                                                  equal_nan=True):
                     return False
             elif isinstance(self_feat, dict):
                 if not isinstance(other_feat, dict):
@@ -190,7 +191,8 @@ class TensorFrame:
                     return False
                 for feat_name in self_feat.keys():
                     if not MultiNestedTensor.allclose(self_feat[feat_name],
-                                                      other_feat[feat_name]):
+                                                      other_feat[feat_name],
+                                                      equal_nan=True):
                         return False
         return True
 

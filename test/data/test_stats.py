@@ -46,6 +46,30 @@ def test_compute_col_stats_all_sequence_numerical():
     }
 
 
+def test_compute_col_stats_all_sequence_numerical_with_nan_inf():
+    ser = pd.Series([[1, 2, 3, np.nan], [4, 5, 6]])
+    expected_col_stats = {
+        StatType.MEAN: 3.5,
+        StatType.STD: 1.707825127659933,
+        StatType.QUANTILES: [1.0, 2.25, 3.5, 4.75, 6.0],
+    }
+    stype = sequence_numerical
+    assert compute_col_stats(ser, stype) == expected_col_stats
+    ser = pd.Series([[1, 2, 3, np.inf], [4, 5, 6]])
+    assert compute_col_stats(ser, stype) == expected_col_stats
+
+
+def test_compute_col_stats_all_sequence_numerical_with_all_nan():
+    ser = pd.Series([[np.nan, np.nan, np.nan, np.inf],
+                     [np.nan, np.nan, np.nan]])
+    stype = sequence_numerical
+    assert compute_col_stats(ser, stype) == {
+        StatType.MEAN: np.nan,
+        StatType.STD: np.nan,
+        StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
+    }
+
+
 def test_compute_col_stats_numerical_with_inf():
     ser = pd.Series([1, 2, 3, np.inf, -np.inf])
     stype = numerical
