@@ -1,5 +1,5 @@
-"""This script gives an example of how to use torch_frame to design tabular deep
-learning models in a modular way.
+"""This script gives an example of how to use torch_frame to design tabular
+deep learning models in a modular way.
 """
 
 import argparse

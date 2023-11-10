@@ -2,7 +2,7 @@
 Table 1 of original paper https://arxiv.org/abs/2012.06678
 adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
 bank-marketing: 93.4 (78.35, 81.00)
-dota2: 63.3 (58.28, 53.75)
+dota2: 63.3 (58.28, 53.75).
 """
 
 import argparse
