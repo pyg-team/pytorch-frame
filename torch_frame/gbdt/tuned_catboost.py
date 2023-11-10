@@ -23,6 +23,7 @@ class CatBoost(GBDT):
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
+
         Returns:
             x (DataFrame): Output :obj:`Dataframe` by
                 concatenating tensors of categorical and numerical features of
@@ -96,7 +97,7 @@ class CatBoost(GBDT):
         tf_val: TensorFrame,
         num_boost_round: int,
     ):
-        r""" Objective function to be optimized.
+        r"""Objective function to be optimized.
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.

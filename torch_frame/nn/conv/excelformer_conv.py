@@ -77,7 +77,7 @@ class DiaM(Module):
         return x
 
     def get_attention_mask(self, input_shape: Tensor.size):
-        r""" Generate an attention mask for a given input shape.
+        r"""Generate an attention mask for a given input shape.
 
         The function constructs an attention mask using the sequence ids
         of the input columns. The mask is created such that the elements

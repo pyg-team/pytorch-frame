@@ -82,7 +82,8 @@ class GBDT:
     def metric(self) -> str:
         r"""Metric to compute for different tasks. root mean squared error for
         regression, ROC-AUC for binary classification, and accuracy for
-        multi-label classification task."""
+        multi-label classification task.
+        """
         if self.task_type == TaskType.REGRESSION:
             return 'rmse'
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:

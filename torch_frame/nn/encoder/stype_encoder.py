@@ -102,13 +102,15 @@ class StypeEncoder(Module, ABC):
     def encode_forward(self, feat: TensorData) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
-        :obj:`[batch_size, num_cols, out_channels]`."""
+        :obj:`[batch_size, num_cols, out_channels]`.
+        """
         raise NotImplementedError
 
     def post_forward(self, out: Tensor) -> Tensor:
         r"""Post-forward function applied to :obj:`out` of shape
         [batch_size, num_cols, channels]. It also returns :obj:`out` of the
-        same shape."""
+        same shape.
+        """
         if self.post_module is not None:
             shape_before = out.shape
             out = self.post_module(out)
@@ -159,7 +161,8 @@ class StypeEncoder(Module, ABC):
 class EmbeddingEncoder(StypeEncoder):
     r"""An embedding look-up based encoder for categorical features. It
     applies :class:`torch.nn.Embedding` for each categorical feature and
-    concatenates the output embeddings."""
+    concatenates the output embeddings.
+    """
     supported_stypes = {stype.categorical}
 
     def __init__(
@@ -269,7 +272,8 @@ class LinearEncoder(StypeEncoder):
     r"""A linear function based encoder for numerical features. It applies
     linear layer :obj:`torch.nn.Linear(1, out_channels)` on each raw numerical
     feature and concatenates the output embeddings. Note that the
-    implementation does this for all numerical features in a batched manner."""
+    implementation does this for all numerical features in a batched manner.
+    """
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -316,7 +320,8 @@ class LinearEncoder(StypeEncoder):
 class StackEncoder(StypeEncoder):
     r"""Simply stack input numerical features of shape
     :obj:`[batch_size, num_cols]` into
-    :obj:`[batch_size, num_cols, out_channels]`."""
+    :obj:`[batch_size, num_cols, out_channels]`.
+    """
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -479,7 +484,7 @@ class LinearPeriodicEncoder(StypeEncoder):
 
 
 class ExcelFormerEncoder(StypeEncoder):
-    r""" An attention based encoder that transforms input numerical features
+    r"""An attention based encoder that transforms input numerical features
     to a 3-dimensional tensor.
 
     Before being fed to the embedding layer, numerical features are normalized
