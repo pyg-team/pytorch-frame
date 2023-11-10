@@ -35,6 +35,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
         >>> out[0, 2]
         tensor([10])
+        >>> out[0]
+        MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
     """
     def validate(self):
         assert self.offset[0] == 0
@@ -50,6 +52,26 @@ class MultiEmbeddingTensor(_MultiTensor):
             i = index[0]
             j = index[1]
             return self.values[i, self.offset[j]:self.offset[j + 1]]
+
+        if isinstance(index, int):
+            return MultiEmbeddingTensor(
+                num_rows=1,
+                num_cols=self.num_cols,
+                values=self.values[index],
+                offset=self.offset,
+            )
+
+        if isinstance(index, Tensor):
+            raise NotImplementedError
+
+        if isinstance(index, slice):
+            raise NotImplementedError
+
+        if isinstance(index, list):
+            raise NotImplementedError
+
+        if isinstance(index, tuple):
+            raise NotImplementedError
 
         # TODO(akihironitta): Support more index types
         raise NotImplementedError

@@ -234,3 +234,71 @@ def test_cat():
     )
     with pytest.raises(IndexError, match="Dimension out of range"):
         MultiEmbeddingTensor.cat([met], dim=3)
+
+
+# FIXME: rename test case
+def test_new_cat():
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=8,
+        num_cols=10,
+    )
+
+    # Test row concat
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met[:2], met[2:4], met[4:]], dim=0),
+    )
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met[i] for i in range(met.size(0))], dim=0),
+    )
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met], dim=0),
+    )
+
+    # Test col concat
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met[:, :2], met[:, 2:4], met[:, 4:]], dim=1),
+    )
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met[i] for i in range(met.size(1))], dim=1),
+    )
+    assert MultiEmbeddingTensor.allclose(
+        met,
+        MultiEmbeddingTensor.cat([met], dim=1),
+    )
+
+
+# FIXME: rename test case
+def test_new_index():
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+    )
+
+    # Test [i, j] indexing
+    for i in range(-num_rows, num_rows):
+        for j in range(num_cols):
+            tensor = met[i, j]
+            assert isinstance(tensor, torch.Tensor)
+            # NOTE: tensor_list[j] is a tensor of j-th column of size
+            # [num_rows, dim_emb_j]. See the docs for more info.
+            assert torch.allclose(tensor_list[j][i], tensor)
+
+    # Test [i] indexing
+    for i in range(-num_rows, num_rows):
+        met_row = met[i]
+        assert isinstance(met_row, MultiEmbeddingTensor)
+        assert met_row.shape[0] == 1
+        assert met_row.shape[1] == num_cols
+        for j in range(-num_cols, num_cols):
+            tensor = met_row[0, j]
+            assert isinstance(tensor, torch.Tensor)
+            # NOTE: tensor_list[j] is a tensor of j-th column of size
+            # [num_rows, dim_emb_j]. See the docs for more info.
+            assert torch.allclose(tensor_list[j][i], tensor)

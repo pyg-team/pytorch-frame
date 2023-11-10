@@ -161,7 +161,7 @@ def test_multi_nested_tensor_basics():
     assert_equal(column_select(tensor_mat, slice(3, 3 + 2)),
                  multi_nested_tensor.narrow(dim=1, start=3, length=2))
 
-    # Testing row concat
+    # Test row concat
     assert_equal(
         tensor_mat,
         MultiNestedTensor.cat(
