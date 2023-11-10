@@ -5,6 +5,7 @@ import torch
 from torch import Tensor
 
 from torch_frame.data import MultiNestedTensor, TensorFrame
+from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
 from torch_frame.typing import TensorData
 
@@ -12,8 +13,10 @@ from torch_frame.typing import TensorData
 def serialize_feat_dict(feat_dict: Dict[str, TensorData]) -> Dict[str, Any]:
     feat_seriealized_dict = {}
     for stype, feat in feat_dict.items():
+        # TODO: Add stype.use_multi_tensor and use the same code path for
+        # stype.embedding.
         if stype.use_multi_nested_tensor:
-            assert isinstance(feat, MultiNestedTensor)
+            assert isinstance(feat, _MultiTensor)
             feat_seriealized = asdict(feat)
         elif stype.use_dict_multi_nested_tensor:
             feat_seriealized = {}
