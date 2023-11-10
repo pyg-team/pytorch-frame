@@ -107,6 +107,6 @@ def test_embedding_tensor_mapper():
     emb_list = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
     ser = pd.Series(emb_list)
     mapper = EmbeddingTensorMapper()
-    met = mapper.forward(ser)
+    out = mapper.forward(ser)
     expected = MultiEmbeddingTensor.from_tensor_list([torch.tensor(emb_list)])
-    assert MultiEmbeddingTensor.allclose(met, expected)
+    assert MultiEmbeddingTensor.allclose(out, expected)
