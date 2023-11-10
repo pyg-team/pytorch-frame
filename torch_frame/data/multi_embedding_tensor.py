@@ -122,7 +122,8 @@ class MultiEmbeddingTensor(_MultiTensor):
             dim (int): The dimension to concatenate along.
 
         Returns:
-            MultiEmbeddingTensor: Concatenated multi embedding tensor.
+            MultiEmbeddingTensor: Concatenated multi embedding tensor that
+                shares the same data as the input multi embedding tensors.
 
         Example:
             >>> from torch_frame.data import MultiEmbeddingTensor
@@ -163,7 +164,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         dim = MultiEmbeddingTensor._normalize_dim(dim)
 
         if len(xs) == 1:
-            return xs[0].clone()
+            return xs[0]
 
         if dim == 0:
             num_rows = sum(x.num_rows for x in xs)
@@ -174,7 +175,9 @@ class MultiEmbeddingTensor(_MultiTensor):
                         "num_cols must be the same across a list of input "
                         "multi embedding tensors.")
             values = torch.cat([x.values for x in xs], dim=0)
-            offset = xs[0].offset.clone()
+            # NOTE: offset shares the same data with the input's offset,
+            # which is inconsistent with when dim=1
+            offset = xs[0].offset
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
 
         elif dim == 1:
@@ -189,5 +192,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset_list = [0]
             for x in xs:
                 offset_list.extend(x.offset[1:] + offset_list[-1])
+            # NOTE: offset is a data copy of the input's offset,
+            # which is inconsistent with when dim=0
             offset = torch.LongTensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)

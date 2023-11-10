@@ -219,25 +219,6 @@ def test_cat():
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.cat([met.to("cpu"), met.to("meta")], dim=0)
 
-    # case: output should be a copy
-    met1, _ = get_fake_multi_embedding_tensor(
-        num_rows=2,
-        num_cols=3,
-        embedding_dim=1,
-    )
-    met2, _ = get_fake_multi_embedding_tensor(
-        num_rows=2,
-        num_cols=3,
-        embedding_dim=1,
-    )
-    for dim in [0, 1]:
-        met_cat = MultiEmbeddingTensor.cat([met1, met2], dim=dim)
-        assert met_cat.values[0, 0] == met1.values[0, 0]
-        met_cat.values[0, 0] = 12345.
-        assert met1.values[0, 0] != 12345.
-        met_cat.offset[0] = -1
-        assert met1.offset[0] != -1
-
     # case: list of non-MultiEmbeddingTensor should raise error
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.cat([object()], dim=0)
