@@ -10,9 +10,8 @@ from torch_frame.data.mapper import (
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
 )
-from torch_frame.testing.text_embedder import HashTextEmbedder
-
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 def test_numerical_tensor_mapper():
