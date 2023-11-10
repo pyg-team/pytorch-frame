@@ -61,6 +61,15 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=self.offset,
             )
 
+        elif isinstance(index, Tensor) and index.ndim == 1:
+            return self.index_select(index, dim=dim)
+
+        elif isinstance(index, List):
+            return self.index_select(
+                torch.tensor(index, device=self.device),
+                dim=dim,
+            )
+
         # TODO(akihironitta): Support more index types
         raise NotImplementedError
 

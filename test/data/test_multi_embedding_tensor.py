@@ -124,6 +124,16 @@ def test_index():
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
 
+    # Test [list[int]] indexing
+    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
+        met_indexed = met[index]
+        assert met_indexed.shape[0] == len(index)
+        assert met_indexed.shape[1] == num_cols
+        for i, idx in enumerate(index):
+            for j in range(num_cols):
+                tensor = met_indexed[i, j]
+                assert torch.allclose(tensor_list[idx][j], tensor)
+
 
 def test_clone():
     met, _ = get_fake_multi_embedding_tensor(
