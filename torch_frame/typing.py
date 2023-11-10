@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 import pandas as pd
 from torch import Tensor
 
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.multi_tensor import _MultiTensor
 
 
@@ -64,4 +65,4 @@ DataFrame = pd.DataFrame
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
 TextTokenizationOutputs = List[Dict[str, Tensor]]
-TensorData = Union[Tensor, _MultiTensor, Dict[str, _MultiTensor]]
+TensorData = Union[Tensor, _MultiTensor, Dict[str, MultiNestedTensor]]

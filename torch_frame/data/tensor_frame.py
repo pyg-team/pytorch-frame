@@ -8,6 +8,7 @@ from torch import Tensor
 import torch_frame
 from torch_frame import stype
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
@@ -180,6 +181,12 @@ class TensorFrame:
                     return False
             elif isinstance(self_feat, MultiNestedTensor):
                 if not isinstance(other_feat, MultiNestedTensor):
+                    return False
+                if not MultiNestedTensor.allclose(self_feat, other_feat,
+                                                  equal_nan=True):
+                    return False
+            elif isinstance(self_feat, MultiEmbeddingTensor):
+                if not isinstance(other_feat, MultiEmbeddingTensor):
                     return False
                 if not MultiNestedTensor.allclose(self_feat, other_feat,
                                                   equal_nan=True):

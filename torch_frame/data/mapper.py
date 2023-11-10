@@ -353,5 +353,5 @@ class EmbeddingTensorMapper(TensorMapper):
             offset=torch.tensor([0, len(ser[0])]),
         ).to(device)
 
-    def backward(self, tensor: Tensor) -> pd.Series:
+    def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
         raise NotImplementedError
