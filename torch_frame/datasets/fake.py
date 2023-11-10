@@ -119,6 +119,12 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_tokenized
+        if stype.embedding in stypes:
+            for col_name in ['emb_1', 'emb_2']:
+                emb_dim = random.randint(1, 5)
+                arr = np.random.randn(num_rows, emb_dim)
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.embedding
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
