@@ -224,7 +224,7 @@ class DataFrameToTensorFrameConverter:
                     feat_dict[stype][key] = MultiNestedTensor.cat(
                         [x[key] for x in xs], dim=1)
             elif stype.use_multi_embedding_tensor:
-                feat_dict[stype] = MultiEmbeddingTensor.cat(xs, dim=1)  # noqa
+                feat_dict[stype] = MultiEmbeddingTensor.cat(xs, dim=1)
             else:
                 feat_dict[stype] = torch.stack(xs, dim=1)
 
