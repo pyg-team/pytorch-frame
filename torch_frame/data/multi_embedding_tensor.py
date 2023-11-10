@@ -155,7 +155,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             raise RuntimeError('Cannot concatenate a sequence of length 0.')
 
         for x in xs:
-            msg = "xs must be a list of MultiEmbeddingTensor."
+            msg = "`xs` must be a list of MultiEmbeddingTensor."
             assert isinstance(x, MultiEmbeddingTensor), msg
             msg = ("device must be the same across a sequence of"
                    " MultiEmbeddingTensor.")
