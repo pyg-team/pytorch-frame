@@ -100,12 +100,29 @@ def test_from_tensor_list():
 
 
 def test_index():
+    num_rows = 8
+    num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
-        num_rows=2,
-        num_cols=3,
+        num_rows=num_rows,
+        num_cols=num_cols,
     )
-    # case met[i, j]: a tuple of two integers
-    assert_equal(tensor_list, met)
+
+    # Test [i, j] indexing
+    for i in range(-num_rows, num_rows):
+        for j in range(num_cols):
+            tensor = met[i, j]
+            assert isinstance(tensor, torch.Tensor)
+            assert torch.allclose(tensor_list[j][i], tensor)
+
+    # Test [i] indexing
+    for i in range(-num_rows, num_rows):
+        met_row = met[i]
+        assert met_row.shape[0] == 1
+        assert met_row.shape[1] == num_cols
+        for j in range(-num_cols, num_cols):
+            tensor = met_row[0, j]
+            assert isinstance(tensor, torch.Tensor)
+            assert torch.allclose(tensor_list[j][i], tensor)
 
 
 def test_clone():
