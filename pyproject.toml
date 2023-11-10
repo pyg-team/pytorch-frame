@@ -40,7 +40,7 @@ test=[
     "pytest-cov",
 ]
 dev=[
-    "torch_frame[test]",
+    "pytorch_frame[test]",
     "pre-commit",
 ]
 full=[
