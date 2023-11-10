@@ -147,7 +147,7 @@ class DataFrameToTensorFrameConverter:
                     self._col_names_dict[stype].append(col)
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
-            sorted(self._col_names_dict[stype])
+            self._col_names_dict[stype].sort()
 
         self.col_to_sep = canonicalize_col_to_sep(
             col_to_sep,
