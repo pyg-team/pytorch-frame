@@ -122,8 +122,9 @@ class FakeDataset(torch_frame.data.Dataset):
         if stype.embedding in stypes:
             for col_name in ['emb_1', 'emb_2']:
                 emb_dim = random.randint(1, 5)
-                arr = np.random.randn(num_rows, emb_dim)
-                df_dict[col_name] = arr
+                emb = [random.random() for _ in range(emb_dim)]
+                emb = [emb for _ in range(num_rows)]
+                df_dict[col_name] = emb
                 col_to_stype[col_name] = stype.embedding
         df = pd.DataFrame(df_dict)
         if create_split:
