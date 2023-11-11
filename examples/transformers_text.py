@@ -206,7 +206,8 @@ else:
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
-dataset.materialize(path=osp.join(path, 'data.pt'))
+filename = f'{args.model}_{text_stype.value}_data.pt'
+dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
 
