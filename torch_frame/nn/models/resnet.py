@@ -10,7 +10,6 @@ from torch.nn import (
     ReLU,
     Sequential,
 )
-from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import TensorFrame, stype
@@ -183,7 +182,7 @@ class ResNet(Module):
         r"""Transforming :class:`TensorFrame` object into output prediction.
 
         Args:
-            x (:class:`torch_frame.TensorFrame`):
+            tf (:class:`torch_frame.TensorFrame`):
                 Input :class:`TensorFrame` object.
 
         Returns:

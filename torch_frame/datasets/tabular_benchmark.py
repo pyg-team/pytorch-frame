@@ -433,4 +433,4 @@ class TabularBenchmark(torch_frame.data.Dataset):
         super().__init__(df, col_to_stype, target_col=target_col)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}(name='{self.name}')")
+        return f"{self.__class__.__name__}(name='{self.name}')"
