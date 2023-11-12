@@ -27,7 +27,7 @@ class FittableBaseTransform(BaseTransform):
         r"""Whether the transform is already fitted."""
         return self._is_fitted
 
-    def _replace_nans(self, x: TensorFrame, na_strategy: NAStrategy):
+    def _replace_nans(self, x: Tensor, na_strategy: NAStrategy):
         r"""Replace NaNs based on NAStrategy.
 
         Args:
