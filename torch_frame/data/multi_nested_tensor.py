@@ -450,7 +450,7 @@ class MultiNestedTensor(_MultiTensor):
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
-    It essentially does the following:
+    It essentially does the following.
 
     .. code-block:: python
 
@@ -458,7 +458,7 @@ def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
         arange = torch.cat([torch.arange(c) for c in count])
 
     Args:
-        counts (Tensor): The count vectors.
+        count (Tensor): The count vectors.
 
     Returns:
         batch (Tensor): batch[i] indicates the batch index of

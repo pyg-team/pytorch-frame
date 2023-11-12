@@ -46,6 +46,8 @@ class GBDT:
             tf_val (TensorFrame): The validation data in :class:`TensorFrame`.
             num_trials (int): Number of trials to perform hyper-parameter
                 search.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         if tf_train.y is None:
             raise RuntimeError("tf_train.y must be a Tensor, but None given.")
@@ -56,7 +58,7 @@ class GBDT:
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
         r"""Predict the labels/values of the test data on the fitted model and
-        returns its predictions:
+        returns its predictions.
 
         - :obj:`TaskType.REGRESSION`: Returns raw numerical values.
 

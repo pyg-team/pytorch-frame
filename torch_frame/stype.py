@@ -3,6 +3,7 @@ from enum import Enum
 
 class stype(Enum):
     r"""The semantic type of a column.
+
     A semantic type denotes the semantic meaning of a column, and denotes how
     columns are encoded into an embedding space within tabular deep learning
     models:

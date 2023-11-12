@@ -119,6 +119,7 @@ class _MultiTensor:
         Args:
             index: Union[int, Tensor]: Input :obj:`index` with potentially
                 negative elements.
+            dim (int): Dimension to be indexed.
             is_slice_end (bool): Whether a given index (int) is slice end or
                 not. If :obj:`True`, we have more lenient :obj:`IndexError`.
                 (default: :obj:`False`)

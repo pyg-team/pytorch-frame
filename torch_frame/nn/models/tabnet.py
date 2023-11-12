@@ -145,6 +145,8 @@ class TabNet(Module):
 
         Args:
             tf (TensorFrame): Input :class:`TensorFrame` object.
+            return_reg (bool): If :obj:`True`, return the entropy
+                regularization.
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output

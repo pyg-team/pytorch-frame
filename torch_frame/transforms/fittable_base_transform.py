@@ -27,11 +27,11 @@ class FittableBaseTransform(BaseTransform):
         r"""Whether the transform is already fitted."""
         return self._is_fitted
 
-    def _replace_nans(self, x: Tensor, na_strategy: NAStrategy):
+    def _replace_nans(self, x: TensorFrame, na_strategy: NAStrategy):
         r"""Replace NaNs based on NAStrategy.
 
         Args:
-            tf (TensorFrame): Input :class:`TensorFrame` object whose NaN
+            x (TensorFrame): Input :class:`TensorFrame` object whose NaN
                 values in categorical columns are to be replaced.
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.

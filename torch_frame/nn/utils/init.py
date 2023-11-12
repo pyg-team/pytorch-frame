@@ -15,7 +15,7 @@ def attenuated_kaiming_uniform_(
     r"""Attenuated Kaiming Uniform Initialization.
 
     Args:
-        x (tensor): Input tensor to be initialized
+        tensor (tensor): Input tensor to be initialized
         scale (float): Positive rescaling constant to the variance.
         a (float): Negative slope of the rectifier used after this layer
         mode (str): Either 'fan_in' (default) or 'fan_out'. Choosing
