@@ -182,11 +182,12 @@ class ExcelFormer(Module):
                 true. (default: :obj:`0.5`)
 
         Returns:
-            (torch.Tensor, torch.Tensor): The first :obj:`Tensor` is the mixed
-            up output embeddings of size [batch_size, out_channels].
-            The second :obj:`Tensor` `y_mixedup` will be returned only when
-            mixup is set to true. The size is [batch_size, num_classes] for
-            classification and [batch_size, 1] for regression.
+            (torch.Tensor, torch.Tensor): The first :class:`Tensor` is the
+            mixed up output embeddings of size
+            :obj:`[batch_size, out_channels]`. The second :obj:`Tensor`
+            :obj:`y_mixedup` will be returned only when mixup is set to true.
+            The size is [batch_size, num_classes] for classification and
+            :obj:`[batch_size, 1]` for regression.
         """
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(
