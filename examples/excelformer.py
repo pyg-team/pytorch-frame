@@ -1,5 +1,5 @@
 """Reported (reproduced) accuracy(rmse for regression task) of ExcelFormer
-based on Table 1 of the paper. https://arxiv.org/abs/2301.02819
+based on Table 1 of the paper https://arxiv.org/abs/2301.02819.
 ExcelFormer uses the same train-validation-test split as the Yandex paper.
 
 california_housing: 0.4587 (0.4733) num_layers=5, num_heads=4, num_layers=5,
