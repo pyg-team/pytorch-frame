@@ -68,9 +68,9 @@ class Module(torch.nn.Module):
         self.validate()
         return super().named_parameters(*args, **kwargs)
 
-    def named_children(self, *args, **kwargs) -> Any:
+    def named_children(self) -> Any:
         self.validate()
-        return super().named_children(*args, **kwargs)
+        return super().named_children()
 
     def named_modules(self, *args, **kwargs) -> Any:
         self.validate()

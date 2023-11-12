@@ -31,13 +31,13 @@ class FittableBaseTransform(BaseTransform):
         r"""Replace NaNs based on NAStrategy.
 
         Args:
-            x (TensorFrame): Input :class:`TensorFrame` object whose NaN
-                values in categorical columns are to be replaced.
+            x (Tensor): Input :class:`Tensor` whose NaN
+                values in categorical columns will be replaced.
             na_strategy (NAStrategy): The :class:`NAStrategy` used to
                 replace NaN values.
 
         Returns:
-            Tensor: Output :class:`TensorFrame` object with NaN values
+            Tensor: Output :class:`Tensor` with NaN values
                 replaced.
         """
         x = x.clone()
@@ -56,6 +56,8 @@ class FittableBaseTransform(BaseTransform):
                 fill_value = valid_data.mean()
             elif na_strategy in [NAStrategy.ZEROS, NAStrategy.MOST_FREQUENT]:
                 fill_value = torch.tensor(0.)
+            else:
+                raise ValueError(f'{na_strategy} is not supported.')
             column_data[nan_mask] = fill_value
         return x
 

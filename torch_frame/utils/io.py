@@ -4,46 +4,50 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 from torch import Tensor
 
+import torch_frame
 from torch_frame.data import MultiNestedTensor, TensorFrame
 from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
 from torch_frame.typing import TensorData
 
 
-def serialize_feat_dict(feat_dict: Dict[str, TensorData]) -> Dict[str, Any]:
-    feat_seriealized_dict = {}
+def serialize_feat_dict(
+    feat_dict: Dict[torch_frame.stype, TensorData]
+) -> Dict[torch_frame.stype, Any]:
+    feat_serialized_dict = {}
     for stype, feat in feat_dict.items():
         # TODO: Add stype.use_multi_tensor and use the same code path for
         # stype.embedding.
         if stype.use_multi_nested_tensor:
             assert isinstance(feat, _MultiTensor)
-            feat_seriealized = asdict(feat)
+            feat_serialized = asdict(feat)
         elif stype.use_dict_multi_nested_tensor:
-            feat_seriealized = {}
+            feat_serialized = {}
             assert isinstance(feat, dict)
             for name, f in feat.items():
                 assert isinstance(f, MultiNestedTensor)
-                feat_seriealized[name] = asdict(f)
+                feat_serialized[name] = asdict(f)
         else:
             assert isinstance(feat, Tensor)
-            feat_seriealized = feat
-        feat_seriealized_dict[stype] = feat_seriealized
-    return feat_seriealized_dict
+            feat_serialized = feat
+        feat_serialized_dict[stype] = feat_serialized
+    return feat_serialized_dict
 
 
 def deserialize_feat_dict(
-        feat_serialized_dict: Dict[str, Any]) -> Dict[str, TensorData]:
+    feat_serialized_dict: Dict[torch_frame.stype, Any]
+) -> Dict[torch_frame.stype, TensorData]:
     feat_dict = {}
-    for stype, feat_seriealized in feat_serialized_dict.items():
+    for stype, feat_serialized in feat_serialized_dict.items():
         if stype.use_multi_nested_tensor:
-            feat = MultiNestedTensor(**feat_seriealized)
+            feat = MultiNestedTensor(**feat_serialized)
         elif stype.use_dict_multi_nested_tensor:
             feat = {}
-            for name, f_serialized in feat_seriealized.items():
+            for name, f_serialized in feat_serialized.items():
                 feat[name] = MultiNestedTensor(**f_serialized)
         else:
-            assert isinstance(feat_seriealized, Tensor)
-            feat = feat_seriealized
+            assert isinstance(feat_serialized, Tensor)
+            feat = feat_serialized
         feat_dict[stype] = feat
     return feat_dict
 
@@ -63,7 +67,7 @@ def save(tensor_frame: TensorFrame,
     tf_dict = {
         'y': tensor_frame.y,
         'col_names_dict': tensor_frame.col_names_dict,
-        'feat_seriealized_dict': serialize_feat_dict(tensor_frame.feat_dict),
+        'feat_serialized_dict': serialize_feat_dict(tensor_frame.feat_dict),
     }
     torch.save((tf_dict, col_stats), path)
 
@@ -86,7 +90,7 @@ def load(
     """
     tf_dict, col_stats = torch.load(path)
     tf_dict['feat_dict'] = deserialize_feat_dict(
-        tf_dict.pop('feat_seriealized_dict'))
+        tf_dict.pop('feat_serialized_dict'))
     tensor_frame = TensorFrame(**tf_dict)
     tensor_frame.to(device)
     return tensor_frame, col_stats

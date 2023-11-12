@@ -116,4 +116,6 @@ class GBDT:
             total_correct = (target == pred).sum().item()
             test_size = len(target)
             metric = {self.metric: total_correct / test_size}
+        else:
+            raise ValueError(f'Metric {self.metric} is not supported.')
         return metric
