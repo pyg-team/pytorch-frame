@@ -68,7 +68,6 @@ ignore = [
     "D101",  # TODO: Don't ignore "Missing docstring in public class"
     "D102",  # TODO: Don't ignore "Missing docstring in public method"
     "D103",  # TODO: Don't ignore "Missing docstring in public function"
-    "D104",  # TODO: Don't ignore "Missing docstring in public package"
     "D105",  # Ignore "Missing docstring in magic method"
     "D107",  # Ignore "Missing docstring in __init__"
     "D205",  # Ignore "blank line required between summary line and description"
@@ -77,6 +76,10 @@ src = ["torch_frame"]
 line-length = 80
 indent-width = 4
 target-version = "py38"
+
+# [tool.ruff.per-files-ignores]
+
+
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
