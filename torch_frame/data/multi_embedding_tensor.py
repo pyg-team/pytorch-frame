@@ -41,38 +41,6 @@ class MultiEmbeddingTensor(_MultiTensor):
         assert len(self.offset) == self.num_cols + 1
         assert self.values.size() == (self.num_rows, self.offset[-1])
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union['MultiEmbeddingTensor', Tensor]:
-
-        if isinstance(index, tuple) and len(index) == 2 and isinstance(
-                index[0], int) and isinstance(index[1], int):
-            i = self._normalize_index(index[0], dim=0)
-            j = self._normalize_index(index[1], dim=1)
-            return self.values[i, self.offset[j]:self.offset[j + 1]]
-
-        if isinstance(index, int):
-            index = self._normalize_index(index, dim=0)
-            return MultiEmbeddingTensor(
-                num_rows=1,
-                num_cols=self.num_cols,
-                values=self.values[index].view(1, -1),
-                offset=self.offset,
-            )
-
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-
-        elif isinstance(index, List):
-            return self.index_select(
-                torch.tensor(index, device=self.device),
-                dim=dim,
-            )
-
-        # TODO(akihironitta): Support more index types
-        raise NotImplementedError
-
     @classmethod
     def from_tensor_list(
         cls,
@@ -126,6 +94,104 @@ class MultiEmbeddingTensor(_MultiTensor):
         values = torch.cat(tensor_list, dim=1)
         offset = torch.LongTensor(offset_list)
         return cls(num_rows, num_cols, values, offset)
+
+    def __getitem__(
+        self,
+        index: Any,
+    ) -> Union['MultiEmbeddingTensor', Tensor]:
+
+        if isinstance(index, tuple) and len(index) == 2 and isinstance(
+                index[0], int) and isinstance(index[1], int):
+            i = self._normalize_index(index[0], dim=0)
+            j = self._normalize_index(index[1], dim=1)
+            return self.values[i, self.offset[j]:self.offset[j + 1]]
+
+        if isinstance(index, int):
+            index = self._normalize_index(index, dim=0)
+            return MultiEmbeddingTensor(
+                num_rows=1,
+                num_cols=self.num_cols,
+                values=self.values[index].view(1, -1),
+                offset=self.offset,
+            )
+
+        if isinstance(index, Tensor) and index.ndim == 1:
+            return self.index_select(index, dim=0)
+
+        if isinstance(index, list):
+            return self.index_select(
+                torch.tensor(index, device=self.device),
+                dim=0,
+            )
+
+        # TODO(akihironitta): Support more index types
+        raise NotImplementedError
+
+    def index_select(
+        self,
+        index: Tensor,
+        dim: int,
+    ) -> 'MultiEmbeddingTensor':
+        """Returns a :class:`MultiEmbeddingTensor` which indexes the input
+        :class:`MultiEmbeddingTensor` along the specified dimension.
+
+        Args:
+            index (Tensor): A 1-D tensor of indices to select.
+            dim (int): The dimension to index in.
+
+        Returns:
+            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
+        """
+        dim = self._normalize_dim(dim)
+        index = self._normalize_index(index, dim=dim)
+        if dim == 0:
+            return self._row_index_select(index)
+        elif dim == 1:
+            return self._col_index_select(index)
+
+    def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        if index.numel() == 0:
+            return MultiEmbeddingTensor(
+                num_rows=0,
+                num_cols=self.num_cols,
+                values=torch.tensor([], device=self.device),
+                offset=torch.zeros(1, dtype=torch.long, device=self.device),
+            )
+        return MultiEmbeddingTensor(
+            num_rows=index.size(0),
+            num_cols=self.num_cols,
+            values=self.values[index],
+            offset=self.offset,
+        )
+
+    def _col_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        if index.numel() == 0:
+            return MultiEmbeddingTensor(
+                num_rows=self.num_rows,
+                num_cols=0,
+                values=torch.tensor([], device=self.device),
+                offset=torch.zeros(1, dtype=torch.long, device=self.device),
+            )
+        col_dims = self.offset[1:] - self.offset[:-1]
+        col_dims = col_dims[index]
+        offset = torch.empty(
+            index.size(0) + 1,
+            dtype=torch.long,
+            device=self.device,
+        )
+        offset[0] = 0
+        offset[1:] = torch.cumsum(col_dims, dim=0)
+        # TODO: Optimize this
+        value_list = []
+        for col_dim, idx in zip(col_dims, index):
+            value_list.append(self.values[:, torch.arange(idx, idx+col_dim)])
+        values = torch.tensor(value_list, device=self.device)
+        return MultiEmbeddingTensor(
+            num_rows=self.num_rows,
+            num_cols=index.size(0),
+            values=values,
+            offset=offset,
+        )
 
     @staticmethod
     def cat(
