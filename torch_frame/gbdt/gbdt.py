@@ -46,6 +46,8 @@ class GBDT:
             tf_val (TensorFrame): The validation data in :class:`TensorFrame`.
             num_trials (int): Number of trials to perform hyper-parameter
                 search.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         if tf_train.y is None:
             raise RuntimeError("tf_train.y must be a Tensor, but None given.")
@@ -56,7 +58,7 @@ class GBDT:
 
     def predict(self, tf_test: TensorFrame) -> Tensor:
         r"""Predict the labels/values of the test data on the fitted model and
-        returns its predictions:
+        returns its predictions.
 
         - :obj:`TaskType.REGRESSION`: Returns raw numerical values.
 
@@ -82,7 +84,8 @@ class GBDT:
     def metric(self) -> str:
         r"""Metric to compute for different tasks. root mean squared error for
         regression, ROC-AUC for binary classification, and accuracy for
-        multi-label classification task."""
+        multi-label classification task.
+        """
         if self.task_type == TaskType.REGRESSION:
             return 'rmse'
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
@@ -113,4 +116,6 @@ class GBDT:
             total_correct = (target == pred).sum().item()
             test_size = len(target)
             metric = {self.metric: total_correct / test_size}
+        else:
+            raise ValueError(f'Metric {self.metric} is not supported.')
         return metric

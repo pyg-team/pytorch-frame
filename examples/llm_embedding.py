@@ -98,7 +98,7 @@ dataset = AmazonFineFoodReviews(
     ),
 )
 
-dataset.materialize(path=osp.join(path, 'data.pt'))
+dataset.materialize(path=osp.join(path, f'{args.service}_data.pt'))
 
 # Shuffle the dataset
 dataset = dataset.shuffle()

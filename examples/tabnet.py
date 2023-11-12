@@ -1,6 +1,5 @@
-"""
-Reported (reproduced) results of of TabNet model in the original paper
-https://arxiv.org/abs/1908.07442
+"""Reported (reproduced) results of of TabNet model in the original paper
+https://arxiv.org/abs/1908.07442.
 
 Forest Cover Type: 96.99 (96.53)
 KDD Census Income: 95.5 (95.41)
