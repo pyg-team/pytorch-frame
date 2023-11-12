@@ -18,7 +18,6 @@ def neg_to_nan(x: Tensor) -> Tensor:
     Returns:
         x (Tensor): Output categ. feature, where `-1` is replaced with `NaN`
     """
-
     is_neg = x == -1
     if is_neg.any():
         x = copy.copy(x).to(torch.float32)
@@ -57,6 +56,7 @@ class XGBoost(GBDT):
 
         Args:
             tf (Tensor Frame): Input :obj:TensorFrame object.
+
         Returns:
             feat (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
@@ -94,7 +94,7 @@ class XGBoost(GBDT):
         dvalid: Any,  # xgboost.DMatrix
         num_boost_round: int,
     ) -> float:
-        r""" Objective function to be optimized.
+        r"""Objective function to be optimized.
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.

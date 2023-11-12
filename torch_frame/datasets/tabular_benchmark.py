@@ -389,7 +389,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
     @classmethod
     @property
     def name_list(cls) -> List[str]:
-        r"List of dataset names available."
+        r"""List of dataset names available."""
         return sorted(list(cls.name_to_task_category.keys()))
 
     def __init__(self, root: str, name: str):

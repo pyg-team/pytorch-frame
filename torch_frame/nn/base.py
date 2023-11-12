@@ -14,7 +14,8 @@ class Module(torch.nn.Module):
 
     This is achieved by postponing submodule creation
     (via :meth:`init_modules`) until all attributes in :obj:`LAZY_ATTRS` are
-    fully-specified."""
+    fully-specified.
+    """
     LAZY_ATTRS: Set[str] = set()
 
     def init_modules(self):

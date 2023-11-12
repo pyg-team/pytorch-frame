@@ -17,7 +17,7 @@ def init_attenuated(linear: Linear):
 
 
 class AiuM(Module):
-    r"""Attentive Intra-feature Update Module
+    r"""Attentive Intra-feature Update Module.
 
     Args:
         channels (int): Input channel dimensionality
@@ -40,7 +40,7 @@ class AiuM(Module):
 
 
 class DiaM(Module):
-    r"""Directed Inter-feature Attention Module
+    r"""Directed Inter-feature Attention Module.
 
     Args:
         channels (int): Input channel dimensionality
@@ -77,7 +77,7 @@ class DiaM(Module):
         return x
 
     def get_attention_mask(self, input_shape: Tensor.size):
-        r""" Generate an attention mask for a given input shape.
+        r"""Generate an attention mask for a given input shape.
 
         The function constructs an attention mask using the sequence ids
         of the input columns. The mask is created such that the elements
@@ -86,11 +86,11 @@ class DiaM(Module):
         are 1e-5.
 
         Args:
-        - input_shape (Tensor.size): Shape of the input tensor. Expected
-        to be (Batch size, _, Channels).
+            input_shape (torch.Size): Shape of the input tensor. Expected
+                to be (Batch size, _, Channels).
 
         Returns:
-        - torch.Tensor: The generated attention mask with values 0 or -1e5.
+            torch.Tensor: The generated attention mask with values 0 or -1e5.
         """
         B, _, num_cols = input_shape
         attention_mask = (self.seq_ids[None, None, :].repeat(B, num_cols, 1)

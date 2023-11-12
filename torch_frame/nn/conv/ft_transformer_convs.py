@@ -69,7 +69,7 @@ class FTTransformerConvs(TableConv):
                 torch.nn.init.xavier_uniform_(p)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        r"""CLS-token augmented Transformer convolution
+        r"""CLS-token augmented Transformer convolution.
 
         Args:
             x (Tensor): Input tensor of shape [batch_size, num_cols, channels]

@@ -145,8 +145,7 @@ class TabNet(Module):
 
         Args:
             tf (TensorFrame): Input :class:`TensorFrame` object.
-            return_reg (bool): Whether to return the entropy
-                regularization.
+            return_reg (bool): Whether to return the entropy regularization.
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
@@ -323,7 +322,7 @@ class AttentiveTransformer(Module):
 
 
 class GhostBatchNorm1d(torch.nn.Module):
-    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741"""
+    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741."""
     def __init__(
         self,
         input_dim: int,

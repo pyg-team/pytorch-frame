@@ -64,7 +64,6 @@ def save(tensor_frame: TensorFrame,
         path (str): Path to save the :class:`TensorFrame` object and
             :obj:`col_stats`.
     """
-
     tf_dict = {
         'y': tensor_frame.y,
         'col_names_dict': tensor_frame.col_names_dict,

@@ -1,3 +1,4 @@
+r"""Utility package."""
 from .stype import (stype, numerical, categorical, text_embedded,
                     text_tokenized, multicategorical, sequence_numerical)
 from .data import TensorFrame
