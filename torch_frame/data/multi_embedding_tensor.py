@@ -184,7 +184,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         # TODO: Optimize this
         value_list = []
         for col_dim, idx in zip(col_dims, index):
-            value_list.append(self.values[:, torch.arange(idx, idx+col_dim)])
+            value_list.append(self.values[:, torch.arange(idx, idx + col_dim)])
         values = torch.tensor(value_list, device=self.device)
         return MultiEmbeddingTensor(
             num_rows=self.num_rows,
