@@ -12,7 +12,6 @@ from torch.nn import (
     ModuleList,
     Sequential,
 )
-from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import TensorFrame, stype

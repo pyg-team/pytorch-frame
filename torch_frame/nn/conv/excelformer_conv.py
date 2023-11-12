@@ -124,12 +124,12 @@ class ExcelFormerConv(TableConv):
     <https://arxiv.org/abs/2301.02819>`_ paper.
 
     Args:
-        channels (int): Input/output channel dimensionality
-        num_cols (int): Number of columns
-        num_heads (int): Number of attention heads
-        diam_dropout (float): diam_dropout (default: 0)
-        aium_dropout (float): aium_dropout (default: 0)
-        residual_dropout (float): residual dropout (default: 0)
+        channels (int): Input/output channel dimensionality.
+        num_cols (int): Number of columns.
+        num_heads (int): Number of attention heads.
+        diam_dropout (float): diam_dropout. (default: 0)
+        aium_dropout (float): aium_dropout. (default: 0)
+        residual_dropout (float): residual dropout. (default: 0)
     """
     def __init__(
         self,

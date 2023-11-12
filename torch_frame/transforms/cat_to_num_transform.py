@@ -13,14 +13,14 @@ from torch_frame.transforms import FittableBaseTransform
 
 class CatToNumTransform(FittableBaseTransform):
     r"""A transform that encodes the categorical features of
-        the :class:`TensorFrame` object using target statistics.
-        The original transform is explained in
-        https://dl.acm.org/doi/10.1145/507533.507538
-        Specifically, each categorical feature is transformed
-        into numerical feature using m-probability estimate,
-        defined by (n_c + p * m)/ (n + m), where n_c is the
-        total count of the category, n is the total count,
-        p is the prior probability and m is a smoothing factor.
+    the :class:`TensorFrame` object using target statistics.
+    The original transform is explained in
+    https://dl.acm.org/doi/10.1145/507533.507538
+    Specifically, each categorical feature is transformed
+    into numerical feature using m-probability estimate,
+    defined by (n_c + p * m)/ (n + m), where n_c is the
+    total count of the category, n is the total count,
+    p is the prior probability and m is a smoothing factor.
     """
     def _fit(
         self,
