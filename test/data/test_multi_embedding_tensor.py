@@ -115,6 +115,7 @@ def test_index_tuple():
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
 
+
 def test_index_int():
     num_rows = 8
     num_cols = 10
