@@ -25,8 +25,6 @@ from torch_frame.nn import (
     LinearModelEncoder,
 )
 from torch_frame.typing import TensorData
-from accelerate import init_empty_weights
-from accelerate.utils import BnbQuantizationConfig, load_and_quantize_model
 
 # Text Embedded
 # all-distilroberta-v1
@@ -37,6 +35,15 @@ from accelerate.utils import BnbQuantizationConfig, load_and_quantize_model
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9470, Best Test Acc: 0.9488
 
+# Text Embedded
+# all-distilroberta-v1 + mixed
+# ============== wine_reviews ===============
+# N/A
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9155, Best Test Acc: 0.8971
+# ======== jigsaw_unintended_bias100K =======
+# WIP
+
 # Text Tokenized
 # distilbert-base-uncased + LoRA
 # ============== wine_reviews ===============
@@ -45,6 +52,15 @@ from accelerate.utils import BnbQuantizationConfig, load_and_quantize_model
 # Best Val Acc: 0.9096, Best Test Acc: 0.8908
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9672, Best Test Acc: 0.9644
+
+# Text Tokenized
+# distilbert-base-uncased + LoRA + mixed
+# ============== wine_reviews ===============
+# N/A
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9175, Best Test Acc: 0.8947
+# ======== jigsaw_unintended_bias100K =======
+# N/A
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='wine_reviews')
@@ -56,6 +72,7 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--finetune', action='store_true')
 parser.add_argument('--lora', action='store_true')
+parser.add_argument('--mixed', action='store_true')
 parser.add_argument(
     '--model', type=str, default='distilbert-base-uncased', choices=[
         'distilbert-base-uncased',
@@ -74,6 +91,7 @@ class TextToEmbedding:
     def __init__(self, model: str, pooling: str, device: torch.device):
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model).to(device)
+        self.model.eval()
         self.device = device
         self.pooling = pooling
 
@@ -122,10 +140,7 @@ class TokenToEmbedding(torch.nn.Module):
     """
     def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
         super().__init__()
-        with init_empty_weights():
-            self.model = AutoModel.from_pretrained(model)
-            bnb_quantization_config = BnbQuantizationConfig(load_in_8bit=True, llm_int8_threshold=6)
-            self.model = load_and_quantize_model(self.model, bnb_quantization_config=bnb_quantization_config)
+        self.model = AutoModel.from_pretrained(model)
 
         if lora:
             if model == 'distilbert-base-uncased':
@@ -146,6 +161,14 @@ class TokenToEmbedding(torch.nn.Module):
                 target_modules=target_modules,
             )
             self.model = get_peft_model(self.model, peft_config)
+
+        def count_parameters(model):
+            return sum(p.numel() for p in model.parameters()
+                       if p.requires_grad)
+
+        print(f'There are {count_parameters(self.model)} parameters '
+              f'in the model {model} to be finetuned.')
+
         self.pooling = pooling
 
     def forward(self, feat: TensorData) -> Tensor:
@@ -167,7 +190,7 @@ class TokenToEmbedding(torch.nn.Module):
         return torch.cat(outs, dim=1)
 
 
-def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
+def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(
         last_hidden_state.size()).float()
     embedding = torch.sum(
@@ -193,7 +216,7 @@ if not args.finetune:
         'text_stype':
         text_stype,
         'text_embedder_cfg':
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
     text_tokenizer = TextTokenizer(model=args.model)
@@ -211,7 +234,8 @@ else:
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
-filename = f'{args.model}_{text_stype.value}_data.pt'
+model_name = args.model.replace('/', '_')
+filename = f'{model_name}_{text_stype.value}_data.pt'
 dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
@@ -251,6 +275,11 @@ model = FTTransformer(
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
+scaler = None
+if args.mixed:
+    from torch.cuda.amp import GradScaler, autocast
+    scaler = GradScaler()
+
 
 def train(epoch: int) -> float:
     model.train()
@@ -258,16 +287,30 @@ def train(epoch: int) -> float:
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
-        pred = model(tf)
-        if is_classification:
-            loss = F.cross_entropy(pred, tf.y)
-        else:
-            loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
-        loss.backward()
+        if args.mixed:
+            with autocast():
+                pred = model(tf)
+                if is_classification:
+                    loss = F.cross_entropy(pred, tf.y)
+                else:
+                    loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
+                assert scaler is not None
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+        else:
+            pred = model(tf)
+            if is_classification:
+                loss = F.cross_entropy(pred, tf.y)
+            else:
+                loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
+            loss.backward()
+            optimizer.step()
+
         loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
-        optimizer.step()
+
     return loss_accum / total_count
 
 
