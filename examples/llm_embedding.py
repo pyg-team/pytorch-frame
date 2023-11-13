@@ -80,8 +80,7 @@ class CohereEmbedding:
 
     def __call__(self, sentences: List[str]) -> Tensor:
         from cohere import Embeddings
-        items: Embeddings = self.co.embed(model=self.model,
-                                          texts=sentences,
+        items: Embeddings = self.co.embed(model=self.model, texts=sentences,
                                           input_type="classification")
         assert len(items) == len(sentences)
         embeddings = torch.tensor(items.embeddings)
