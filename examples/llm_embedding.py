@@ -58,8 +58,10 @@ class OpenAIEmbedding:
         self.model = model
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        items = self.client.embeddings.create(input=sentences,
-                                              model=self.model).data
+        from openai import Embedding
+        items: List[Embedding] = self.client.embeddings.create(
+            input=sentences,
+            model=self.model).data
         assert len(items) == len(sentences)
         embeddings = [
             torch.FloatTensor(item.embedding).view(1, -1) for item in items
@@ -78,8 +80,10 @@ class CohereEmbedding:
         self.co = cohere.Client(api_key)
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        items = self.co.embed(model=self.model, texts=sentences,
-                              input_type="classification")
+        import cohere
+        items: List[List[float]] = self.co.embed(model=self.model,
+                                                 texts=sentences,
+                                                 input_type="classification").embeddings
         assert len(items) == len(sentences)
         embeddings = torch.tensor(items.embeddings)
         return embeddings
@@ -97,7 +101,7 @@ class VoyageaiEmbedding:
         import voyageai
         voyageai.api_key = api_key
         from voyageai import get_embeddings
-        items = get_embeddings(sentences, model=self.model)
+        items: List[List[float]] = get_embeddings(sentences, model=self.model)
         assert len(items) == len(sentences)
         embeddings = [torch.FloatTensor(item).view(1, -1) for item in items]
         return torch.cat(embeddings, dim=0)
