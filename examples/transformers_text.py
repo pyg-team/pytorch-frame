@@ -42,7 +42,7 @@ from torch_frame.typing import TensorData
 # ===== product_sentiment_machine_hack ======
 # Best Val Acc: 0.9155, Best Test Acc: 0.8971
 # ======== jigsaw_unintended_bias100K =======
-# WIP
+# N/A
 
 # Text Tokenized
 # distilbert-base-uncased + LoRA
