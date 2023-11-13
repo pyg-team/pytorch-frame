@@ -212,6 +212,12 @@ We support the following (but not limited to):
       </a>
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Hugging Face Code Example</a>
     </td>
+      <td align="center">
+      <a href="https://www.voyageai.com/">
+        <img src="docs/source/_figures/voyageai.webp" alt="Voyage AI" width="100px"/>
+      </a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Voyageai Code Example</a>
+    </td>
   </tr>
 </table>
 
