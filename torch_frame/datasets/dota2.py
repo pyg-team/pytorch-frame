@@ -46,8 +46,8 @@ class Dota2(torch_frame.data.Dataset):
             'Game mode',
             'Game type',
         ]
-        num_heros = 113
-        names += [f'hero_{i}' for i in range(num_heros)]
+        num_heroes = 113
+        names += [f'hero_{i}' for i in range(num_heroes)]
         folder_path = osp.dirname(path)
         with zipfile.ZipFile(path, 'r') as zip_ref:
             zip_ref.extractall(folder_path)
@@ -60,7 +60,7 @@ class Dota2(torch_frame.data.Dataset):
             'Game mode': torch_frame.categorical,
             'Game type': torch_frame.categorical,
         }
-        for i in range(num_heros):
+        for i in range(num_heroes):
             col_to_stype[f'hero_{i}'] = torch_frame.categorical
 
         super().__init__(df, col_to_stype, target_col='Team won the game')

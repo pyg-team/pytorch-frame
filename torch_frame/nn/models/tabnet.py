@@ -145,6 +145,7 @@ class TabNet(Module):
 
         Args:
             tf (TensorFrame): Input :class:`TensorFrame` object.
+            return_reg (bool): Whether to return the entropy regularization.
 
         Returns:
             Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
@@ -161,9 +162,7 @@ class TabNet(Module):
 
         # [batch_size, num_cols * cat_emb_channels]
         prior = torch.ones_like(x)
-
-        if return_reg:
-            reg = 0.
+        reg = 0.
 
         # [batch_size, split_attn_channels]
         attention_x = self.feat_transformers[0](x)
@@ -323,7 +322,7 @@ class AttentiveTransformer(Module):
 
 
 class GhostBatchNorm1d(torch.nn.Module):
-    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741"""
+    r"""Ghost Batch Normalization https://arxiv.org/abs/1705.08741."""
     def __init__(
         self,
         input_dim: int,

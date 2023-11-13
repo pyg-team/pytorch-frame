@@ -147,7 +147,7 @@ class DataFrameToTensorFrameConverter:
                     self._col_names_dict[stype].append(col)
         for stype in self._col_names_dict.keys():
             # in-place sorting of col_names for each stype
-            sorted(self._col_names_dict[stype])
+            self._col_names_dict[stype].sort()
 
         self.col_to_sep = canonicalize_col_to_sep(
             col_to_sep,
@@ -200,9 +200,9 @@ class DataFrameToTensorFrameConverter:
         df: DataFrame,
         device: Optional[torch.device] = None,
     ) -> TensorFrame:
-        r"""Convert a given :obj:`DataFrame` object into :class:`TensorFrame`
-        object."""
-
+        r"""Convert a given :class:`DataFrame` object into :class:`TensorFrame`
+        object.
+        """
         xs_dict: Dict[torch_frame.stype, List[TensorData]] = defaultdict(list)
 
         for stype, col_names in self.col_names_dict.items():
@@ -484,7 +484,8 @@ class Dataset(ABC):
     @requires_post_materialization
     def index_select(self, index: IndexSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified indices
-        :obj:`index`."""
+        :obj:`index`.
+        """
         if isinstance(index, int):
             index = [index]
 
@@ -517,7 +518,8 @@ class Dataset(ABC):
     @requires_pre_materialization
     def col_select(self, cols: ColumnSelectType) -> 'Dataset':
         r"""Returns a subset of the dataset from specified columns
-        :obj:`cols`."""
+        :obj:`cols`.
+        """
         cols = [cols] if isinstance(cols, str) else cols
 
         if self.target_col is not None and self.target_col not in cols:

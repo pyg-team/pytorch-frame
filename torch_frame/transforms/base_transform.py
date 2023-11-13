@@ -10,7 +10,8 @@ class BaseTransform(ABC):
     r"""An abstract base class for writing transforms.
 
     Transforms are a general way to modify and customize
-    :class:`TensorFrame`"""
+    :class:`TensorFrame`
+    """
     def __init__(self):
         self._transformed_stats: Optional[Dict[str, Dict[StatType,
                                                          Any]]] = None
@@ -22,8 +23,10 @@ class BaseTransform(ABC):
     @abstractmethod
     def forward(self, tf: TensorFrame) -> TensorFrame:
         r"""Process TensorFrame obj into another TensorFrame obj.
+
         Args:
             tf (TensorFrame): Input :class:`TensorFrame`.
+
         Returns:
             TensorFrame: Input :class:`TensorFrame` after transform.
         """

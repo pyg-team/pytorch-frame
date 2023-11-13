@@ -12,7 +12,7 @@ class MultiNestedTensor(_MultiTensor):
     different for different row/column. Internally, we store the object in an
     efficient flattened format: :obj:`(values, offset)`, where the PyTorch
     Tensor at :obj:`(i, j)` is accessed by
-    :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`
+    :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`.
 
     Args:
         num_rows (int): Number of rows.
@@ -324,7 +324,7 @@ class MultiNestedTensor(_MultiTensor):
 
     def _single_index_select(self, index: int,
                              dim: int) -> 'MultiNestedTensor':
-        r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)"""
+        r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
         if dim == 0:
@@ -450,7 +450,7 @@ class MultiNestedTensor(_MultiTensor):
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
-    It essentially does the following:
+    It essentially does the following.
 
     .. code-block:: python
 
@@ -458,7 +458,7 @@ def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
         arange = torch.cat([torch.arange(c) for c in count])
 
     Args:
-        counts (Tensor): The count vectors.
+        count (Tensor): The count vectors.
 
     Returns:
         batch (Tensor): batch[i] indicates the batch index of

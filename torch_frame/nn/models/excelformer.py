@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Module, ModuleList
-from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import stype
@@ -21,8 +20,8 @@ def feature_mixup(
     x: Tensor,
     y: Tensor,
     num_classes: int,
-    beta: int = 0.5,
-) -> TensorFrame:
+    beta: float = 0.5,
+) -> Tuple[Tensor, Tensor]:
     r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
@@ -118,7 +117,7 @@ class ExcelFormer(Module):
 
         self.in_channels = in_channels
         self.out_channels = out_channels
-        if col_names_dict.keys() != set([stype.numerical]):
+        if col_names_dict.keys() != {stype.numerical}:
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
         self.excelformer_encoder = StypeWiseFeatureEncoder(
@@ -183,11 +182,12 @@ class ExcelFormer(Module):
                 true. (default: :obj:`0.5`)
 
         Returns:
-            (torch.Tensor, torch.Tensor): The first :obj:`Tensor` is the mixed
-            up output embeddings of size [batch_size, out_channels].
-            The second :obj:`Tensor` y_mixedup will be returned only when
-            mixup is set to true. The size is [batch_size, num_classes] for
-            classification and [batch_size, 1] for regression.
+            (torch.Tensor, torch.Tensor): The first :class:`Tensor` is the
+            mixed up output embeddings of size
+            :obj:`[batch_size, out_channels]`. The second :class:`Tensor`
+            :obj:`y_mixedup` will be returned only when mixup is set to true.
+            The size is [batch_size, num_classes] for classification and
+            :obj:`[batch_size, 1]` for regression.
         """
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(

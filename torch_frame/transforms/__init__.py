@@ -1,3 +1,4 @@
+r"""Transforms package."""
 from .base_transform import BaseTransform
 from .fittable_base_transform import FittableBaseTransform
 from .cat_to_num_transform import CatToNumTransform

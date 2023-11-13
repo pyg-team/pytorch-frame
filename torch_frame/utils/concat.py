@@ -13,9 +13,9 @@ from torch_frame.typing import TensorData
 def cat(tf_list: List[TensorFrame], along: str) -> TensorFrame:
     r"""Concatenates a list of :class:`TensorFrame` objects along a specified
     axis (:obj:`row` or :obj:`col`). If set to :obj:`row`, this will
-    concatenate the tensor frames along the rows, keeping columns unchanced.
+    concatenate the tensor frames along the rows, keeping columns unchanged.
     If set to :obj:`col`, this will concatenate the tensor frames along the
-    columns, which increases the columns while keeping the rows unchanced.
+    columns, which increases the columns while keeping the rows unchanged.
 
     Args:
         tf_list (List[TensorFrame]): A list of tensor frames to concatenate.
