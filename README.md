@@ -200,18 +200,24 @@ We support the following (but not limited to):
       </a>
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">OpenAI Embedding Code Example</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://cohere.com/embeddings">
         <img src="docs/source/_figures/cohere-logo.png" alt="Cohere" width="100px"/>
       </a>
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://huggingface.co/">
         <img src="docs/source/_figures/hf-logo-with-title.png" alt="Hugging Face" width="100px"/>
       </a>
       <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Hugging Face Code Example</a>
     </td>
+  </tr>
+  <tr>
       <td align="center">
       <a href="https://www.voyageai.com/">
         <img src="docs/source/_figures/voyageai.webp" alt="Voyage AI" width="100px"/>
