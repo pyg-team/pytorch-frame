@@ -62,6 +62,8 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
   </tr>
 </table>
 
+--------------------------------------------------------------------------------
+
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
 * [Quick Tour](#quick-tour)
@@ -252,7 +254,7 @@ The following chart shows the performance of various deep learning models on sma
 
 We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research.
 
-We also benchmark different text encoders on a public dataset([Amazon Fine Food Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews)). The following chars show the performance of different text encoders.
+We also benchmark different text encoders on a public dataset ([Amazon Fine Food Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews)). The following chars show the performance of different text encoders.
 
 | Test Acc  | Method          | Model Name                                           | Source       |
 |-----------|-----------------|------------------------------------------------------|--------------|
