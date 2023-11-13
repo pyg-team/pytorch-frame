@@ -27,7 +27,7 @@ def download_url(
     if filename is None:
         filename = url.rpartition('/')[2]
         if filename[0] != '?':
-            filename.split('?')[0]
+            filename = filename.split('?')[0]
 
     path = osp.join(root, filename)
 

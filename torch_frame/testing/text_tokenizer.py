@@ -35,7 +35,8 @@ class WhiteSpaceHashTokenizer:
 class RandomTextModel(torch.nn.Module):
     r"""A text embedding model that takes the tokenized input from
     :class:`WhiteSpaceHashTokenizer` and outputs random embeddings. Should be
-    used only for testing purposes."""
+    used only for testing purposes.
+    """
     def __init__(self, text_emb_channels: int, num_cols: int):
         self.text_emb_channels = text_emb_channels
         self.num_cols = num_cols

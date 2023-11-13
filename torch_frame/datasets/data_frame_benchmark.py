@@ -721,13 +721,15 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         scale: str,
     ) -> List[Tuple[str, Dict[str, Any]]]:
         r"""List of datasets available for a given :obj:`task_type` and
-        :obj:`scale`."""
+        :obj:`scale`.
+        """
         return cls.dataset_categorization_dict[task_type.value][scale]
 
     @classmethod
     def num_datasets_available(cls, task_type: TaskType, scale: str):
         r"""Number of datasets available for a given :obj:`task_type` and
-        :obj:`scale`."""
+        :obj:`scale`.
+        """
         return len(cls.datasets_available(task_type, scale))
 
     def __init__(
@@ -793,8 +795,8 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
                 f'  cls={self.cls_str}\n'
                 f')')
 
-    def materialize(self):
-        super().materialize()
+    def materialize(self, *args, **kwargs):
+        super().materialize(*args, **kwargs)
         if self.task_type != self._task_type:
             raise RuntimeError(f"task type does not match. It should be "
                                f"{self.task_type.value} but specified as "

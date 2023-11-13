@@ -12,7 +12,6 @@ from torch.nn import (
     ModuleList,
     Sequential,
 )
-from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import TensorFrame, stype
@@ -134,7 +133,7 @@ class TabTransformer(Module):
         r"""Transforming :class:`TensorFrame` object into output prediction.
 
         Args:
-            x (:class:`torch_frame.TensorFrame`):
+            tf (TensorFrame):
                 Input :class:`TensorFrame` object.
 
         Returns:

@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 import torch
 from torch import Tensor
 from torch.nn import LayerNorm, Module, ModuleList, Parameter, ReLU, Sequential
-from torch.nn.modules.module import Module
 
 import torch_frame
 from torch_frame import TensorFrame, stype

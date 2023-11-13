@@ -10,7 +10,8 @@ def generate_random_split(length: int, seed: int, train_ratio: float = 0.8,
     The elements are either :obj:`0`, :obj:`1`, or :obj:`2`, representing
     train, val, test, respectively. Note that this function relies on the fact
     that numpy's shuffle is consistent across versions, which has been
-    historically the case."""
+    historically the case.
+    """
     assert train_ratio + val_ratio < 1
     assert train_ratio > 0
     assert val_ratio > 0

@@ -96,7 +96,7 @@ class KDDCensusIncome(torch_frame.data.Dataset):
             'income above 50000',
         ]
 
-        continous_cols = set([
+        continuous_cols = {
             'age',
             'wage per hour',
             'capital gains',
@@ -104,11 +104,11 @@ class KDDCensusIncome(torch_frame.data.Dataset):
             'divdends from stocks',
             'num persons worked for employer',
             'weeks worked in year',
-        ])
+        }
 
         col_to_stype: Dict[str, stype] = {}
         for name in names:
-            if name in continous_cols:
+            if name in continuous_cols:
                 col_to_stype[name] = torch_frame.numerical
             else:
                 col_to_stype[name] = torch_frame.categorical

@@ -1,7 +1,10 @@
-'''
+"""Example of a regression task using sentence-transformers to embed item name
+and item descriptions of Mercari Price Suggestion Challenage dataset
+https://www.kaggle.com/c/mercari-price-suggestion-challenge/.
+
 Train Loss: 540.2466, Train RMSE: 22.6720, Val RMSE: 26.2494
-Private Score: 0.50207 Public Score: 0.50156
-'''
+Private Score: 0.50207 Public Score: 0.50156.
+"""
 import argparse
 import os.path as osp
 from typing import List

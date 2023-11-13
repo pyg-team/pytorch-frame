@@ -389,7 +389,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
     @classmethod
     @property
     def name_list(cls) -> List[str]:
-        r"List of dataset names available."
+        r"""List of dataset names available."""
         return sorted(list(cls.name_to_task_category.keys()))
 
     def __init__(self, root: str, name: str):
@@ -433,4 +433,4 @@ class TabularBenchmark(torch_frame.data.Dataset):
         super().__init__(df, col_to_stype, target_col=target_col)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}(name='{self.name}')")
+        return f"{self.__class__.__name__}(name='{self.name}')"
