@@ -62,7 +62,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
   </tr>
 </table>
 
-____
+<hr style="border: 0.5px solid #ccc;">
 
 * [Library Highlights](#library-highlights)
 * [Architecture Overview](#architecture-overview)
