@@ -182,8 +182,7 @@ class ResNet(Module):
         r"""Transforming :class:`TensorFrame` object into output prediction.
 
         Args:
-            tf (:class:`torch_frame.TensorFrame`):
-                Input :class:`TensorFrame` object.
+            tf (TensorFrame): Input :class:`TensorFrame` object.
 
         Returns:
             torch.Tensor: Output of shape [batch_size, out_channels].

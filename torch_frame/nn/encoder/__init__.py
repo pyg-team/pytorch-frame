@@ -1,3 +1,4 @@
+r"""Encoder package."""
 from .encoder import FeatureEncoder
 from .stypewise_encoder import StypeWiseFeatureEncoder
 from .stype_encoder import (

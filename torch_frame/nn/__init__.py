@@ -1,3 +1,4 @@
+r"""Neural network module package."""
 from .base import Module
 from .encoder import *  # noqa
 from .conv import *  # noqa

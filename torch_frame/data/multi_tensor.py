@@ -1,24 +1,35 @@
 import copy
-from dataclasses import dataclass
-from typing import Any, Callable, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 
 import torch
 from torch import Tensor
 
 
-@dataclass(repr=False)
 class _MultiTensor:
-    num_rows: int
-    num_cols: int
-    values: Tensor
-    offset: Tensor
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        num_rows: int,
+        num_cols: int,
+        values: Tensor,
+        offset: Tensor,
+    ):
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.values = values
+        self.offset = offset
         self.validate()
 
     def validate(self):
         r"""Validates the :class:`_MultiTensor` object."""
-        pass
+
+    def to_dict(self) -> Dict[str, Any]:
+        r"""Serialize the object into a dictionary."""
+        return {
+            "num_rows": self.num_rows,
+            "num_cols": self.num_cols,
+            "values": self.values,
+            "offset": self.offset,
+        }
 
     def __setitem__(self, index: Any, values: Any) -> None:
         raise RuntimeError(
@@ -26,7 +37,7 @@ class _MultiTensor:
             "values. It should be used for read-only.")
 
     def __repr__(self) -> str:
-        return ' '.join([
+        return " ".join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",
             f"num_cols={self.num_cols},",
             f"device='{self.device}')",
@@ -61,7 +72,7 @@ class _MultiTensor:
     def dtype(self) -> torch.dtype:
         return self.values.dtype
 
-    def clone(self) -> '_MultiTensor':
+    def clone(self) -> "_MultiTensor":
         return self.__class__(
             self.num_rows,
             self.num_cols,
@@ -82,7 +93,7 @@ class _MultiTensor:
 
     # Helper Functions ########################################################
 
-    def _apply(self, fn: Callable[[Tensor], Tensor]) -> '_MultiTensor':
+    def _apply(self, fn: Callable[[Tensor], Tensor]) -> "_MultiTensor":
         out = copy.copy(self)
         out.values = fn(out.values)
         out.offset = fn(out.offset)
@@ -119,6 +130,7 @@ class _MultiTensor:
         Args:
             index: Union[int, Tensor]: Input :obj:`index` with potentially
                 negative elements.
+            dim (int): Dimension to be indexed.
             is_slice_end (bool): Whether a given index (int) is slice end or
                 not. If :obj:`True`, we have more lenient :obj:`IndexError`.
                 (default: :obj:`False`)
@@ -148,8 +160,8 @@ class _MultiTensor:
     @classmethod
     def allclose(
         cls,
-        tensor1: '_MultiTensor',
-        tensor2: '_MultiTensor',
+        tensor1: "_MultiTensor",
+        tensor2: "_MultiTensor",
         equal_nan: bool = False,
     ) -> bool:
         r"""Returns whether given two tensors are all close or not.

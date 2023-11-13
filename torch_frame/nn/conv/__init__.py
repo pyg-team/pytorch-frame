@@ -1,3 +1,4 @@
+r"""Convolutional layer package."""
 from .table_conv import TableConv
 from .ft_transformer_convs import FTTransformerConvs
 from .trompt_conv import TromptConv

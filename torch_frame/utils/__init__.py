@@ -1,3 +1,4 @@
+r"""Utility package."""
 from .io import save, load
 from .concat import cat
 from .split import generate_random_split
