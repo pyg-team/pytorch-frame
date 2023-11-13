@@ -25,6 +25,8 @@ from torch_frame.nn import (
     LinearModelEncoder,
 )
 from torch_frame.typing import TensorData
+from accelerate import init_empty_weights
+from accelerate.utils import BnbQuantizationConfig, load_and_quantize_model
 
 # Text Embedded
 # all-distilroberta-v1
@@ -120,7 +122,10 @@ class TokenToEmbedding(torch.nn.Module):
     """
     def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
         super().__init__()
-        self.model = AutoModel.from_pretrained(model)
+        with init_empty_weights():
+            self.model = AutoModel.from_pretrained(model)
+            bnb_quantization_config = BnbQuantizationConfig(load_in_8bit=True, llm_int8_threshold=6)
+            self.model = load_and_quantize_model(self.model, bnb_quantization_config=bnb_quantization_config)
 
         if lora:
             if model == 'distilbert-base-uncased':
