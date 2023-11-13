@@ -223,6 +223,18 @@ We support the following (but not limited to):
   </tr>
 </table>
 
+We benchmark different text encoders on a public dataset((Amazon Fine Food Reviews)[https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews]). The following chars show the performance of different text encoders.
+
+| Test Acc  | Method          | Model Name                                           | Source       |
+|-----------|-----------------|------------------------------------------------------|--------------|
+| 0.7668    | Pre-trained     | DistilBERT (66M # params)                            | Hugging Face |
+| 0.7926    | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M)    | Hugging Face |
+| 0.8116    | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)        | OpenAI       |
+| **0.8263**| Pre-trained     | embed-english-v3.0 (dimension size: 1024)            | Cohere       |
+| **0.8242**| Pre-trained     | voyage-01 (dimension size: 1024)                     | Voyage AI    |
+| 0.8112    | Model Finetune  | DistilBERT (66M # params)                            | Hugging Face |
+| 0.8139    | Adapter Finetune| DistilBERT (66M # params)                            | Hugging Face |
+| **0.8230**| LoRA Finetune   | DistilBERT (66M # params)                            | Hugging Face |
 
 ## Implemented Deep Tabular Models
 
