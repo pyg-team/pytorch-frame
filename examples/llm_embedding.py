@@ -80,10 +80,10 @@ class CohereEmbedding:
         self.co = cohere.Client(api_key)
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        import cohere
-        items: List[List[float]] = self.co.embed(model=self.model,
+        from cohere import Embeddings
+        items: Embeddings = self.co.embed(model=self.model,
                                                  texts=sentences,
-                                                 input_type="classification").embeddings
+                                                 input_type="classification")
         assert len(items) == len(sentences)
         embeddings = torch.tensor(items.embeddings)
         return embeddings
@@ -130,7 +130,6 @@ dataset = AmazonFineFoodReviews(
 )
 
 dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
-dataset.materialize(path=osp.join(path, f'{args.service}_data.pt'))
 
 # Shuffle the dataset
 dataset = dataset.shuffle()
