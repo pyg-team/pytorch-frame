@@ -36,15 +36,6 @@ class MultiEmbeddingTensor(_MultiTensor):
         >>> out[0, 2]
         tensor([10])
     """
-    def __init___(
-        self,
-        num_rows: int,
-        num_cols: int,
-        values: Tensor,
-        offset: Tensor,
-    ):
-        super().__init__(num_rows, num_cols, values, offset)
-
     def validate(self):
         assert self.offset[0] == 0
         assert len(self.offset) == self.num_cols + 1
