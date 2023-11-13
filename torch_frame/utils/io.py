@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import Any, Dict, Optional, Tuple
 
 import torch
@@ -20,13 +19,13 @@ def serialize_feat_dict(
         # stype.embedding.
         if stype.use_multi_nested_tensor:
             assert isinstance(feat, _MultiTensor)
-            feat_serialized = asdict(feat)
+            feat_serialized = feat.to_dict()
         elif stype.use_dict_multi_nested_tensor:
             feat_serialized = {}
             assert isinstance(feat, dict)
             for name, f in feat.items():
                 assert isinstance(f, MultiNestedTensor)
-                feat_serialized[name] = asdict(f)
+                feat_serialized[name] = f.to_dict()
         else:
             assert isinstance(feat, Tensor)
             feat_serialized = feat

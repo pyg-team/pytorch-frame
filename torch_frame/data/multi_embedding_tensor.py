@@ -36,6 +36,15 @@ class MultiEmbeddingTensor(_MultiTensor):
         >>> out[0, 2]
         tensor([10])
     """
+    def __init___(
+        self,
+        num_rows: int,
+        num_cols: int,
+        values: Tensor,
+        offset: Tensor,
+    ):
+        super().__init__(num_rows, num_cols, values, offset)
+
     def validate(self):
         assert self.offset[0] == 0
         assert len(self.offset) == self.num_cols + 1
@@ -44,10 +53,9 @@ class MultiEmbeddingTensor(_MultiTensor):
     def __getitem__(
         self,
         index: Any,
-    ) -> Union['MultiEmbeddingTensor', Tensor]:
-
-        if isinstance(index, tuple) and len(index) == 2 and isinstance(
-                index[0], int) and isinstance(index[1], int):
+    ) -> Union["MultiEmbeddingTensor", Tensor]:
+        if (isinstance(index, tuple) and len(index) == 2
+                and isinstance(index[0], int) and isinstance(index[1], int)):
             i = self._normalize_index(index[0], dim=0)
             j = self._normalize_index(index[1], dim=1)
             return self.values[i, self.offset[j]:self.offset[j + 1]]
@@ -68,7 +76,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     def from_tensor_list(
         cls,
         tensor_list: List[Tensor],
-    ) -> 'MultiEmbeddingTensor':
+    ) -> "MultiEmbeddingTensor":
         r"""Creates a :class:`MultiEmbeddingTensor` from a list of
         :class:`torch.Tensor`.
 
@@ -120,9 +128,9 @@ class MultiEmbeddingTensor(_MultiTensor):
 
     @staticmethod
     def cat(
-        xs: Sequence['MultiEmbeddingTensor'],
+        xs: Sequence["MultiEmbeddingTensor"],
         dim: int = 0,
-    ) -> 'MultiEmbeddingTensor':
+    ) -> "MultiEmbeddingTensor":
         """Concatenates a sequence of :class:`MultiEmbeddingTensor` along the
         specified dimension.
 
@@ -162,7 +170,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                     [12, 13, 14, 15, 16, 17]])
         """
         if len(xs) == 0:
-            raise RuntimeError('Cannot concatenate a sequence of length 0.')
+            raise RuntimeError("Cannot concatenate a sequence of length 0.")
 
         for x in xs:
             msg = "`xs` must be a list of MultiEmbeddingTensor."
