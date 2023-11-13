@@ -223,7 +223,7 @@ We support the following (but not limited to):
   </tr>
 </table>
 
-We benchmark different text encoders on a public dataset((Amazon Fine Food Reviews)[https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews]). The following chars show the performance of different text encoders.
+We benchmark different text encoders on a public dataset([Amazon Fine Food Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews)). The following chars show the performance of different text encoders.
 
 | Test Acc  | Method          | Model Name                                           | Source       |
 |-----------|-----------------|------------------------------------------------------|--------------|
