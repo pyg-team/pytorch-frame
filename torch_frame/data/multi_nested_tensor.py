@@ -48,7 +48,7 @@ class MultiNestedTensor(_MultiTensor):
     def from_tensor_mat(
         cls,
         tensor_mat: List[List[Tensor]],
-    ) -> 'MultiNestedTensor':
+    ) -> "MultiNestedTensor":
         r"""Construct :class:`MultiNestedTensor` object from
         :obj:`tensor_mat`.
 
@@ -112,7 +112,7 @@ class MultiNestedTensor(_MultiTensor):
     def __getitem__(
         self,
         index: Any,
-    ) -> Union['MultiNestedTensor', Tensor]:
+    ) -> Union["MultiNestedTensor", Tensor]:
         if isinstance(index, tuple):
             # index[0] for row indexing, index[1] for column indexing
             assert len(index) == 2
@@ -148,7 +148,7 @@ class MultiNestedTensor(_MultiTensor):
         self,
         index: Union[int, Tensor, List, slice],
         dim: int,
-    ) -> 'MultiNestedTensor':
+    ) -> "MultiNestedTensor":
         r"""Supports all types of row/column-level advanced indexing.
 
         Args:
@@ -175,7 +175,7 @@ class MultiNestedTensor(_MultiTensor):
         else:
             raise NotImplementedError
 
-    def narrow(self, dim: int, start: int, length: int) -> 'MultiNestedTensor':
+    def narrow(self, dim: int, start: int, length: int) -> "MultiNestedTensor":
         """Narrow the tensor along the given dimension.
 
         Args:
@@ -211,7 +211,7 @@ class MultiNestedTensor(_MultiTensor):
                 offset=offset,
             )
 
-    def _slice(self, slice: slice, dim: int) -> 'MultiNestedTensor':
+    def _slice(self, slice: slice, dim: int) -> "MultiNestedTensor":
         dim = MultiNestedTensor._normalize_dim(dim)
 
         num_data = self.num_rows if dim == 0 else self.num_cols
@@ -226,7 +226,7 @@ class MultiNestedTensor(_MultiTensor):
             return self.narrow(dim=dim, start=start_idx,
                                length=end_idx - start_idx)
 
-    def _row_narrow(self, start: int, length: int) -> 'MultiNestedTensor':
+    def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0
         assert length > 0
@@ -235,21 +235,25 @@ class MultiNestedTensor(_MultiTensor):
         offset = self.offset[start * self.num_cols:end * self.num_cols + 1]
         values = self.values[offset[0]:offset[-1]]
         offset = offset - offset[0]
-        return MultiNestedTensor(num_rows=end - start, num_cols=self.num_cols,
-                                 values=values, offset=offset)
+        return MultiNestedTensor(
+            num_rows=end - start,
+            num_cols=self.num_cols,
+            values=values,
+            offset=offset,
+        )
 
-    def _col_narrow(self, start: int, length: int) -> 'MultiNestedTensor':
+    def _col_narrow(self, start: int, length: int) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0
         assert length > 0
         end = start + length
         if start == 0:
             assert end < self.num_cols
-            offset_mat = (self.offset[:-1].reshape(
-                self.num_rows, self.num_cols)[:, start:end + 1])
+            offset_mat = self.offset[:-1].reshape(self.num_rows, self.num_cols)
+            offset_mat = offset_mat[:, start:end + 1]
         else:
-            offset_mat = (self.offset[1:].reshape(
-                self.num_rows, self.num_cols)[:, start - 1:end])
+            offset_mat = self.offset[1:].reshape(self.num_rows, self.num_cols)
+            offset_mat = offset_mat[:, start - 1:end]
 
         offset_start = offset_mat[:, 0]
         count = offset_mat[:, -1] - offset_start
@@ -262,10 +266,14 @@ class MultiNestedTensor(_MultiTensor):
         num_cols = end - start
         offset = torch.full((self.num_rows * num_cols + 1, ), accum[-1])
         offset[:-1] = offset_mat_zero_start[:, :-1].flatten()
-        return MultiNestedTensor(num_rows=self.num_rows, num_cols=num_cols,
-                                 values=values, offset=offset)
+        return MultiNestedTensor(
+            num_rows=self.num_rows,
+            num_cols=num_cols,
+            values=values,
+            offset=offset,
+        )
 
-    def index_select(self, index: Tensor, dim: int) -> 'MultiNestedTensor':
+    def index_select(self, index: Tensor, dim: int) -> "MultiNestedTensor":
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
         if dim == 0:
@@ -273,14 +281,16 @@ class MultiNestedTensor(_MultiTensor):
         else:
             return self._col_index_select(index)
 
-    def _row_index_select(self, index: Tensor) -> 'MultiNestedTensor':
+    def _row_index_select(self, index: Tensor) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values
         if index.numel() == 0:
             return MultiNestedTensor(
-                num_rows=0, num_cols=self.num_cols,
+                num_rows=0,
+                num_cols=self.num_cols,
                 values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device))
+                offset=torch.tensor([0], device=self.device),
+            )
         index_right = (index + 1) * self.num_cols
         index_left = index * self.num_cols
         diff = self.offset[index_right] - self.offset[index_left]
@@ -289,8 +299,12 @@ class MultiNestedTensor(_MultiTensor):
         values = self.values[idx]
 
         # Calculate offset
-        count = torch.full(size=(len(index), ), fill_value=self.num_cols,
-                           dtype=torch.long, device=self.device)
+        count = torch.full(
+            size=(len(index), ),
+            fill_value=self.num_cols,
+            dtype=torch.long,
+            device=self.device,
+        )
         count[-1] += 1
         batch, arange = _batched_arange(count)
         idx = index_left[batch] + arange
@@ -299,31 +313,43 @@ class MultiNestedTensor(_MultiTensor):
         diff_cumsum = torch.roll(diff_cumsum, 1)
         diff_cumsum[0] = 0
         offset = offset + diff_cumsum[batch]
-        return MultiNestedTensor(num_rows=len(index), num_cols=self.num_cols,
-                                 values=values, offset=offset)
+        return MultiNestedTensor(
+            num_rows=len(index),
+            num_cols=self.num_cols,
+            values=values,
+            offset=offset,
+        )
 
-    def _col_index_select(self, index: Tensor) -> 'MultiNestedTensor':
+    def _col_index_select(self, index: Tensor) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`index_select`."""
         if index.numel() == 0:
             return MultiNestedTensor(
-                num_rows=self.num_rows, num_cols=0,
+                num_rows=self.num_rows,
+                num_cols=0,
                 values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device))
-        start_idx = (
-            index +
-            torch.arange(0, self.num_rows * self.num_cols, self.num_cols,
-                         device=self.device).view(-1, 1)).flatten()
+                offset=torch.tensor([0], device=self.device),
+            )
+        start_idx = (index + torch.arange(
+            0,
+            self.num_rows * self.num_cols,
+            self.num_cols,
+            device=self.device,
+        ).view(-1, 1)).flatten()
         offset_start = self.offset[start_idx]
         count = self.offset[start_idx + 1] - self.offset[start_idx]
         offset = count.new_zeros(count.numel() + 1)
         torch.cumsum(count, dim=0, out=offset[1:])
         batch, arange = _batched_arange(count)
         values = self.values[offset_start[batch] + arange]
-        return MultiNestedTensor(num_rows=self.num_rows, num_cols=len(index),
-                                 values=values, offset=offset)
+        return MultiNestedTensor(
+            num_rows=self.num_rows,
+            num_cols=len(index),
+            values=values,
+            offset=offset,
+        )
 
     def _single_index_select(self, index: int,
-                             dim: int) -> 'MultiNestedTensor':
+                             dim: int) -> "MultiNestedTensor":
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
@@ -336,8 +362,12 @@ class MultiNestedTensor(_MultiTensor):
             return MultiNestedTensor(num_rows=1, num_cols=self.num_cols,
                                      values=values, offset=offset)
         elif dim == 1:
-            start_idx = torch.arange(index, self.num_rows * self.num_cols,
-                                     self.num_cols, device=self.device)
+            start_idx = torch.arange(
+                index,
+                self.num_rows * self.num_cols,
+                self.num_cols,
+                device=self.device,
+            )
             diff = self.offset[start_idx + 1] - self.offset[start_idx]
             batch, arange = _batched_arange(diff)
             # Compute values
@@ -373,9 +403,9 @@ class MultiNestedTensor(_MultiTensor):
     # Static methods ##########################################################
     @staticmethod
     def cat(
-        xs: Sequence['MultiNestedTensor'],
+        xs: Sequence["MultiNestedTensor"],
         dim: int = 0,
-    ) -> 'MultiNestedTensor':
+    ) -> "MultiNestedTensor":
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
@@ -402,8 +432,12 @@ class MultiNestedTensor(_MultiTensor):
                 idx += len(x.offset[:-1])
             offset[idx:] = xs[-1].offset
             offset[idx:].add_(accum)
-            return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
-                                     values=values, offset=offset)
+            return MultiNestedTensor(
+                num_rows=num_rows,
+                num_cols=num_cols,
+                values=values,
+                offset=offset,
+            )
         else:
             num_rows = xs[0].num_rows
             num_cols = sum(x.num_cols for x in xs)
@@ -430,8 +464,11 @@ class MultiNestedTensor(_MultiTensor):
             torch.cumsum(elem_length_mat.flatten(), dim=0, out=offset[1:])
 
             # Compute values
-            values = torch.empty(sum([x.values.numel() for x in xs]),
-                                 dtype=x[0].values.dtype, device=device)
+            values = torch.empty(
+                sum([x.values.numel() for x in xs]),
+                dtype=x[0].values.dtype,
+                device=device,
+            )
             col_start_idx = 0
             for x in xs:
                 offset_start_idx = col_start_idx + torch.arange(
@@ -444,8 +481,12 @@ class MultiNestedTensor(_MultiTensor):
                 values[offset_start[batch] + arange] = x.values
                 col_start_idx += x.num_cols
 
-            return MultiNestedTensor(num_rows=num_rows, num_cols=num_cols,
-                                     values=values, offset=offset)
+            return MultiNestedTensor(
+                num_rows=num_rows,
+                num_cols=num_cols,
+                values=values,
+                offset=offset,
+            )
 
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
