@@ -55,7 +55,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
       <a href="https://www.voyageai.com/">
         <img src="docs/source/_figures/voyageai.webp" alt="Voyage AI" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Voyage AI Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Voyage AI Code Example</a>
     </td>
   </tr>
 </table>
