@@ -157,6 +157,7 @@ def test_index():
     # TODO(akihironitta): Test [slice, slice] indexing
     # TODO(akihironitta): Test [slice, range] indexing
 
+
 def test_clone():
     met, _ = get_fake_multi_embedding_tensor(
         num_rows=2,
