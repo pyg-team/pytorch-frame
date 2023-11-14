@@ -211,6 +211,39 @@ class NumericalSequenceTensorMapper(TensorMapper):
         return pd.Series(ser)
 
 
+class TimestampTensorMapper(TensorMapper):
+    r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
+    def __init__(self, ):
+        super().__init__()
+
+    def forward(
+        self,
+        ser: Series,
+        *,
+        device: Optional[torch.device] = None,
+    ) -> Tensor:
+        ser = pd.to_datetime(ser)
+        tensors = [
+            torch.tensor(ser.dt.year.values, device=device),
+            torch.tensor(ser.dt.month.values, device=device),
+            torch.tensor(ser.dt.day.values, device=device),
+            torch.tensor(ser.dt.dayofweek, device=device),
+            torch.tensor(ser.dt.hour, device=device),
+            torch.tensor(ser.dt.minute, device=device),
+            torch.tensor(ser.dt.second, device=device)
+        ]
+        return torch.cat(tensors, dim=1).reshape(len(ser), 1, len(tensors))
+
+    def backward(self, tensor: Tensor) -> pd.Series:
+        df = pd.DataFrame(
+            tensor, columns=[
+                'year', 'month', 'day', 'dayofweek', 'hour', 'minute', 'second'
+            ])
+        ser = pd.to_datetime(
+            df[['year', 'month', 'day', 'hour', 'minute', 'second']])
+        return ser
+
+
 class TextEmbeddingTensorMapper(TensorMapper):
     r"""Embed any text series into tensor.
 
