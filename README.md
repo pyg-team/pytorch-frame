@@ -254,17 +254,17 @@ The following chart shows the performance of various deep learning models on sma
 
 We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research.
 
-We also benchmark different text encoders on a public dataset ([Amazon Fine Food Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews)). The following chars show the performance of different text encoders.
+We also benchmark different text encoders on a public dataset ([Amazon Fine Food Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.AmazonFineFoodReviews.html#torch_frame.datasets.AmazonFineFoodReviews)). The following table shows the performance:
 
 | Test Acc  | Method          | Model Name                                           | Source       |
 |-----------|-----------------|------------------------------------------------------|--------------|
 | 0.8116    | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)        | OpenAI       |
 | **0.8263**| Pre-trained     | embed-english-v3.0 (dimension size: 1024)            | Cohere       |
-| **0.8242**| Pre-trained     | voyage-01 (dimension size: 1024)                     | Voyage AI    |
+| 0.8147    | Pre-trained     | voyage-01 (dimension size: 1024)                     | Voyage AI    |
 | 0.7926    | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M)    | Hugging Face |
 | **0.8230**| LoRA Finetune   | DistilBERT (66M # params)                            | Hugging Face |
 
-The benchmark script is in this [example](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py).
+The benchmark script for text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py).
 ## Installation
 
 PyTorch Frame is available for Python 3.8 to Python 3.11.
