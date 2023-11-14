@@ -158,35 +158,6 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset=self.offset,
         )
 
-    def _col_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
-        if index.numel() == 0:
-            return MultiEmbeddingTensor(
-                num_rows=self.num_rows,
-                num_cols=0,
-                values=torch.tensor([], device=self.device),
-                offset=torch.zeros(1, dtype=torch.long, device=self.device),
-            )
-        col_dims = self.offset[1:] - self.offset[:-1]
-        col_dims = col_dims[index]
-        offset = torch.empty(
-            index.size(0) + 1,
-            dtype=torch.long,
-            device=self.device,
-        )
-        offset[0] = 0
-        offset[1:] = torch.cumsum(col_dims, dim=0)
-        # TODO: Optimize this
-        value_list = []
-        for col_dim, idx in zip(col_dims, index):
-            value_list.append(self.values[:, torch.arange(idx, idx + col_dim)])
-        values = torch.tensor(value_list, device=self.device)
-        return MultiEmbeddingTensor(
-            num_rows=self.num_rows,
-            num_cols=index.size(0),
-            values=values,
-            offset=offset,
-        )
-
     @staticmethod
     def cat(
         xs: Sequence["MultiEmbeddingTensor"],
