@@ -138,7 +138,7 @@ def test_index():
                     met_indexed[i, j],
                 )
 
-    # Test [torch.Tensor] indexing
+    # Test [Tensor] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         met_indexed = met[torch.tensor(index)]
         assert isinstance(met_indexed, MultiEmbeddingTensor)
@@ -151,6 +151,11 @@ def test_index():
                     met_indexed[i, j],
                 )
 
+    # TODO(akihironitta): Test [range] indexing
+    # TODO(akihironitta): Test [slice, list] indexing
+    # TODO(akihironitta): Test [slice, Tensor] indexing
+    # TODO(akihironitta): Test [slice, slice] indexing
+    # TODO(akihironitta): Test [slice, range] indexing
 
 def test_clone():
     met, _ = get_fake_multi_embedding_tensor(
