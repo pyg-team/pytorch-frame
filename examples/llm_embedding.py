@@ -128,10 +128,9 @@ dataset = MultimodalTextBenchmark(
 
 dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
 
-# Shuffle the dataset
-dataset = dataset.shuffle()
-train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
-    0.8:0.9], dataset[0.9:]
+train_dataset, val_dataset, test_dataset = dataset.split()
+if len(val_dataset) == 0:
+    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
 
 # Set up data loaders
 train_loader = DataLoader(train_dataset.tensor_frame,
