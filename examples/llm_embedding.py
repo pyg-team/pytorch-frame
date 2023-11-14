@@ -11,7 +11,9 @@ from tqdm import tqdm
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import DataLoader
-from torch_frame.datasets import AmazonFineFoodReviews
+from torch_frame.datasets.multimodal_text_benchmark import (
+    MultimodalTextBenchmark,
+)
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
@@ -20,6 +22,7 @@ from torch_frame.nn import (
 )
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
@@ -88,7 +91,7 @@ class CohereEmbedding:
 
 
 class VoyageaiEmbedding:
-    dimension: int = 4096
+    dimension: int = 1024
     text_embedder_batch_size: int = 8
 
     def __init__(self, model: str = 'voyage-01'):
@@ -119,13 +122,11 @@ elif args.service == 'cohere':
 else:
     text_encoder = VoyageaiEmbedding()
 
-dataset = AmazonFineFoodReviews(
-    root=path,
-    text_embedder_cfg=TextEmbedderConfig(
+dataset = MultimodalTextBenchmark(
+    root=path, name=args.dataset, text_embedder_cfg=TextEmbedderConfig(
         text_embedder=text_encoder,
         batch_size=text_encoder.text_embedder_batch_size,
-    ),
-)
+    ))
 
 dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
 
