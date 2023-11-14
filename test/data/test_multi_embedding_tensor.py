@@ -143,6 +143,7 @@ def test_index_list():
         num_rows=num_rows,
         num_cols=num_cols,
     )
+
     # Test [list[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         met_indexed = met[index]
@@ -151,8 +152,10 @@ def test_index_list():
         assert met_indexed.shape[1] == num_cols
         for i, idx in enumerate(index):
             for j in range(num_cols):
-                tensor = met_indexed[i, j]
-                assert torch.allclose(tensor_list[idx][j], tensor)
+                assert torch.allclose(
+                    tensor_list[j][idx],
+                    met_indexed[i, j],
+                )
 
 
 def test_clone():
