@@ -115,7 +115,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             return self.index_select(index, dim=0)
         if isinstance(index, list):
             return self.index_select(
-                torch.tensor(index, device=self.device),
+                torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=0,
             )
         # TODO(akihironitta): Support more index types

@@ -140,7 +140,7 @@ def test_index():
 
     # Test [Tensor] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
-        met_indexed = met[torch.tensor(index)]
+        met_indexed = met[torch.tensor(index, dtype=torch.long)]
         assert isinstance(met_indexed, MultiEmbeddingTensor)
         assert met_indexed.shape[0] == len(index)
         assert met_indexed.shape[1] == num_cols
