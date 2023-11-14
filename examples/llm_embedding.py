@@ -11,9 +11,7 @@ from tqdm import tqdm
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import DataLoader
-from torch_frame.datasets.multimodal_text_benchmark import (
-    MultimodalTextBenchmark,
-)
+from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
@@ -22,7 +20,6 @@ from torch_frame.nn import (
 )
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--batch_size', type=int, default=512)
@@ -31,6 +28,7 @@ parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--service', type=str, default='voyageai',
                     choices=['openai', 'cohere', 'voyageai'])
+parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--api_key', type=str, default=None)
 args = parser.parse_args()
 
@@ -99,7 +97,7 @@ class VoyageaiEmbedding:
         self.model = model
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        import voyageai
+        import voyageai  # noqa
         voyageai.api_key = api_key
         from voyageai import get_embeddings
         items: List[List[float]] = get_embeddings(sentences, model=self.model)
@@ -113,7 +111,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                args.dataset)
+                'amazon_fine_food_reviews')
 os.makedirs(path, exist_ok=True)
 if args.service == 'openai':
     text_encoder = OpenAIEmbedding()
@@ -128,12 +126,14 @@ dataset = MultimodalTextBenchmark(
         batch_size=text_encoder.text_embedder_batch_size,
     ))
 
-dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
+filename = f'{args.service}_data.pt'
+dataset.materialize(path=osp.join(path, filename))
 
-# Shuffle the dataset
-dataset = dataset.shuffle()
-train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
-    0.8:0.9], dataset[0.9:]
+is_classification = dataset.task_type.is_classification
+
+train_dataset, val_dataset, test_dataset = dataset.split()
+if len(val_dataset) == 0:
+    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
 
 # Set up data loaders
 train_loader = DataLoader(train_dataset.tensor_frame,
