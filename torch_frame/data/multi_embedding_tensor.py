@@ -38,7 +38,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     """
     def validate(self):
         assert self.offset[0] == 0
-        assert len(self.offset) == min(1, self.num_rows) * self.num_cols + 1
+        assert len(self.offset) == self.num_cols + 1
 
     @classmethod
     def from_tensor_list(
@@ -141,16 +141,10 @@ class MultiEmbeddingTensor(_MultiTensor):
         if dim == 0:
             return self._row_index_select(index)
         elif dim == 1:
-            return self._col_index_select(index)
+            # TODO(akihironitta): Implement column index select
+            raise NotImplementedError
 
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
-        if index.numel() == 0:
-            return MultiEmbeddingTensor(
-                num_rows=0,
-                num_cols=self.num_cols,
-                values=torch.tensor([], device=self.device),
-                offset=torch.zeros(1, dtype=torch.long, device=self.device),
-            )
         return MultiEmbeddingTensor(
             num_rows=index.size(0),
             num_cols=self.num_cols,
