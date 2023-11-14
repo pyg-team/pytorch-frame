@@ -99,8 +99,7 @@ def test_from_tensor_list():
         ])
 
 
-# FIXME: Merge test cases
-def test_index_tuple():
+def test_index():
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -115,15 +114,6 @@ def test_index_tuple():
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
 
-
-def test_index_int():
-    num_rows = 8
-    num_cols = 10
-    met, tensor_list = get_fake_multi_embedding_tensor(
-        num_rows=num_rows,
-        num_cols=num_cols,
-    )
-
     # Test [i] indexing
     for i in range(-num_rows, num_rows):
         met_row = met[i]
@@ -134,15 +124,6 @@ def test_index_int():
             tensor = met_row[0, j]
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
-
-
-def test_index_list():
-    num_rows = 8
-    num_cols = 10
-    met, tensor_list = get_fake_multi_embedding_tensor(
-        num_rows=num_rows,
-        num_cols=num_cols,
-    )
 
     # Test [list[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
