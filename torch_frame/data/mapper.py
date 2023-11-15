@@ -220,10 +220,9 @@ class NumericalSequenceTensorMapper(TensorMapper):
 
 class TimestampTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
-    def __init__(self, format: str, year_range: List[Optional[int]]):
+    def __init__(self, format: str):
         super().__init__()
         self.format = format
-        self.year_range = year_range
 
     def forward(
         self,

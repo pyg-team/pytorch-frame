@@ -199,10 +199,9 @@ class DataFrameToTensorFrameConverter:
             return MultiCategoricalTensorMapper(index,
                                                 sep=self.col_to_sep[col])
         elif stype == torch_frame.timestamp:
-            year_range = self.col_stats[col][StatType.YEAR_RANGE]
             return TimestampTensorMapper(
-                format=(None if self.col_to_time_format is None else
-                        self.col_to_time_format[col]), year_range=year_range)
+                format=(None if self.col_to_time_format is
+                        None else self.col_to_time_format[col]))
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
