@@ -147,7 +147,6 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.timestamp
         df = pd.DataFrame(df_dict)
-        print(df)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
             # test, we will implement `random_split` and `split_by_col`

@@ -1,14 +1,20 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import torch
 
+import torch_frame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
+    TimestampTensorMapper,
 )
+from torch_frame.data.stats import StatType, compute_col_stats
+from torch_frame.datasets.fake import _random_timestamp
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
@@ -42,17 +48,29 @@ def test_categorical_tensor_mapper():
 
 
 def test_timestamp_tensor_mapper():
-    ser = pd.Series(['A', 'B', None, 'C', 'B'])
-    expected = torch.tensor([1, 0, -1, -1, 0])
+    start_date = datetime(2000, 1, 1)
+    end_date = datetime(2023, 1, 1)
+    num_rows = 10
+    format = '%Y-%m-%d %H:%M:%S'
+    arr = [
+        _random_timestamp(start_date, end_date, format)
+        for _ in range(num_rows)
+    ]
+    arr[0] = np.nan
+    ser = pd.Series(arr)
+    stype = torch_frame.timestamp
 
-    mapper = CategoricalTensorMapper(['B', 'A'])
+    year_range = compute_col_stats(ser, stype,
+                                   time_format=format)[StatType.YEAR_RANGE]
+
+    mapper = TimestampTensorMapper(format=format, year_range=year_range)
 
     out = mapper.forward(ser)
-    assert out.dtype == torch.long
-    assert torch.equal(out, expected)
-
-    out = mapper.backward(out)
-    pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
+    assert out.shape == (num_rows, 1, 7)
+    assert torch.isnan(out[0, :, :]).all()
+    assert out[1:, :, :].dtype == torch.float32
+    is_between_0_and_1 = (out[1:, :, :] >= 0) & (out[1:, :, :] < 1)
+    assert is_between_0_and_1.all()
 
 
 def test_multicategorical_tensor_mapper():

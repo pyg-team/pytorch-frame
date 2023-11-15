@@ -102,6 +102,7 @@ def test_converter():
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,
         target_col=dataset.target_col,
+        col_to_time_format=dataset.col_to_time_format,
     )
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict

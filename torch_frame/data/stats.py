@@ -97,10 +97,9 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.YEAR_RANGE:
-            print(ser)
             ser = pd.to_datetime(ser, format=time_format)
             year_range = ser.dt.year.values
-            return [max(year_range), min(year_range)]
+            return [min(year_range), max(year_range)]
 
 
 _default_values = {
@@ -109,7 +108,7 @@ _default_values = {
     StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
     StatType.COUNT: ([], []),
     StatType.MULTI_COUNT: ([], []),
-    StatType.YEAR_RANGE: [np.nan, np.nan],
+    StatType.YEAR_RANGE: [1900, 1900],
 }
 
 
