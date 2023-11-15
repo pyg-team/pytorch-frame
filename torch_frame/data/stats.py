@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+import pandas as pd
 
 import torch_frame
 from torch_frame.typing import Series
@@ -16,6 +17,9 @@ class StatType(Enum):
         QUANTILES: The minimum, first quartile, median, third quartile,
             and the maximum of a numerical column.
         COUNT: The count of each category in a categorical column.
+        MULTI_COUNT: The count of each category in a multi-categorical
+            column.
+        YEAR_RANGE: The range of years in a timestamp column.
     """
     # Numerical:
     MEAN = 'MEAN'
@@ -27,6 +31,9 @@ class StatType(Enum):
 
     # Multicategorical:
     MULTI_COUNT = 'MULTI_COUNT'
+
+    # Timestamp
+    YEAR_RANGE = 'YEAR_RANGE'
 
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
@@ -42,7 +49,10 @@ class StatType(Enum):
                 StatType.MEAN,
                 StatType.STD,
                 StatType.QUANTILES,
-            ]
+            ],
+            torch_frame.timestamp: [
+                StatType.YEAR_RANGE,
+            ],
         }
         return stats_type.get(stype, [])
 
@@ -85,13 +95,20 @@ class StatType(Enum):
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
 
+        elif self == StatType.YEAR_RANGE:
+            assert sep is not None
+            ser = pd.to_datetime(ser)
+            year_range = ser.dt.year.values
+            return [max(year_range), min(year_range)]
+
 
 _default_values = {
     StatType.MEAN: np.nan,
     StatType.STD: np.nan,
     StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
     StatType.COUNT: ([], []),
-    StatType.MULTI_COUNT: ([], [])
+    StatType.MULTI_COUNT: ([], []),
+    StatType.YEAR_RANGE: [np.nan, np.nan],
 }
 
 

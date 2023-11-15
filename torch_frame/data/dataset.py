@@ -20,6 +20,7 @@ from torch_frame.data.mapper import (
     TensorMapper,
     TextEmbeddingTensorMapper,
     TextTokenizationTensorMapper,
+    TimestampTensorMapper,
 )
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType, compute_col_stats
@@ -179,6 +180,9 @@ class DataFrameToTensorFrameConverter:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
             return MultiCategoricalTensorMapper(index,
                                                 sep=self.col_to_sep[col])
+        elif stype == torch_frame.timestamp:
+            year_range = self.col_stats[col][StatType.YEAR_RANGE]
+            return TimestampTensorMapper(year_range)
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,

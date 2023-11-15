@@ -9,6 +9,13 @@ from tqdm import tqdm
 from torch_frame.data import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
+NUM_MONTHS_PER_YEAR = 12
+NUM_DAYS_PER_MONTH = 31
+NUM_DAYS_PER_WEEK = 7
+NUM_HOURS_PER_DAY = 24
+NUM_MINUTES_PER_HOUR = 60
+NUM_SECONDS_PER_MINUTE = 60
+
 
 class TensorMapper(ABC):
     r"""A base class to handle the conversion from raw input data into a
@@ -213,8 +220,9 @@ class NumericalSequenceTensorMapper(TensorMapper):
 
 class TimestampTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
-    def __init__(self, ):
+    def __init__(self, year_range):
         super().__init__()
+        self.year_range = year_range
 
     def forward(
         self,
@@ -224,13 +232,21 @@ class TimestampTensorMapper(TensorMapper):
     ) -> Tensor:
         ser = pd.to_datetime(ser)
         tensors = [
-            torch.tensor(ser.dt.year.values, device=device),
-            torch.tensor(ser.dt.month.values, device=device),
-            torch.tensor(ser.dt.day.values, device=device),
-            torch.tensor(ser.dt.dayofweek, device=device),
-            torch.tensor(ser.dt.hour, device=device),
-            torch.tensor(ser.dt.minute, device=device),
-            torch.tensor(ser.dt.second, device=device)
+            torch.from_numpy((ser.dt.year.values - self.year_range[0]) /
+                             (self.year_range[1] - self.year_range[0] + 1)).to(
+                                 device=device),
+            torch.from_numpy(ser.dt.month.values /
+                             NUM_MONTHS_PER_YEAR).to(device=device),
+            torch.from_numpy(ser.dt.day.values /
+                             NUM_DAYS_PER_MONTH).to(device=device),
+            torch.from_numpy(ser.dt.dayofweek /
+                             NUM_DAYS_PER_WEEK).to(device=device),
+            torch.from_numpy(ser.dt.hour /
+                             NUM_HOURS_PER_DAY).to(device=device),
+            torch.from_numpy(ser.dt.minute /
+                             NUM_MINUTES_PER_HOUR).to(device=device),
+            torch.from_numpy(ser.dt.second /
+                             NUM_SECONDS_PER_MINUTE).to(device=device)
         ]
         return torch.cat(tensors, dim=1).reshape(len(ser), 1, len(tensors))
 
@@ -239,6 +255,14 @@ class TimestampTensorMapper(TensorMapper):
             tensor, columns=[
                 'year', 'month', 'day', 'dayofweek', 'hour', 'minute', 'second'
             ])
+        df['year'] = round(df['year'] *
+                           (self.year_range[1] - self.year_range[0] + 1) +
+                           self.year_range[0])
+        df['month'] = round(df['month'] * NUM_MONTHS_PER_YEAR)
+        df['day'] = round(df['day'] * NUM_DAYS_PER_MONTH)
+        df['hour'] = round(df['hour'] * NUM_HOURS_PER_DAY)
+        df['minute'] = round(df['minute'] * NUM_MINUTES_PER_HOUR)
+        df['seconds'] = round(df['second'] * NUM_SECONDS_PER_MINUTE)
         ser = pd.to_datetime(
             df[['year', 'month', 'day', 'hour', 'minute', 'second']])
         return ser
