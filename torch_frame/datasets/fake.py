@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import numpy as np
@@ -10,6 +11,16 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils.split import SPLIT_TO_NUM
+
+
+def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
+    r"""This function will return a random datetime converted to string with
+    given format between the start and end datetime objects.
+    """
+    timestamp = start + timedelta(
+        # Get a random amount of seconds between `start` and `end`
+        seconds=random.randint(0, int((end - start).total_seconds())), )
+    return timestamp.strftime(format)
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -119,6 +130,23 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_tokenized
+        if stype.timestamp in stypes:
+            time_formats = [
+                '%Y-%m-%d %H:%M:%S', '%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d'
+            ]
+            start_date = datetime(2000, 1, 1)
+            end_date = datetime(2023, 1, 1)
+            for i in range(len(time_formats)):
+                col_name = f'timestamp_{i}'
+                format = time_formats[i]
+                arr = [
+                    _random_timestamp(start_date, end_date, format)
+                    for _ in range(num_rows)
+                ]
+                if with_nan:
+                    arr[0::2] = len(arr[0::2]) * [np.nan]
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.timestamp
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and

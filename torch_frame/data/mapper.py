@@ -220,8 +220,9 @@ class NumericalSequenceTensorMapper(TensorMapper):
 
 class TimestampTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
-    def __init__(self, year_range):
+    def __init__(self, format, year_range: List[Optional[int]]):
         super().__init__()
+        self.format = format
         self.year_range = year_range
 
     def forward(
@@ -230,7 +231,7 @@ class TimestampTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        ser = pd.to_datetime(ser)
+        ser = pd.to_datetime(ser, format=self.format)
         tensors = [
             torch.from_numpy((ser.dt.year.values - self.year_range[0]) /
                              (self.year_range[1] - self.year_range[0] + 1)).to(

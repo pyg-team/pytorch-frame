@@ -58,36 +58,37 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
-                            columns: List[str]) -> Dict[str, str]:
-    r"""Canonicalize :obj:`col_to_sep` into a dictionary format.
+def canonicalize_col_to_pattern(col_to_pattern: Union[str, Dict[str, str]],
+                                columns: List[str]) -> Dict[str, str]:
+    r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
-        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. (default: :obj:`,`)
-        columns (List[str]): A list of multi-categorical columns.
+        col_to_pattern (Union[str, Dict[str, str]]): A dictionary or a string
+            specifying the separator/pattern for the multi-categorical
+            or timestamp columns. If a string is specified, then the same
+            separator will be used throughout all the multi-categorical
+            columns. If a dictionary is given, we use a separator specified
+            for each column. (default: :obj:`,`)
+        columns (List[str]): A list of multi-categorical or timestamp columns.
 
     Returns:
-        Dict[str, str]: :obj:`col_to_sep` in a dictionary format, mapping
-            multi-categorical columns into their specified separators.
+        Dict[str, str]: :obj:`col_to_pattern` in a dictionary format, mapping
+            multi-categorical or timestamp columns into their specified
+            separators.
     """
-    if isinstance(col_to_sep, str):
-        sep = col_to_sep
-        col_to_sep = {}
+    if isinstance(col_to_pattern, str):
+        sep = col_to_pattern
+        col_to_pattern = {}
         for col in columns:
-            col_to_sep[col] = sep
+            col_to_pattern[col] = sep
     else:
-        missing_cols = set(columns) - set(col_to_sep.keys())
+        missing_cols = set(columns) - set(col_to_pattern.keys())
         if len(missing_cols) > 0:
             raise ValueError(
                 f"col_to_sep needs to specify separators for all "
                 f"multi-categorical columns, but the separators for the "
                 f"following columns are missing: {list(missing_cols)}.")
-    return col_to_sep
+    return col_to_pattern
 
 
 class DataFrameToTensorFrameConverter:
@@ -122,6 +123,13 @@ class DataFrameToTensorFrameConverter:
             values are tensors such as tokens.
             :obj:`batch_size` specifies the mini-batch size for
             :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_time_format (Union[str, Dict[str, str]], optional): A
+            dictionary or a string specifying the format for the timestamp
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. If not specified, pandas's internal to_datetime function
+            will be used to auto parse time columns. (default: None)
     """
     def __init__(
         self,
@@ -131,6 +139,7 @@ class DataFrameToTensorFrameConverter:
         col_to_sep: Union[str, Dict[str, str]] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
@@ -150,9 +159,15 @@ class DataFrameToTensorFrameConverter:
             # in-place sorting of col_names for each stype
             self._col_names_dict[stype].sort()
 
-        self.col_to_sep = canonicalize_col_to_sep(
+        self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
             self.col_names_dict.get(torch_frame.multicategorical, []))
+
+        self.col_to_time_format = (None if self.col_to_time_format is None else
+                                   canonicalize_col_to_pattern(
+                                       col_to_time_format,
+                                       self.col_names_dict.get(
+                                           torch_frame.timestamp, [])))
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -182,7 +197,9 @@ class DataFrameToTensorFrameConverter:
                                                 sep=self.col_to_sep[col])
         elif stype == torch_frame.timestamp:
             year_range = self.col_stats[col][StatType.YEAR_RANGE]
-            return TimestampTensorMapper(year_range)
+            return TimestampTensorMapper(
+                format=(None if self.col_to_time_format is None else
+                        self.col_to_time_format[col]), year_range=year_range)
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -264,6 +281,13 @@ class Dataset(ABC):
             values are tensors such as tokens.
             :obj:`batch_size` specifies the mini-batch size for
             :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_time_format (Union[str, Dict[str, str]], optional): A
+            dictionary or a string specifying the format for the timestamp
+            columns. If a string is specified, then the same separator will
+            be used throughout all the multi-categorical columns. If a
+            dictionary is given, we use a separator specified for each
+            column. If not specified, pandas's internal to_datetime function
+            will be used to auto parse time columns. (default: None)
     """
     def __init__(
         self,
@@ -274,6 +298,7 @@ class Dataset(ABC):
         col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -307,10 +332,15 @@ class Dataset(ABC):
 
         self.text_embedder_cfg = text_embedder_cfg
         self.text_tokenizer_cfg = text_tokenizer_cfg
-        self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
+        self.col_to_sep = canonicalize_col_to_pattern(col_to_sep, [
             col for col, stype in self.col_to_stype.items()
             if stype == torch_frame.multicategorical
         ])
+        self.col_to_time_format = (None if self.col_to_time_format is None else
+                                   canonicalize_col_to_pattern(
+                                       col_to_time_format,
+                                       self.col_names_dict.get(
+                                           torch_frame.timestamp, [])))
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -464,6 +494,7 @@ class Dataset(ABC):
             col_to_sep=self.col_to_sep,
             text_embedder_cfg=self.text_embedder_cfg,
             text_tokenizer_cfg=self.text_tokenizer_cfg,
+            col_to_time_format=self.col_to_time_format,
         )
 
     @property
