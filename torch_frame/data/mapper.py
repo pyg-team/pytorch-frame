@@ -233,23 +233,19 @@ class TimestampTensorMapper(TensorMapper):
     ) -> Tensor:
         ser = pd.to_datetime(ser, format=self.format)
         tensors = [
-            torch.from_numpy((ser.dt.year.values - self.year_range[0]) /
-                             (self.year_range[1] - self.year_range[0] + 1)).to(
-                                 device=device).unsqueeze(1),
             torch.from_numpy(
-                (ser.dt.month.values - 1) /
-                NUM_MONTHS_PER_YEAR).to(device=device).unsqueeze(1),
+                ser.dt.year.values).to(device=device).unsqueeze(1),
             torch.from_numpy(
-                (ser.dt.day.values - 1) /
-                NUM_DAYS_PER_MONTH).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.dayofweek.values /
-                             NUM_DAYS_PER_WEEK).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.hour.values /
-                             NUM_HOURS_PER_DAY).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.minute.values / NUM_MINUTES_PER_HOUR).to(
-                device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.second.values / NUM_SECONDS_PER_MINUTE).to(
-                device=device).unsqueeze(1)
+                ser.dt.month.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(ser.dt.day.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(
+                ser.dt.dayofweek.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(
+                ser.dt.hour.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(
+                ser.dt.minute.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(
+                ser.dt.second.values).to(device=device).unsqueeze(1)
         ]
         return torch.stack(tensors).permute(1, 2, 0).to(torch.float32)
 

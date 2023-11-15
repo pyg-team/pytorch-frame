@@ -79,7 +79,8 @@ def test_compute_col_stats_all_timestamp_with_all_nan():
     ser = pd.Series([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
     stype = timestamp
     year_range = compute_col_stats(ser, stype)[StatType.YEAR_RANGE]
-    assert (year_range[0] == year_range[1] == 1900)
+    print(year_range[0])
+    assert np.isnan(year_range[0]) and np.isnan(year_range[1])
 
 
 def test_compute_col_stats_all_sequence_numerical():

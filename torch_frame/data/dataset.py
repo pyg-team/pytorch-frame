@@ -125,11 +125,14 @@ class DataFrameToTensorFrameConverter:
             :obj:`text_tokenizer`. (default: :obj:`None`)
         col_to_time_format (Union[str, Dict[str, str]], optional): A
             dictionary or a string specifying the format for the timestamp
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. If not specified, pandas's internal to_datetime function
-            will be used to auto parse time columns. (default: None)
+            columns. See ` strfttime documentation
+            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ # noqa
+            for more information on formats. If a string is specified,
+            then the same format will be used throughout all the timestamp
+            columns. If a dictionary is given, we use a different format
+            specified for each column. If not specified, pandas's internal
+            to_datetime function will be used to auto parse time columns.
+            (default: None)
     """
     def __init__(
         self,
@@ -283,11 +286,14 @@ class Dataset(ABC):
             :obj:`text_tokenizer`. (default: :obj:`None`)
         col_to_time_format (Union[str, Dict[str, str]], optional): A
             dictionary or a string specifying the format for the timestamp
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. If not specified, pandas's internal to_datetime function
-            will be used to auto parse time columns. (default: None)
+            columns. See ` strfttime documentation
+            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ # noqa
+            for more information on formats. If a string is specified,
+            then the same format will be used throughout all the timestamp
+            columns. If a dictionary is given, we use a different format
+            specified for each column. If not specified, pandas's internal
+            to_datetime function will be used to auto parse time columns.
+            (default: None)
     """
     def __init__(
         self,

@@ -57,6 +57,7 @@ def test_timestamp_tensor_mapper():
         for _ in range(num_rows)
     ]
     arr[0] = np.nan
+    arr[1] = '2020-03-09 17:20:4'
     ser = pd.Series(arr)
     stype = torch_frame.timestamp
 
@@ -68,9 +69,10 @@ def test_timestamp_tensor_mapper():
     out = mapper.forward(ser)
     assert out.shape == (num_rows, 1, 7)
     assert torch.isnan(out[0, :, :]).all()
+    assert torch.allclose(
+        out[1, :, :],
+        torch.tensor([2020., 3., 9., 0, 17., 20., 4.]).view(1, -1))
     assert out[1:, :, :].dtype == torch.float32
-    is_between_0_and_1 = (out[1:, :, :] >= 0) & (out[1:, :, :] < 1)
-    assert is_between_0_and_1.all()
 
 
 def test_multicategorical_tensor_mapper():

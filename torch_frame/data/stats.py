@@ -108,7 +108,7 @@ _default_values = {
     StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
     StatType.COUNT: ([], []),
     StatType.MULTI_COUNT: ([], []),
-    StatType.YEAR_RANGE: [1900, 1900],
+    StatType.YEAR_RANGE: [np.nan, np.nan],
 }
 
 
