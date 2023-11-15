@@ -21,5 +21,7 @@ def test_trompt():
         col_names_dict=tensor_frame.col_names_dict,
     )
     model.reset_parameters()
-    out = model(tensor_frame)
+    out = model.forward_stacked(tensor_frame)
     assert out.shape == (batch_size, num_layers, out_channels)
+    pred = model(tensor_frame)
+    assert pred.shape == (batch_size, out_channels)
