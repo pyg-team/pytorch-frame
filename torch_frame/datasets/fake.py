@@ -12,6 +12,8 @@ from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils.split import SPLIT_TO_NUM
 
+TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d']
+
 
 def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
     r"""This function will return a random datetime converted to string with
@@ -131,14 +133,11 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_tokenized
         if stype.timestamp in stypes:
-            time_formats = [
-                '%Y-%m-%d %H:%M:%S', '%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d'
-            ]
             start_date = datetime(2000, 1, 1)
             end_date = datetime(2023, 1, 1)
-            for i in range(len(time_formats)):
+            for i in range(len(TIME_FORMATS)):
                 col_name = f'timestamp_{i}'
-                format = time_formats[i]
+                format = TIME_FORMATS[i]
                 arr = [
                     _random_timestamp(start_date, end_date, format)
                     for _ in range(num_rows)
@@ -148,6 +147,7 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.timestamp
         df = pd.DataFrame(df_dict)
+        print(df)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
             # test, we will implement `random_split` and `split_by_col`
@@ -161,10 +161,10 @@ class FakeDataset(torch_frame.data.Dataset):
             split[2] = SPLIT_TO_NUM['test']
             df['split'] = split
         super().__init__(
-            df,
-            col_to_stype,
-            target_col='target',
+            df, col_to_stype, target_col='target',
             split_col='split' if create_split else None,
             text_embedder_cfg=text_embedder_cfg,
-            text_tokenizer_cfg=text_tokenizer_cfg,
-        )
+            text_tokenizer_cfg=text_tokenizer_cfg, col_to_time_format={
+                f'timestamp_{i}': TIME_FORMATS[i]
+                for i in range(len(TIME_FORMATS))
+            })

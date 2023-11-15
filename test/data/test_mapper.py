@@ -41,6 +41,20 @@ def test_categorical_tensor_mapper():
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
 
 
+def test_timestamp_tensor_mapper():
+    ser = pd.Series(['A', 'B', None, 'C', 'B'])
+    expected = torch.tensor([1, 0, -1, -1, 0])
+
+    mapper = CategoricalTensorMapper(['B', 'A'])
+
+    out = mapper.forward(ser)
+    assert out.dtype == torch.long
+    assert torch.equal(out, expected)
+
+    out = mapper.backward(out)
+    pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
+
+
 def test_multicategorical_tensor_mapper():
     ser = pd.Series(['A,B', 'B', '', 'C', 'B,C', None])
     expected_values = torch.tensor([1, 0, 0, 0, -1])

@@ -56,7 +56,8 @@ class StatType(Enum):
         }
         return stats_type.get(stype, [])
 
-    def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
+    def compute(self, ser: Series, sep: Optional[str] = None,
+                time_format: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
             finite_mask = np.isfinite(flattened)
@@ -96,8 +97,8 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.YEAR_RANGE:
-            assert sep is not None
-            ser = pd.to_datetime(ser)
+            print(ser)
+            ser = pd.to_datetime(ser, format=time_format)
             year_range = ser.dt.year.values
             return [max(year_range), min(year_range)]
 
@@ -116,6 +117,7 @@ def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
     sep: Optional[str] = None,
+    time_format: Optional[str] = None,
 ) -> Dict[StatType, Any]:
 
     if stype == torch_frame.numerical:
@@ -129,7 +131,7 @@ def compute_col_stats(
         }
     else:
         stats = {
-            stat_type: stat_type.compute(ser.dropna(), sep)
+            stat_type: stat_type.compute(ser.dropna(), sep, time_format)
             for stat_type in StatType.stats_for_stype(stype)
         }
 

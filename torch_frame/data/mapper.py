@@ -240,16 +240,16 @@ class TimestampTensorMapper(TensorMapper):
                              NUM_MONTHS_PER_YEAR).to(device=device),
             torch.from_numpy(ser.dt.day.values /
                              NUM_DAYS_PER_MONTH).to(device=device),
-            torch.from_numpy(ser.dt.dayofweek /
+            torch.from_numpy(ser.dt.dayofweek.values /
                              NUM_DAYS_PER_WEEK).to(device=device),
-            torch.from_numpy(ser.dt.hour /
+            torch.from_numpy(ser.dt.hour.values /
                              NUM_HOURS_PER_DAY).to(device=device),
-            torch.from_numpy(ser.dt.minute /
+            torch.from_numpy(ser.dt.minute.values /
                              NUM_MINUTES_PER_HOUR).to(device=device),
-            torch.from_numpy(ser.dt.second /
+            torch.from_numpy(ser.dt.second.values /
                              NUM_SECONDS_PER_MINUTE).to(device=device)
         ]
-        return torch.cat(tensors, dim=1).reshape(len(ser), 1, len(tensors))
+        return torch.cat(tensors).reshape(len(ser), 1, len(tensors))
 
     def backward(self, tensor: Tensor) -> pd.Series:
         df = pd.DataFrame(

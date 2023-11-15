@@ -163,7 +163,7 @@ class DataFrameToTensorFrameConverter:
             col_to_sep,
             self.col_names_dict.get(torch_frame.multicategorical, []))
 
-        self.col_to_time_format = (None if self.col_to_time_format is None else
+        self.col_to_time_format = (None if col_to_time_format is None else
                                    canonicalize_col_to_pattern(
                                        col_to_time_format,
                                        self.col_names_dict.get(
@@ -336,11 +336,12 @@ class Dataset(ABC):
             col for col, stype in self.col_to_stype.items()
             if stype == torch_frame.multicategorical
         ])
-        self.col_to_time_format = (None if self.col_to_time_format is None else
-                                   canonicalize_col_to_pattern(
-                                       col_to_time_format,
-                                       self.col_names_dict.get(
-                                           torch_frame.timestamp, [])))
+        self.col_to_time_format = (
+            None if col_to_time_format is None else
+            canonicalize_col_to_pattern(col_to_time_format, [
+                col for col, stype in self.col_to_stype.items()
+                if stype == torch_frame.timestamp
+            ]))
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -462,7 +463,9 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
-                ser, stype, sep=self.col_to_sep.get(col, None))
+                ser, stype, sep=self.col_to_sep.get(col, None),
+                time_format=None if self.col_to_time_format is None else
+                self.col_to_time_format.get(col, None))
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
