@@ -9,13 +9,6 @@ from tqdm import tqdm
 from torch_frame.data import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
-NUM_MONTHS_PER_YEAR = 12
-NUM_DAYS_PER_MONTH = 31
-NUM_DAYS_PER_WEEK = 7
-NUM_HOURS_PER_DAY = 24
-NUM_MINUTES_PER_HOUR = 60
-NUM_SECONDS_PER_MINUTE = 60
-
 
 class TensorMapper(ABC):
     r"""A base class to handle the conversion from raw input data into a
