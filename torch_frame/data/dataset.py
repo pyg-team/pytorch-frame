@@ -58,7 +58,8 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: Union[str, Dict[str, str]],
+def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[str],
+                                                      Dict[str, str]],
                                 columns: List[str]) -> Dict[str, str]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
@@ -76,7 +77,7 @@ def canonicalize_col_to_pattern(col_to_pattern: Union[str, Dict[str, str]],
             multi-categorical or timestamp columns into their specified
             separators.
     """
-    if isinstance(col_to_pattern, str):
+    if col_to_pattern is None or isinstance(col_to_pattern, str):
         sep = col_to_pattern
         col_to_pattern = {}
         for col in columns:
@@ -166,11 +167,9 @@ class DataFrameToTensorFrameConverter:
             col_to_sep,
             self.col_names_dict.get(torch_frame.multicategorical, []))
 
-        self.col_to_time_format = (None if col_to_time_format is None else
-                                   canonicalize_col_to_pattern(
-                                       col_to_time_format,
-                                       self.col_names_dict.get(
-                                           torch_frame.timestamp, [])))
+        self.col_to_time_format = canonicalize_col_to_pattern(
+            col_to_time_format,
+            self.col_names_dict.get(torch_frame.timestamp, []))
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -200,8 +199,7 @@ class DataFrameToTensorFrameConverter:
                                                 sep=self.col_to_sep[col])
         elif stype == torch_frame.timestamp:
             return TimestampTensorMapper(
-                format=(None if self.col_to_time_format is
-                        None else self.col_to_time_format[col]))
+                format=self.col_to_time_format.get(col, None))
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -341,12 +339,11 @@ class Dataset(ABC):
             col for col, stype in self.col_to_stype.items()
             if stype == torch_frame.multicategorical
         ])
-        self.col_to_time_format = (
-            None if col_to_time_format is None else
-            canonicalize_col_to_pattern(col_to_time_format, [
+        self.col_to_time_format = canonicalize_col_to_pattern(
+            col_to_time_format, [
                 col for col, stype in self.col_to_stype.items()
                 if stype == torch_frame.timestamp
-            ]))
+            ])
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -469,8 +466,7 @@ class Dataset(ABC):
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
                 ser, stype, sep=self.col_to_sep.get(col, None),
-                time_format=None if self.col_to_time_format is None else
-                self.col_to_time_format.get(col, None))
+                time_format=self.col_to_time_format.get(col, None))
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
