@@ -67,9 +67,9 @@ def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[str],
         col_to_pattern (Union[str, Dict[str, str]]): A dictionary or a string
             specifying the separator/pattern for the multi-categorical
             or timestamp columns. If a string is specified, then the same
-            separator will be used throughout all the multi-categorical
-            columns. If a dictionary is given, we use a separator specified
-            for each column. (default: :obj:`,`)
+            separator/format will be used throughout all the multi-categorical
+            or timestamp columns. If a dictionary is given, we use a separator
+            specified for each column. (default: :obj:`,`)
         columns (List[str]): A list of multi-categorical or timestamp columns.
 
     Returns:
@@ -78,10 +78,10 @@ def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[str],
             separators.
     """
     if col_to_pattern is None or isinstance(col_to_pattern, str):
-        sep = col_to_pattern
+        pattern = col_to_pattern
         col_to_pattern = {}
         for col in columns:
-            col_to_pattern[col] = sep
+            col_to_pattern[col] = pattern
     else:
         missing_cols = set(columns) - set(col_to_pattern.keys())
         if len(missing_cols) > 0:
