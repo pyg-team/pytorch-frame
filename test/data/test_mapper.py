@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-import torch_frame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
     MultiCategoricalTensorMapper,
@@ -13,7 +12,6 @@ from torch_frame.data.mapper import (
     TextEmbeddingTensorMapper,
     TimestampTensorMapper,
 )
-from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.datasets.fake import _random_timestamp
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
@@ -59,12 +57,8 @@ def test_timestamp_tensor_mapper():
     arr[0] = np.nan
     arr[1] = '2020-03-09 17:20:4'
     ser = pd.Series(arr)
-    stype = torch_frame.timestamp
 
-    year_range = compute_col_stats(ser, stype,
-                                   time_format=format)[StatType.YEAR_RANGE]
-
-    mapper = TimestampTensorMapper(format=format, year_range=year_range)
+    mapper = TimestampTensorMapper(format=format)
 
     out = mapper.forward(ser)
     assert out.shape == (num_rows, 1, 7)
