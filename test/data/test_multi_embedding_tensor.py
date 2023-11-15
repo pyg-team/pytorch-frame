@@ -5,6 +5,7 @@ import pytest
 import torch
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.testing import withCUDA
 
 
 def assert_equal(
@@ -24,11 +25,12 @@ def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
     embedding_dim: Optional[int] = None,
+    device: Optional[torch.device] = None,
 ) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = embedding_dim or random.randint(1, 5)
-        tensor = torch.randn((num_rows, embedding_dim))
+        tensor = torch.randn((num_rows, embedding_dim), device=device)
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
 
@@ -99,12 +101,14 @@ def test_from_tensor_list():
         ])
 
 
-def test_index():
+@withCUDA
+def test_index(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
         num_rows=num_rows,
         num_cols=num_cols,
+        device=device,
     )
 
     # Test [i, j] indexing
@@ -126,30 +130,21 @@ def test_index():
             assert torch.allclose(tensor_list[j][i], tensor)
 
     # Test [list[int]] indexing
-    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
-        met_indexed = met[index]
-        assert isinstance(met_indexed, MultiEmbeddingTensor)
-        assert met_indexed.shape[0] == len(index)
-        assert met_indexed.shape[1] == num_cols
-        for i, idx in enumerate(index):
-            for j in range(num_cols):
-                assert torch.allclose(
-                    tensor_list[j][idx],
-                    met_indexed[i, j],
-                )
-
     # Test [Tensor] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
-        met_indexed = met[torch.tensor(index, dtype=torch.long)]
-        assert isinstance(met_indexed, MultiEmbeddingTensor)
-        assert met_indexed.shape[0] == len(index)
-        assert met_indexed.shape[1] == num_cols
-        for i, idx in enumerate(index):
-            for j in range(num_cols):
-                assert torch.allclose(
-                    tensor_list[j][idx],
-                    met_indexed[i, j],
-                )
+        for index_type in ["list", "tensor"]:
+            if index_type == "tensor":
+                index = torch.tensor(index, dtype=torch.long)
+            met_indexed = met[index]
+            assert isinstance(met_indexed, MultiEmbeddingTensor)
+            assert met_indexed.shape[0] == len(index)
+            assert met_indexed.shape[1] == num_cols
+            for i, idx in enumerate(index):
+                for j in range(num_cols):
+                    assert torch.allclose(
+                        tensor_list[j][idx],
+                        met_indexed[i, j],
+                    )
 
     # TODO(akihironitta): Test [range] indexing
     # TODO(akihironitta): Test [slice, list] indexing

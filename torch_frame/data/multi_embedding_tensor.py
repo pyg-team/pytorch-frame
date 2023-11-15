@@ -103,7 +103,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             i = self._normalize_index(index[0], dim=0)
             j = self._normalize_index(index[1], dim=1)
             return self.values[i, self.offset[j]:self.offset[j + 1]]
-        if isinstance(index, int):
+        elif isinstance(index, int):
             index = self._normalize_index(index, dim=0)
             return MultiEmbeddingTensor(
                 num_rows=1,
@@ -111,9 +111,9 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=self.values[index].view(1, -1),
                 offset=self.offset,
             )
-        if isinstance(index, Tensor) and index.ndim == 1:
+        elif isinstance(index, Tensor) and index.ndim == 1:
             return self.index_select(index, dim=0)
-        if isinstance(index, list):
+        elif isinstance(index, list):
             return self.index_select(
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=0,
