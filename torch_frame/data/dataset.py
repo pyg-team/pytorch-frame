@@ -125,8 +125,8 @@ class DataFrameToTensorFrameConverter:
             :obj:`text_tokenizer`. (default: :obj:`None`)
         col_to_time_format (Union[str, Dict[str, str]], optional): A
             dictionary or a string specifying the format for the timestamp
-            columns. See ` strfttime documentation
-            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ # noqa
+            columns. See `strfttime documentation
+            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
             for more information on formats. If a string is specified,
             then the same format will be used throughout all the timestamp
             columns. If a dictionary is given, we use a different format
