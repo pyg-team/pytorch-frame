@@ -28,21 +28,21 @@ from torch_frame.datasets import TabularBenchmark
 from torch_frame.nn import Trompt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='california')
-parser.add_argument('--channels', type=int, default=128)
-parser.add_argument('--num_prompts', type=int, default=128)
-parser.add_argument('--num_layers', type=int, default=6)
-parser.add_argument('--batch_size', type=int, default=256)
-parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--epochs', type=int, default=50)
-parser.add_argument('--seed', type=int, default=0)
+parser.add_argument("--dataset", type=str, default="california")
+parser.add_argument("--channels", type=int, default=128)
+parser.add_argument("--num_prompts", type=int, default=128)
+parser.add_argument("--num_layers", type=int, default=6)
+parser.add_argument("--batch_size", type=int, default=256)
+parser.add_argument("--lr", type=float, default=0.001)
+parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--seed", type=int, default=0)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Prepare datasets
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
+path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
                 args.dataset)
 dataset = TabularBenchmark(root=path, name=args.dataset)
 dataset.materialize()
@@ -53,8 +53,11 @@ dataset = dataset.shuffle()
 # Split ratio following https://arxiv.org/abs/2207.08815
 # 70% is used for training. 30% of the remaining is used for validation.
 # The final reminder is used for testing.
-train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
-    0.7:0.79], dataset[0.79:]
+train_dataset, val_dataset, test_dataset = (
+    dataset[:0.7],
+    dataset[0.7:0.79],
+    dataset[0.79:],
+)
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame
@@ -83,10 +86,10 @@ def train(epoch: int) -> float:
     model.train()
     loss_accum = total_count = 0
 
-    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         # [batch_size, num_layers, num_classes]
-        out = model(tf)
+        out = model.forward_stacked(tf)
         num_layers = out.size(1)
         # [batch_size * num_layers, num_classes]
         pred = out.view(-1, dataset.num_classes)
@@ -108,9 +111,7 @@ def test(loader: DataLoader) -> float:
 
     for tf in loader:
         tf = tf.to(device)
-        out = model(tf)  # [batch_size, num_layers, num_classes]
-        # Mean pooling across layers:
-        pred = out.mean(dim=1)  # [batch_size, num_classes]
+        pred = model(tf)
         pred_class = pred.argmax(dim=-1)
         accum += float((tf.y == pred_class).sum())
         total_count += len(tf.y)
@@ -128,8 +129,8 @@ for epoch in range(1, args.epochs + 1):
     if best_val_acc < val_acc:
         best_val_acc = val_acc
         best_test_acc = test_acc
-    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
-          f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
+    print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
+          f"Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}")
     lr_scheduler.step()
 
-print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
+print(f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}")
