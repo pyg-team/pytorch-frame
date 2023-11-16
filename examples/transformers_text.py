@@ -1,6 +1,6 @@
 import argparse
 import os.path as osp
-from typing import Dict, List
+from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -24,7 +24,7 @@ from torch_frame.nn import (
     LinearEncoder,
     LinearModelEncoder,
 )
-from torch_frame.typing import TensorData
+from torch_frame.typing import TensorData, TextTokenizationOutputs
 
 # Text Embedded
 # all-distilroberta-v1
@@ -104,13 +104,10 @@ class TextTokenizer:
     def __init__(self, model: str):
         self.tokenizer = AutoTokenizer.from_pretrained(model)
 
-    def __call__(self, sentences: List[str]) -> List[Dict[str, Tensor]]:
-        res = []
+    def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
         # Tokenize batches of sentences
-        inputs = self.tokenizer(sentences, truncation=True, padding=True,
-                                return_tensors="pt")
-        res.append(inputs)
-        return res
+        return self.tokenizer(sentences, truncation=True, padding=True,
+                              return_tensors='pt')
 
 
 class TokenToEmbedding(torch.nn.Module):
