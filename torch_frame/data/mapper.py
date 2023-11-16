@@ -328,43 +328,38 @@ class TextTokenizationTensorMapper(TensorMapper):
             tokenized_outputs: TextTokenizationOutputs = self.text_tokenizer(
                 ser_list)
             if isinstance(tokenized_outputs, Mapping):
-                tokenized_outputs = [tokenized_outputs]
-            for key in tokenized_outputs[0]:
-                xs = []
-                for item in tokenized_outputs:
-                    if item[key].ndim == 1:
-                        xs.append([item[key]])
-                    elif item[key].ndim == 2:
-                        xs.append([row for row in item[key]])
-                    else:
-                        raise ValueError(f'{key} has `ndim` not '
-                                         f'equal to 1 or 2.')
-                feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(
-                    device)
+                keys = tokenized_outputs.keys()
+                for key in keys:
+                    xs = [[row] for row in tokenized_outputs[key]]
+                    feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
+            else:
+                keys = tokenized_outputs[0].keys()
+                for key in keys:
+                    xs = [[item[key]] for item in tokenized_outputs]
+                    feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
             return feat_dict
 
-        tokenized_outputs: TextTokenizationOutputs = []
+        tokenized_outputs: List[TextTokenizationOutputs] = []
         for i in tqdm(range(0, len(ser_list), self.batch_size),
                       desc="Tokenizing texts in mini-batch"):
             tokenized_batch: TextTokenizationOutputs = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
-            if isinstance(tokenized_batch, Mapping):
-                tokenized_outputs.append(tokenized_batch)
-            else:
-                tokenized_outputs.extend(tokenized_batch)
+            tokenized_outputs.append(tokenized_batch)
 
-        for key in tokenized_outputs[0]:
-            xs = []
-            for item in tokenized_outputs:
-                if item[key].ndim == 1:
-                    xs.append([item[key]])
-                elif item[key].ndim == 2:
-                    for row in item[key]:
-                        xs.append([row])
-                else:
-                    raise ValueError(f'{key} has `ndim` not '
-                                     f'equal to 1 or 2.')
-            feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs).to(device)
+        if isinstance(tokenized_outputs[0], Mapping):
+            keys = tokenized_outputs[0].keys()
+            for key in keys:
+                xs = []
+                for tokenized_batch in tokenized_outputs:
+                    xs.extend([row] for row in tokenized_batch[key])
+                feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
+        else:
+            keys = tokenized_outputs[0][0].keys()
+            for key in keys:
+                xs = []
+                for tokenized_batch in tokenized_outputs:
+                    xs.extend([item[key]] for item in tokenized_batch)
+                feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
         return feat_dict
 
     def backward(self, tensor: Tensor) -> pd.Series:

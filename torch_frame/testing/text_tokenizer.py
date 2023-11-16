@@ -33,7 +33,7 @@ class WhiteSpaceHashTokenizer:
             idx = torch.LongTensor(
                 [hash(t) % self.num_hash_bins for t in tokens])
             input_ids.append(idx)
-            attention_mask.append(torch.ones(idx.shape, dtype=torch.long))
+            attention_mask.append(torch.ones(idx.shape, dtype=torch.bool))
 
         if not self.batched:
             return [{
@@ -49,7 +49,7 @@ class WhiteSpaceHashTokenizer:
             input_ids = torch.stack(padded_input_ids)
             padded_attention_mask = [
                 torch.nn.functional.pad(t, (0, max_length - t.size(0)),
-                                        value=0) for t in attention_mask
+                                        value=False) for t in attention_mask
             ]
             attention_mask = torch.stack(padded_attention_mask)
             return {'input_ids': input_ids, 'attention_mask': attention_mask}
