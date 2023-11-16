@@ -351,6 +351,11 @@ class TextTokenizationTensorMapper(TensorMapper):
             for key in keys:
                 xs = []
                 for tokenized_batch in tokenized_outputs:
+                    if tokenized_batch[key].ndim != 2:
+                        raise ValueError('Mini-batch of text should be '
+                                         'tokenized into 2-dimensional '
+                                         'tensor when tokenization output '
+                                         'is a dictionary.')
                     xs.extend([row] for row in tokenized_batch[key])
                 feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
         else:
@@ -358,7 +363,13 @@ class TextTokenizationTensorMapper(TensorMapper):
             for key in keys:
                 xs = []
                 for tokenized_batch in tokenized_outputs:
-                    xs.extend([item[key]] for item in tokenized_batch)
+                    for item in tokenized_batch:
+                        if item[key].ndim != 1:
+                            raise ValueError('Mini-batch of text should be '
+                                             'tokenized into 1-dimensional '
+                                             'tensor when tokenization output '
+                                             'is a list of dictionaries.')
+                        xs.append([item[key]])
                 feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
         return feat_dict
 
