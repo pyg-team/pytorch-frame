@@ -140,7 +140,7 @@ class DataFrameToTensorFrameConverter:
         col_to_stype: Dict[str, torch_frame.stype],
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
-        col_to_sep: Union[str, Dict[str, str]] = ',',
+        col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
@@ -165,11 +165,13 @@ class DataFrameToTensorFrameConverter:
 
         self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
-            self.col_names_dict.get(torch_frame.multicategorical, []))
+            self.col_names_dict.get(torch_frame.multicategorical, []),
+        )
 
         self.col_to_time_format = canonicalize_col_to_pattern(
             col_to_time_format,
-            self.col_names_dict.get(torch_frame.timestamp, []))
+            self.col_names_dict.get(torch_frame.timestamp, []),
+        )
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -331,19 +333,24 @@ class Dataset(ABC):
         if (target_col is not None and self.col_to_stype[target_col]
                 == torch_frame.multicategorical):
             raise ValueError(
-                'Multilabel classification task is not yet supported.')
+                "Multilabel classification task is not yet supported.")
 
         self.text_embedder_cfg = text_embedder_cfg
         self.text_tokenizer_cfg = text_tokenizer_cfg
-        self.col_to_sep = canonicalize_col_to_pattern(col_to_sep, [
-            col for col, stype in self.col_to_stype.items()
-            if stype == torch_frame.multicategorical
-        ])
+        self.col_to_sep = canonicalize_col_to_pattern(
+            col_to_sep,
+            [
+                col for col, stype in self.col_to_stype.items()
+                if stype == torch_frame.multicategorical
+            ],
+        )
         self.col_to_time_format = canonicalize_col_to_pattern(
-            col_to_time_format, [
+            col_to_time_format,
+            [
                 col for col, stype in self.col_to_stype.items()
                 if stype == torch_frame.timestamp
-            ])
+            ],
+        )
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -370,12 +377,12 @@ class Dataset(ABC):
         return torch_frame.data.download_url(url, root, filename, log=log)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}()'
+        return f"{self.__class__.__name__}()"
 
     def __len__(self) -> int:
         return len(self.df)
 
-    def __getitem__(self, index: IndexSelectType) -> 'Dataset':
+    def __getitem__(self, index: IndexSelectType) -> "Dataset":
         is_col_select = isinstance(index, str)
         is_col_select |= (isinstance(index, (list, tuple)) and len(index) > 0
                           and isinstance(index[0], str))
@@ -428,7 +435,7 @@ class Dataset(ABC):
     # Materialization #########################################################
 
     def materialize(self, device: Optional[torch.device] = None,
-                    path: Optional[str] = None) -> 'Dataset':
+                    path: Optional[str] = None) -> "Dataset":
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only.
 
@@ -465,8 +472,11 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
-                ser, stype, sep=self.col_to_sep.get(col, None),
-                time_format=self.col_to_time_format.get(col, None))
+                ser,
+                stype,
+                sep=self.col_to_sep.get(col, None),
+                time_format=self.col_to_time_format.get(col, None),
+            )
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
@@ -481,7 +491,10 @@ class Dataset(ABC):
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
-        # 3. Mark the dataset as materialized:
+        # 3. Update col stats based on `TensorFrame`:
+        self._update_col_stats()
+
+        # 4. Mark the dataset as materialized:
         self._is_materialized = True
 
         if path is not None:
@@ -500,6 +513,20 @@ class Dataset(ABC):
             text_tokenizer_cfg=self.text_tokenizer_cfg,
             col_to_time_format=self.col_to_time_format,
         )
+
+    def _update_col_stats(self):
+        r"""Set :obj:`col_stats` based on :obj:`tensor_frame`."""
+        if torch_frame.text_embedded in self._tensor_frame.feat_dict:
+            # Text embedding dimensionality is only available after the tensor
+            # frame actually gets created, so we compute col_stats here.
+            # For now, we set all EMB_DIM to be the same.
+            # TODO: Extend this to allow different embedding dimensionalities
+            # for different columns.
+            emb_dim = self._tensor_frame.feat_dict[
+                torch_frame.text_embedded].size(-1)
+            for col_name in self._tensor_frame.col_names_dict[
+                    torch_frame.text_embedded]:
+                self._col_stats[col_name][StatType.EMB_DIM] = emb_dim
 
     @property
     def is_materialized(self) -> bool:
@@ -521,7 +548,7 @@ class Dataset(ABC):
     # Indexing ################################################################
 
     @requires_post_materialization
-    def index_select(self, index: IndexSelectType) -> 'Dataset':
+    def index_select(self, index: IndexSelectType) -> "Dataset":
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`.
         """
@@ -548,14 +575,14 @@ class Dataset(ABC):
 
     def shuffle(
         self, return_perm: bool = False
-    ) -> Union['Dataset', Tuple['Dataset', Tensor]]:
+    ) -> Union["Dataset", Tuple["Dataset", Tensor]]:
         r"""Randomly shuffles the rows in the dataset."""
         perm = torch.randperm(len(self))
         dataset = self.index_select(perm)
         return (dataset, perm) if return_perm is True else dataset
 
     @requires_pre_materialization
-    def col_select(self, cols: ColumnSelectType) -> 'Dataset':
+    def col_select(self, cols: ColumnSelectType) -> "Dataset":
         r"""Returns a subset of the dataset from specified columns
         :obj:`cols`.
         """
@@ -571,7 +598,7 @@ class Dataset(ABC):
 
         return dataset
 
-    def get_split(self, split: str) -> 'Dataset':
+    def get_split(self, split: str) -> "Dataset":
         r"""Returns a subset of the dataset that belongs to a given training
         split (as defined in :obj:`split_col`).
 
@@ -583,19 +610,19 @@ class Dataset(ABC):
             raise ValueError(
                 f"'get_split' is not supported for '{self}' since 'split_col' "
                 f"is not specified.")
-        if split not in ['train', 'val', 'test']:
+        if split not in ["train", "val", "test"]:
             raise ValueError(f"The split named '{split}' is not available. "
                              f"Needs to be either 'train', 'val', or 'test'.")
         indices = self.df.index[self.df[self.split_col] ==
                                 SPLIT_TO_NUM[split]].tolist()
         return self[indices]
 
-    def split(self) -> Tuple['Dataset', 'Dataset', 'Dataset']:
+    def split(self) -> Tuple["Dataset", "Dataset", "Dataset"]:
         r"""Splits the dataset into training, validation and test splits."""
         return (
-            self.get_split('train'),
-            self.get_split('val'),
-            self.get_split('test'),
+            self.get_split("train"),
+            self.get_split("val"),
+            self.get_split("test"),
         )
 
     @property

@@ -33,7 +33,7 @@ from torch_frame.nn.encoder.stype_encoder import \
 
 class PretrainedTextEncoder:
     def __init__(self, device: torch.device) -> None:
-        self.model = SentenceTransformer('all-distilroberta-v1', device=device)
+        self.model = SentenceTransformer("all-distilroberta-v1", device=device)
 
     def __call__(self, sentences: List[str]) -> Tensor:
         # Inference on GPU (if available)
@@ -44,19 +44,19 @@ class PretrainedTextEncoder:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--channels', type=int, default=256)
-parser.add_argument('--num_layers', type=int, default=4)
-parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=50)
-parser.add_argument('--seed', type=int, default=0)
+parser.add_argument("--channels", type=int, default=256)
+parser.add_argument("--num_layers", type=int, default=4)
+parser.add_argument("--batch_size", type=int, default=512)
+parser.add_argument("--lr", type=float, default=0.0001)
+parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--seed", type=int, default=0)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Prepare datasets
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'mercari')
+path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data", "mercari")
 text_encoder = PretrainedTextEncoder(device=device)
 dataset = Mercari(
     root=path,
@@ -65,7 +65,7 @@ dataset = Mercari(
                                          batch_size=5),
 )
 
-dataset.materialize(path=osp.join(path, 'data.pt'))
+dataset.materialize(path=osp.join(path, "data.pt"))
 
 is_classification = dataset.task_type.is_classification
 
@@ -86,7 +86,7 @@ stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
     stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
+    stype.text_embedded: LinearEmbeddingEncoder(),
 }
 
 if is_classification:
@@ -111,7 +111,7 @@ def train(epoch: int) -> float:
     model.train()
     loss_accum = total_count = 0
 
-    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         pred = model(tf)
         if is_classification:
@@ -139,7 +139,7 @@ def test(loader: DataLoader) -> float:
             accum += float((tf.y == pred_class).sum())
         else:
             accum += float(
-                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
         total_count += len(tf.y)
 
     if is_classification:
@@ -151,13 +151,13 @@ def test(loader: DataLoader) -> float:
 
 
 if is_classification:
-    metric = 'Acc'
+    metric = "Acc"
     best_val_metric = 0
     best_test_metric = 0
 else:
-    metric = 'RMSE'
-    best_val_metric = float('inf')
-    best_test_metric = float('inf')
+    metric = "RMSE"
+    best_val_metric = float("inf")
+    best_test_metric = float("inf")
 
 best_model_state = None
 
@@ -172,13 +172,13 @@ for epoch in range(1, args.epochs + 1):
     elif not is_classification and val_metric < best_val_metric:
         best_val_metric = val_metric
         best_model_state = model.state_dict()
-        torch.save(best_model_state, osp.join(path, 'best_model.pth'))
+        torch.save(best_model_state, osp.join(path, "best_model.pth"))
 
-    print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
-          f'Val {metric}: {val_metric:.4f}')
+    print(f"Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, "
+          f"Val {metric}: {val_metric:.4f}")
     lr_scheduler.step()
 
-print(f'Best Val {metric}: {best_val_metric:.4f}, ')
+print(f"Best Val {metric}: {best_val_metric:.4f}, ")
 
 # Generate prediction csv
 model.load_state_dict(best_model_state)
@@ -191,8 +191,8 @@ with torch.inference_mode():
         pred = model(tf)
         all_preds.append(pred.cpu().numpy())
 pred = np.concatenate(all_preds).flatten()
-df = dataset.df[dataset.df['split_col'] == 2]
+df = dataset.df[dataset.df["split_col"] == 2]
 df = df[["test_id"]]
 df["test_id"] = df["test_id"].astype(int)
 df[dataset.target_col] = pred
-df.to_csv('submission.csv')
+df.to_csv("submission.csv")
