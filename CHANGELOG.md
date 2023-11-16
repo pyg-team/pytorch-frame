@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `multi-categorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
+- Added `Timestamp` stype ([#212](https://github.com/pyg-team/pytorch-frame/pull/212))
+- Added `multi-categorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
 - Added support for saving and loading of `TensorFrame` with complex `stypes`. ([#197](https://github.com/pyg-team/pytorch-frame/pull/197))
 - Added `TensorFrame` concatenation of complex stypes. ([#190](https://github.com/pyg-team/pytorch-frame/pull/190))
 - Added `text_tokenized` example ([#174](https://github.com/pyg-team/pytorch-frame/pull/174))
@@ -25,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 
 ### Changed
+
+- Made `Trompt` output 2-dim embeddings in `forward`
 
 ### Deprecated
 
