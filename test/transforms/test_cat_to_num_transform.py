@@ -14,7 +14,7 @@ from torch_frame.transforms import CatToNumTransform
 
 @pytest.mark.parametrize('with_nan', [True, False])
 def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
-    num_rows = 20
+    num_rows = 10
     dataset: Dataset = FakeDataset(
         num_rows=num_rows, with_nan=with_nan, stypes=[stype.categorical],
         task_type=TaskType.MULTICLASS_CLASSIFICATION, create_split=True)
@@ -71,7 +71,7 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     TaskType.BINARY_CLASSIFICATION
 ])
 def test_cat_to_num_transform_with_loading(task_type):
-    num_rows = 20
+    num_rows = 10
     dataset: Dataset = FakeDataset(num_rows=num_rows, with_nan=True,
                                    stypes=[stype.numerical, stype.categorical],
                                    task_type=task_type, create_split=True)

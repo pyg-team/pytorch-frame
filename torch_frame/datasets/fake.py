@@ -65,7 +65,10 @@ class FakeDataset(torch_frame.data.Dataset):
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
         elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            df_dict = {'target': np.random.randint(0, 3, size=(num_rows, ))}
+            labels = np.random.randint(0, 3, size=(num_rows, ))
+            # make sure the final label exists
+            labels[0] = 2
+            df_dict = {'target': labels}
             col_to_stype = {'target': stype.categorical}
         elif task_type == TaskType.BINARY_CLASSIFICATION:
             df_dict = {'target': np.random.randint(0, 2, size=(num_rows, ))}
