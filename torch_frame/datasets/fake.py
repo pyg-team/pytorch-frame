@@ -44,7 +44,7 @@ class FakeDataset(torch_frame.data.Dataset):
             PyTorch embeddings and :obj:`batch_size` that specifies the
             mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
         text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
-            configuration the specifies the text tokenizer to map text columns
+            configuration that specifies the text tokenizer to map text columns
             into maps sentences into tensor of tokens (default: :obj:`None`)
     """
     def __init__(
@@ -159,11 +159,16 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = SPLIT_TO_NUM['val']
             split[2] = SPLIT_TO_NUM['test']
             df['split'] = split
+
         super().__init__(
-            df, col_to_stype, target_col='target',
+            df,
+            col_to_stype,
+            target_col='target',
             split_col='split' if create_split else None,
             text_embedder_cfg=text_embedder_cfg,
-            text_tokenizer_cfg=text_tokenizer_cfg, col_to_time_format={
+            text_tokenizer_cfg=text_tokenizer_cfg,
+            col_to_time_format={
                 f'timestamp_{i}': TIME_FORMATS[i]
                 for i in range(len(TIME_FORMATS))
-            })
+            },
+        )

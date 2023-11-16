@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 import torch
+import torch.nn.functional as F
 
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
@@ -15,12 +16,16 @@ class WhiteSpaceHashTokenizer:
             (default: :obj:`64`)
         device (torch.device, optional): The device to put tokens.
             (default: :obj:`None`)
-        batched (bool): Whether tokenize in the batched format.
-            If :obj:`True`, tokenizer returns 2-dimension tensor,
-            else return 1-dimension tensor. (default: :obj:`False`)
+        batched (bool): Whether to tokenize in a batched format.
+            If :obj:`True`, tokenizer returns Mapping[str, 2dim-Tensor],
+            else List[Mapping[str, 1dim-Tensor]]. (default: :obj:`False`)
     """
-    def __init__(self, num_hash_bins: int = 64,
-                 device: Optional[torch.device] = None, batched: bool = False):
+    def __init__(
+        self,
+        num_hash_bins: int = 64,
+        device: Optional[torch.device] = None,
+        batched: bool = False,
+    ):
         self.device = device
         self.num_hash_bins = num_hash_bins
         self.batched = batched
@@ -35,24 +40,24 @@ class WhiteSpaceHashTokenizer:
             input_ids.append(idx)
             attention_mask.append(torch.ones(idx.shape, dtype=torch.bool))
 
-        if not self.batched:
+        if self.batched:
+            max_length = max(t.size(0) for t in input_ids)
+            padded_input_ids = [
+                F.pad(t, (0, max_length - t.size(0)), value=-1)
+                for t in input_ids
+            ]
+            input_ids = torch.stack(padded_input_ids)
+            padded_attention_mask = [
+                F.pad(t, (0, max_length - t.size(0)), value=False)
+                for t in attention_mask
+            ]
+            attention_mask = torch.stack(padded_attention_mask)
+            return {'input_ids': input_ids, 'attention_mask': attention_mask}
+        else:
             return [{
                 'input_ids': input_ids[i],
                 'attention_mask': attention_mask[i]
             } for i in range(len(sentences))]
-        else:
-            max_length = max(t.size(0) for t in input_ids)
-            padded_input_ids = [
-                torch.nn.functional.pad(t, (0, max_length - t.size(0)),
-                                        value=-1) for t in input_ids
-            ]
-            input_ids = torch.stack(padded_input_ids)
-            padded_attention_mask = [
-                torch.nn.functional.pad(t, (0, max_length - t.size(0)),
-                                        value=False) for t in attention_mask
-            ]
-            attention_mask = torch.stack(padded_attention_mask)
-            return {'input_ids': input_ids, 'attention_mask': attention_mask}
 
 
 class RandomTextModel(torch.nn.Module):

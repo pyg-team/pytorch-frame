@@ -330,12 +330,18 @@ class TextTokenizationTensorMapper(TensorMapper):
             if isinstance(tokenized_outputs, Mapping):
                 keys = tokenized_outputs.keys()
                 for key in keys:
-                    xs = [[row] for row in tokenized_outputs[key]]
+                    tensors = tokenized_outputs[key]
+                    assert tensors.ndim == 2
+                    xs = [[tensor] for tensor in tensors]
                     feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
             else:
                 keys = tokenized_outputs[0].keys()
                 for key in keys:
-                    xs = [[item[key]] for item in tokenized_outputs]
+                    xs = []
+                    for tensor_dict in tokenized_outputs:
+                        tensor = tensor_dict[key]
+                        assert tensor.ndim == 1
+                        xs.append([tensor])
                     feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
             return feat_dict
 
@@ -351,25 +357,19 @@ class TextTokenizationTensorMapper(TensorMapper):
             for key in keys:
                 xs = []
                 for tokenized_batch in tokenized_outputs:
-                    if tokenized_batch[key].ndim != 2:
-                        raise ValueError('Mini-batch of text should be '
-                                         'tokenized into 2-dimensional '
-                                         'tensor when tokenization output '
-                                         'is a dictionary.')
-                    xs.extend([row] for row in tokenized_batch[key])
+                    tensors = tokenized_batch[key]
+                    assert tensors.ndim == 2
+                    xs.extend([tensor] for tensor in tensors)
                 feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
         else:
             keys = tokenized_outputs[0][0].keys()
             for key in keys:
                 xs = []
                 for tokenized_batch in tokenized_outputs:
-                    for item in tokenized_batch:
-                        if item[key].ndim != 1:
-                            raise ValueError('Mini-batch of text should be '
-                                             'tokenized into 1-dimensional '
-                                             'tensor when tokenization output '
-                                             'is a list of dictionaries.')
-                        xs.append([item[key]])
+                    for tensor_dict in tokenized_batch:
+                        tensor = tensor_dict[key]
+                        assert tensor.ndim == 1
+                        xs.append([tensor])
                 feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
         return feat_dict
 
