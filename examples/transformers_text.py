@@ -45,27 +45,31 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9672, Best Test Acc: 0.9644
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='wine_reviews')
-parser.add_argument('--channels', type=int, default=256)
-parser.add_argument('--num_layers', type=int, default=4)
-parser.add_argument('--batch_size', type=int, default=512)
-parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--finetune', action='store_true')
-parser.add_argument('--lora', action='store_true')
+parser.add_argument("--dataset", type=str, default="wine_reviews")
+parser.add_argument("--channels", type=int, default=256)
+parser.add_argument("--num_layers", type=int, default=4)
+parser.add_argument("--batch_size", type=int, default=512)
+parser.add_argument("--lr", type=float, default=0.0001)
+parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--seed", type=int, default=0)
+parser.add_argument("--finetune", action="store_true")
+parser.add_argument("--lora", action="store_true")
 parser.add_argument(
-    '--model', type=str, default='distilbert-base-uncased', choices=[
-        'distilbert-base-uncased',
-        'sentence-transformers/all-distilroberta-v1',
-    ])
-parser.add_argument('--pooling', type=str, default='mean',
-                    choices=['mean', 'cls'])
+    "--model",
+    type=str,
+    default="distilbert-base-uncased",
+    choices=[
+        "distilbert-base-uncased",
+        "sentence-transformers/all-distilroberta-v1",
+    ],
+)
+parser.add_argument("--pooling", type=str, default="mean",
+                    choices=["mean", "cls"])
 args = parser.parse_args()
 
 if args.lora and not args.finetune:
-    raise ValueError('Please also specify finetune when '
-                     'choosing LoRA finetuning.')
+    raise ValueError("Please also specify finetune when "
+                     "choosing LoRA finetuning.")
 
 
 class TextToEmbedding:
@@ -76,20 +80,24 @@ class TextToEmbedding:
         self.pooling = pooling
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        inputs = self.tokenizer(sentences, truncation=True,
-                                padding='max_length', return_tensors='pt')
+        inputs = self.tokenizer(
+            sentences,
+            truncation=True,
+            padding="max_length",
+            return_tensors="pt",
+        )
         for key in inputs:
             if isinstance(inputs[key], Tensor):
                 inputs[key] = inputs[key].to(self.device)
         out = self.model(**inputs)
-        mask = inputs['attention_mask']
-        if self.pooling == 'mean':
-            return mean_pooling(out.last_hidden_state.detach(),
-                                mask).squeeze(1).cpu()
-        elif self.pooling == 'cls':
+        mask = inputs["attention_mask"]
+        if self.pooling == "mean":
+            return (mean_pooling(out.last_hidden_state.detach(),
+                                 mask).squeeze(1).cpu())
+        elif self.pooling == "cls":
             return out.last_hidden_state[:, 0, :].detach().cpu()
         else:
-            raise ValueError(f'{self.pooling} is not supported.')
+            raise ValueError(f"{self.pooling} is not supported.")
 
 
 class TextTokenizer:
@@ -115,18 +123,18 @@ class TokenToEmbedding(torch.nn.Module):
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, pooling: str = 'mean', lora: bool = False):
+    def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
         super().__init__()
         self.model = AutoModel.from_pretrained(model)
 
         if lora:
-            if model == 'distilbert-base-uncased':
-                target_modules = ['ffn.lin1']
-            elif model == 'sentence-transformers/all-distilroberta-v1':
-                target_modules = ['intermediate.dense']
+            if model == "distilbert-base-uncased":
+                target_modules = ["ffn.lin1"]
+            elif model == "sentence-transformers/all-distilroberta-v1":
+                target_modules = ["intermediate.dense"]
             else:
-                raise ValueError(f'Model {model} is not specified for '
-                                 f'LoRA finetuning.')
+                raise ValueError(f"Model {model} is not specified for "
+                                 f"LoRA finetuning.")
 
             peft_config = LoraConfig(
                 task_type=TaskType.FEATURE_EXTRACTION,
@@ -134,7 +142,7 @@ class TokenToEmbedding(torch.nn.Module):
                 lora_alpha=32,
                 inference_mode=False,
                 lora_dropout=0.1,
-                bias='none',
+                bias="none",
                 target_modules=target_modules,
             )
             self.model = get_peft_model(self.model, peft_config)
@@ -142,26 +150,26 @@ class TokenToEmbedding(torch.nn.Module):
 
     def forward(self, feat: TensorData) -> Tensor:
         # [batch_size, num_cols, batch_max_seq_len]
-        input_ids = feat['input_ids'].to_dense(fill_value=0)
-        mask = feat['attention_mask'].to_dense(fill_value=0)
+        input_ids = feat["input_ids"].to_dense(fill_value=0)
+        mask = feat["attention_mask"].to_dense(fill_value=0)
         outs = []
         # Get text embeddings over each column
         for i in range(input_ids.shape[1]):
             out = self.model(input_ids=input_ids[:, i, :],
                              attention_mask=mask[:, i, :])
-            if self.pooling == 'mean':
+            if self.pooling == "mean":
                 outs.append(mean_pooling(out.last_hidden_state, mask[:, i, :]))
-            elif self.pooling == 'cls':
+            elif self.pooling == "cls":
                 outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
             else:
-                raise ValueError(f'{self.pooling} is not supported.')
+                raise ValueError(f"{self.pooling} is not supported.")
         # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
 
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(
-        last_hidden_state.size()).float()
+    input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
+        last_hidden_state.size()).float())
     embedding = torch.sum(
         last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
             input_mask_expanded.sum(1), min=1e-9)
@@ -169,10 +177,10 @@ def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
 
 
 torch.manual_seed(args.seed)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Prepare datasets
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
+path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
                 args.dataset)
 
 # Prepare text columns
@@ -180,11 +188,11 @@ if not args.finetune:
     text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
                                    device=device)
     text_stype = torch_frame.text_embedded
-    text_stype_encoder = LinearEmbeddingEncoder(in_channels=768)
+    text_stype_encoder = LinearEmbeddingEncoder()
     kwargs = {
-        'text_stype':
+        "text_stype":
         text_stype,
-        'text_embedder_cfg':
+        "text_embedder_cfg":
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
 else:
@@ -195,15 +203,15 @@ else:
     text_stype_encoder = LinearModelEncoder(in_channels=768,
                                             model=text_encoder)
     kwargs = {
-        'text_stype':
+        "text_stype":
         text_stype,
-        'text_tokenizer_cfg':
+        "text_tokenizer_cfg":
         TextTokenizerConfig(text_tokenizer=text_tokenizer, batch_size=10000),
     }
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
-filename = f'{args.model}_{text_stype.value}_data.pt'
+filename = f"{args.model}_{text_stype.value}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
@@ -248,7 +256,7 @@ def train(epoch: int) -> float:
     model.train()
     loss_accum = total_count = 0
 
-    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         pred = model(tf)
         if is_classification:
@@ -276,7 +284,7 @@ def test(loader: DataLoader) -> float:
             accum += float((tf.y == pred_class).sum())
         else:
             accum += float(
-                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction='sum'))
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
         total_count += len(tf.y)
 
     if is_classification:
@@ -288,13 +296,13 @@ def test(loader: DataLoader) -> float:
 
 
 if is_classification:
-    metric = 'Acc'
+    metric = "Acc"
     best_val_metric = 0
     best_test_metric = 0
 else:
-    metric = 'RMSE'
-    best_val_metric = float('inf')
-    best_test_metric = float('inf')
+    metric = "RMSE"
+    best_val_metric = float("inf")
+    best_test_metric = float("inf")
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
@@ -309,8 +317,8 @@ for epoch in range(1, args.epochs + 1):
         best_val_metric = val_metric
         best_test_metric = test_metric
 
-    print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
-          f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+    print(f"Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, "
+          f"Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}")
 
-print(f'Best Val {metric}: {best_val_metric:.4f}, '
-      f'Best Test {metric}: {best_test_metric:.4f}')
+print(f"Best Val {metric}: {best_val_metric:.4f}, "
+      f"Best Test {metric}: {best_test_metric:.4f}")

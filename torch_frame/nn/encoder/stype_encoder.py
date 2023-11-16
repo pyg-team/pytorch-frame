@@ -18,8 +18,8 @@ from ..utils.init import attenuated_kaiming_uniform_
 
 def reset_parameters_soft(module: Module):
     r"""Call reset_parameters() only when it exists. Skip activation module."""
-    if (hasattr(module, 'reset_parameters')
-            and callable(module.reset_parameters)):
+    if hasattr(module, "reset_parameters") and callable(
+            module.reset_parameters):
         module.reset_parameters()
 
 
@@ -41,14 +41,18 @@ class StypeEncoder(Module, ABC):
             values. If na_strategy is None, then it outputs non-learnable
             all-zero embedding for :obj:`NaN` category. (default: :obj:`None`)
     """
-    supported_stypes: Set[stype] = {}
-    LAZY_ATTRS = {'out_channels', 'stats_list', 'stype'}
 
-    def __init__(self, out_channels: Optional[int] = None,
-                 stats_list: Optional[List[Dict[StatType, Any]]] = None,
-                 stype: Optional[stype] = None,
-                 post_module: Optional[Module] = None,
-                 na_strategy: Optional[NAStrategy] = None):
+    supported_stypes: Set[stype] = {}
+    LAZY_ATTRS = {"out_channels", "stats_list", "stype"}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+    ):
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
@@ -141,7 +145,7 @@ class StypeEncoder(Module, ABC):
             if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data)
             else:
-                nan_mask = (column_data == -1)
+                nan_mask = column_data == -1
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
@@ -163,6 +167,7 @@ class EmbeddingEncoder(StypeEncoder):
     applies :class:`torch.nn.Embedding` for each categorical feature and
     concatenates the output embeddings.
     """
+
     supported_stypes = {stype.categorical}
 
     def __init__(
@@ -218,6 +223,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         mode (str): "sum", "mean" or "max".
             Specifies the way to reduce the bag. (default: :obj:`mean`)
     """
+
     supported_stypes = {stype.multicategorical}
 
     def __init__(
@@ -227,13 +233,14 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
-        mode: str = 'mean',
+        mode: str = "mean",
     ):
         self.mode = mode
         if mode not in ["mean", "sum", "max"]:
             raise ValueError(
                 f"Unknown mode {mode} for MultiCategoricalEmbeddingEncoder.",
-                "Please use 'mean', 'sum' or 'max'.")
+                "Please use 'mean', 'sum' or 'max'.",
+            )
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
@@ -244,8 +251,12 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
             num_categories = len(stats[StatType.MULTI_COUNT][0])
             # 0-th category is for NaN.
             self.embs.append(
-                EmbeddingBag(num_categories + 1, self.out_channels,
-                             padding_idx=0, mode=self.mode))
+                EmbeddingBag(
+                    num_categories + 1,
+                    self.out_channels,
+                    padding_idx=0,
+                    mode=self.mode,
+                ))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -274,6 +285,7 @@ class LinearEncoder(StypeEncoder):
     feature and concatenates the output embeddings. Note that the
     implementation does this for all numerical features in a batched manner.
     """
+
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -291,10 +303,10 @@ class LinearEncoder(StypeEncoder):
         super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
-        self.register_buffer('mean', mean)
-        std = torch.tensor([stats[StatType.STD]
-                            for stats in self.stats_list]) + 1e-6
-        self.register_buffer('std', std)
+        self.register_buffer("mean", mean)
+        std = (torch.tensor([stats[StatType.STD]
+                             for stats in self.stats_list]) + 1e-6)
+        self.register_buffer("std", std)
         num_cols = len(self.stats_list)
         self.weight = Parameter(torch.empty(num_cols, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
@@ -310,7 +322,7 @@ class LinearEncoder(StypeEncoder):
         feat = (feat - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ij,jk->ijk', feat, self.weight)
+        x_lin = torch.einsum("ij,jk->ijk", feat, self.weight)
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
@@ -322,6 +334,7 @@ class StackEncoder(StypeEncoder):
     :obj:`[batch_size, num_cols]` into
     :obj:`[batch_size, num_cols, out_channels]`.
     """
+
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -339,10 +352,10 @@ class StackEncoder(StypeEncoder):
         super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
-        self.register_buffer('mean', mean)
-        std = torch.tensor([stats[StatType.STD]
-                            for stats in self.stats_list]) + 1e-6
-        self.register_buffer('std', std)
+        self.register_buffer("mean", mean)
+        std = (torch.tensor([stats[StatType.STD]
+                             for stats in self.stats_list]) + 1e-6)
+        self.register_buffer("std", std)
 
     def reset_parameters(self):
         super().reset_parameters()
@@ -362,6 +375,7 @@ class LinearBucketEncoder(StypeEncoder):
     `"On Embeddings for Numerical Features in Tabular Deep Learning"
     <https://arxiv.org/abs/2203.05556>`_.
     """
+
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -380,7 +394,7 @@ class LinearBucketEncoder(StypeEncoder):
         # The min, 25th, 50th, 75th quantile, and max of the column.
         quantiles = [stats[StatType.QUANTILES] for stats in self.stats_list]
         boundaries = torch.tensor(quantiles)
-        self.register_buffer('boundaries', boundaries)
+        self.register_buffer("boundaries", boundaries)
         num_cols = len(self.stats_list)
         self.weight = Parameter(
             torch.empty(num_cols, boundaries.shape[1] - 1, self.out_channels))
@@ -411,13 +425,14 @@ class LinearBucketEncoder(StypeEncoder):
                             > self.boundaries[i, :-1]).float()
             greater_mask[
                 torch.arange(len(bucket_indices), device=greater_mask.device),
-                bucket_indices] = frac
+                bucket_indices,
+            ] = frac
             encoded_values.append(greater_mask)
         # Apply column-wise linear transformation
         out = torch.stack(encoded_values, dim=1)
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', out, self.weight)
+        x_lin = torch.einsum("ijk,jkl->ijl", out, self.weight)
         x = x_lin + self.bias
         return x
 
@@ -433,6 +448,7 @@ class LinearPeriodicEncoder(StypeEncoder):
     Args:
         n_bins (int): Number of bins for periodic encoding.
     """
+
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -452,10 +468,10 @@ class LinearPeriodicEncoder(StypeEncoder):
         super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
-        self.register_buffer('mean', mean)
-        std = torch.tensor([stats[StatType.STD]
-                            for stats in self.stats_list]) + 1e-6
-        self.register_buffer('std', std)
+        self.register_buffer("mean", mean)
+        std = (torch.tensor([stats[StatType.STD]
+                             for stats in self.stats_list]) + 1e-6)
+        self.register_buffer("std", std)
         num_cols = len(self.stats_list)
         self.linear_in = Parameter(torch.empty((num_cols, self.n_bins)))
         self.linear_out = Parameter(
@@ -479,7 +495,7 @@ class LinearPeriodicEncoder(StypeEncoder):
 
         # [batch_size, num_cols, num_buckets],[num_cols, num_buckets, channels]
         # -> [batch_size, num_cols, channels]
-        x = torch.einsum('ijk,jkl->ijl', feat_sincos, self.linear_out)
+        x = torch.einsum("ijk,jkl->ijl", feat_sincos, self.linear_out)
         return x
 
 
@@ -501,6 +517,7 @@ class ExcelFormerEncoder(StypeEncoder):
         stats_list (List[Dict[StatType, Any]]): The list of stats for each
             column within the same stype.
     """
+
     supported_stypes = {stype.numerical}
 
     def __init__(
@@ -518,10 +535,10 @@ class ExcelFormerEncoder(StypeEncoder):
         super().init_modules()
         mean = torch.tensor(
             [stats[StatType.MEAN] for stats in self.stats_list])
-        self.register_buffer('mean', mean)
-        std = torch.tensor([stats[StatType.STD]
-                            for stats in self.stats_list]) + 1e-6
-        self.register_buffer('std', std)
+        self.register_buffer("mean", mean)
+        std = (torch.tensor([stats[StatType.STD]
+                             for stats in self.stats_list]) + 1e-6)
+        self.register_buffer("std", std)
         num_cols = len(self.stats_list)
         self.W_1 = Parameter(Tensor(num_cols, self.out_channels))
         self.W_2 = Parameter(Tensor(num_cols, self.out_channels))
@@ -546,16 +563,12 @@ class ExcelFormerEncoder(StypeEncoder):
 
 class LinearEmbeddingEncoder(StypeEncoder):
     r"""Linear function based encoder for pre-computed embedding features.
-    It applies a linear layer :obj:`torch.nn.Linear(in_channels, out_channels)`
-    on each embedding feature (:obj:`in_channels` is the dimensionality of the
-    embedding) and concatenates the output embeddings. Note that the
-    implementation does this for all :obj:`text_embedded` features in a
+    It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
+    on each embedding feature and concatenates the output embeddings. Note that
+    the implementation does this for all :obj:`text_embedded` features in a
     batched manner.
-
-    Args:
-        in_channels (int): The dimensionality of the embedding feature. Needs
-            to be specified manually.
     """
+
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any pre-encoded embeddings, including image/audio/graph
     # embeddings.
@@ -568,20 +581,22 @@ class LinearEmbeddingEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
-        in_channels: Optional[int] = None,
     ):
-        if in_channels is None:
-            raise ValueError("Please manually specify the `in_channels`, "
-                             "which is the text embedding dimensionality.")
-        self.in_channels = in_channels
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
     def init_modules(self):
         super().init_modules()
         num_cols = len(self.stats_list)
+        emb_dim_list = [stats[StatType.EMB_DIM] for stats in self.stats_list]
+        if not all(emb_dim == emb_dim_list[0] for emb_dim in emb_dim_list):
+            # TODO: Relax this by using feat: MultiEmbeddedTensor
+            raise RuntimeError(
+                "All embeddings must be of the same dimensionality.")
+        emb_dim = emb_dim_list[0]
+
         self.weight = Parameter(
-            torch.empty(num_cols, self.in_channels, self.out_channels))
+            torch.empty(num_cols, emb_dim, self.out_channels))
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
 
@@ -594,7 +609,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', feat, self.weight)
+        x_lin = torch.einsum("ijk,jkl->ijl", feat, self.weight)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
@@ -617,6 +632,7 @@ class LinearModelEncoder(StypeEncoder):
             :obj:`MultiNestedTensor` and model outputs three-dimensional
             embedding features that will be input into the linear layer.
     """
+
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
@@ -664,7 +680,7 @@ class LinearModelEncoder(StypeEncoder):
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum('ijk,jkl->ijl', x, self.weight)
+        x_lin = torch.einsum("ijk,jkl->ijl", x, self.weight)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
