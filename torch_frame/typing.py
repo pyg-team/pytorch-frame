@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from enum import Enum
 from typing import Dict, List, Union
 
@@ -63,5 +64,6 @@ DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
-TextTokenizationOutputs = List[Dict[str, Tensor]]
+TextTokenizationOutputs = Union[List[Mapping[str, Tensor]], Mapping[str,
+                                                                    Tensor]]
 TensorData = Union[Tensor, MultiNestedTensor, Dict[str, MultiNestedTensor]]

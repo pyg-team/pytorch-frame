@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import pandas as pd
@@ -263,10 +264,10 @@ class TextTokenizationTensorMapper(TensorMapper):
 
     Args:
         text_tokenizer (callable): A callable function that takes list of
-            strings and returns list of dictionary. The keys of the dictionary
-            are arguments that will be put to the model, including
-            :obj:`input_ids` and :obj:`attention_mask`. The values of the
-            dictionary are tensors corresponding to keys.
+            strings and returns list of dictionaries or dictionary. The keys
+            of the dictionary are arguments that will be put to the model,
+            such as :obj:`input_ids` and :obj:`attention_mask`. The values
+            of the dictionary are tensors corresponding to keys.
         batch_size (int, optional): The mini-batch size used for the text
             tokenizer. If :obj:`None`, we will encode all text in a full-batch
             manner.
@@ -291,11 +292,13 @@ class TextTokenizationTensorMapper(TensorMapper):
 
         feat_dict = {}
         if self.batch_size is None:
-            tokenized_list: TextTokenizationOutputs = self.text_tokenizer(
+            tokenized_outputs: TextTokenizationOutputs = self.text_tokenizer(
                 ser_list)
-            for key in tokenized_list[0]:
+            if isinstance(tokenized_outputs, Mapping):
+                tokenized_outputs = [tokenized_outputs]
+            for key in tokenized_outputs[0]:
                 xs = []
-                for item in tokenized_list:
+                for item in tokenized_outputs:
                     if item[key].ndim == 1:
                         xs.append([item[key]])
                     elif item[key].ndim == 2:
@@ -307,15 +310,19 @@ class TextTokenizationTensorMapper(TensorMapper):
                     device)
             return feat_dict
 
-        tokenized_list: TextTokenizationOutputs = []
+        tokenized_outputs: TextTokenizationOutputs = []
         for i in tqdm(range(0, len(ser_list), self.batch_size),
                       desc="Tokenizing texts in mini-batch"):
             tokenized_batch: TextTokenizationOutputs = self.text_tokenizer(
                 ser_list[i:i + self.batch_size])
-            tokenized_list.extend(tokenized_batch)
-        for key in tokenized_list[0]:
+            if isinstance(tokenized_batch, Mapping):
+                tokenized_outputs.append(tokenized_batch)
+            else:
+                tokenized_outputs.extend(tokenized_batch)
+
+        for key in tokenized_outputs[0]:
             xs = []
-            for item in tokenized_list:
+            for item in tokenized_outputs:
                 if item[key].ndim == 1:
                     xs.append([item[key]])
                 elif item[key].ndim == 2:

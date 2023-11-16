@@ -11,7 +11,8 @@ from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_fake_dataset(with_nan):
+@pytest.mark.parametrize('tokenize_with_batched', [True, False])
+def test_fake_dataset(with_nan, tokenize_with_batched):
     num_rows = 20
     out_channels = 10
     dataset = FakeDataset(
@@ -29,7 +30,8 @@ def test_fake_dataset(with_nan):
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels), batch_size=None),
         text_tokenizer_cfg=TextTokenizerConfig(
-            text_tokenizer=WhiteSpaceHashTokenizer(num_hash_bins=12),
+            text_tokenizer=WhiteSpaceHashTokenizer(
+                num_hash_bins=12, batched=tokenize_with_batched),
             batch_size=5),
     )
     assert str(dataset) == 'FakeDataset()'
