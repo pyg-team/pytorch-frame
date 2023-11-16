@@ -38,7 +38,7 @@ class FCResidualBlock(Module):
         self,
         in_channels: int,
         out_channels: int,
-        normalization: Optional[str] = 'layernorm',
+        normalization: Optional[str] = "layernorm",
         dropout_prob: float = 0.0,
     ):
         super().__init__()
@@ -47,10 +47,10 @@ class FCResidualBlock(Module):
         self.relu = ReLU()
         self.dropout = Dropout(dropout_prob)
 
-        if normalization == 'batchnorm':
+        if normalization == "batchnorm":
             self.norm1 = BatchNorm1d(out_channels)
             self.norm2 = BatchNorm1d(out_channels)
-        elif normalization == 'layernorm':
+        elif normalization == "layernorm":
             self.norm1 = LayerNorm(out_channels)
             self.norm2 = LayerNorm(out_channels)
         else:
@@ -134,7 +134,7 @@ class ResNet(Module):
         col_names_dict: Dict[torch_frame.stype, List[str]],
         stype_encoder_dict: Optional[Dict[torch_frame.stype,
                                           StypeEncoder]] = None,
-        normalization: Optional[str] = 'layernorm',
+        normalization: Optional[str] = "layernorm",
         dropout_prob: float = 0.2,
     ):
         super().__init__()
@@ -155,12 +155,16 @@ class ResNet(Module):
             stype_encoder_dict=stype_encoder_dict,
         )
 
-        in_channels = channels * (len(col_stats) - 1)
+        num_cols = sum(
+            [len(col_names) for col_names in col_names_dict.values()])
+        in_channels = channels * num_cols
         self.backbone = Sequential(*[
-            FCResidualBlock(in_channels if i == 0 else channels, channels,
-                            normalization=normalization,
-                            dropout_prob=dropout_prob)
-            for i in range(num_layers)
+            FCResidualBlock(
+                in_channels if i == 0 else channels,
+                channels,
+                normalization=normalization,
+                dropout_prob=dropout_prob,
+            ) for i in range(num_layers)
         ])
 
         self.decoder = Sequential(
