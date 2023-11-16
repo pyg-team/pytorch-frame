@@ -18,6 +18,7 @@ def get_fake_dataset(
         torch_frame.multicategorical,
         torch_frame.text_embedded,
         torch_frame.sequence_numerical,
+        torch_frame.timestamp,
     ]
     dataset = FakeDataset(
         num_rows=num_rows,
