@@ -54,42 +54,30 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-@pytest.mark.parametrize(
-    "encoder_cls_kwargs",
-    [
-        (LinearEncoder, {}),
-        (
-            LinearEncoder,
-            {
-                "post_module": ReLU(),
-            },
-        ),
-        (LinearBucketEncoder, {}),
-        (LinearBucketEncoder, {
-            "post_module": ReLU()
-        }),
-        (LinearEncoder, {
-            "post_module": ReLU()
-        }),
-        (LinearPeriodicEncoder, {
-            "n_bins": 4
-        }),
-        (
-            LinearPeriodicEncoder,
-            {
-                "n_bins": 4,
-                "post_module": ReLU(),
-            },
-        ),
-        (
-            ExcelFormerEncoder,
-            {
-                "post_module": ReLU(),
-            },
-        ),
-        (StackEncoder, {}),
-    ],
-)
+@pytest.mark.parametrize('encoder_cls_kwargs', [
+    (LinearEncoder, {}),
+    (LinearEncoder, {
+        'post_module': ReLU(),
+    }),
+    (LinearBucketEncoder, {}),
+    (LinearBucketEncoder, {
+        'post_module': ReLU()
+    }),
+    (LinearEncoder, {
+        'post_module': ReLU()
+    }),
+    (LinearPeriodicEncoder, {
+        'n_bins': 4
+    }),
+    (LinearPeriodicEncoder, {
+        'n_bins': 4,
+        'post_module': ReLU(),
+    }),
+    (ExcelFormerEncoder, {
+        'post_module': ReLU(),
+    }),
+    (StackEncoder, {}),
+])
 def test_numerical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -160,17 +148,11 @@ def test_multicategorical_feature_encoder(encoder_cls_kwargs):
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-@pytest.mark.parametrize(
-    "encoder_cls_kwargs",
-    [
-        (
-            EmbeddingEncoder,
-            {
-                "na_strategy": NAStrategy.MOST_FREQUENT,
-            },
-        ),
-    ],
-)
+@pytest.mark.parametrize('encoder_cls_kwargs', [
+    (EmbeddingEncoder, {
+        'na_strategy': NAStrategy.MOST_FREQUENT,
+    }),
+])
 def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()
@@ -196,23 +178,14 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (feat_cat[isnan_mask] == -1).all()
 
 
-@pytest.mark.parametrize(
-    "encoder_cls_kwargs",
-    [
-        (
-            LinearEncoder,
-            {
-                "na_strategy": NAStrategy.ZEROS,
-            },
-        ),
-        (
-            LinearEncoder,
-            {
-                "na_strategy": NAStrategy.MEAN,
-            },
-        ),
-    ],
-)
+@pytest.mark.parametrize('encoder_cls_kwargs', [
+    (LinearEncoder, {
+        'na_strategy': NAStrategy.ZEROS,
+    }),
+    (LinearEncoder, {
+        'na_strategy': NAStrategy.MEAN,
+    }),
+])
 def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=True)
     dataset.materialize()

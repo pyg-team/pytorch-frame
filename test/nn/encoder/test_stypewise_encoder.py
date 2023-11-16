@@ -22,41 +22,28 @@ from torch_frame.testing.text_tokenizer import (
 )
 
 
-@pytest.mark.parametrize("encoder_cat_cls_kwargs", [(EmbeddingEncoder, {})])
-@pytest.mark.parametrize(
-    "encoder_num_cls_kwargs",
-    [
-        (LinearEncoder, {}),
-        (LinearBucketEncoder, {}),
-        (LinearPeriodicEncoder, {
-            "n_bins": 4
-        }),
-    ],
-)
-@pytest.mark.parametrize(
-    "encoder_multicategorical_cls_kwargs",
-    [
-        (MultiCategoricalEmbeddingEncoder, {}),
-    ],
-)
-@pytest.mark.parametrize(
-    "encoder_text_embedded_cls_kwargs",
-    [
-        (LinearEmbeddingEncoder, {}),
-    ],
-)
-@pytest.mark.parametrize(
-    "encoder_text_tokenized_cls_kwargs",
-    [
-        (
-            LinearModelEncoder,
-            {
-                "model": RandomTextModel(12, 2),
-                "in_channels": 12,
-            },
-        ),
-    ],
-)
+@pytest.mark.parametrize('encoder_cat_cls_kwargs', [(EmbeddingEncoder, {})])
+@pytest.mark.parametrize('encoder_num_cls_kwargs', [
+    (LinearEncoder, {}),
+    (LinearBucketEncoder, {}),
+    (LinearPeriodicEncoder, {
+        'n_bins': 4
+    }),
+])
+@pytest.mark.parametrize('encoder_multicategorical_cls_kwargs', [
+    (MultiCategoricalEmbeddingEncoder, {}),
+])
+@pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
+    (LinearEmbeddingEncoder, {
+        'in_channels': 12
+    }),
+])
+@pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
+    (LinearModelEncoder, {
+        'model': RandomTextModel(12, 2),
+        'in_channels': 12,
+    }),
+])
 def test_stypewise_feature_encoder(
     encoder_cat_cls_kwargs,
     encoder_num_cls_kwargs,
