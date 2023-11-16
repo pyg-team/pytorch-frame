@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import numpy as np
@@ -10,6 +11,18 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils.split import SPLIT_TO_NUM
+
+TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d']
+
+
+def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
+    r"""This function will return a random datetime converted to string with
+    given format between the start and end datetime objects.
+    """
+    timestamp = start + timedelta(
+        # Get a random amount of seconds between `start` and `end`
+        seconds=random.randint(0, int((end - start).total_seconds())), )
+    return timestamp.strftime(format)
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -119,6 +132,20 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_tokenized
+        if stype.timestamp in stypes:
+            start_date = datetime(2000, 1, 1)
+            end_date = datetime(2023, 1, 1)
+            for i in range(len(TIME_FORMATS)):
+                col_name = f'timestamp_{i}'
+                format = TIME_FORMATS[i]
+                arr = [
+                    _random_timestamp(start_date, end_date, format)
+                    for _ in range(num_rows)
+                ]
+                if with_nan:
+                    arr[0::2] = len(arr[0::2]) * [np.nan]
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.timestamp
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
@@ -133,10 +160,10 @@ class FakeDataset(torch_frame.data.Dataset):
             split[2] = SPLIT_TO_NUM['test']
             df['split'] = split
         super().__init__(
-            df,
-            col_to_stype,
-            target_col='target',
+            df, col_to_stype, target_col='target',
             split_col='split' if create_split else None,
             text_embedder_cfg=text_embedder_cfg,
-            text_tokenizer_cfg=text_tokenizer_cfg,
-        )
+            text_tokenizer_cfg=text_tokenizer_cfg, col_to_time_format={
+                f'timestamp_{i}': TIME_FORMATS[i]
+                for i in range(len(TIME_FORMATS))
+            })

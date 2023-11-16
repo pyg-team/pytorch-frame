@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+import pandas as pd
 
 import torch_frame
 from torch_frame.typing import Series
@@ -16,6 +17,9 @@ class StatType(Enum):
         QUANTILES: The minimum, first quartile, median, third quartile,
             and the maximum of a numerical column.
         COUNT: The count of each category in a categorical column.
+        MULTI_COUNT: The count of each category in a multi-categorical
+            column.
+        YEAR_RANGE: The range of years in a timestamp column.
     """
     # Numerical:
     MEAN = 'MEAN'
@@ -27,6 +31,9 @@ class StatType(Enum):
 
     # Multicategorical:
     MULTI_COUNT = 'MULTI_COUNT'
+
+    # Timestamp
+    YEAR_RANGE = 'YEAR_RANGE'
 
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> List['StatType']:
@@ -42,11 +49,15 @@ class StatType(Enum):
                 StatType.MEAN,
                 StatType.STD,
                 StatType.QUANTILES,
-            ]
+            ],
+            torch_frame.timestamp: [
+                StatType.YEAR_RANGE,
+            ],
         }
         return stats_type.get(stype, [])
 
-    def compute(self, ser: Series, sep: Optional[str] = None) -> Any:
+    def compute(self, ser: Series, sep: Optional[str] = None,
+                time_format: Optional[str] = None) -> Any:
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
             finite_mask = np.isfinite(flattened)
@@ -85,13 +96,19 @@ class StatType(Enum):
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
 
+        elif self == StatType.YEAR_RANGE:
+            ser = pd.to_datetime(ser, format=time_format)
+            year_range = ser.dt.year.values
+            return [min(year_range), max(year_range)]
+
 
 _default_values = {
     StatType.MEAN: np.nan,
     StatType.STD: np.nan,
     StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
     StatType.COUNT: ([], []),
-    StatType.MULTI_COUNT: ([], [])
+    StatType.MULTI_COUNT: ([], []),
+    StatType.YEAR_RANGE: [np.nan, np.nan],
 }
 
 
@@ -99,6 +116,7 @@ def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
     sep: Optional[str] = None,
+    time_format: Optional[str] = None,
 ) -> Dict[StatType, Any]:
 
     if stype == torch_frame.numerical:
@@ -112,7 +130,7 @@ def compute_col_stats(
         }
     else:
         stats = {
-            stat_type: stat_type.compute(ser.dropna(), sep)
+            stat_type: stat_type.compute(ser.dropna(), sep, time_format)
             for stat_type in StatType.stats_for_stype(stype)
         }
 

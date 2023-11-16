@@ -20,6 +20,7 @@ from torch_frame.data.mapper import (
     TensorMapper,
     TextEmbeddingTensorMapper,
     TextTokenizationTensorMapper,
+    TimestampTensorMapper,
 )
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType, compute_col_stats
@@ -57,36 +58,38 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_sep(col_to_sep: Union[str, Dict[str, str]],
-                            columns: List[str]) -> Dict[str, str]:
-    r"""Canonicalize :obj:`col_to_sep` into a dictionary format.
+def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[str],
+                                                      Dict[str, str]],
+                                columns: List[str]) -> Dict[str, str]:
+    r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
-        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. (default: :obj:`,`)
-        columns (List[str]): A list of multi-categorical columns.
+        col_to_pattern (Union[str, Dict[str, str]]): A dictionary or a string
+            specifying the separator/pattern for the multi-categorical
+            or timestamp columns. If a string is specified, then the same
+            separator/format will be used throughout all the multi-categorical
+            or timestamp columns. If a dictionary is given, we use a separator
+            specified for each column. (default: :obj:`,`)
+        columns (List[str]): A list of multi-categorical or timestamp columns.
 
     Returns:
-        Dict[str, str]: :obj:`col_to_sep` in a dictionary format, mapping
-            multi-categorical columns into their specified separators.
+        Dict[str, str]: :obj:`col_to_pattern` in a dictionary format, mapping
+            multi-categorical or timestamp columns into their specified
+            separators.
     """
-    if isinstance(col_to_sep, str):
-        sep = col_to_sep
-        col_to_sep = {}
+    if col_to_pattern is None or isinstance(col_to_pattern, str):
+        pattern = col_to_pattern
+        col_to_pattern = {}
         for col in columns:
-            col_to_sep[col] = sep
+            col_to_pattern[col] = pattern
     else:
-        missing_cols = set(columns) - set(col_to_sep.keys())
+        missing_cols = set(columns) - set(col_to_pattern.keys())
         if len(missing_cols) > 0:
             raise ValueError(
                 f"col_to_sep needs to specify separators for all "
                 f"multi-categorical columns, but the separators for the "
                 f"following columns are missing: {list(missing_cols)}.")
-    return col_to_sep
+    return col_to_pattern
 
 
 class DataFrameToTensorFrameConverter:
@@ -121,6 +124,16 @@ class DataFrameToTensorFrameConverter:
             values are tensors such as tokens.
             :obj:`batch_size` specifies the mini-batch size for
             :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_time_format (Union[str, Dict[str, str]], optional): A
+            dictionary or a string specifying the format for the timestamp
+            columns. See `strfttime documentation
+            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
+            for more information on formats. If a string is specified,
+            then the same format will be used throughout all the timestamp
+            columns. If a dictionary is given, we use a different format
+            specified for each column. If not specified, pandas's internal
+            to_datetime function will be used to auto parse time columns.
+            (default: None)
     """
     def __init__(
         self,
@@ -130,6 +143,7 @@ class DataFrameToTensorFrameConverter:
         col_to_sep: Union[str, Dict[str, str]] = ',',
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
@@ -149,9 +163,13 @@ class DataFrameToTensorFrameConverter:
             # in-place sorting of col_names for each stype
             self._col_names_dict[stype].sort()
 
-        self.col_to_sep = canonicalize_col_to_sep(
+        self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
             self.col_names_dict.get(torch_frame.multicategorical, []))
+
+        self.col_to_time_format = canonicalize_col_to_pattern(
+            col_to_time_format,
+            self.col_names_dict.get(torch_frame.timestamp, []))
 
         if (torch_frame.text_embedded
                 in self.col_names_dict) and (self.text_embedder_cfg is None):
@@ -179,6 +197,9 @@ class DataFrameToTensorFrameConverter:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
             return MultiCategoricalTensorMapper(index,
                                                 sep=self.col_to_sep[col])
+        elif stype == torch_frame.timestamp:
+            return TimestampTensorMapper(
+                format=self.col_to_time_format.get(col, None))
         elif stype == torch_frame.text_embedded:
             return TextEmbeddingTensorMapper(
                 self.text_embedder_cfg.text_embedder,
@@ -260,6 +281,16 @@ class Dataset(ABC):
             values are tensors such as tokens.
             :obj:`batch_size` specifies the mini-batch size for
             :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_time_format (Union[str, Dict[str, str]], optional): A
+            dictionary or a string specifying the format for the timestamp
+            columns. See `strfttime documentation
+            <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
+            for more information on formats. If a string is specified,
+            then the same format will be used throughout all the timestamp
+            columns. If a dictionary is given, we use a different format
+            specified for each column. If not specified, pandas's internal
+            to_datetime function will be used to auto parse time columns.
+            (default: None)
     """
     def __init__(
         self,
@@ -270,6 +301,7 @@ class Dataset(ABC):
         col_to_sep: Union[str, Dict[str, str]] = ",",
         text_embedder_cfg: Optional[TextEmbedderConfig] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -303,10 +335,15 @@ class Dataset(ABC):
 
         self.text_embedder_cfg = text_embedder_cfg
         self.text_tokenizer_cfg = text_tokenizer_cfg
-        self.col_to_sep = canonicalize_col_to_sep(col_to_sep, [
+        self.col_to_sep = canonicalize_col_to_pattern(col_to_sep, [
             col for col, stype in self.col_to_stype.items()
             if stype == torch_frame.multicategorical
         ])
+        self.col_to_time_format = canonicalize_col_to_pattern(
+            col_to_time_format, [
+                col for col, stype in self.col_to_stype.items()
+                if stype == torch_frame.timestamp
+            ])
         self._is_materialized: bool = False
         self._col_stats: Dict[str, Dict[StatType, Any]] = {}
         self._tensor_frame: Optional[TensorFrame] = None
@@ -428,7 +465,8 @@ class Dataset(ABC):
         for col, stype in self.col_to_stype.items():
             ser = self.df[col]
             self._col_stats[col] = compute_col_stats(
-                ser, stype, sep=self.col_to_sep.get(col, None))
+                ser, stype, sep=self.col_to_sep.get(col, None),
+                time_format=self.col_to_time_format.get(col, None))
             # For a target column, sort categories lexicographically such that
             # we do not accidentally swap labels in binary classification
             # tasks.
@@ -460,6 +498,7 @@ class Dataset(ABC):
             col_to_sep=self.col_to_sep,
             text_embedder_cfg=self.text_embedder_cfg,
             text_tokenizer_cfg=self.text_tokenizer_cfg,
+            col_to_time_format=self.col_to_time_format,
         )
 
     @property

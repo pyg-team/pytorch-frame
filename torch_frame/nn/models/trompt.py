@@ -75,14 +75,18 @@ class Trompt(Module):
                     col_names_dict=col_names_dict,
                     stype_encoder_dict={
                         stype.categorical:
-                        EmbeddingEncoder(post_module=LayerNorm(channels),
-                                         na_strategy=NAStrategy.MOST_FREQUENT),
+                        EmbeddingEncoder(
+                            post_module=LayerNorm(channels),
+                            na_strategy=NAStrategy.MOST_FREQUENT,
+                        ),
                         stype.numerical:
                         LinearEncoder(
                             post_module=Sequential(
                                 ReLU(),
                                 LayerNorm(channels),
-                            ), na_strategy=NAStrategy.MEAN),
+                            ),
+                            na_strategy=NAStrategy.MEAN,
+                        ),
                     },
                 ))
             self.trompt_convs.append(
@@ -100,9 +104,10 @@ class Trompt(Module):
             trompt_conv.reset_parameters()
         self.trompt_decoder.reset_parameters()
 
-    def forward(self, tf: TensorFrame) -> Tensor:
+    def forward_stacked(self, tf: TensorFrame) -> Tensor:
         r"""Transforming :class:`TensorFrame` object into a series of output
-        predictions at each layer.
+        predictions at each layer. Used during training to compute layer-wise
+        loss.
 
         Args:
             tf (:class:`torch_frame.TensorFrame`):
@@ -129,3 +134,6 @@ class Trompt(Module):
         # [batch_size, num_layers, out_channels]
         stacked_out = torch.cat(outs, dim=1)
         return stacked_out
+
+    def forward(self, tf: TensorFrame) -> Tensor:
+        return self.forward_stacked(tf).mean(dim=1)
