@@ -121,7 +121,7 @@ pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_e
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768)
+        stype.text_embedded: LinearEmbeddingEncoder()
     }
 
 Then, :obj:`stype_encoder_dict` can be directly fed into
