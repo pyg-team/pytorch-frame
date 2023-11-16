@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
 
 import pandas as pd
 import torch

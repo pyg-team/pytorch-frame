@@ -1,6 +1,5 @@
-from collections.abc import Mapping
 from enum import Enum
-from typing import Dict, List, Union
+from typing import Dict, List, Mapping, Union
 
 import pandas as pd
 from torch import Tensor
