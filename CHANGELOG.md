@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Deprecated
 
+- No manual passing of `in_channels` to `LinearEmbeddingEncoder` for `stype.text_embedded`
+
 ### Removed
 
 ### Fixed
