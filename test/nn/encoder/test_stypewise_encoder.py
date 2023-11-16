@@ -34,9 +34,7 @@ from torch_frame.testing.text_tokenizer import (
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
-    (LinearEmbeddingEncoder, {
-        'in_channels': 12
-    }),
+    (LinearEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
