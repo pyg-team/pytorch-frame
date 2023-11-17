@@ -94,16 +94,21 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
         if stype.multicategorical in stypes:
-            # TODO: Currently having multiple multi-categorical columns
-            # is not supported. Please add test case for multiple
-            # multi-categorical columns when it's added.
-            for col_name in ['multicat_1', 'multicat_2']:
-                arr = np.random.randint(0, 3, size=(num_rows, 2))
-                arr = arr.astype(str)
-                arr = np.apply_along_axis(lambda x: ','.join(x), 1, arr)
-                df_dict[col_name] = list(arr)
+            half = num_rows // 2
+            for col_name in [
+                    'multicat_1', 'multicat_2', 'multicat_3', 'multicat_4'
+            ]:
+                if col_name in ['multicat_1', 'multicat_2']:
+                    arr = (['toy,health'] * half + ['toy,health, game'] *
+                           (num_rows - half))
+                else:
+                    # Supporting list
+                    arr = ([['toy', 'health']] * half +
+                           [['toy', 'health'
+                             'game']] * (num_rows - half))
                 if with_nan:
-                    df_dict[col_name][0] = None
+                    arr[0] = None
+                df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.multicategorical
         if stype.sequence_numerical in stypes:
             for col_name in ['seq_num_1', 'seq_num_2']:

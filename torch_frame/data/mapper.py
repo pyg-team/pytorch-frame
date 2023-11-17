@@ -1,5 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Union,
+)
 
 import pandas as pd
 import torch
@@ -119,13 +129,21 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
     @staticmethod
-    def split_by_sep(row: str, sep: str) -> Set[Any]:
+    def split_by_sep(row: Optional[Union[str, List[Any]]],
+                     sep: str) -> Set[Any]:
         if row is None:
             return set([-1])
-        elif row.strip() == '':
-            return set()
+        elif isinstance(row, str):
+            if row.strip() == '':
+                return set()
+            else:
+                return set([cat.strip() for cat in row.split(sep)])
+        elif isinstance(row, list):
+            return set(row)
         else:
-            return set([cat.strip() for cat in row.split(sep)])
+            raise ValueError(
+                f"MulticategoricalTensorMapper only supports str or list types"
+                f"(got {row})")
 
     def forward(
         self,
