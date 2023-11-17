@@ -10,7 +10,7 @@ from torch_frame.data.mapper import MultiCategoricalTensorMapper
 from torch_frame.typing import DataFrame, Series
 
 POSSIBLE_SEPS = ["|", ","]
-POSSIBLE_TIME_FORMATS = [None, '%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d']
+POSSIBLE_TIME_FORMATS = [None, '%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']
 
 
 def _is_timestamp(ser: Series) -> bool:

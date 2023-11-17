@@ -31,14 +31,8 @@ def get_fake_dataset(
 
 @pytest.mark.parametrize("with_nan", [True, False])
 def test_infer_df_stype(with_nan):
-    num_rows = 50
+    num_rows = 200
     text_embedder_cfg = TextEmbedderConfig(text_embedder=HashTextEmbedder(8))
     dataset = get_fake_dataset(num_rows, text_embedder_cfg, with_nan)
     col_to_stype_inferred = infer_df_stype(dataset.df)
-    assert col_to_stype_inferred.keys() == dataset.col_to_stype.keys()
-    for col_name, true_stype in dataset.col_to_stype.items():
-        if true_stype in [
-                torch_frame.numerical, torch_frame.categorical,
-                torch_frame.timestamp
-        ]:
-            assert col_to_stype_inferred[col_name] == true_stype
+    assert col_to_stype_inferred == dataset.col_to_stype

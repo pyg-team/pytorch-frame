@@ -1,4 +1,5 @@
 import random
+import string
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -12,7 +13,7 @@ from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils.split import SPLIT_TO_NUM
 
-TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d']
+TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']
 
 
 def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
@@ -23,6 +24,13 @@ def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
         # Get a random amount of seconds between `start` and `end`
         seconds=random.randint(0, int((end - start).total_seconds())), )
     return timestamp.strftime(format)
+
+
+def _generate_random_string(min_length: int, max_length: int) -> str:
+    length = random.randint(min_length, max_length)
+    random_string = ''.join(
+        random.choice(string.ascii_letters) for _ in range(length))
+    return random_string
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -94,18 +102,17 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
         if stype.multicategorical in stypes:
-            half = num_rows // 2
             for col_name in [
                     'multicat_1', 'multicat_2', 'multicat_3', 'multicat_4'
             ]:
-                if col_name in ['multicat_1', 'multicat_2']:
-                    arr = (['toy,health'] * half + ['toy,health, game'] *
-                           (num_rows - half))
-                else:
-                    # Supporting list
-                    arr = ([['toy', 'health']] * half +
-                           [['toy', 'health'
-                             'game']] * (num_rows - half))
+                vocab = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+                arr = []
+                for _ in range(num_rows):
+                    sampled = random.sample(vocab, 3)
+                    if col_name in ['multicat_1', 'multicat_2']:
+                        arr.append(','.join(sampled))
+                    else:
+                        arr.append(sampled)
                 if with_nan:
                     arr[0] = None
                 df_dict[col_name] = arr
@@ -127,15 +134,24 @@ class FakeDataset(torch_frame.data.Dataset):
                 col_to_stype[col_name] = stype.sequence_numerical
         if stype.text_embedded in stypes:
             for col_name in ['text_embedded_1', 'text_embedded_2']:
-                arr = ['Hello world!'] * num_rows
+                arr = [
+                    ' '.join([
+                        _generate_random_string(5, 15),
+                        _generate_random_string(5, 15)
+                    ]) for _ in range(num_rows)
+                ]
                 if with_nan:
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_embedded
         if stype.text_tokenized in stypes:
             for col_name in ['text_tokenized_1', 'text_tokenized_2']:
-                arr = ['Hello world!'] * (num_rows - 1)
-                arr += ['Hello!']
+                arr = [
+                    ' '.join([
+                        _generate_random_string(5, 15),
+                        _generate_random_string(5, 15)
+                    ]) for _ in range(num_rows)
+                ]
                 if with_nan:
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
