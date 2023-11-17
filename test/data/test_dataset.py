@@ -95,8 +95,12 @@ def test_dataset_inductive_transform():
 def test_converter():
     dataset = FakeDataset(
         num_rows=10, stypes=[
-            stype.categorical, stype.numerical, stype.multicategorical,
-            stype.sequence_numerical, stype.timestamp
+            stype.categorical,
+            stype.numerical,
+            stype.multicategorical,
+            stype.sequence_numerical,
+            stype.timestamp,
+            stype.embedding,
         ]).materialize()
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,

@@ -39,7 +39,7 @@ class StatType(Enum):
 
     # text_embedded (Also, embedding)
     # Note: For text_embedded, this stats is computed in
-    # dataset.update_col_stats, not here.
+    # dataset._update_col_stats, not here.
     EMB_DIM = "EMB_DIM"
 
     @staticmethod
