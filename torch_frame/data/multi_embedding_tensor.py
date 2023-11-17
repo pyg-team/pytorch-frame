@@ -41,29 +41,6 @@ class MultiEmbeddingTensor(_MultiTensor):
         assert len(self.offset) == self.num_cols + 1
         assert self.values.size() == (self.num_rows, self.offset[-1])
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union['MultiEmbeddingTensor', Tensor]:
-
-        if isinstance(index, tuple) and len(index) == 2 and isinstance(
-                index[0], int) and isinstance(index[1], int):
-            i = self._normalize_index(index[0], dim=0)
-            j = self._normalize_index(index[1], dim=1)
-            return self.values[i, self.offset[j]:self.offset[j + 1]]
-
-        if isinstance(index, int):
-            index = self._normalize_index(index, dim=0)
-            return MultiEmbeddingTensor(
-                num_rows=1,
-                num_cols=self.num_cols,
-                values=self.values[index].view(1, -1),
-                offset=self.offset,
-            )
-
-        # TODO(akihironitta): Support more index types
-        raise NotImplementedError
-
     @classmethod
     def from_tensor_list(
         cls,
@@ -447,32 +424,3 @@ class MultiEmbeddingTensor(_MultiTensor):
             # which is inconsistent with when dim=0
             offset = torch.LongTensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
-
-    def _normalize_index(
-        self,
-        index: Union[int, Tensor],
-        dim: int,
-        is_slice_end: bool = False,
-    ) -> Union[int, Tensor]:
-        """Helper function to map negative indices to positive indices and
-        raise :obj:`IndexError` when necessary.
-
-        Args:
-            index: Union[int, Tensor]: Input :obj:`index` with potentially
-                negative elements.
-            is_slice_end (bool): Whether a given index (int) is slice or not.
-                If :obj:`True`, we have more lenient :obj:`IndexError`.
-                (default: :obj:`False`)
-        """
-        dim = self._normalize_dim(dim)
-        max_entries = self.num_rows if dim == 0 else self.num_cols
-        idx_name = "Row" if dim == 0 else "Col"
-        if isinstance(index, int):
-            if index < 0:
-                index = index + max_entries
-            if is_slice_end and index < 0 or index > max_entries:
-                raise IndexError(f"{idx_name} index out of bounds!")
-            elif (not is_slice_end) and (index < 0 or index >= max_entries):
-                raise IndexError(f"{idx_name} index out of bounds!")
-
-        return index

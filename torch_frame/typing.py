@@ -64,7 +64,6 @@ DataFrame = pd.DataFrame
 
 IndexSelectType = Union[int, List[int], range, slice, Tensor]
 ColumnSelectType = Union[str, List[str]]
-TextTokenizationOutputs = List[Dict[str, Tensor]]
 TextTokenizationMapping = Mapping[str, Tensor]
 TextTokenizationOutputs = Union[List[TextTokenizationMapping],
                                 TextTokenizationMapping]
