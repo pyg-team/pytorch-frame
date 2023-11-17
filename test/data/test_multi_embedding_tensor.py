@@ -30,6 +30,8 @@ def row_select(
     Args:
         tensor_list (list[torch.Tensor]): a list of tensors of size
             [num_rows, dim_emb_j].
+        index (Union[List[int], slice]): a list of row indices or a slice to
+            apply to each tensor in tensor_list.
 
     Returns:
         List[torch.Tensor]: new_tensor_list is a list of tensors of size
