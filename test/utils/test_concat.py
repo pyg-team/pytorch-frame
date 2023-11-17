@@ -42,4 +42,4 @@ def test_cat_tensor_frames_along_col(get_fake_tensor_frame):
     tf1 = TensorFrame(feat_dict1, col_names_dict1, tf.y)
     tf2 = TensorFrame(feat_dict2, col_names_dict2, None)
     tf_cat = torch_frame.cat([tf1, tf2], along='col')
-    return tf_cat == tf
+    assert tf_cat == tf
