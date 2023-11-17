@@ -38,7 +38,8 @@ class MultiEmbeddingTensor(_MultiTensor):
     """
     def validate(self):
         assert self.offset[0] == 0
-        assert len(self.offset) == self.num_cols + 1 or self.values.numel() == 0
+        assert len(
+            self.offset) == self.num_cols + 1 or self.values.numel() == 0
         assert self.offset.ndim == 1
         assert self.values.ndim == 2 or self.values.numel() == 0
 
