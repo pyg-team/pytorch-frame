@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 import torch_frame
+from torch_frame.data.mapper import MultiCategoricalTensorMapper
 from torch_frame.typing import Series
 
 
@@ -99,9 +100,8 @@ class StatType(Enum):
 
         elif self == StatType.MULTI_COUNT:
             assert sep is not None
-            ser = ser.apply(
-                lambda x: set([cat.strip() for cat in x.split(sep)])
-                if (x is not None and x != "") else set())
+            ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
+                            split_by_sep(row, sep))
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()

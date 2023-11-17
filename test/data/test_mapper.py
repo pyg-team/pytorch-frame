@@ -59,29 +59,33 @@ def test_timestamp_tensor_mapper():
 
 
 def test_multicategorical_tensor_mapper():
-    ser = pd.Series(['A,B', 'B', '', 'C', 'B,C', None])
-    expected_values = torch.tensor([1, 0, 0, 0, -1])
-    expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
-    mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
+    for ser in [
+            pd.Series(['A,B', 'B', '', 'C', 'B,C', None]),
+            # Testing with leading and traling whitespace
+            pd.Series([' A, B', '  B', ' ', 'C  ', 'B , C', None])
+    ]:
+        expected_values = torch.tensor([1, 0, 0, 0, -1])
+        expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
+        mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
-    tensor = mapper.forward(ser)
-    values = tensor.values
-    offset = tensor.offset
-    assert values.dtype == torch.long
-    assert torch.equal(
-        values[expected_boundaries[0]:expected_boundaries[1]].sort().values,
-        torch.tensor([0, 1]))
-    assert torch.equal(values[expected_boundaries[1]:],
-                       expected_values[expected_boundaries[1]:])
-    assert torch.equal(offset, expected_boundaries)
+        tensor = mapper.forward(ser)
+        values = tensor.values
+        offset = tensor.offset
+        assert values.dtype == torch.long
+        assert torch.equal(
+            values[expected_boundaries[0]:expected_boundaries[1]].sort().
+            values, torch.tensor([0, 1]))
+        assert torch.equal(values[expected_boundaries[1]:],
+                           expected_values[expected_boundaries[1]:])
+        assert torch.equal(offset, expected_boundaries)
 
-    out = mapper.backward(tensor)
-    assert out.values[0] == 'A,B' or out.values[0] == 'B,A'
-    assert out.values[1] == 'B'
-    assert out.values[2] == ''
-    assert out.values[3] == ''
-    assert out.values[4] == 'B'
-    assert out.values[5] == ''
+        out = mapper.backward(tensor)
+        assert out.values[0] == 'A,B' or out.values[0] == 'B,A'
+        assert out.values[1] == 'B'
+        assert out.values[2] == ''
+        assert out.values[3] == ''
+        assert out.values[4] == 'B'
+        assert out.values[5] == ''
 
 
 def test_numerical_sequence_tensor_mapper():
