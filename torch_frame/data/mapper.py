@@ -142,8 +142,8 @@ class MultiCategoricalTensorMapper(TensorMapper):
             return set(row)
         else:
             raise ValueError(
-                f"MulticategoricalTensorMapper only supports str or list types"
-                f"(got {row})")
+                f"MulticategoricalTensorMapper only supports str or list "
+                f"types (got input: {row})")
 
     def forward(
         self,
