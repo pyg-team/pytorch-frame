@@ -1,11 +1,12 @@
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import pandas.api.types as ptypes
 from dateutil.parser import ParserError
 
 from torch_frame import stype
+from torch_frame.data.mapper import MultiCategoricalTensorMapper
 from torch_frame.typing import DataFrame, Series
 
 POSSIBLE_SEPS = ["|", ","]
@@ -23,16 +24,12 @@ def _is_timestamp(ser: Series) -> bool:
     return is_timestamp
 
 
-def _is_multicategorical(ser: Series) -> bool:
-    ','.join(ser)
-    import pdb
-    pdb.set_trace()
-    return True
-
-
-def _lst_is_all_numeric(lst: List[Any]) -> bool:
+def _lst_is_all_type(
+    lst: List[Any],
+    types: Union[Tuple[type], type],
+) -> bool:
     assert isinstance(lst, list)
-    return all(isinstance(x, (int, float)) for x in lst)
+    return all(isinstance(x, types) for x in lst)
 
 
 def _lst_is_free_of_nan_and_inf(lst: List[Any]):
@@ -52,52 +49,79 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
         Optional[stype]: Inferred :obj:`stype`. Returns :obj:`None` if
             inference failed.
     """
-    ser = ser.dropna()
+    has_nan = ser.isna().any()
+    if has_nan:
+        ser = ser.dropna()
 
-    if len(ser) == 0:
-        # Cannot infer stype if ser is completely empty
-        return None
+    if isinstance(ser.iloc[0], list):
+        # Candidates: embedding, sequence_numerical, multicategorical
 
-    if isinstance(ser[0], list):
-        # Candidates: embedding, sequence_categorical
-        length = len(ser[0])
+        # True if all elements in all lists are numerical
+        is_all_numerical = True
+        # True if all elements in all lists are string
+        is_all_string = True
+        # True if all lists are of the same length and all elements are float
+        # and free of nans.
         is_embedding = True
+
+        length = len(ser.iloc[0])
         for lst in ser:
             if not isinstance(lst, list):
                 return None
-            if not _lst_is_all_numeric(lst):
-                return None
-            # Check if lst is qualified for embedding or not.
-            if not (length == len(lst) and _lst_is_free_of_nan_and_inf(lst)):
-                is_embedding = False
-        if is_embedding:
-            return stype.embedding
+            if _lst_is_all_type(lst, (int, float)):
+                if not (length == len(lst) and _lst_is_all_type(lst, float)
+                        and _lst_is_free_of_nan_and_inf(lst)):
+                    is_embedding = False
+            else:
+                is_all_numerical = False
+            if not _lst_is_all_type(lst, str):
+                is_all_string = False
+
+        if is_all_numerical:
+            if is_embedding:
+                return stype.embedding
+            else:
+                return stype.sequence_numerical
+        elif is_all_string:
+            return stype.multicategorical
         else:
-            return stype.sequence_numerical
+            return None
     else:
-        # Candidates: numerical, categorical, multicategorical,
+        # Candidates: numerical, categorical, multicategorical, and
         # text_(embedded/tokenized)
+
         if ptypes.is_numeric_dtype(ser):
             # Candidates: numerical, categorical
-            if ptypes.is_float_dtype(ser):
+            if ptypes.is_float_dtype(ser) and not (has_nan and
+                                                   (ser % 1 == 0).all()):
                 return stype.numerical
-            elif ptypes.is_integer_dtype(ser):
+            else:
                 if ser.nunique() < 10:
                     # Heuristics: If the number of unique values is less than
                     # 10, then we infer the column as categorical
                     return stype.categorical
                 else:
                     return stype.numerical
-            else:
-                return None
         else:
-            # Candidates: categorical, multicategorical,
+            # Candidates: timestamp, categorical, multicategorical,
             # text_(embedded/tokenized)
             if _is_timestamp(ser):
                 return stype.timestamp
-            elif _is_multicategorical(ser):
-                # TODO: Add more logic
+
+            # Candates: categorical, multicategorical,
+            # text_(embedded/tokenized)
+            if ser.nunique() < 10:
+                return stype.categorical
+            # Apply different seps and count the number of multicategories.
+            num_unique_list = []
+            for sep in POSSIBLE_SEPS:
+                num_unique_list.append(
+                    ser.apply(lambda row: MultiCategoricalTensorMapper.
+                              split_by_sep(row, sep)).explode().nunique())
+            if min(num_unique_list) < 10:
                 return stype.multicategorical
+            else:
+                return stype.text_embedded
 
 
 def infer_df_stype(df: DataFrame) -> Dict[str, stype]:
