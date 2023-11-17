@@ -114,9 +114,10 @@ class TextToEmbedding:
 
 
 class TextToEmbeddingFinetune(torch.nn.Module):
-    r"""Include converting text data to tokens and have :obj:`forward`
-    function convert tokens to embeddings with a text model, whose
-    parameters will also be finetuned along with the tabular learning.
+    r"""Include :obj:`tokenize` that converts text data to tokens, and
+    :obj:`forward` function that converts tokens to embeddings with a
+    text model, whose parameters will also be finetuned along with the
+    tabular learning.
 
     Args:
         model (str): Model name to load by using :obj:`transformers`,
