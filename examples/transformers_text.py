@@ -23,6 +23,7 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
+    MultiCategoricalEmbeddingEncoder,
 )
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
@@ -34,6 +35,13 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9155, Best Test Acc: 0.8885
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9470, Best Test Acc: 0.9488
+# =============== news_channel ==============
+# Best Val Acc: 0.5010, Best Test Acc: 0.4847
+# ============ fake_job_postings2 ===========
+# Best Val Acc: 0.9788, Best Test Acc: 0.9739
+# ========== imdb_genre_prediction ==========
+# Best Val Acc: 0.7875, Best Test Acc: 0.6900
+# bookprice_prediction
 
 # Text Tokenized
 # distilbert-base-uncased + LoRA
@@ -43,6 +51,12 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9096, Best Test Acc: 0.8908
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9672, Best Test Acc: 0.9644
+# =============== news_channel ==============
+# Best Val Acc: 0.5039, Best Test Acc: 0.4918
+# ============ fake_job_postings2 ===========
+# Best Val Acc: 0.9788, Best Test Acc: 0.9736
+# ========== imdb_genre_prediction ==========
+# Best Val Acc: 0.8125, Best Test Acc: 0.7150
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="wine_reviews")
@@ -211,7 +225,8 @@ else:
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
-filename = f"{args.model}_{text_stype.value}_data.pt"
+model_name = args.model.replace('/', '')
+filename = f"{model_name}_{text_stype.value}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
@@ -233,6 +248,7 @@ stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
     text_stype: text_stype_encoder,
+    stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
 }
 
 if is_classification:
