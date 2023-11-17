@@ -218,7 +218,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=self.offset,
             )
         elif dim == 1:
-            offset = self.offset[start:start+length+1] - self.offset[start]
+            offset = self.offset[start:start + length + 1] - self.offset[start]
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
                 num_cols=length,
