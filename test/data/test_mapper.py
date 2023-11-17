@@ -131,3 +131,5 @@ def test_embedding_tensor_mapper():
     out = mapper.forward(ser)
     expected = MultiEmbeddingTensor.from_tensor_list([torch.tensor(emb_list)])
     assert MultiEmbeddingTensor.allclose(out, expected)
+    out = mapper.backward(out)
+    pd.testing.assert_series_equal(out, ser)

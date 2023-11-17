@@ -400,9 +400,6 @@ class TextTokenizationTensorMapper(TensorMapper):
 
 class EmbeddingTensorMapper(TensorMapper):
     r"""Maps embedding columns into tensors."""
-    def __init__(self) -> None:
-        super().__init__()
-
     def forward(
         self,
         ser: Series,
@@ -423,4 +420,7 @@ class EmbeddingTensorMapper(TensorMapper):
         ).to(device)
 
     def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
-        raise NotImplementedError
+        values = tensor.values.cpu()
+        offset = tensor.offset
+        val = [v for v in values[:, 0:offset[1]].numpy()]
+        return pd.Series(val)
