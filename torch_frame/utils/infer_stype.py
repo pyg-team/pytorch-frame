@@ -37,6 +37,10 @@ def _lst_is_free_of_nan_and_inf(lst: List[Any]):
     return all(not math.isnan(x) and not math.isinf(x) for x in lst)
 
 
+def _min_count(ser: Series) -> int:
+    return ser.value_counts().min()
+
+
 def infer_series_stype(ser: Series) -> Optional[stype]:
     """Infer :obj:`stype` given :class:`Series` object. The inference may not
     be always correct/best for your data. We recommend you double-checking the
@@ -96,9 +100,7 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                                                    (ser % 1 == 0).all()):
                 return stype.numerical
             else:
-                if ser.nunique() < 10:
-                    # Heuristics: If the number of unique values is less than
-                    # 10, then we infer the column as categorical
+                if _min_count(ser) > 4:
                     return stype.categorical
                 else:
                     return stype.numerical
@@ -110,15 +112,15 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized)
-            if ser.nunique() < 10:
+            if _min_count(ser) > 4:
                 return stype.categorical
-            # Apply different seps and count the number of multicategories.
-            num_unique_list = []
+            min_count_list = []
             for sep in POSSIBLE_SEPS:
-                num_unique_list.append(
-                    ser.apply(lambda row: MultiCategoricalTensorMapper.
-                              split_by_sep(row, sep)).explode().nunique())
-            if min(num_unique_list) < 10:
+                min_count_list.append(
+                    _min_count(
+                        ser.apply(lambda row: MultiCategoricalTensorMapper.
+                                  split_by_sep(row, sep)).explode()))
+            if max(min_count_list) > 4:
                 return stype.multicategorical
             else:
                 return stype.text_embedded
