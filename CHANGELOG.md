@@ -8,8 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Enabled `list` input in `multicategorical` stype ([#224](https://github.com/pyg-team/pytorch-frame/pull/224))
 - Added `Timestamp` stype ([#212](https://github.com/pyg-team/pytorch-frame/pull/212))
-- Added `multi-categorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
+- Added `multicategorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
 - Added support for saving and loading of `TensorFrame` with complex `stypes`. ([#197](https://github.com/pyg-team/pytorch-frame/pull/197))
 - Added `TensorFrame` concatenation of complex stypes. ([#190](https://github.com/pyg-team/pytorch-frame/pull/190))
 - Added `text_tokenized` example ([#174](https://github.com/pyg-team/pytorch-frame/pull/174))
@@ -22,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `sequence_numerical` stype ([#159](https://github.com/pyg-team/pytorch-frame/pull/159))
 - Added `MultiCategoricalEmbeddingEncoder` ([#155](https://github.com/pyg-team/pytorch-frame/pull/155))
 - Added advanced indexing for `MultiNestedTensor` ([#150](https://github.com/pyg-team/pytorch-frame/pull/150), [#161](https://github.com/pyg-team/pytorch-frame/pull/161), [#163](https://github.com/pyg-team/pytorch-frame/pull/163), [#165](https://github.com/pyg-team/pytorch-frame/pull/165))
-- Added `multi_categorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128), [#151](https://github.com/pyg-team/pytorch-frame/pull/151))
+- Added `multicategorical` stype ([#128](https://github.com/pyg-team/pytorch-frame/pull/128), [#151](https://github.com/pyg-team/pytorch-frame/pull/151))
 - Added `MultiNestedTensor` ([#149](https://github.com/pyg-team/pytorch-frame/pull/149))
 
 ### Changed

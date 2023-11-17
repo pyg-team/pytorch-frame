@@ -33,11 +33,18 @@ def test_compute_col_stats_all_categorical():
 
 
 def test_compute_col_stats_all_multi_categorical():
-    ser = pd.Series(['a|b', 'a|c', 'c|a', 'a|b|c', np.nan])
-    stype = multicategorical
-    assert compute_col_stats(ser, stype, sep='|') == {
-        StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
-    }
+    for ser in [
+            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None]),
+            # # Testing with leading and traling whitespace
+            pd.Series(['a| a | b', 'a| c', 'c |a', '  a| b| c', '  ', None]),
+            # Testing with list representation
+            pd.Series([['a', 'a', 'b'], ['a', 'c'], ['c', 'a'],
+                       ['a', 'b', 'c'], [], None]),
+    ]:
+        stype = multicategorical
+        assert compute_col_stats(ser, stype, sep='|') == {
+            StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
+        }
 
 
 def test_compute_col_stats_all_timestamp():
