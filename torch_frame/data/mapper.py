@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set
 
 import pandas as pd
 import torch
@@ -118,13 +118,14 @@ class MultiCategoricalTensorMapper(TensorMapper):
         )
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
-    def _split_by_sep(self, row: str):
+    @staticmethod
+    def split_by_sep(row: str, sep: str) -> Set[Any]:
         if row is None:
             return set([-1])
-        elif row == '':
+        elif row.strip() == '':
             return set()
         else:
-            return set(row.split(self.sep))
+            return set([cat.strip() for cat in row.split(sep)])
 
     def forward(
         self,
@@ -136,7 +137,8 @@ class MultiCategoricalTensorMapper(TensorMapper):
             raise ValueError('Multi-categorical types expect string as input')
         values = []
         original_index = ser.index
-        ser = ser.apply(self._split_by_sep)
+        ser = ser.apply(lambda row: MultiCategoricalTensorMapper.split_by_sep(
+            row, sep=self.sep))
         ser = ser.explode()
         ser = pd.merge(
             ser.rename('data'),
