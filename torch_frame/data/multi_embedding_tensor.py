@@ -38,7 +38,8 @@ class MultiEmbeddingTensor(_MultiTensor):
     """
     def validate(self):
         assert self.offset[0] == 0
-        assert len(self.offset) == self.num_cols + 1 or self.values.numel() == 0
+        assert len(
+            self.offset) == self.num_cols + 1 or self.values.numel() == 0
         assert self.offset.ndim == 1
         assert self.values.ndim == 2 or self.values.numel() == 0
 
@@ -116,9 +117,42 @@ class MultiEmbeddingTensor(_MultiTensor):
 
     def select(
         self,
-        index: Union[int, Tensor, List[int], slice],
+        index: Union[int, Tensor, List[int], slice, range],
         dim: int,
     ) -> "MultiEmbeddingTensor":
+        """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
+        :class:`MultiEmbeddingTensor` along the specified dimension.
+
+        Args:
+            index (Union[int, Tensor, List[int], slice]): An index to select.
+            dim (int): The dimension to index in.
+
+        Returns:
+            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
+
+        Note:
+            :obj:`select(index, dim=0)` is equivalent to
+            :obj:`multi_embedding_tensor[index]`, and
+            :obj:`select(index, dim=1)` is equivalent to
+            :obj:`multi_embedding_tensor[:, index]`.
+
+        Example:
+            >>> num_rows = 2
+            >>> tensor_list = [
+            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
+            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
+            ...    torch.tensor([[10], [11]]),            # col2
+            ... ]
+            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+            >>> out
+            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
+            >>> # int can select one row/col
+            >>> out.select(0, dim=0)
+            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
+            >>> # list/tensor/range can select multiple rows/cols
+            >>> out.select([0, 2], dim=1)
+            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
+        """
         dim = self._normalize_dim(dim)
         if isinstance(index, int):
             return self._single_index_select(index, dim=dim)
@@ -141,6 +175,29 @@ class MultiEmbeddingTensor(_MultiTensor):
         start: int,
         length: int,
     ) -> "MultiEmbeddingTensor":
+        """Returns a narrowed version of input :class:`MultiEmbeddingTensor`.
+
+        Args:
+            dim (int): The dimension along which to narrow.
+            start (int): The starting dimension index to narrow.
+            length (int): The length of the dimension to narrow.
+
+        Returns:
+            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
+
+        Example:
+            >>> num_rows = 2
+            >>> tensor_list = [
+            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
+            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
+            ...    torch.tensor([[10], [11]]),            # col2
+            ... ]
+            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+            >>> out
+            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
+            >>> out.narrow(dim=1, start=1, length=2)
+            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
+        """
         dim = self._normalize_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if start == 0 and start + length >= num_data:

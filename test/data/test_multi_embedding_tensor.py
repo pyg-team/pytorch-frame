@@ -21,12 +21,11 @@ def assert_equal(
             assert torch.allclose(tensor_list[j][i], met[i, j])
 
 
-# FIXME: Check again when using this to test something
 def row_select(
     tensor_list: List[torch.Tensor],
     index: Union[List[int], slice],
 ) -> List[torch.Tensor]:
-    """Selects rows from a list of tensors.
+    """Selects rows from a list of column tensors.
 
     Args:
         tensor_list (list[torch.Tensor]): a list of tensors of size
@@ -294,6 +293,12 @@ def test_narrow(device):
     )
     assert_equal(tensor_list[2:2 + 4], met.narrow(1, 2, 4))
     assert_equal(row_select(tensor_list, slice(2, 2 + 4)), met.narrow(0, 2, 4))
+    empty_met = met.narrow(0, 2, 0)
+    assert empty_met.shape[0] == 0
+    assert empty_met.shape[1] == num_cols
+    empty_met = met.narrow(1, 2, 0)
+    assert empty_met.shape[0] == num_rows
+    assert empty_met.shape[1] == 0
 
 
 def test_clone():
