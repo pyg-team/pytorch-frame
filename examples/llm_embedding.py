@@ -11,7 +11,7 @@ from tqdm import tqdm
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import DataLoader
-from torch_frame.datasets import AmazonFineFoodReviews
+from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
@@ -26,8 +26,9 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--service', type=str, default='cohere',
-                    choices=['openai', 'cohere'])
+parser.add_argument('--service', type=str, default='voyageai',
+                    choices=['openai', 'cohere', 'voyageai'])
+parser.add_argument('--dataset', type=str, default='wine_reviews')
 parser.add_argument('--api_key', type=str, default=None)
 args = parser.parse_args()
 
@@ -37,10 +38,14 @@ if args.service == 'openai':
     api_key = args.api_key or os.environ.get('OPENAI_API_KEY', None)
     if api_key is None:
         raise ValueError('OpenAI API key is not specified.')
-else:
+elif args.service == 'cohere':
     api_key = args.api_key or os.environ.get('COHERE_API_KEY', None)
     if api_key is None:
         raise ValueError('Cohere API key is not specified.')
+else:
+    api_key = args.api_key or os.environ.get('VOYAGE_API_KEY', None)
+    if api_key is None:
+        raise ValueError('Voyageai API key is not specified.')
 
 
 class OpenAIEmbedding:
@@ -54,8 +59,9 @@ class OpenAIEmbedding:
         self.model = model
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        items = self.client.embeddings.create(input=sentences,
-                                              model=self.model).data
+        from openai import Embedding
+        items: List[Embedding] = self.client.embeddings.create(
+            input=sentences, model=self.model).data
         assert len(items) == len(sentences)
         embeddings = [
             torch.FloatTensor(item.embedding).view(1, -1) for item in items
@@ -74,11 +80,30 @@ class CohereEmbedding:
         self.co = cohere.Client(api_key)
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        items = self.co.embed(model=self.model, texts=sentences,
-                              input_type="classification")
+        from cohere import Embeddings
+        items: Embeddings = self.co.embed(model=self.model, texts=sentences,
+                                          input_type="classification")
         assert len(items) == len(sentences)
         embeddings = torch.tensor(items.embeddings)
         return embeddings
+
+
+class VoyageaiEmbedding:
+    dimension: int = 1024
+    text_embedder_batch_size: int = 8
+
+    def __init__(self, model: str = 'voyage-01'):
+        # Please run `pip install voyageai` to install the package
+        self.model = model
+
+    def __call__(self, sentences: List[str]) -> Tensor:
+        import voyageai  # noqa
+        voyageai.api_key = api_key
+        from voyageai import get_embeddings
+        items: List[List[float]] = get_embeddings(sentences, model=self.model)
+        assert len(items) == len(sentences)
+        embeddings = [torch.FloatTensor(item).view(1, -1) for item in items]
+        return torch.cat(embeddings, dim=0)
 
 
 torch.manual_seed(args.seed)
@@ -88,22 +113,24 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 'amazon_fine_food_reviews')
 os.makedirs(path, exist_ok=True)
-text_encoder = OpenAIEmbedding(
-    model=args.model) if args.service == 'openai' else CohereEmbedding()
-dataset = AmazonFineFoodReviews(
-    root=path,
-    text_embedder_cfg=TextEmbedderConfig(
+if args.service == 'openai':
+    text_encoder = OpenAIEmbedding()
+elif args.service == 'cohere':
+    text_encoder = CohereEmbedding()
+else:
+    text_encoder = VoyageaiEmbedding()
+
+dataset = MultimodalTextBenchmark(
+    root=path, name=args.dataset, text_embedder_cfg=TextEmbedderConfig(
         text_embedder=text_encoder,
         batch_size=text_encoder.text_embedder_batch_size,
-    ),
-)
+    ))
 
-dataset.materialize(path=osp.join(path, 'data.pt'))
+dataset.materialize(path=osp.join(path, f'data_{args.service}.pt'))
 
-# Shuffle the dataset
-dataset = dataset.shuffle()
-train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
-    0.8:0.9], dataset[0.9:]
+train_dataset, val_dataset, test_dataset = dataset.split()
+if len(val_dataset) == 0:
+    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
 
 # Set up data loaders
 train_loader = DataLoader(train_dataset.tensor_frame,

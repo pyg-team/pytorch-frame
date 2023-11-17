@@ -29,7 +29,8 @@ def has_package(package: str) -> bool:
 
 def withPackage(*args) -> Callable:
     r"""A decorator to skip tests if certain packages are not installed.
-    Also supports version specification."""
+    Also supports version specification.
+    """
     na_packages = set(package for package in args if not has_package(package))
 
     def decorator(func: Callable) -> Callable:
@@ -46,8 +47,8 @@ def withCUDA(func: Callable):
     r"""A decorator to test both on CPU and CUDA (if available)."""
     import pytest
 
-    devices = [torch.device('cpu')]
+    devices = [pytest.param(torch.device('cpu'), id='cpu')]
     if torch.cuda.is_available():
-        devices.append(torch.device('cuda:0'))
+        devices.append(pytest.param(torch.device('cuda:0'), id='cuda:0'))
 
     return pytest.mark.parametrize('device', devices)(func)

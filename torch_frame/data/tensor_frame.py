@@ -1,5 +1,4 @@
 import copy
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 import torch
@@ -12,7 +11,6 @@ from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
-@dataclass(repr=False)
 class TensorFrame:
     r"""A tensor frame holds a :pytorch:`PyTorch` tensor for each table column.
     Table columns are organized into their semantic types
@@ -64,11 +62,15 @@ class TensorFrame:
         # Transfer tensor frame to the GPU:
         tf = tf.to('cuda')
     """
-    feat_dict: Dict[torch_frame.stype, TensorData]
-    col_names_dict: Dict[torch_frame.stype, List[str]]
-    y: Optional[Tensor] = None
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        feat_dict: Dict[torch_frame.stype, TensorData],
+        col_names_dict: Dict[torch_frame.stype, List[str]],
+        y: Optional[Tensor] = None,
+    ):
+        self.feat_dict = feat_dict
+        self.col_names_dict = col_names_dict
+        self.y = y
         self.validate()
 
     def validate(self):
@@ -197,9 +199,11 @@ class TensorFrame:
                 if self_feat.keys() != other_feat.keys():
                     return False
                 for feat_name in self_feat.keys():
-                    if not MultiNestedTensor.allclose(self_feat[feat_name],
-                                                      other_feat[feat_name],
-                                                      equal_nan=True):
+                    if not MultiNestedTensor.allclose(
+                            self_feat[feat_name],
+                            other_feat[feat_name],
+                            equal_nan=True,
+                    ):
                         return False
         return True
 
@@ -207,8 +211,8 @@ class TensorFrame:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        stype_repr = '\n'.join([
-            f'  {stype.value} ({len(col_names)}): {col_names},'
+        stype_repr = "\n".join([
+            f"  {stype.value} ({len(col_names)}): {col_names},"
             for stype, col_names in self.col_names_dict.items()
         ])
 
@@ -220,7 +224,7 @@ class TensorFrame:
                 f"  device='{self.device}',\n"
                 f")")
 
-    def __getitem__(self, index: IndexSelectType) -> 'TensorFrame':
+    def __getitem__(self, index: IndexSelectType) -> "TensorFrame":
         if isinstance(index, int):
             index = [index]
 
@@ -235,7 +239,7 @@ class TensorFrame:
 
         return self._apply(fn)
 
-    def __copy__(self) -> 'TensorFrame':
+    def __copy__(self) -> "TensorFrame":
         out = self.__class__.__new__(self.__class__)
         for key, value in self.__dict__.items():
             out.__dict__[key] = value
@@ -282,7 +286,7 @@ class TensorFrame:
 
     # Helper Functions ########################################################
 
-    def _apply(self, fn: Callable[[Tensor], Tensor]) -> 'TensorFrame':
+    def _apply(self, fn: Callable[[Tensor], Tensor]) -> "TensorFrame":
         out = copy.copy(self)
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:

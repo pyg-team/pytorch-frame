@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `multi-categorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
 - Added support for saving and loading of `TensorFrame` with complex `stypes`. ([#197](https://github.com/pyg-team/pytorch-frame/pull/197))
 - Added `stype.embedding` ((#194)[https://github.com/pyg-team/pytorch-frame/pull/194])
 - Added `TensorFrame` concatenation of complex stypes. ([#190](https://github.com/pyg-team/pytorch-frame/pull/190))
@@ -15,7 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added Cohere embedding example ([#186](https://github.com/pyg-team/pytorch-frame/pull/186))
 - Added `AmazonFineFoodReviews` dataset and OpenAI embedding example ([#182](https://github.com/pyg-team/pytorch-frame/pull/182))
 - Added save and load logic for `FittableBaseTransform` ([#178](https://github.com/pyg-team/pytorch-frame/pull/178))
-- Added `MultiEmbeddingTensor` ([#181](https://github.com/pyg-team/pytorch-frame/pull/181), [#193](https://github.com/pyg-team/pytorch-frame/pull/193), [#198](https://github.com/pyg-team/pytorch-frame/pull/198))
+- Added `MultiEmbeddingTensor` ([#181](https://github.com/pyg-team/pytorch-frame/pull/181), [#193](https://github.com/pyg-team/pytorch-frame/pull/193), [#198](https://github.com/pyg-team/pytorch-frame/pull/198), [#199](https://github.com/pyg-team/pytorch-frame/pull/199), [#217](https://github.com/pyg-team/pytorch-frame/pull/217))
 - Added `to_dense()` for `MultiNestedTensor` ([#170](https://github.com/pyg-team/pytorch-frame/pull/170))
 - Added example for `multicategorical` stype ([#162](https://github.com/pyg-team/pytorch-frame/pull/162))
 - Added `sequence_numerical` stype ([#159](https://github.com/pyg-team/pytorch-frame/pull/159))

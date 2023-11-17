@@ -3,6 +3,7 @@ from enum import Enum
 
 class stype(Enum):
     r"""The semantic type of a column.
+
     A semantic type denotes the semantic meaning of a column, and denotes how
     columns are encoded into an embedding space within tabular deep learning
     models:
@@ -35,7 +36,7 @@ class stype(Enum):
 
     @property
     def use_multi_nested_tensor(self) -> bool:
-        r""" This property indicates if the data of an stype is stored in
+        r"""This property indicates if the data of an stype is stored in
         :class:`torch_frame.data.MultiNestedTensor`.
         """
         return self in [stype.multicategorical, self.sequence_numerical]
@@ -49,7 +50,7 @@ class stype(Enum):
 
     @property
     def use_dict_multi_nested_tensor(self) -> bool:
-        r""" This property indicates if the data of an stype is stored in
+        r"""This property indicates if the data of an stype is stored in
         a dictionary of :class:`torch_frame.data.MultiNestedTensor`.
         """
         return self in [stype.text_tokenized]

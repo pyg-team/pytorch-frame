@@ -14,7 +14,8 @@ from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 class TensorMapper(ABC):
     r"""A base class to handle the conversion from raw input data into a
     compact tensor representation, i.e., the identity for numerical values,
-    indices for categorical values, etc."""
+    indices for categorical values, etc.
+    """
     @abstractmethod
     def forward(
         self,
@@ -28,13 +29,15 @@ class TensorMapper(ABC):
     @abstractmethod
     def backward(self, tensor: TensorData) -> pd.Series:
         r"""Maps a compact tensor representation back into the raw input data.
-        The reverse operation of :meth:`forward`."""
+        The reverse operation of :meth:`forward`.
+        """
         raise NotImplementedError
 
 
 class NumericalTensorMapper(TensorMapper):
     r"""Maps any numerical series into a floating-point representation, with
-    :obj:`float('NaN')` denoting N/A values."""
+    :obj:`float('NaN')` denoting N/A values.
+    """
     def forward(
         self,
         ser: Series,
@@ -54,7 +57,8 @@ class NumericalTensorMapper(TensorMapper):
 
 class CategoricalTensorMapper(TensorMapper):
     r"""Maps any categorical series into an index representation, with
-    :obj:`-1` denoting N/A values."""
+    :obj:`-1` denoting N/A values.
+    """
     def __init__(self, categories: Iterable[Any]):
         super().__init__()
         self.categories: pd.Series = pd.Series(
@@ -167,8 +171,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
 
 class NumericalSequenceTensorMapper(TensorMapper):
-    r"""Maps any sequence series into an :obj:`MultiNestedTensor`.
-    """
+    r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
     def __init__(self, ):
         super().__init__()
 

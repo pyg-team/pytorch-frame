@@ -1,10 +1,11 @@
 import random
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import pytest
 import torch
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.testing import withCUDA
 
 
 def assert_equal(
@@ -20,15 +21,39 @@ def assert_equal(
             assert torch.allclose(tensor_list[j][i], met[i, j])
 
 
+def row_select(
+    tensor_list: List[torch.Tensor],
+    index: Union[List[int], slice],
+) -> List[torch.Tensor]:
+    """Selects rows from a list of column tensors.
+
+    Args:
+        tensor_list (list[torch.Tensor]): a list of tensors of size
+            [num_rows, dim_emb_j].
+        index (Union[List[int], slice]): a list of row indices or a slice to
+            apply to each tensor in tensor_list.
+
+    Returns:
+        List[torch.Tensor]: new_tensor_list is a list of tensors of size
+            [num_rows_indexed, dim_emb_j].
+    """
+    new_tensor_list = []
+    for col_tensor in tensor_list:
+        new_col_tensor = col_tensor[index]
+        new_tensor_list.append(new_col_tensor)
+    return new_tensor_list
+
+
 def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
     embedding_dim: Optional[int] = None,
+    device: Optional[torch.device] = None,
 ) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = embedding_dim or random.randint(1, 5)
-        tensor = torch.randn((num_rows, embedding_dim))
+        tensor = torch.randn((num_rows, embedding_dim), device=device)
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
 
@@ -99,12 +124,14 @@ def test_from_tensor_list():
         ])
 
 
-def test_index():
+@withCUDA
+def test_index(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
         num_rows=num_rows,
         num_cols=num_cols,
+        device=device,
     )
 
     # Test [i, j] indexing
@@ -117,12 +144,163 @@ def test_index():
     # Test [i] indexing
     for i in range(-num_rows, num_rows):
         met_row = met[i]
+        assert isinstance(met_row, MultiEmbeddingTensor)
         assert met_row.shape[0] == 1
         assert met_row.shape[1] == num_cols
         for j in range(-num_cols, num_cols):
             tensor = met_row[0, j]
             assert isinstance(tensor, torch.Tensor)
             assert torch.allclose(tensor_list[j][i], tensor)
+
+    # Test [list[int]] indexing
+    # Test [Tensor] indexing
+    for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
+        for index_type in ["list", "tensor"]:
+            if index_type == "tensor":
+                index = torch.tensor(index, dtype=torch.long)
+            met_indexed = met[index]
+            assert isinstance(met_indexed, MultiEmbeddingTensor)
+            assert met_indexed.shape[0] == len(index)
+            assert met_indexed.shape[1] == num_cols
+            for i, idx in enumerate(index):
+                for j in range(num_cols):
+                    assert torch.allclose(
+                        tensor_list[j][idx],
+                        met_indexed[i, j],
+                    )
+
+
+@withCUDA
+def test_index_range(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [range] indexing
+    for index in [range(2, 6), range(2, 6, 2), range(6, 2, -1)]:
+        met_indexed = met[index]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == len(index)
+        assert met_indexed.shape[1] == num_cols
+        for idx, i in enumerate(index):
+            for j in range(num_cols):
+                assert torch.allclose(tensor_list[j][i], met_indexed[idx, j])
+
+
+@withCUDA
+def test_index_slice(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [slice] indexing
+    assert_equal(tensor_list, met[:])
+    assert_equal(row_select(tensor_list, slice(None, 3)), met[:3])
+    assert_equal(row_select(tensor_list, slice(3, None)), met[3:])
+    assert_equal(row_select(tensor_list, slice(3, 5)), met[3:5])
+    assert_equal(row_select(tensor_list, slice(-7, 5)), met[-7:5])
+    assert_equal(row_select(tensor_list, slice(-7, -1)), met[-7:-1])
+    assert_equal(row_select(tensor_list, slice(1, None, 2)), met[1::2])
+    empty_met = met[5:3]
+    assert empty_met.shape[0] == 0
+    assert empty_met.shape[1] == num_cols
+
+
+@withCUDA
+def test_index_slice_slice(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [:, slice] indexing
+    assert_equal(tensor_list, met[:, :])
+    assert_equal(tensor_list[:3], met[:, :3])
+    assert_equal(tensor_list[3:], met[:, 3:])
+    assert_equal(tensor_list[3:5], met[:, 3:5])
+    assert_equal(tensor_list[-7:5], met[:, -7:5])
+    assert_equal(tensor_list[-7:-1], met[:, -7:-1])
+    assert_equal(tensor_list[1::2], met[:, 1::2])
+    empty_met = met[:, 5:3]
+    assert empty_met.shape[0] == num_rows
+    assert empty_met.shape[1] == 0
+
+
+@withCUDA
+def test_index_slice_list(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [:, list] indexing
+    # Test [:, Tensor] indexing
+    for index in [[4], [2, 2], [-4, 1, 9], [3, -9, 1, 0], []]:
+        for index_type in ["list", "tensor"]:
+            if index_type == "tensor":
+                index = torch.tensor(index, dtype=torch.long)
+            met_indexed = met[:, index]
+            assert isinstance(met_indexed, MultiEmbeddingTensor)
+            assert met_indexed.shape[0] == num_rows
+            assert met_indexed.shape[1] == len(index)
+            for i in range(num_rows):
+                for j, idx in enumerate(index):
+                    assert torch.allclose(
+                        tensor_list[idx][i],
+                        met_indexed[i, j],
+                    )
+
+
+@withCUDA
+def test_index_slice_range(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [:, range] indexing
+    for index in [range(2, 6), range(2, 6, 2), range(6, 2, -1)]:
+        met_indexed = met[:, index]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == num_rows
+        assert met_indexed.shape[1] == len(index)
+        for j, idx in enumerate(index):
+            for i in range(num_rows):
+                assert torch.allclose(
+                    tensor_list[idx][i],
+                    met_indexed[i, j],
+                )
+
+
+@withCUDA
+def test_narrow(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    assert_equal(tensor_list[2:2 + 4], met.narrow(1, 2, 4))
+    assert_equal(row_select(tensor_list, slice(2, 2 + 4)), met.narrow(0, 2, 4))
+    empty_met = met.narrow(0, 2, 0)
+    assert empty_met.shape[0] == 0
+    assert empty_met.shape[1] == num_cols
+    empty_met = met.narrow(1, 2, 0)
+    assert empty_met.shape[0] == num_rows
+    assert empty_met.shape[1] == 0
 
 
 def test_clone():

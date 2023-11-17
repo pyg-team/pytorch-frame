@@ -215,6 +215,16 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         'mercari_price_suggestion100K': ['train', 'test'],
     }
 
+    _dataset_col_to_sep = {
+        'data_scientist_salary': ', ',
+        'imdb_genre_prediction': ', ',
+        'california_house_price': ', ',
+        'melbourne_airbnb': ', ',
+        'ae_price_prediction': ', ',
+        'kick_starter_funding': ', ',
+        'mercari_price_suggestion100K': '/',
+    }
+
     _dataset_stype_to_col = {
         'product_sentiment_machine_hack': {
             torch_frame.text_embedded: ['Product_Description'],
@@ -236,26 +246,22 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             torch_frame.categorical: ['target'],
         },
         'data_scientist_salary': {
-            # `location` should be multi-categorical
             torch_frame.categorical:
-            ['experience', 'job_type', 'location', 'salary'],
-            # `key_skills` should be multi-categorical
-            torch_frame.text_embedded:
-            ['job_description', 'job_desig', 'key_skills'],
+            ['experience', 'job_type', 'salary', 'location'],
+            torch_frame.text_embedded: ['job_description', 'job_desig'],
+            torch_frame.multicategorical: ['key_skills'],
         },
         'melbourne_airbnb': {
             # `host_since` should be time column
-            # `amenities` should be multi-categorical
             torch_frame.text_embedded: [
                 'name', 'summary', 'space', 'description',
                 'neighborhood_overview', 'notes', 'transit', 'access',
                 'interaction', 'house_rules', 'host_since', 'host_about',
-                'amenities', 'first_review', 'last_review'
+                'first_review', 'last_review'
             ],
-            # `host_verifications` should be multi-categorical
             torch_frame.categorical: [
                 'host_location', 'host_response_time', 'host_response_rate',
-                'host_is_superhost', 'host_neighborhood', 'host_verifications',
+                'host_is_superhost', 'host_neighborhood',
                 'host_has_profile_pic', 'host_identity_verified', 'street',
                 'neighborhood', 'city', 'suburb', 'state', 'zipcode',
                 'smart_location', 'country_code', 'country',
@@ -289,6 +295,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'review_scores_value', 'calculated_host_listings_count',
                 'reviews_per_month'
             ],
+            torch_frame.multicategorical: ['host_verifications', 'amenities'],
         },
         'news_channel': {
             torch_frame.numerical: [
@@ -313,8 +320,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'Revenue (Millions)', 'Metascore'
             ],
             torch_frame.categorical: ['Director', 'Genre_is_Drama'],
-            # `Actors` should be multi-categorical
-            torch_frame.text_embedded: ['Title', 'Description', 'Actors'],
+            torch_frame.text_embedded: ['Title', 'Description'],
+            torch_frame.multicategorical: ['Actors'],
         },
         'fake_job_postings2': {
             torch_frame.text_embedded: ['title', 'description'],
@@ -324,7 +331,6 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             ]
         },
         'kick_starter_funding': {
-            # `keywords` should be multi-categorical
             # `deadline` should be time column
             # `created_at` should be time column
             torch_frame.text_embedded:
@@ -363,17 +369,14 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             ['Division Name', 'Department Name', 'Class Name'],
         },
         'ae_price_prediction': {
-            # `style_attributes` should be multi-categorical
-            # `total_sizes` should be multi-categorical
-            torch_frame.text_embedded: [
-                'description', 'style_attributes', 'total_sizes',
-                'available_size'
-            ],
+            torch_frame.text_embedded: ['description'],
             torch_frame.numerical: ['price', 'rating', 'review_count'],
             torch_frame.categorical: [
                 'product_name', 'brand_name', 'product_category', 'retailer',
                 'color'
-            ]
+            ],
+            torch_frame.multicategorical:
+            ['style_attributes', 'total_sizes', 'available_size']
         },
         'news_popularity2': {
             torch_frame.text_embedded: ['article_title'],
@@ -393,36 +396,60 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'High School Distance', 'Tax assessed value',
                 'Annual tax amount', 'Listed Price', 'Last Sold Price'
             ],
-            # `Heating` should be multi-categorical
-            # `Cooling` should be multi-categorical
-            # `Parking` should be multi-categorical
-            # `Flooring` should be multi-categorical
-            # `Heating features` should be multi-categorical
-            # `Cooling features` should be multi-categorical
-            # `Appliances included` should be multi-categorical
-            # `Laundry features` should be multi-categorical
-            # `Parking features` should be multi-categorical
             # `Listed On` should be time column
             # `Last Sold On` should be time column
             torch_frame.categorical: [
-                'Type', 'Heating', 'Cooling', 'Parking', 'Region',
-                'Elementary School', 'Middle School', 'High School',
-                'Flooring', 'Heating features', 'Cooling features',
-                'Appliances included', 'Laundry features', 'Parking features',
-                'Listed On', 'Last Sold On', 'City', 'Zip', 'State'
-            ]
+                'Type', 'Region', 'Elementary School', 'Middle School',
+                'High School', 'Listed On', 'Last Sold On', 'City', 'Zip',
+                'State'
+            ],
+            torch_frame.multicategorical: [
+                'Heating',
+                'Cooling',
+                'Parking',
+                'Flooring',
+                'Heating features',
+                'Cooling features',
+                'Appliances included',
+                'Laundry features',
+                'Parking features',
+            ],
         },
         'mercari_price_suggestion100K': {
-            # `category_name` should be multi-categorical
-            torch_frame.text_embedded:
-            ['name', 'category_name', 'item_description'],
+            torch_frame.text_embedded: ['name', 'item_description'],
             torch_frame.numerical: ['log_price'],
             torch_frame.categorical: [
                 'item_condition_id', 'brand_name', 'shipping', 'cat1', 'cat2',
                 'cat3'
             ],
+            torch_frame.multicategorical: ['category_name'],
         },
     }
+
+    def _pre_transform(self, df: pd.DataFrame,
+                       target_col: str) -> pd.DataFrame:
+        if self.name == 'melbourne_airbnb':
+            df['host_verifications'] = df['host_verifications'].strip('[]')
+            df['amenities'] = df['amenities'].strip('[]')
+        elif self.name == 'kick_starter_funding':
+            df['keywords'] = [
+                item.replace('-', ' ') for item in df['keywords']
+            ]
+        elif self.name == 'ae_price_prediction':
+            df['style_attributes'] = df['style_attributes'].str.strip('[]')
+            df['total_sizes'] = df['total_sizes'].str.strip('[]')
+            df['available_size'] = df['available_size'].str.strip('[]')
+        # Post transform some regression datasets' target column
+        # by transforming from log scale to original scale
+        elif self.name == 'bookprice_prediction':
+            df[target_col] = np.power(10, df[target_col]) - 1
+            df[df[target_col] < 0][target_col] = 0
+        elif self.name == 'california_house_price':
+            df[target_col] = np.exp(df[target_col])
+        elif self.name == 'mercari_price_suggestion100K':
+            df[target_col] = np.exp(df[target_col]) - 1
+            df[df[target_col] < 0][target_col] = 0
+        return df
 
     def __init__(self, root: str, name: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
@@ -461,17 +488,6 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
         target_col = self._dataset_target_col[self.name]
 
-        # Post transform some regression datasets' target column
-        # by transforming from log scale to original scale
-        if self.name == 'bookprice_prediction':
-            df[target_col] = np.power(10, df[target_col]) - 1
-            df[df[target_col] < 0][target_col] = 0
-        elif self.name == 'california_house_price':
-            df[target_col] = np.exp(df[target_col])
-        elif self.name == 'mercari_price_suggestion100K':
-            df[target_col] = np.exp(df[target_col]) - 1
-            df[df[target_col] < 0][target_col] = 0
-
         stype_to_col = self._dataset_stype_to_col[name]
 
         col_to_stype = {}
@@ -482,7 +498,11 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                     col_to_stype[col] = self.text_stype
                 else:
                     col_to_stype[col] = stype
+
+        df = self._pre_transform(df=df, target_col=target_col)
+        col_to_sep = self._dataset_col_to_sep.get(name, '')
+
         super().__init__(df, col_to_stype, target_col=target_col,
-                         split_col='split',
+                         split_col='split', col_to_sep=col_to_sep,
                          text_embedder_cfg=text_embedder_cfg,
                          text_tokenizer_cfg=text_tokenizer_cfg)
