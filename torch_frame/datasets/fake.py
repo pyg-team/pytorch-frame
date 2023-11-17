@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import numpy as np
@@ -10,6 +11,18 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils.split import SPLIT_TO_NUM
+
+TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%m-%d']
+
+
+def _random_timestamp(start: datetime, end: datetime, format: str) -> str:
+    r"""This function will return a random datetime converted to string with
+    given format between the start and end datetime objects.
+    """
+    timestamp = start + timedelta(
+        # Get a random amount of seconds between `start` and `end`
+        seconds=random.randint(0, int((end - start).total_seconds())), )
+    return timestamp.strftime(format)
 
 
 class FakeDataset(torch_frame.data.Dataset):
@@ -31,7 +44,7 @@ class FakeDataset(torch_frame.data.Dataset):
             PyTorch embeddings and :obj:`batch_size` that specifies the
             mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
         text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
-            configuration the specifies the text tokenizer to map text columns
+            configuration that specifies the text tokenizer to map text columns
             into maps sentences into tensor of tokens (default: :obj:`None`)
     """
     def __init__(
@@ -52,7 +65,10 @@ class FakeDataset(torch_frame.data.Dataset):
             df_dict = {'target': np.random.randn(num_rows)}
             col_to_stype = {'target': stype.numerical}
         elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            df_dict = {'target': np.random.randint(0, 3, size=(num_rows, ))}
+            labels = np.random.randint(0, 3, size=(num_rows, ))
+            # make sure the final label exists
+            labels[0] = 2
+            df_dict = {'target': labels}
             col_to_stype = {'target': stype.categorical}
         elif task_type == TaskType.BINARY_CLASSIFICATION:
             df_dict = {'target': np.random.randint(0, 2, size=(num_rows, ))}
@@ -78,16 +94,21 @@ class FakeDataset(torch_frame.data.Dataset):
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.categorical
         if stype.multicategorical in stypes:
-            # TODO: Currently having multiple multi-categorical columns
-            # is not supported. Please add test case for multiple
-            # multi-categorical columns when it's added.
-            for col_name in ['multicat_1', 'multicat_2']:
-                arr = np.random.randint(0, 3, size=(num_rows, 2))
-                arr = arr.astype(str)
-                arr = np.apply_along_axis(lambda x: ','.join(x), 1, arr)
-                df_dict[col_name] = list(arr)
+            half = num_rows // 2
+            for col_name in [
+                    'multicat_1', 'multicat_2', 'multicat_3', 'multicat_4'
+            ]:
+                if col_name in ['multicat_1', 'multicat_2']:
+                    arr = (['toy,health'] * half + ['toy,health, game'] *
+                           (num_rows - half))
+                else:
+                    # Supporting list
+                    arr = ([['toy', 'health']] * half +
+                           [['toy', 'health'
+                             'game']] * (num_rows - half))
                 if with_nan:
-                    df_dict[col_name][0] = None
+                    arr[0] = None
+                df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.multicategorical
         if stype.sequence_numerical in stypes:
             for col_name in ['seq_num_1', 'seq_num_2']:
@@ -126,6 +147,20 @@ class FakeDataset(torch_frame.data.Dataset):
                 emb = [emb for _ in range(num_rows)]
                 df_dict[col_name] = emb
                 col_to_stype[col_name] = stype.embedding
+        if stype.timestamp in stypes:
+            start_date = datetime(2000, 1, 1)
+            end_date = datetime(2023, 1, 1)
+            for i in range(len(TIME_FORMATS)):
+                col_name = f'timestamp_{i}'
+                format = TIME_FORMATS[i]
+                arr = [
+                    _random_timestamp(start_date, end_date, format)
+                    for _ in range(num_rows)
+                ]
+                if with_nan:
+                    arr[0::2] = len(arr[0::2]) * [np.nan]
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.timestamp
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
@@ -139,6 +174,7 @@ class FakeDataset(torch_frame.data.Dataset):
             split[1] = SPLIT_TO_NUM['val']
             split[2] = SPLIT_TO_NUM['test']
             df['split'] = split
+
         super().__init__(
             df,
             col_to_stype,
@@ -146,4 +182,8 @@ class FakeDataset(torch_frame.data.Dataset):
             split_col='split' if create_split else None,
             text_embedder_cfg=text_embedder_cfg,
             text_tokenizer_cfg=text_tokenizer_cfg,
+            col_to_time_format={
+                f'timestamp_{i}': TIME_FORMATS[i]
+                for i in range(len(TIME_FORMATS))
+            },
         )

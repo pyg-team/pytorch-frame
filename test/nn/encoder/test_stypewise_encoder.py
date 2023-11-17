@@ -34,9 +34,7 @@ from torch_frame.testing.text_tokenizer import (
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
-    (LinearEmbeddingEncoder, {
-        'in_channels': 12
-    }),
+    (LinearEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
@@ -56,12 +54,14 @@ def test_stypewise_feature_encoder(
         num_rows=num_rows,
         with_nan=False,
         stypes=[
-            stype.categorical, stype.numerical, stype.multicategorical,
-            stype.text_embedded, stype.text_tokenized
+            stype.categorical,
+            stype.numerical,
+            stype.multicategorical,
+            stype.text_embedded,
+            stype.text_tokenized,
         ],
         text_embedder_cfg=TextEmbedderConfig(
-            text_embedder=HashTextEmbedder(
-                encoder_text_embedded_cls_kwargs[1]['in_channels']),
+            text_embedder=HashTextEmbedder(out_channels=16, ),
             batch_size=None,
         ),
         text_tokenizer_cfg=TextTokenizerConfig(
@@ -96,15 +96,17 @@ def test_stypewise_feature_encoder(
     x, col_names = encoder(tensor_frame)
     assert x.shape == (num_rows, tensor_frame.num_cols, out_channels)
     assert col_names == [
-        'num_1',
-        'num_2',
-        'num_3',
-        'cat_1',
-        'cat_2',
-        'text_embedded_1',
-        'text_embedded_2',
-        'text_tokenized_1',
-        'text_tokenized_2',
-        'multicat_1',
-        'multicat_2',
+        "num_1",
+        "num_2",
+        "num_3",
+        "cat_1",
+        "cat_2",
+        "text_embedded_1",
+        "text_embedded_2",
+        "text_tokenized_1",
+        "text_tokenized_2",
+        "multicat_1",
+        "multicat_2",
+        "multicat_3",
+        "multicat_4",
     ]

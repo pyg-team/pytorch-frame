@@ -9,6 +9,7 @@ from torch_frame.data.mapper import (
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
+    TimestampTensorMapper,
 )
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.testing.text_embedder import HashTextEmbedder
@@ -43,30 +44,50 @@ def test_categorical_tensor_mapper():
     pd.testing.assert_series_equal(out, pd.Series(['A', 'B', None, None, 'B']))
 
 
+def test_timestamp_tensor_mapper():
+    format = '%Y-%m-%d %H:%M:%S'
+    arr = [np.nan, '2020-03-09 17:20:4']
+    ser = pd.Series(arr)
+
+    mapper = TimestampTensorMapper(format=format)
+
+    out = mapper.forward(ser)
+    assert out.shape == (2, 1, 7)
+    assert torch.isnan(out[0, :, :]).all()
+    assert torch.allclose(
+        out[1, :, :],
+        torch.tensor([2020., 3., 9., 0, 17., 20., 4.]).view(1, -1))
+    assert out.dtype == torch.float32
+
+
 def test_multicategorical_tensor_mapper():
-    ser = pd.Series(['A,B', 'B', '', 'C', 'B,C', None])
-    expected_values = torch.tensor([1, 0, 0, 0, -1])
-    expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
-    mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
+    for ser in [
+            pd.Series(['A,B', 'B', '', 'C', 'B,C', None]),
+            # Testing with leading and traling whitespace
+            pd.Series([' A, B', '  B', ' ', 'C  ', 'B , C', None])
+    ]:
+        expected_values = torch.tensor([1, 0, 0, 0, -1])
+        expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
+        mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
-    tensor = mapper.forward(ser)
-    values = tensor.values
-    offset = tensor.offset
-    assert values.dtype == torch.long
-    assert torch.equal(
-        values[expected_boundaries[0]:expected_boundaries[1]].sort().values,
-        torch.tensor([0, 1]))
-    assert torch.equal(values[expected_boundaries[1]:],
-                       expected_values[expected_boundaries[1]:])
-    assert torch.equal(offset, expected_boundaries)
+        tensor = mapper.forward(ser)
+        values = tensor.values
+        offset = tensor.offset
+        assert values.dtype == torch.long
+        assert torch.equal(
+            values[expected_boundaries[0]:expected_boundaries[1]].sort().
+            values, torch.tensor([0, 1]))
+        assert torch.equal(values[expected_boundaries[1]:],
+                           expected_values[expected_boundaries[1]:])
+        assert torch.equal(offset, expected_boundaries)
 
-    out = mapper.backward(tensor)
-    assert out.values[0] == 'A,B' or out.values[0] == 'B,A'
-    assert out.values[1] == 'B'
-    assert out.values[2] == ''
-    assert out.values[3] == ''
-    assert out.values[4] == 'B'
-    assert out.values[5] == ''
+        out = mapper.backward(tensor)
+        assert out.values[0] == 'A,B' or out.values[0] == 'B,A'
+        assert out.values[1] == 'B'
+        assert out.values[2] == ''
+        assert out.values[3] == ''
+        assert out.values[4] == 'B'
+        assert out.values[5] == ''
 
 
 def test_numerical_sequence_tensor_mapper():

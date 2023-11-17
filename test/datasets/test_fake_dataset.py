@@ -12,7 +12,9 @@ from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
-def test_fake_dataset(with_nan):
+@pytest.mark.parametrize('tokenize_with_batch', [True, False])
+@pytest.mark.parametrize('text_batch_size', [None, 5])
+def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
     num_rows = 20
     out_channels = 10
     dataset = FakeDataset(
@@ -29,10 +31,12 @@ def test_fake_dataset(with_nan):
         ],
         create_split=True,
         text_embedder_cfg=TextEmbedderConfig(
-            text_embedder=HashTextEmbedder(out_channels), batch_size=None),
+            text_embedder=HashTextEmbedder(out_channels),
+            batch_size=text_batch_size),
         text_tokenizer_cfg=TextTokenizerConfig(
-            text_tokenizer=WhiteSpaceHashTokenizer(num_hash_bins=12),
-            batch_size=5),
+            text_tokenizer=WhiteSpaceHashTokenizer(
+                num_hash_bins=12, batched=tokenize_with_batch),
+            batch_size=text_batch_size),
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
@@ -44,6 +48,8 @@ def test_fake_dataset(with_nan):
         'cat_2',
         'multicat_1',
         'multicat_2',
+        'multicat_3',
+        'multicat_4',
         'seq_num_1',
         'seq_num_2',
         'text_embedded_1',
@@ -76,7 +82,7 @@ def test_fake_dataset(with_nan):
     feat_multicat = tensor_frame.feat_dict[torch_frame.multicategorical]
     assert isinstance(feat_multicat, MultiNestedTensor)
     assert feat_multicat.size(0) == num_rows
-    assert feat_multicat.size(1) == 2
+    assert feat_multicat.size(1) == 4
 
     feat_sequence_numerical = tensor_frame.feat_dict[
         torch_frame.sequence_numerical]
@@ -94,6 +100,12 @@ def test_fake_dataset(with_nan):
     assert isinstance(feat_text_tokenized['input_ids'], MultiNestedTensor)
     assert feat_text_tokenized['input_ids'].dtype == torch.int64
     assert feat_text_tokenized['input_ids'].shape == (num_rows, 2, -1)
+    assert feat_text_tokenized['attention_mask'].dtype == torch.bool
+    assert feat_text_tokenized['attention_mask'].shape == (num_rows, 2, -1)
+    assert feat_text_tokenized['input_ids'].to_dense(
+        fill_value=0).shape == (num_rows, 2, 2)
+    assert feat_text_tokenized['attention_mask'].to_dense(
+        fill_value=False).shape == (num_rows, 2, 2)
 
     feat_emb = tensor_frame.feat_dict[torch_frame.embedding]
     assert isinstance(feat_emb, MultiEmbeddingTensor)

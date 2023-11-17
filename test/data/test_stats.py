@@ -1,12 +1,16 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
 from torch_frame.data.stats import StatType, compute_col_stats
+from torch_frame.datasets.fake import _random_timestamp
 from torch_frame.stype import (
     categorical,
     multicategorical,
     numerical,
     sequence_numerical,
+    timestamp,
 )
 
 
@@ -29,11 +33,61 @@ def test_compute_col_stats_all_categorical():
 
 
 def test_compute_col_stats_all_multi_categorical():
-    ser = pd.Series(['a|b', 'a|c', 'c|a', 'a|b|c', np.nan])
-    stype = multicategorical
-    assert compute_col_stats(ser, stype, sep='|') == {
-        StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
-    }
+    for ser in [
+            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None]),
+            # # Testing with leading and traling whitespace
+            pd.Series(['a| a | b', 'a| c', 'c |a', '  a| b| c', '  ', None]),
+            # Testing with list representation
+            pd.Series([['a', 'a', 'b'], ['a', 'c'], ['c', 'a'],
+                       ['a', 'b', 'c'], [], None]),
+    ]:
+        stype = multicategorical
+        assert compute_col_stats(ser, stype, sep='|') == {
+            StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
+        }
+
+
+def test_compute_col_stats_all_timestamp():
+    start_date = datetime(2000, 1, 1)
+    end_date = datetime(2023, 1, 1)
+    num_rows = 10
+
+    # Test YEAR_RANGE with year specified
+    format = '%Y-%m-%d %H:%M:%S'
+    arr = [
+        _random_timestamp(start_date, end_date, format)
+        for _ in range(num_rows)
+    ]
+    arr[0::2] = len(arr[0::2]) * [np.nan]
+    ser = pd.Series(arr)
+    stype = timestamp
+
+    year_range = compute_col_stats(ser, stype,
+                                   time_format=format)[StatType.YEAR_RANGE]
+    assert (year_range[0] >= 2000 and year_range[1] <= 2023
+            and year_range[0] <= year_range[1])
+
+    # Test YEAR_RANGE with year unspecified
+    format = '%m-%d'
+    arr = [
+        _random_timestamp(start_date, end_date, format)
+        for _ in range(num_rows)
+    ]
+    arr[0::2] = len(arr[0::2]) * [np.nan]
+    ser = pd.Series(arr)
+    stype = timestamp
+
+    year_range = compute_col_stats(ser, stype,
+                                   time_format=format)[StatType.YEAR_RANGE]
+    assert (year_range[0] == year_range[1] == 1900)
+
+
+def test_compute_col_stats_all_timestamp_with_all_nan():
+    ser = pd.Series([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+    stype = timestamp
+    year_range = compute_col_stats(ser, stype)[StatType.YEAR_RANGE]
+    print(year_range[0])
+    assert np.isnan(year_range[0]) and np.isnan(year_range[1])
 
 
 def test_compute_col_stats_all_sequence_numerical():

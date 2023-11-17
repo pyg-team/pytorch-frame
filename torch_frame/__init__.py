@@ -1,3 +1,4 @@
+r"""Utility package."""
 from .stype import (
     stype,
     numerical,
@@ -6,6 +7,7 @@ from .stype import (
     text_tokenized,
     multicategorical,
     sequence_numerical,
+    timestamp,
     embedding,
 )
 from .data import TensorFrame
@@ -27,6 +29,7 @@ __all__ = [
     'text_tokenized',
     'multicategorical',
     'sequence_numerical',
+    'timestamp',
     'embedding',
     'TaskType',
     'NAStrategy',
