@@ -169,7 +169,6 @@ def test_index(device):
                     )
 
 
-# FIXME: Merge this test case with test_index
 @withCUDA
 def test_index_range(device):
     num_rows = 8
@@ -190,7 +189,6 @@ def test_index_range(device):
                 assert torch.allclose(tensor_list[j][i], met_indexed[idx, j])
 
 
-# FIXME: Merge this test case with test_index
 @withCUDA
 def test_index_slice(device):
     num_rows = 8
@@ -213,7 +211,6 @@ def test_index_slice(device):
     assert empty_met.shape[1] == num_cols
 
 
-# FIXME: Merge this test case with test_index
 @withCUDA
 def test_index_slice_slice(device):
     num_rows = 8
@@ -236,7 +233,6 @@ def test_index_slice_slice(device):
     assert empty_met.shape[1] == 0
 
 
-# FIXME: Merge this test case with test_index
 @withCUDA
 def test_index_slice_list(device):
     num_rows = 8
@@ -254,8 +250,8 @@ def test_index_slice_list(device):
                 index = torch.tensor(index, dtype=torch.long)
             met_indexed = met[:, index]
             assert isinstance(met_indexed, MultiEmbeddingTensor)
-            assert met_indexed.shape[0] == len(index)
-            assert met_indexed.shape[1] == num_cols
+            assert met_indexed.shape[0] == num_rows
+            assert met_indexed.shape[1] == len(index)
             for i in range(num_rows):
                 for j, idx in enumerate(index):
                     assert torch.allclose(
@@ -264,7 +260,6 @@ def test_index_slice_list(device):
                     )
 
 
-# FIXME: Merge this test case with test_index
 @withCUDA
 def test_index_slice_range(device):
     num_rows = 8
@@ -281,7 +276,24 @@ def test_index_slice_range(device):
         assert met_indexed.shape[0] == num_rows
         assert met_indexed.shape[1] == len(index)
         for j, idx in enumerate(index):
-            assert_equal([tensor_list[j]], met_indexed[:, idx])
+            for i in range(num_rows):
+                assert torch.allclose(
+                    tensor_list[idx][i],
+                    met_indexed[i, j],
+                )
+
+
+@withCUDA
+def test_narrow(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    assert_equal(tensor_list[2:2 + 4], met.narrow(1, 2, 4))
+    assert_equal(row_select(tensor_list, slice(2, 2 + 4)), met.narrow(0, 2, 4))
 
 
 def test_clone():
