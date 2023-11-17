@@ -57,6 +57,10 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
     if has_nan:
         ser = ser.dropna()
 
+    # Categorical minimum counting threshold. If the count of the most minor
+    # categories is larger than this value, we treat the column as categorical.
+    cat_min_count_thresh = 4
+
     if isinstance(ser.iloc[0], list):
         # Candidates: embedding, sequence_numerical, multicategorical
 
@@ -100,7 +104,7 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                                                    (ser % 1 == 0).all()):
                 return stype.numerical
             else:
-                if _min_count(ser) > 4:
+                if _min_count(ser) > cat_min_count_thresh:
                     return stype.categorical
                 else:
                     return stype.numerical
@@ -112,15 +116,17 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized)
-            if _min_count(ser) > 4:
+            if _min_count(ser) > cat_min_count_thresh:
                 return stype.categorical
+
+            # Try different possible seps and mick the largest min_count.
             min_count_list = []
             for sep in POSSIBLE_SEPS:
                 min_count_list.append(
                     _min_count(
                         ser.apply(lambda row: MultiCategoricalTensorMapper.
                                   split_by_sep(row, sep)).explode()))
-            if max(min_count_list) > 4:
+            if max(min_count_list) > cat_min_count_thresh:
                 return stype.multicategorical
             else:
                 return stype.text_embedded
