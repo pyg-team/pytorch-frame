@@ -113,19 +113,10 @@ class TextToEmbedding:
             raise ValueError(f"{self.pooling} is not supported.")
 
 
-class TextTokenizer:
-    def __init__(self, model: str):
-        self.tokenizer = AutoTokenizer.from_pretrained(model)
-
-    def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
-        # Tokenize batches of sentences
-        return self.tokenizer(sentences, truncation=True, padding=True,
-                              return_tensors='pt')
-
-
-class TokenToEmbedding(torch.nn.Module):
-    r"""Convert tokens to embeddings with a text model, whose parameters
-    will also be finetuned during the tabular learning.
+class TextToEmbeddingFinetune(torch.nn.Module):
+    r"""Include converting text data to tokens and have :obj:`forward`
+    function convert tokens to embeddings with a text model, whose
+    parameters will also be finetuned along with the tabular learning.
 
     Args:
         model (str): Model name to load by using :obj:`transformers`,
@@ -138,6 +129,7 @@ class TokenToEmbedding(torch.nn.Module):
     """
     def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
         super().__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model)
 
         if lora:
@@ -179,6 +171,11 @@ class TokenToEmbedding(torch.nn.Module):
         # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
 
+    def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
+        # Tokenize batches of sentences
+        return self.tokenizer(sentences, truncation=True, padding=True,
+                              return_tensors='pt')
+
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
     input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
@@ -209,9 +206,9 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
 else:
-    text_tokenizer = TextTokenizer(model=args.model)
-    text_encoder = TokenToEmbedding(model=args.model, pooling=args.pooling,
-                                    lora=args.lora)
+    text_encoder = TextToEmbeddingFinetune(model=args.model,
+                                           pooling=args.pooling,
+                                           lora=args.lora)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearModelEncoder(in_channels=768,
                                             model=text_encoder)
@@ -219,7 +216,8 @@ else:
         "text_stype":
         text_stype,
         "text_tokenizer_cfg":
-        TextTokenizerConfig(text_tokenizer=text_tokenizer, batch_size=10000),
+        TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
+                            batch_size=10000),
     }
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
