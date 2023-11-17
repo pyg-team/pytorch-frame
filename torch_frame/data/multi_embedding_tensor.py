@@ -218,13 +218,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=self.offset,
             )
         elif dim == 1:
-            offset = torch.zeros(
-                length + 1,
-                dtype=torch.long,
-                device=self.device,
-            )
-            offset[1:] = self.offset[start + 1:start + 1 +
-                                     length] - self.offset[start]
+            offset = self.offset[start:start+length+1] - self.offset[start]
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
                 num_cols=length,
@@ -242,8 +236,10 @@ class MultiEmbeddingTensor(_MultiTensor):
         num_data = self.num_rows if dim == 0 else self.num_cols
         if index.step is not None and index.step > 1:
             idx = torch.tensor(
-                range(num_data)[index], device=self.device,
-                dtype=torch.long)  # mind peak mem usage
+                range(num_data)[index],
+                device=self.device,
+                dtype=torch.long,
+            )
             return self.index_select(idx, dim=dim)
         else:
             start_idx: int = self._normalize_index(index.start or 0, dim=dim)
