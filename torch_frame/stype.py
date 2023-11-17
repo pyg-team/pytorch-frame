@@ -43,7 +43,7 @@ class stype(Enum):
 
     @property
     def use_multi_embedding_tensor(self) -> bool:
-        r""" This property indicates if the data of an stype is stored in
+        r"""This property indicates if the data of an stype is stored in
         :class:`torch_frame.data.MultiNestedTensor`.
         """
         return self in [stype.embedding]
