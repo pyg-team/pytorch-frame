@@ -41,7 +41,7 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9788, Best Test Acc: 0.9739
 # ========== imdb_genre_prediction ==========
 # Best Val Acc: 0.7875, Best Test Acc: 0.6900
-# bookprice_prediction
+
 
 # Text Tokenized
 # distilbert-base-uncased + LoRA
