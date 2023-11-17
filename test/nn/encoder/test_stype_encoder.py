@@ -27,7 +27,7 @@ from torch_frame.testing.text_tokenizer import (
 )
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs', [(EmbeddingEncoder, {})])
+@pytest.mark.parametrize("encoder_cls_kwargs", [(EmbeddingEncoder, {})])
 def test_categorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
@@ -36,9 +36,12 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.categorical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.categorical,
+        **encoder_cls_kwargs[1],
+    )
     feat_cat = tensor_frame.feat_dict[stype.categorical]
     x = encoder(feat_cat)
     assert x.shape == (feat_cat.size(0), feat_cat.size(1), 8)
@@ -90,26 +93,32 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
     feat_num = tensor_frame.feat_dict[stype.numerical]
     x = encoder(feat_num)
     assert x.shape == (feat_num.size(0), feat_num.size(1), 8)
-    if 'post_module' in encoder_cls_kwargs[1]:
+    if "post_module" in encoder_cls_kwargs[1]:
         assert encoder.post_module is not None
     else:
         assert encoder.post_module is None
 
     # Perturb the first column
-    feat_num[:, 0] = feat_num[:, 0] + 10.
+    feat_num[:, 0] = feat_num[:, 0] + 10.0
     x_perturbed = encoder(feat_num)
     # Make sure other column embeddings are unchanged
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs',
-                         [(MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'mean'
-                         }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'sum'
-                         }), (MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'max'
-                         })])
+@pytest.mark.parametrize(
+    "encoder_cls_kwargs",
+    [
+        (MultiCategoricalEmbeddingEncoder, {
+            "mode": "mean"
+        }),
+        (MultiCategoricalEmbeddingEncoder, {
+            "mode": "sum"
+        }),
+        (MultiCategoricalEmbeddingEncoder, {
+            "mode": "max"
+        }),
+    ],
+)
 def test_multicategorical_feature_encoder(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10,
                                    stypes=[stype.multicategorical],
@@ -120,9 +129,12 @@ def test_multicategorical_feature_encoder(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.multicategorical]
     ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.multicategorical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.multicategorical,
+        **encoder_cls_kwargs[1],
+    )
     feat_multicat = tensor_frame.feat_dict[stype.multicategorical]
     x = encoder(feat_multicat)
     assert x.shape == (feat_multicat.size(0), feat_multicat.size(1), 8)
@@ -150,9 +162,12 @@ def test_categorical_feature_encoder_with_nan(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.categorical]
     ]
 
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.categorical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.categorical,
+        **encoder_cls_kwargs[1],
+    )
     feat_cat = tensor_frame.feat_dict[stype.categorical]
     isnan_mask = feat_cat == -1
     x = encoder(feat_cat)
@@ -192,11 +207,16 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert feat_num[isnan_mask].isnan().all()
 
 
-@pytest.mark.parametrize('encoder_cls_kwargs',
-                         [(MultiCategoricalEmbeddingEncoder, {
-                             'mode': 'mean',
-                             'na_strategy': NAStrategy.ZEROS
-                         })])
+@pytest.mark.parametrize(
+    "encoder_cls_kwargs",
+    [(
+        MultiCategoricalEmbeddingEncoder,
+        {
+            "mode": "mean",
+            "na_strategy": NAStrategy.ZEROS
+        },
+    )],
+)
 def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10,
                                    stypes=[stype.multicategorical],
@@ -209,9 +229,12 @@ def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
         for col_name in tensor_frame.col_names_dict[stype.multicategorical]
     ]
 
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.multicategorical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.multicategorical,
+        **encoder_cls_kwargs[1],
+    )
     feat_multicat = tensor_frame.feat_dict[stype.multicategorical]
     isnan_mask = feat_multicat.values == -1
     x = encoder(feat_multicat)
@@ -243,15 +266,18 @@ def test_text_embedded_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
-    encoder = LinearEmbeddingEncoder(out_channels=out_channels,
-                                     stats_list=stats_list,
-                                     stype=stype.text_embedded,
-                                     in_channels=text_emb_channels)
+    encoder = LinearEmbeddingEncoder(
+        out_channels=out_channels,
+        stats_list=stats_list,
+        stype=stype.text_embedded,
+    )
     x_text = tensor_frame.feat_dict[stype.text_embedded]
     x = encoder(x_text)
-    assert x.shape == (num_rows,
-                       len(tensor_frame.col_names_dict[stype.text_embedded]),
-                       out_channels)
+    assert x.shape == (
+        num_rows,
+        len(tensor_frame.col_names_dict[stype.text_embedded]),
+        out_channels,
+    )
 
 
 def test_text_tokenized_encoder():
@@ -268,7 +294,9 @@ def test_text_tokenized_encoder():
         ],
         text_tokenizer_cfg=TextTokenizerConfig(
             text_tokenizer=WhiteSpaceHashTokenizer(
-                num_hash_bins=num_hash_bins), batch_size=None),
+                num_hash_bins=num_hash_bins),
+            batch_size=None,
+        ),
     )
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
@@ -278,7 +306,8 @@ def test_text_tokenized_encoder():
     ]
     model = RandomTextModel(
         text_emb_channels=text_emb_channels,
-        num_cols=len(tensor_frame.col_names_dict[stype.text_tokenized]))
+        num_cols=len(tensor_frame.col_names_dict[stype.text_tokenized]),
+    )
     encoder = LinearModelEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
@@ -288,6 +317,8 @@ def test_text_tokenized_encoder():
     )
     x_text = tensor_frame.feat_dict[stype.text_tokenized]
     x = encoder(x_text)
-    assert x.shape == (num_rows,
-                       len(tensor_frame.col_names_dict[stype.text_tokenized]),
-                       out_channels)
+    assert x.shape == (
+        num_rows,
+        len(tensor_frame.col_names_dict[stype.text_tokenized]),
+        out_channels,
+    )

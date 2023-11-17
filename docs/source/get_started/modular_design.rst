@@ -44,7 +44,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding `stype.numerical
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder(in_channels=768),
+        stype.text_embedded: LinearEmbeddingEncoder(),
     }
 
     encoder = StypeWiseFeatureEncoder(
