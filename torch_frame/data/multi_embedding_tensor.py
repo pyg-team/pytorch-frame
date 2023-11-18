@@ -38,8 +38,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     """
     def validate(self):
         assert self.offset[0] == 0
-        assert len(
-            self.offset) == self.num_cols + 1 or self.values.numel() == 0
+        assert len(self.offset) == self.num_cols + 1
         assert self.offset.ndim == 1
         assert self.values.ndim == 2 or self.values.numel() == 0
 
@@ -208,7 +207,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 num_rows=0 if dim == 0 else self.num_rows,
                 num_cols=0 if dim == 1 else self.num_cols,
                 values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device),
+                offset=torch.tensor([0], device=self.device) if dim == 1 else self.offset,
             )
 
         elif dim == 0:
