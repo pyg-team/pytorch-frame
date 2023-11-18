@@ -207,7 +207,8 @@ class MultiEmbeddingTensor(_MultiTensor):
                 num_rows=0 if dim == 0 else self.num_rows,
                 num_cols=0 if dim == 1 else self.num_cols,
                 values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device) if dim == 1 else self.offset,
+                offset=torch.tensor([0], device=self.device)
+                if dim == 1 else self.offset,
             )
 
         elif dim == 0:
