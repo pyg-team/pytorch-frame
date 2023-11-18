@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -19,6 +20,15 @@ from tqdm import tqdm
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
+
+
+def _get_default_numpy_dtype() -> np.dtype:
+    r"""Returns the default numpy dtype."""
+    # NOTE: We are converting the default PyTorch dtype into a string
+    # representation that can be understood by numpy.
+    # TODO: Think of a "less hacky" way to do this.
+    dtype = str(torch.get_default_dtype()).split('.')[-1]
+    return np.dtype(dtype)
 
 
 class TensorMapper(ABC):
@@ -54,10 +64,7 @@ class NumericalTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        # NOTE We are converting the default PyTorch dtype into a string
-        # representation that can be understood by numpy.
-        # TODO Think of a "less hacky" way to do this.
-        dtype = str(torch.get_default_dtype()).split('.')[-1]
+        dtype = _get_default_numpy_dtype()
         value = ser.values.astype(dtype)
         return torch.from_numpy(value).to(device)
 
@@ -406,12 +413,8 @@ class EmbeddingTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> MultiEmbeddingTensor:
-        # NOTE We are converting the default PyTorch dtype into a string
-        # representation that can be understood by numpy.
-        # TODO Think of a "less hacky" way to do this.
-        dtype = str(torch.get_default_dtype()).split('.')[-1]
-        values = ser.explode().astype(dtype).values
-        values = torch.from_numpy(values).view(len(ser), -1)
+        dtype = _get_default_numpy_dtype()
+        values = torch.from_numpy(np.stack(ser.values).astype(dtype))
         return MultiEmbeddingTensor(
             num_rows=len(ser),
             num_cols=1,

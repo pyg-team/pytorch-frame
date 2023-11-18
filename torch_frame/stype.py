@@ -32,7 +32,6 @@ class stype(Enum):
     text_tokenized = 'text_tokenized'
     multicategorical = 'multicategorical'
     sequence_numerical = 'sequence_numerical'
-    embedding = 'embedding'
     timestamp = 'timestamp'
     embedding = 'embedding'
 
@@ -68,6 +67,5 @@ text_embedded = stype('text_embedded')
 text_tokenized = stype('text_tokenized')
 multicategorical = stype('multicategorical')
 sequence_numerical = stype('sequence_numerical')
-embedding = stype('embedding')
 timestamp = stype('timestamp')
 embedding = stype('embedding')

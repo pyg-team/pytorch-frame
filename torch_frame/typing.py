@@ -5,7 +5,7 @@ import pandas as pd
 from torch import Tensor
 
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
-from torch_frame.data.multi_tensor import _MultiTensor
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 
 
 class TaskType(Enum):
@@ -67,4 +67,9 @@ ColumnSelectType = Union[str, List[str]]
 TextTokenizationMapping = Mapping[str, Tensor]
 TextTokenizationOutputs = Union[List[TextTokenizationMapping],
                                 TextTokenizationMapping]
-TensorData = Union[Tensor, _MultiTensor, Dict[str, MultiNestedTensor]]
+TensorData = Union[
+    Tensor,
+    MultiNestedTensor,
+    MultiEmbeddingTensor,
+    Dict[str, MultiNestedTensor],
+]
