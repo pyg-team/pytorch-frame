@@ -29,4 +29,4 @@ class HashTextEmbedder:
         idx = torch.LongTensor(
             [hash(s) % self.num_hash_bins for s in sentences],
             device=self.device)
-        return self.embedding(idx)
+        return self.embedding(idx).detach()
