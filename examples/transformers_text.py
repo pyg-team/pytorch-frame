@@ -23,6 +23,7 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
+    MultiCategoricalEmbeddingEncoder,
 )
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
@@ -34,6 +35,12 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9155, Best Test Acc: 0.8885
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9470, Best Test Acc: 0.9488
+# =============== news_channel ==============
+# Best Val Acc: 0.5010, Best Test Acc: 0.4847
+# ============ fake_job_postings2 ===========
+# Best Val Acc: 0.9788, Best Test Acc: 0.9739
+# ========== imdb_genre_prediction ==========
+# Best Val Acc: 0.7875, Best Test Acc: 0.6900
 
 # Text Tokenized
 # distilbert-base-uncased + LoRA
@@ -43,6 +50,12 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.9096, Best Test Acc: 0.8908
 # ======== jigsaw_unintended_bias100K =======
 # Best Val Acc: 0.9672, Best Test Acc: 0.9644
+# =============== news_channel ==============
+# Best Val Acc: 0.5039, Best Test Acc: 0.4918
+# ============ fake_job_postings2 ===========
+# Best Val Acc: 0.9788, Best Test Acc: 0.9736
+# ========== imdb_genre_prediction ==========
+# Best Val Acc: 0.8125, Best Test Acc: 0.7150
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="wine_reviews")
@@ -100,19 +113,11 @@ class TextToEmbedding:
             raise ValueError(f"{self.pooling} is not supported.")
 
 
-class TextTokenizer:
-    def __init__(self, model: str):
-        self.tokenizer = AutoTokenizer.from_pretrained(model)
-
-    def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
-        # Tokenize batches of sentences
-        return self.tokenizer(sentences, truncation=True, padding=True,
-                              return_tensors='pt')
-
-
-class TokenToEmbedding(torch.nn.Module):
-    r"""Convert tokens to embeddings with a text model, whose parameters
-    will also be finetuned during the tabular learning.
+class TextToEmbeddingFinetune(torch.nn.Module):
+    r"""Include :obj:`tokenize` that converts text data to tokens, and
+    :obj:`forward` function that converts tokens to embeddings with a
+    text model, whose parameters will also be finetuned along with the
+    tabular learning.
 
     Args:
         model (str): Model name to load by using :obj:`transformers`,
@@ -125,6 +130,7 @@ class TokenToEmbedding(torch.nn.Module):
     """
     def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
         super().__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model)
 
         if lora:
@@ -166,6 +172,11 @@ class TokenToEmbedding(torch.nn.Module):
         # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
 
+    def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
+        # Tokenize batches of sentences
+        return self.tokenizer(sentences, truncation=True, padding=True,
+                              return_tensors='pt')
+
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
     input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
@@ -196,9 +207,9 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
 else:
-    text_tokenizer = TextTokenizer(model=args.model)
-    text_encoder = TokenToEmbedding(model=args.model, pooling=args.pooling,
-                                    lora=args.lora)
+    text_encoder = TextToEmbeddingFinetune(model=args.model,
+                                           pooling=args.pooling,
+                                           lora=args.lora)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearModelEncoder(in_channels=768,
                                             model=text_encoder)
@@ -206,12 +217,14 @@ else:
         "text_stype":
         text_stype,
         "text_tokenizer_cfg":
-        TextTokenizerConfig(text_tokenizer=text_tokenizer, batch_size=10000),
+        TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
+                            batch_size=10000),
     }
 
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, **kwargs)
 
-filename = f"{args.model}_{text_stype.value}_data.pt"
+model_name = args.model.replace('/', '')
+filename = f"{model_name}_{text_stype.value}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
@@ -233,6 +246,7 @@ stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
     text_stype: text_stype_encoder,
+    stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
 }
 
 if is_classification:

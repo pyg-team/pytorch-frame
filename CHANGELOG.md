@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added auto-inference of `stype` ([#221](https://github.com/pyg-team/pytorch-frame/pull/221))
 - Enabled `list` input in `multicategorical` stype ([#224](https://github.com/pyg-team/pytorch-frame/pull/224))
 - Added `Timestamp` stype ([#212](https://github.com/pyg-team/pytorch-frame/pull/212))
 - Added `multicategorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
