@@ -116,7 +116,7 @@ class MultiNestedTensor(_MultiTensor):
         if isinstance(index, tuple):
             # index[0] for row indexing, index[1] for column indexing
             assert len(index) == 2
-            if isinstance(index[0], int) and isinstance(index[1], int):
+            if all(isinstance(idx, int) for idx in index):
                 # Returns Tensor
                 return self._get_value(index[0], index[1])
             else:

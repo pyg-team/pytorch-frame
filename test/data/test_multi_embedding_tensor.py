@@ -28,20 +28,16 @@ def row_select(
     """Selects rows from a list of column tensors.
 
     Args:
-        tensor_list (list[torch.Tensor]): a list of tensors of size
+        tensor_list (list[torch.Tensor]): A list of tensors of size
             [num_rows, dim_emb_j].
-        index (Union[List[int], slice]): a list of row indices or a slice to
+        index (Union[list[int], slice]): A list of row indices or a slice to
             apply to each tensor in tensor_list.
 
     Returns:
         List[torch.Tensor]: new_tensor_list is a list of tensors of size
             [num_rows_indexed, dim_emb_j].
     """
-    new_tensor_list = []
-    for col_tensor in tensor_list:
-        new_col_tensor = col_tensor[index]
-        new_tensor_list.append(new_col_tensor)
-    return new_tensor_list
+    return [col_tensor[index] for col_tensor in tensor_list]
 
 
 def get_fake_multi_embedding_tensor(
