@@ -191,7 +191,7 @@ class TensorFrame:
                 if not isinstance(other_feat, MultiEmbeddingTensor):
                     return False
                 if not MultiEmbeddingTensor.allclose(self_feat, other_feat,
-                                                  equal_nan=True):
+                                                     equal_nan=True):
                     return False
             elif isinstance(self_feat, dict):
                 if not isinstance(other_feat, dict):

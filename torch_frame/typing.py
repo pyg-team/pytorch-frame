@@ -4,8 +4,8 @@ from typing import Dict, List, Mapping, Union
 import pandas as pd
 from torch import Tensor
 
-from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 
 
 class TaskType(Enum):
