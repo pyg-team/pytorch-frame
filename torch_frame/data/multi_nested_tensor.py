@@ -1,9 +1,9 @@
-from typing import Any, List, Sequence, Tuple, Union
+from typing import Any, List, Sequence, Union
 
 import torch
 from torch import Tensor
 
-from torch_frame.data.multi_tensor import _MultiTensor
+from torch_frame.data.multi_tensor import _batched_arange, _MultiTensor
 
 
 class MultiNestedTensor(_MultiTensor):
@@ -487,32 +487,3 @@ class MultiNestedTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
-
-
-def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
-    r"""Fast implementation of batched version of :meth:`torch.arange`.
-    It essentially does the following.
-
-    .. code-block:: python
-
-        batch = torch.cat([torch.full((c,), i) for i, c in enumerate(count)])
-        arange = torch.cat([torch.arange(c) for c in count])
-
-    Args:
-        count (Tensor): The count vectors.
-
-    Returns:
-        batch (Tensor): batch[i] indicates the batch index of
-            _batched_arange[i]
-        arange (Tensor): batched version of arange
-    """
-    ptr = count.new_zeros(count.numel() + 1)
-    torch.cumsum(count, dim=0, out=ptr[1:])
-
-    batch = torch.arange(count.numel(), device=count.device).repeat_interleave(
-        count, output_size=ptr[-1])  # type: ignore
-
-    arange = torch.arange(batch.numel(), device=count.device)
-    arange -= ptr[batch]
-
-    return batch, arange

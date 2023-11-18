@@ -3,7 +3,7 @@ from typing import Any, List, Sequence, Union
 import torch
 from torch import Tensor
 
-from torch_frame.data.multi_tensor import _MultiTensor
+from torch_frame.data.multi_tensor import _batched_arange, _MultiTensor
 
 
 class MultiEmbeddingTensor(_MultiTensor):
@@ -301,15 +301,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         col_dims = self.offset[1:] - self.offset[:-1]
         new_col_dims = col_dims[index]
         torch.cumsum(new_col_dims, dim=0, out=offset[1:])
-        value_index = [
-            torch.arange(
-                self.offset[i],
-                self.offset[i + 1],
-                dtype=torch.long,
-                device=self.device,
-            ) for i in index
-        ]
-        value_index = torch.cat(value_index, dim=0)
+        batch, arange = _batched_arange(new_col_dims)
+        value_index = self.offset[index][batch] + arange
         return MultiEmbeddingTensor(
             num_rows=self.num_rows,
             num_cols=index.size(0),
@@ -331,11 +324,11 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=self.offset,
             )
         elif dim == 1:
+            value_index = slice(self.offset[index], self.offset[index + 1])
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
                 num_cols=1,
-                values=self.values[:,
-                                   self.offset[index]:self.offset[index + 1]],
+                values=self.values[:, value_index],
                 offset=self.offset[[0, index + 1]],
             )
 
