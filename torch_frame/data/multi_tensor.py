@@ -188,3 +188,40 @@ class _MultiTensor:
                               equal_nan=equal_nan):
             return False
         return True
+
+
+def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
+    r"""Fast implementation of batched version of :meth:`torch.arange`.
+    It essentially does the following.
+
+    .. code-block:: python
+
+        batch = torch.cat([torch.full((c,), i) for i, c in enumerate(count)])
+        arange = torch.cat([torch.arange(c) for c in count])
+
+    Args:
+        count (Tensor): The count vectors.
+
+    Returns:
+        batch (Tensor): batch[i] indicates the batch index of
+            _batched_arange[i]
+        arange (Tensor): batched version of arange
+
+    Example:
+        >>> count = torch.tensor([3, 2, 4])
+        >>> batch, arange = _batched_arange(count)
+        >>> batch
+        tensor([0, 0, 0, 1, 1, 2, 2, 2, 2])
+        >>> arange
+        tensor([0, 1, 2, 0, 1, 0, 1, 2, 3])
+    """
+    ptr = count.new_zeros(count.numel() + 1)
+    torch.cumsum(count, dim=0, out=ptr[1:])
+
+    batch = torch.arange(count.numel(), device=count.device).repeat_interleave(
+        count, output_size=ptr[-1])  # type: ignore
+
+    arange = torch.arange(batch.numel(), device=count.device)
+    arange -= ptr[batch]
+
+    return batch, arange
