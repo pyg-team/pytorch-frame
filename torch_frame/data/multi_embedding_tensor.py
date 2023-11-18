@@ -325,11 +325,18 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         elif dim == 1:
             value_index = slice(self.offset[index], self.offset[index + 1])
+            values = self.values[:, value_index]
+            offset_list = [0, self.offset[index + 1] - self.offset[index]]
+            offset = torch.tensor(
+                offset_list,
+                dtype=torch.long,
+                device=self.device,
+            )
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
                 num_cols=1,
-                values=self.values[:, value_index],
-                offset=self.offset[[0, index + 1]],
+                values=values,
+                offset=offset,
             )
 
     @staticmethod
