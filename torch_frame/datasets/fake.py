@@ -156,6 +156,13 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.text_tokenized
+        if stype.embedding in stypes:
+            for col_name in ['emb_1', 'emb_2']:
+                emb_dim = random.randint(1, 5)
+                emb = [random.random() for _ in range(emb_dim)]
+                emb = [emb for _ in range(num_rows)]
+                df_dict[col_name] = emb
+                col_to_stype[col_name] = stype.embedding
         if stype.timestamp in stypes:
             start_date = datetime(2000, 1, 1)
             end_date = datetime(2023, 1, 1)

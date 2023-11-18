@@ -1,7 +1,15 @@
 r"""Utility package."""
-from .stype import (stype, numerical, categorical, text_embedded,
-                    text_tokenized, multicategorical, sequence_numerical,
-                    timestamp)
+from .stype import (
+    stype,
+    numerical,
+    categorical,
+    text_embedded,
+    text_tokenized,
+    multicategorical,
+    sequence_numerical,
+    timestamp,
+    embedding,
+)
 from .data import TensorFrame
 from .typing import TaskType, DataFrame, NAStrategy
 from torch_frame.utils import save, load, cat  # noqa
@@ -22,6 +30,7 @@ __all__ = [
     'multicategorical',
     'sequence_numerical',
     'timestamp',
+    'embedding',
     'TaskType',
     'NAStrategy',
     'TensorFrame',

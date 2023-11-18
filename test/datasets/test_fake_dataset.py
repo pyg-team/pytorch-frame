@@ -4,7 +4,8 @@ import torch
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
-from torch_frame.data import MultiNestedTensor
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.datasets import FakeDataset
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
@@ -26,6 +27,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
             torch_frame.sequence_numerical,
             torch_frame.text_embedded,
             torch_frame.text_tokenized,
+            torch_frame.embedding,
         ],
         create_split=True,
         text_embedder_cfg=TextEmbedderConfig(
@@ -54,6 +56,8 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
         'text_embedded_2',
         'text_tokenized_1',
         'text_tokenized_2',
+        'emb_1',
+        'emb_2',
     ]
     assert dataset.target_col == 'target'
 
@@ -102,6 +106,9 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
         fill_value=0).shape == (num_rows, 2, 2)
     assert feat_text_tokenized['attention_mask'].to_dense(
         fill_value=False).shape == (num_rows, 2, 2)
+
+    feat_emb = tensor_frame.feat_dict[torch_frame.embedding]
+    assert isinstance(feat_emb, MultiEmbeddingTensor)
 
     # Test dataset split
     train_dataset, val_dataset, test_dataset = dataset.split()

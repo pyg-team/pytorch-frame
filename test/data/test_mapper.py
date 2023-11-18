@@ -4,12 +4,14 @@ import torch
 
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
+    EmbeddingTensorMapper,
     MultiCategoricalTensorMapper,
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TextEmbeddingTensorMapper,
     TimestampTensorMapper,
 )
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
@@ -120,3 +122,14 @@ def test_text_embedding_tensor_mapper():
     mapper.batch_size = None
     emb2 = mapper.forward(ser)
     assert torch.allclose(emb, emb2)
+
+
+def test_embedding_tensor_mapper():
+    emb_list = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
+    ser = pd.Series(emb_list)
+    mapper = EmbeddingTensorMapper()
+    out = mapper.forward(ser)
+    expected = MultiEmbeddingTensor.from_tensor_list([torch.tensor(emb_list)])
+    assert MultiEmbeddingTensor.allclose(out, expected)
+    out = mapper.backward(out)
+    pd.testing.assert_series_equal(out, ser)

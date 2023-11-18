@@ -17,3 +17,5 @@ def test_stype():
     assert torch_frame.text_embedded.is_text_stype
     assert torch_frame.text_tokenized == torch_frame.stype('text_tokenized')
     assert torch_frame.text_tokenized.is_text_stype
+    assert torch_frame.embedding == torch_frame.stype('embedding')
+    assert torch_frame.embedding.use_multi_embedding_tensor
