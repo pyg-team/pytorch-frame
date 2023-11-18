@@ -209,6 +209,28 @@ def test_index_slice(device):
 
 
 @withCUDA
+def test_index_slice_int(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [:, int] indexing
+    for index in [4, 2, -4, 1, 7, 3, -7, 1, 0]:
+        met_indexed = met[:, index]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == num_rows
+        assert met_indexed.shape[1] == 1
+        for i in range(num_rows):
+            assert torch.allclose(
+                tensor_list[index][i],
+                met_indexed[i, 0],
+            )
+
+
+@withCUDA
 def test_index_slice_slice(device):
     num_rows = 8
     num_cols = 10
