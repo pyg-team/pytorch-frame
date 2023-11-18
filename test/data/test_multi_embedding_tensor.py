@@ -28,20 +28,16 @@ def row_select(
     """Selects rows from a list of column tensors.
 
     Args:
-        tensor_list (list[torch.Tensor]): a list of tensors of size
+        tensor_list (list[torch.Tensor]): A list of tensors of size
             [num_rows, dim_emb_j].
-        index (Union[List[int], slice]): a list of row indices or a slice to
+        index (Union[list[int], slice]): A list of row indices or a slice to
             apply to each tensor in tensor_list.
 
     Returns:
         List[torch.Tensor]: new_tensor_list is a list of tensors of size
             [num_rows_indexed, dim_emb_j].
     """
-    new_tensor_list = []
-    for col_tensor in tensor_list:
-        new_col_tensor = col_tensor[index]
-        new_tensor_list.append(new_col_tensor)
-    return new_tensor_list
+    return [col_tensor[index] for col_tensor in tensor_list]
 
 
 def get_fake_multi_embedding_tensor(
@@ -210,6 +206,28 @@ def test_index_slice(device):
     empty_met = met[5:3]
     assert empty_met.shape[0] == 0
     assert empty_met.shape[1] == num_cols
+
+
+@withCUDA
+def test_index_slice_int(device):
+    num_rows = 8
+    num_cols = 10
+    met, tensor_list = get_fake_multi_embedding_tensor(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        device=device,
+    )
+    # Test [:, int] indexing
+    for index in [4, 2, -4, 1, 7, 3, -7, 1, 0]:
+        met_indexed = met[:, index]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == num_rows
+        assert met_indexed.shape[1] == 1
+        for i in range(num_rows):
+            assert torch.allclose(
+                tensor_list[index][i],
+                met_indexed[i, 0],
+            )
 
 
 @withCUDA

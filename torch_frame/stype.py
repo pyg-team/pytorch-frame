@@ -19,9 +19,11 @@ class stype(Enum):
     Attributes:
         numerical: Numerical columns.
         categorical: Categorical columns.
-        multicategorical: Multicategorical columns.
         text_embedded: Pre-computed embeddings of text columns.
         text_tokenized: Tokenized text columns for finetuning.
+        multicategorical: Multicategorical columns.
+        sequence_numerical: Sequence of numerical values.
+        embedding: Embedding column.
         timestamp: Timestamp columns.
     """
     numerical = 'numerical'
@@ -30,6 +32,7 @@ class stype(Enum):
     text_tokenized = 'text_tokenized'
     multicategorical = 'multicategorical'
     sequence_numerical = 'sequence_numerical'
+    embedding = 'embedding'
     timestamp = 'timestamp'
     embedding = 'embedding'
 
@@ -65,5 +68,6 @@ text_embedded = stype('text_embedded')
 text_tokenized = stype('text_tokenized')
 multicategorical = stype('multicategorical')
 sequence_numerical = stype('sequence_numerical')
+embedding = stype('embedding')
 timestamp = stype('timestamp')
 embedding = stype('embedding')

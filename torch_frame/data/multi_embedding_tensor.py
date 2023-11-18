@@ -38,8 +38,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     """
     def validate(self):
         assert self.offset[0] == 0
-        assert len(
-            self.offset) == self.num_cols + 1 or self.values.numel() == 0
+        assert len(self.offset) == self.num_cols + 1
         assert self.offset.ndim == 1
         assert self.values.ndim == 2 or self.values.numel() == 0
 
@@ -103,7 +102,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     ) -> Union["MultiEmbeddingTensor", Tensor]:
         if isinstance(index, tuple):
             assert len(index) == 2
-            if isinstance(index[0], int) and isinstance(index[1], int):
+            if all(isinstance(idx, int) for idx in index):
                 i = self._normalize_index(index[0], dim=0)
                 j = self._normalize_index(index[1], dim=1)
                 return self.values[i, self.offset[j]:self.offset[j + 1]]
@@ -117,14 +116,15 @@ class MultiEmbeddingTensor(_MultiTensor):
 
     def select(
         self,
-        index: Union[int, Tensor, List[int], slice, range],
+        index: Union[int, Tensor, Sequence[int], slice, range],
         dim: int,
     ) -> "MultiEmbeddingTensor":
         """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
         :class:`MultiEmbeddingTensor` along the specified dimension.
 
         Args:
-            index (Union[int, Tensor, List[int], slice]): An index to select.
+            index (Union[int, Tensor, Sequence[int], slice, range]): An index
+                to select.
             dim (int): The dimension to index in.
 
         Returns:
@@ -207,7 +207,8 @@ class MultiEmbeddingTensor(_MultiTensor):
                 num_rows=0 if dim == 0 else self.num_rows,
                 num_cols=0 if dim == 1 else self.num_cols,
                 values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device),
+                offset=torch.tensor([0], device=self.device)
+                if dim == 1 else self.offset,
             )
 
         elif dim == 0:
