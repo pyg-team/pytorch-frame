@@ -75,8 +75,11 @@ class TensorFrame:
 
     def validate(self):
         r"""Validates the :class:`TensorFrame` object."""
+        if len(self.feat_dict) == 0:
+            raise ValueError("feat_dict should not be empty.")
+
         if self.feat_dict.keys() != self.col_names_dict.keys():
-            raise RuntimeError(
+            raise ValueError(
                 f"The keys of feat_dict and col_names_dict must be the same, "
                 f"but got {self.feat_dict.keys()} for feat_dict and "
                 f"{self.col_names_dict.keys()} for col_names_dict.")

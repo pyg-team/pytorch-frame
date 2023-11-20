@@ -96,7 +96,7 @@ def test_empty_tensor_frame():
     col_names_dict = {
         torch_frame.numerical: ['num_1', 'num_2'],
     }
-    with pytest.raises(RuntimeError, match='The keys of feat_dict'):
+    with pytest.raises(ValueError, match='The keys of feat_dict'):
         TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
 
 
