@@ -26,7 +26,6 @@ class HashTextEmbedder:
         self.embedding = Embedding(num_hash_bins, out_channels).to(device)
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        idx = torch.LongTensor(
-            [hash(s) % self.num_hash_bins for s in sentences],
-            device=self.device)
+        idx = torch.tensor([hash(s) % self.num_hash_bins for s in sentences],
+                           device=self.device)
         return self.embedding(idx).detach()

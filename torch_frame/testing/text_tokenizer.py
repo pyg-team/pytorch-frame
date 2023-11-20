@@ -35,8 +35,7 @@ class WhiteSpaceHashTokenizer:
         attention_mask = []
         for s in sentences:
             tokens = s.split(' ')
-            idx = torch.LongTensor(
-                [hash(t) % self.num_hash_bins for t in tokens])
+            idx = torch.tensor([hash(t) % self.num_hash_bins for t in tokens])
             input_ids.append(idx)
             attention_mask.append(torch.ones(idx.shape, dtype=torch.bool))
 

@@ -93,7 +93,7 @@ class MultiEmbeddingTensor(_MultiTensor):
 
         num_cols = len(tensor_list)
         values = torch.cat(tensor_list, dim=1)
-        offset = torch.LongTensor(offset_list)
+        offset = torch.tensor(offset_list, device=values.device)
         return cls(num_rows, num_cols, values, offset)
 
     def __getitem__(
@@ -420,5 +420,5 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset_list.extend(x.offset[1:] + offset_list[-1])
             # NOTE: offset is a data copy of the input's offset,
             # which is inconsistent with when dim=0
-            offset = torch.LongTensor(offset_list)
+            offset = torch.tensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
