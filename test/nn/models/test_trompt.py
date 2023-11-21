@@ -1,9 +1,12 @@
+import pytest
+
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import Trompt
 
 
-def test_trompt():
+@pytest.mark.parametrize('batch_size', [0, 5])
+def test_trompt(batch_size):
     batch_size = 10
     channels = 8
     out_channels = 1
@@ -11,7 +14,7 @@ def test_trompt():
     num_layers = 6
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
-    tensor_frame = dataset.tensor_frame
+    tensor_frame = dataset.tensor_frame[:batch_size]
     model = Trompt(
         channels=channels,
         out_channels=out_channels,

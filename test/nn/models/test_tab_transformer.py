@@ -8,8 +8,8 @@ from torch_frame.nn import TabTransformer
 
 @pytest.mark.parametrize('stypes', [[stype.categorical, stype.numerical],
                                     [stype.categorical], [stype.numerical]])
-def test_tab_transformer(stypes):
-    batch_size = 10
+@pytest.mark.parametrize('batch_size', [0, 5])
+def test_tab_transformer(stypes, batch_size):
     channels = 8
     out_channels = 1
     num_layers = 3
@@ -17,7 +17,7 @@ def test_tab_transformer(stypes):
     encoder_pad_size = 2
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False, stypes=stypes)
     dataset.materialize()
-    tensor_frame = dataset.tensor_frame
+    tensor_frame = dataset.tensor_frame[:batch_size]
     model = TabTransformer(
         channels=channels,
         out_channels=out_channels,
