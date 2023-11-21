@@ -1,6 +1,6 @@
+import math
 from typing import Any, Dict, List
 
-import math
 import torch
 from torch import Tensor
 from torch.nn import (
