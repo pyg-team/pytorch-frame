@@ -155,9 +155,9 @@ class TabNet(Module):
         """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
-        batch_size = x.size(0)
+        batch_size = x.shape[0]
         # [batch_size, num_cols * cat_emb_channels]
-        x = x.view(batch_size, x.size(1) * x.size(2))
+        x = x.view(batch_size, math.prod(x.shape[1:]))
         x = self.bn(x)
 
         # [batch_size, num_cols * cat_emb_channels]
