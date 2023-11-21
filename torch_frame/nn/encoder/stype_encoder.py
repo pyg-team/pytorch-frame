@@ -572,7 +572,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any pre-encoded embeddings, including image/audio/graph
     # embeddings.
-    supported_stypes = {stype.text_embedded}
+    supported_stypes = {stype.text_embedded, stype.embedding}
 
     def __init__(
         self,
@@ -636,7 +636,7 @@ class LinearModelEncoder(StypeEncoder):
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
-    supported_stypes = {stype.text_tokenized}
+    supported_stypes = {stype.text_tokenized, stype.embedding}
 
     def __init__(
         self,

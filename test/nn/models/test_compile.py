@@ -10,7 +10,7 @@ from torch_frame.nn.models import (
     TabTransformer,
     Trompt,
 )
-from torch_frame.stype import stype
+import torch_frame
 from torch_frame.testing import withPackage
 
 
@@ -60,7 +60,7 @@ from torch_frame.testing import withPackage
         pytest.param(
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
-            [stype.numerical],
+            [torch_frame.numerical],
             4,
             id="ExcelFormer",
         ),
@@ -77,7 +77,7 @@ def test_compile_graph_break(
     dataset = FakeDataset(
         num_rows=10,
         with_nan=False,
-        stypes=stypes or [stype.categorical, stype.numerical],
+        stypes=stypes or [torch_frame.categorical, torch_frame.numerical],
     )
     dataset.materialize()
     tf = dataset.tensor_frame

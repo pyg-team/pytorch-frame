@@ -7,7 +7,7 @@ from torch_frame import TaskType
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.nn import ExcelFormer
-from torch_frame.stype import stype
+import torch_frame
 
 
 @pytest.mark.parametrize('task_type', [
@@ -21,7 +21,7 @@ def test_excelformer(task_type, batch_size):
     num_heads = 2
     num_layers = 6
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False,
-                                   stypes=[stype.numerical],
+                                   stypes=[torch_frame.numerical],
                                    task_type=task_type)
     dataset.materialize()
     if task_type.is_classification:
@@ -46,11 +46,11 @@ def test_excelformer(task_type, batch_size):
     assert out.shape == (batch_size, out_channels)
 
     # Test the mixup forward pass
-    feat_num = copy.copy(tensor_frame.feat_dict[stype.numerical])
+    feat_num = copy.copy(tensor_frame.feat_dict[torch_frame.numerical])
     out_mixedup, y_mixedup = model.forward_mixup(tensor_frame)
     assert out_mixedup.shape == (batch_size, out_channels)
     # Make sure the numerical feature is not modified.
-    assert torch.allclose(feat_num, tensor_frame.feat_dict[stype.numerical])
+    assert torch.allclose(feat_num, tensor_frame.feat_dict[torch_frame.numerical])
 
     if task_type.is_classification:
         assert y_mixedup.shape == (batch_size, out_channels)

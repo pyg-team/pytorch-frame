@@ -220,7 +220,7 @@ class DataFrameToTensorFrameConverter:
             return EmbeddingTensorMapper()
         else:
             raise NotImplementedError(f"Unable to process the semantic "
-                                      f"type '{stype.value}'")
+                                      f"type '{stype}'")
 
     def __call__(
         self,

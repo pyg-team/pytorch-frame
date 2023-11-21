@@ -5,7 +5,7 @@ import pandas as pd
 import pandas.api.types as ptypes
 from dateutil.parser import ParserError
 
-from torch_frame import stype
+import torch_frame
 from torch_frame.data.mapper import MultiCategoricalTensorMapper
 from torch_frame.typing import DataFrame, Series
 
@@ -41,7 +41,7 @@ def _min_count(ser: Series) -> int:
     return ser.value_counts().min()
 
 
-def infer_series_stype(ser: Series) -> Optional[stype]:
+def infer_series_stype(ser: Series) -> Optional[torch_frame.stype]:
     """Infer :obj:`stype` given :class:`Series` object. The inference may not
     be always correct/best for your data. We recommend you double-checking the
     correctness yourself before actually using it.
@@ -87,37 +87,37 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
 
         if is_all_numerical:
             if is_embedding:
-                return stype.embedding
+                return torch_frame.embedding
             else:
-                return stype.sequence_numerical
+                return torch_frame.sequence_numerical
         elif is_all_string:
-            return stype.multicategorical
+            return torch_frame.multicategorical
         else:
             return None
     else:
         # Candidates: numerical, categorical, multicategorical, and
-        # text_(embedded/tokenized)
+        # text_(embedded/tokenized)test/nn/models/test_compile.py
 
         if ptypes.is_numeric_dtype(ser):
             # Candidates: numerical, categorical
             if ptypes.is_float_dtype(ser) and not (has_nan and
                                                    (ser % 1 == 0).all()):
-                return stype.numerical
+                return torch_frame.numerical
             else:
                 if _min_count(ser) > cat_min_count_thresh:
-                    return stype.categorical
+                    return torch_frame.categorical
                 else:
-                    return stype.numerical
+                    return torch_frame.numerical
         else:
             # Candidates: timestamp, categorical, multicategorical,
             # text_(embedded/tokenized)
             if _is_timestamp(ser):
-                return stype.timestamp
+                return torch_frame.timestamp
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized)
             if _min_count(ser) > cat_min_count_thresh:
-                return stype.categorical
+                return torch_frame.categorical
 
             # Try different possible seps and mick the largest min_count.
             min_count_list = []
@@ -127,12 +127,12 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                         ser.apply(lambda row: MultiCategoricalTensorMapper.
                                   split_by_sep(row, sep)).explode()))
             if max(min_count_list) > cat_min_count_thresh:
-                return stype.multicategorical
+                return torch_frame.multicategorical
             else:
-                return stype.text_embedded
+                return torch_frame.text_embedded
 
 
-def infer_df_stype(df: DataFrame) -> Dict[str, stype]:
+def infer_df_stype(df: DataFrame) -> Dict[str, torch_frame.stype]:
     """Infer :obj:`col_to_stype` given :class:`DataFrame` object.
 
     Args:

@@ -22,22 +22,17 @@ class StatType(Enum):
             column.
         YEAR_RANGE: The range of years in a timestamp column.
     """
-
-    # Numerical:
+    # numerical:
     MEAN = "MEAN"
     STD = "STD"
     QUANTILES = "QUANTILES"
-
     # categorical:
     COUNT = "COUNT"
-
     # multicategorical:
     MULTI_COUNT = "MULTI_COUNT"
-
-    # timestamp
+    # timestamp:
     YEAR_RANGE = "YEAR_RANGE"
-
-    # text_embedded (Also, embedding)
+    # text_embedded, embedding:
     # Note: For text_embedded, this stats is computed in
     # dataset._update_col_stats, not here.
     EMB_DIM = "EMB_DIM"
