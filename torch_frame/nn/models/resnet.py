@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+import math
 from torch import Tensor
 from torch.nn import (
     BatchNorm1d,
@@ -194,7 +195,7 @@ class ResNet(Module):
         x, _ = self.encoder(tf)
 
         # Flattening the encoder output
-        x = x.view(x.size(0), -1)
+        x = x.view(x.size(0), math.prod(x.shape[1:]))
 
         x = self.backbone(x)
         out = self.decoder(x)

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import math
 import torch
 from torch import Tensor
 from torch.nn import (
@@ -153,11 +154,11 @@ class TabTransformer(Module):
             x_cat = torch.cat((x_cat, pos_enc_pad), dim=-1)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x_cat = tab_transformer_conv(x_cat)
-            x_cat = x_cat.reshape(batch_size, -1)
+            x_cat = x_cat.reshape(batch_size, math.prod(x_cat.shape[1:]))
             xs.append(x_cat)
         if stype.numerical in self.col_names_dict:
-            x_num = self.num_encoder(tf.feat_dict[stype.numerical]).view(
-                batch_size, -1)
+            x_num = self.num_encoder(tf.feat_dict[stype.numerical])
+            x_num = x_num.view(batch_size, math.prod(x_num.shape[1:]))
             x_num = self.num_norm(x_num)
             xs.append(x_num)
         x = torch.cat(xs, dim=1)

@@ -155,14 +155,14 @@ class TabNet(Module):
         """
         # [batch_size, num_cols, cat_emb_channels]
         x, _ = self.feature_encoder(tf)
-        batch_size = x.shape[0]
+        batch_size = x.size(0)
         # [batch_size, num_cols * cat_emb_channels]
-        x = x.view(batch_size, -1)
+        x = x.view(batch_size, x.size(1) * x.size(2))
         x = self.bn(x)
 
         # [batch_size, num_cols * cat_emb_channels]
         prior = torch.ones_like(x)
-        reg = 0.
+        reg = torch.tensor(0., device=x.device)
 
         # [batch_size, split_attn_channels]
         attention_x = self.feat_transformers[0](x)
@@ -190,7 +190,7 @@ class TabNet(Module):
             prior = (self.gamma - attention_mask) * prior
 
             # Compute entropy regularization
-            if return_reg:
+            if return_reg and batch_size > 0:
                 entropy = -torch.sum(
                     attention_mask * torch.log(attention_mask + 1e-15),
                     dim=1).mean()
@@ -335,10 +335,13 @@ class GhostBatchNorm1d(torch.nn.Module):
         self.bn = BatchNorm1d(self.input_dim)
 
     def forward(self, x: Tensor) -> Tensor:
-        num_chunks = math.ceil(len(x) / self.virtual_batch_size)
-        chunks = torch.chunk(x, num_chunks, dim=0)
-        res = [self.bn(x_) for x_ in chunks]
-        return torch.cat(res, dim=0)
+        if len(x) > 0:
+            num_chunks = math.ceil(len(x) / self.virtual_batch_size)
+            chunks = torch.chunk(x, num_chunks, dim=0)
+            res = [self.bn(x_) for x_ in chunks]
+            return torch.cat(res, dim=0)
+        else:
+            return self.bn(x)
 
     def reset_parameters(self):
         self.bn.reset_parameters()
