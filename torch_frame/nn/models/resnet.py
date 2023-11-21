@@ -86,7 +86,7 @@ class FCResidualBlock(Module):
         if self.shortcut is not None:
             x = self.shortcut(x)
 
-        out += x
+        out = out + x
         out = self.relu(out)
 
         return out
