@@ -241,14 +241,15 @@ def train(
         y = tf.y
         if isinstance(model, ExcelFormer):
             pred, y = model.forward_mixup(tf)
+        elif isinstance(model, Trompt):
+            # Trompt uses the layer-wise loss
+            pred = model.forward_stacked(tf)
+            num_layers = pred.size(1)
+            # [batch_size * num_layers, num_classes]
+            pred = pred.view(-1, out_channels)
+            y = tf.y.repeat_interleave(num_layers)
         else:
-            pred = model.forward(tf)
-            if isinstance(model, Trompt):
-                # Trompt uses the layer-wise loss
-                num_layers = pred.size(1)
-                # [batch_size * num_layers, num_classes]
-                pred = pred.view(-1, out_channels)
-                y = tf.y.repeat_interleave(num_layers)
+            pred = model(tf)
 
         if pred.size(1) == 1:
             pred = pred.view(-1, )
@@ -273,8 +274,6 @@ def test(
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        if isinstance(model, Trompt):
-            pred = pred.mean(dim=1)  # [batch_size, out_channels]
         if dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             pred = pred.argmax(dim=-1)
         elif dataset.task_type == TaskType.REGRESSION:
