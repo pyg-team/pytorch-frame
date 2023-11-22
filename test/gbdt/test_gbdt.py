@@ -29,8 +29,12 @@ def test_catboost(gbdt_cls, task_type_and_metric):
         if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
         metric=metric,
     )
-    gbdt.tune(tf_train=dataset.tensor_frame, tf_val=dataset.tensor_frame,
-              num_trials=2, num_boost_round=2)
+    gbdt.tune(
+        tf_train=dataset.tensor_frame,
+        tf_val=dataset.tensor_frame,
+        num_trials=2,
+        num_boost_round=2,
+    )
     pred = gbdt.predict(tf_test=dataset.tensor_frame)
     score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
     assert gbdt.metric == metric
