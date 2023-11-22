@@ -1,10 +1,16 @@
 from abc import abstractmethod
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 from torch import Tensor
 
-from torch_frame import TaskType, TensorFrame
+from torch_frame import Metric, TaskType, TensorFrame
+
+DEFAULT_METRIC = {
+    TaskType.REGRESSION: Metric.RMSE,
+    TaskType.BINARY_CLASSIFICATION: Metric.ROCAUC,
+    TaskType.MULTICLASS_CLASSIFICATION: Metric.ACCURACY,
+}
 
 
 class GBDT:
@@ -16,11 +22,31 @@ class GBDT:
         num_classes (int, optional): If the task is multiclass classification,
             an optional num_classes can be used to specify the number of
             classes. Otherwise, we infer the value from the train data.
+        metric (Metric, optional): Metric to optimize for, e.g.,
+            :obj:`Metric.MAE`. If :obj:`None`, it will default to
+            :obj:`Metric.RMSE` for regression, :obj:`Metric.ROCAUC` for binary
+            classification, and :obj:`Metric.ACCURACY` for multi-
+            class classification. (default: :obj:`None`).
     """
-    def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
+    def __init__(
+        self,
+        task_type: TaskType,
+        num_classes: Optional[int] = None,
+        metric: Optional[Metric] = None,
+    ):
         self.task_type = task_type
         self._is_fitted: bool = False
         self._num_classes = num_classes
+
+        # Set up metric
+        self._metric = DEFAULT_METRIC[task_type]
+        if metric is not None:
+            if metric.supports_task_type(task_type):
+                self._metric = metric
+            else:
+                raise ValueError(
+                    f"{task_type} does not support {metric}. Please choose "
+                    f"from {task_type.supported_metrics}.")
 
     @abstractmethod
     def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
@@ -81,41 +107,36 @@ class GBDT:
         return pred
 
     @property
-    def metric(self) -> str:
-        r"""Metric to compute for different tasks. root mean squared error for
-        regression, ROC-AUC for binary classification, and accuracy for
-        multi-label classification task.
-        """
-        if self.task_type == TaskType.REGRESSION:
-            return 'rmse'
-        elif self.task_type == TaskType.BINARY_CLASSIFICATION:
-            return 'rocauc'
-        elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            return 'acc'
-        else:
-            raise ValueError(f"metric is not defined for {self.task_type}")
+    def metric(self) -> Metric:
+        r"""Metric to compute for different tasks."""
+        return self._metric
 
     @torch.no_grad()
-    def compute_metric(self, target: Tensor, pred: Tensor) -> Dict[str, float]:
+    def compute_metric(
+        self,
+        target: Tensor,
+        pred: Tensor,
+    ) -> float:
         r"""Compute evaluation metric given target labels :obj:`Tensor` and
         pred :obj:`Tensor`. Target contains the target values or labels; pred
         contains the prediction output from calling `predict()` function.
 
         Returns:
-            metric (Dict[str, float]): A dictionary containing the metric name
-                and the metric value.
+            score (float): Computed metric score values.
         """
-        if self.metric == 'rmse':
-            metric = {
-                self.metric: (pred - target).square().mean().sqrt().item()
-            }
-        elif self.metric == 'rocauc':
+        if self.metric == Metric.RMSE:
+            score = (pred - target).square().mean().sqrt().item()
+        elif self.metric == Metric.MAE:
+            score = (pred - target).abs().mean().item()
+        elif self.metric == Metric.ROCAUC:
             from sklearn.metrics import roc_auc_score
-            metric = {self.metric: roc_auc_score(target.cpu(), pred.cpu())}
-        elif self.metric == 'acc':
+            score = roc_auc_score(target.cpu(), pred.cpu())
+        elif self.metric == Metric.ACCURACY:
+            if self.task_type == TaskType.BINARY_CLASSIFICATION:
+                pred = pred > 0.5
             total_correct = (target == pred).sum().item()
             test_size = len(target)
-            metric = {self.metric: total_correct / test_size}
+            score = total_correct / test_size
         else:
-            raise ValueError(f'Metric {self.metric} is not supported.')
-        return metric
+            raise ValueError(f'{self.metric} is not supported.')
+        return score

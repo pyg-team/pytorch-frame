@@ -8,6 +8,24 @@ from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 
 
+class Metric(Enum):
+    r"""The metric.
+
+    Attributes:
+        ACCURACY: accuracy
+        ROCAUC: rocauc
+        RMSE: rmse
+        MAE: mae
+    """
+    ACCURACY = 'accuracy'
+    ROCAUC = 'rocauc'
+    RMSE = 'rmse'
+    MAE = 'mae'
+
+    def supports_task_type(self, task_type: 'TaskType') -> bool:
+        return self in task_type.supported_metrics
+
+
 class TaskType(Enum):
     r"""The type of the task.
 
@@ -22,13 +40,24 @@ class TaskType(Enum):
     MULTILABEL_CLASSIFICATION = 'multilabel_classification'
 
     @property
-    def is_classification(self):
+    def is_classification(self) -> bool:
         return self in (TaskType.BINARY_CLASSIFICATION,
                         TaskType.MULTICLASS_CLASSIFICATION)
 
     @property
-    def is_regression(self):
+    def is_regression(self) -> bool:
         return self == TaskType.REGRESSION
+
+    @property
+    def supported_metrics(self) -> List[Metric]:
+        if self == TaskType.REGRESSION:
+            return [Metric.RMSE, Metric.MAE]
+        elif self == TaskType.BINARY_CLASSIFICATION:
+            return [Metric.ACCURACY, Metric.ROCAUC]
+        elif self == TaskType.MULTICLASS_CLASSIFICATION:
+            return [Metric.ACCURACY]
+        else:
+            return []
 
 
 class NAStrategy(Enum):
@@ -47,15 +76,15 @@ class NAStrategy(Enum):
     ZEROS = 'zeros'
 
     @property
-    def is_categorical_strategy(self):
+    def is_categorical_strategy(self) -> bool:
         return self == NAStrategy.MOST_FREQUENT
 
     @property
-    def is_multicategorical_strategy(self):
+    def is_multicategorical_strategy(self) -> bool:
         return self == NAStrategy.ZEROS
 
     @property
-    def is_numerical_strategy(self):
+    def is_numerical_strategy(self) -> bool:
         return self in [NAStrategy.MEAN, NAStrategy.ZEROS]
 
 
