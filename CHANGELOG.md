@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support `Metric` in `GBDT` ([#236](https://github.com/pyg-team/pytorch-frame/pull/236))
 - Added auto-inference of `stype` ([#221](https://github.com/pyg-team/pytorch-frame/pull/221))
 - Enabled `list` input in `multicategorical` stype ([#224](https://github.com/pyg-team/pytorch-frame/pull/224))
 - Added `Timestamp` stype ([#212](https://github.com/pyg-team/pytorch-frame/pull/212))
