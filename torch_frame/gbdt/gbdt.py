@@ -122,7 +122,7 @@ class GBDT:
         contains the prediction output from calling `predict()` function.
 
         Returns:
-            score (float): Computed metric score values.
+            score (float): Computed metric score.
         """
         if self.metric == Metric.RMSE:
             score = (pred - target).square().mean().sqrt().item()
