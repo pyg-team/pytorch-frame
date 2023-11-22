@@ -108,7 +108,7 @@ class GBDT:
 
     @property
     def metric(self) -> Metric:
-        r"""Metric to compute for different tasks."""
+        r"""Evaluation metric to tune."""
         return self._metric
 
     @torch.no_grad()
