@@ -62,13 +62,13 @@ train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
 
 num_classes = None
 metric = None
+task_type = dataset.task_type
 if dataset.task_type.is_classification:
-    # By default, GBDT will use the following eval metric for different
-    # task types: RMSE for regression, ROC-AUC for binary classification,
-    # and accuracy for multi-class classification.
-    task_type = dataset.task_type
     metric = Metric.ACCURACY
     num_classes = dataset.num_classes
+else:
+    metric = Metric.RMSE
+    num_classes = None
 
 gbdt_cls_dict = {'xgboost': XGBoost, 'catboost': CatBoost}
 gbdt = gbdt_cls_dict[args.gbdt_type](
