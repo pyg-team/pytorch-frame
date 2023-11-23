@@ -6,6 +6,7 @@ import torch
 from torch import Tensor
 
 from torch_frame.data import MultiNestedTensor
+from torch_frame.testing import withCUDA
 
 
 def assert_equal(tensor_mat: List[List[Tensor]],
@@ -31,7 +32,8 @@ def column_select(
     return new_tensor_mat
 
 
-def test_multi_nested_tensor_basics():
+@withCUDA
+def test_multi_nested_tensor_basics(device):
     num_rows = 8
     num_cols = 10
     max_value = 100
@@ -40,12 +42,18 @@ def test_multi_nested_tensor_basics():
         tensor_list = []
         for _ in range(num_cols):
             length = random.randint(0, 10)
-            tensor_list.append(torch.randint(0, max_value, size=(length, )))
+            tensor = torch.randint(
+                0, max_value, size=(length, ), device=device,
+            )
+            tensor_list.append(tensor)
         tensor_mat.append(tensor_list)
 
     multi_nested_tensor = MultiNestedTensor.from_tensor_mat(tensor_mat)
     assert (str(multi_nested_tensor) ==
-            "MultiNestedTensor(num_rows=8, num_cols=10, device='cpu')")
+            f"MultiNestedTensor(num_rows=8, num_cols=10, device='{device}')")
+    assert multi_nested_tensor.device == device
+    assert multi_nested_tensor.values.device == device
+    assert multi_nested_tensor.offset.device == device
 
     # Test sizes
     assert multi_nested_tensor.shape[0] == num_rows
