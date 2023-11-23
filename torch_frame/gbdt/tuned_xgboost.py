@@ -1,11 +1,11 @@
 import copy
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 import torch
 from torch import Tensor
 
-from torch_frame import TaskType, TensorFrame, stype
+from torch_frame import Metric, TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
 
 
@@ -32,21 +32,6 @@ class XGBoost(GBDT):
     This implementation extends GBDT and aims to find optimal hyperparameters
     by optimizing the given objective function.
     """
-    def __init__(self, task_type: TaskType, num_classes: Optional[int] = None):
-        super().__init__(task_type, num_classes)
-        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            self.obj = "multi:softmax"
-            self.eval_metric = "mlogloss"
-        elif self.task_type == TaskType.REGRESSION:
-            self.obj = 'reg:squarederror'
-            self.eval_metric = 'rmse'
-        elif self.task_type == TaskType.BINARY_CLASSIFICATION:
-            self.obj = 'binary:logistic'
-            self.eval_metric = 'auc'
-        else:
-            raise ValueError(f"{self.__class__.__name__} is not supported for "
-                             f"{self.task_type}.")
-
     def _to_xgboost_input(
         self,
         tf: TensorFrame,
@@ -110,10 +95,6 @@ class XGBoost(GBDT):
         import xgboost
 
         self.params = {
-            "objective":
-            self.obj,
-            "eval_metric":
-            self.eval_metric,
             "booster":
             trial.suggest_categorical("booster",
                                       ["gbtree", "gblinear", "dart"]),
@@ -150,8 +131,28 @@ class XGBoost(GBDT):
             self.params["skip_drop"] = trial.suggest_float(
                 "skip_drop", 1e-8, 1.0, log=True)
 
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            self.params["objective"] = "multi:softmax"
+            self.params["eval_metric"] = "merror"
+        elif self.task_type == TaskType.REGRESSION:
+            if self.metric == Metric.RMSE:
+                self.params["objective"] = "reg:squarederror"
+                self.params["eval_metric"] = "rmse"
+            elif self.metric == Metric.MAE:
+                self.params["objective"] = "reg:absoluteerror"
+                self.params["eval_metric"] = "mae"
+        elif self.task_type == TaskType.BINARY_CLASSIFICATION:
+            self.params["objective"] = "binary:logistic"
+            if self.metric == Metric.ROCAUC:
+                self.params["eval_metric"] = "auc"
+            elif self.metric == Metric.ACCURACY:
+                self.params["eval_metric"] = "error"
+        else:
+            raise ValueError(f"{self.__class__.__name__} is not supported for "
+                             f"{self.task_type}.")
+
         pruning_callback = optuna.integration.XGBoostPruningCallback(
-            trial, f"validation-{self.eval_metric}")
+            trial, f"validation-{self.params['eval_metric']}")
         if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["num_class"] = self._num_classes or len(
                 np.unique(dtrain.get_label()))
@@ -163,7 +164,7 @@ class XGBoost(GBDT):
                               callbacks=[pruning_callback])
         pred = boost.predict(dvalid)
         score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
-                                    torch.from_numpy(pred))[self.metric]
+                                    torch.from_numpy(pred))
         return score
 
     def _tune(

@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from torch_frame import DataFrame, TaskType, TensorFrame, stype
+from torch_frame import DataFrame, Metric, TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
 
 
@@ -17,7 +17,9 @@ class CatBoost(GBDT):
     by optimizing the given objective function.
     """
     def _to_catboost_input(
-            self, tf) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
+        self,
+        tf,
+    ) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -130,13 +132,18 @@ class CatBoost(GBDT):
             trial.suggest_float("eta", 1e-6, 1.0, log=True),
         }
         if self.task_type == TaskType.REGRESSION:
-            self.params["objective"] = trial.suggest_categorical(
-                "objective", ["RMSE", "MAE"])
-            self.params["eval_metric"] = "RMSE"
+            if self.metric == Metric.RMSE:
+                self.params["objective"] = "RMSE"
+                self.params["eval_metric"] = "RMSE"
+            elif self.metric == Metric.MAE:
+                self.params["objective"] = "MAE"
+                self.params["eval_metric"] = "MAE"
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
-            self.params["objective"] = trial.suggest_categorical(
-                "objective", ["CrossEntropy", "Logloss"])
-            self.params["eval_metric"] = "AUC"
+            self.params["objective"] = "Logloss"
+            if self.metric == Metric.ROCAUC:
+                self.params["eval_metric"] = "AUC"
+            elif self.metric == Metric.ACCURACY:
+                self.params["eval_metric"] = "Accuracy"
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "MultiClass"
             self.params["eval_metric"] = "Accuracy"
@@ -145,6 +152,7 @@ class CatBoost(GBDT):
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
+
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
         eval_x, eval_y, _ = self._to_catboost_input(tf_val)
         boost = catboost.CatBoost(self.params)
@@ -153,7 +161,7 @@ class CatBoost(GBDT):
                           early_stopping_rounds=50, logging_level="Silent")
         pred = self._predict_helper(boost, eval_x)
         score = self.compute_metric(torch.from_numpy(eval_y),
-                                    torch.from_numpy(pred))[self.metric]
+                                    torch.from_numpy(pred))
         return score
 
     def _tune(
