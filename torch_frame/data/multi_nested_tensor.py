@@ -105,7 +105,7 @@ class MultiNestedTensor(_MultiTensor):
                 offset_list.append(accum_idx)
 
         values = torch.cat(values_list)
-        offset = torch.LongTensor(offset_list)
+        offset = torch.tensor(offset_list, device=values.device)
 
         return cls(num_rows, num_cols, values, offset)
 
