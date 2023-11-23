@@ -39,10 +39,10 @@ class GBDT:
         self._num_classes = num_classes
 
         # Set up metric
-        self._metric = DEFAULT_METRIC[task_type]
+        self.metric = DEFAULT_METRIC[task_type]
         if metric is not None:
             if metric.supports_task_type(task_type):
-                self._metric = metric
+                self.metric = metric
             else:
                 raise ValueError(
                     f"{task_type} does not support {metric}. Please choose "
@@ -105,11 +105,6 @@ class GBDT:
             assert pred.ndim == 1
         assert len(pred) == len(tf_test)
         return pred
-
-    @property
-    def metric(self) -> Metric:
-        r"""Evaluation metric to tune."""
-        return self._metric
 
     @torch.no_grad()
     def compute_metric(
