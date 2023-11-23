@@ -47,7 +47,7 @@ from torch_frame.testing import withPackage
                 ffn_dropout=0.5,
             ),
             None,
-            4,
+            2,
             id="TabTransformer",
         ),
         pytest.param(
@@ -61,7 +61,7 @@ from torch_frame.testing import withPackage
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
             [stype.numerical],
-            4,
+            2,
             id="ExcelFormer",
         ),
     ],
@@ -72,8 +72,6 @@ def test_compile_graph_break(
     stypes,
     expected_graph_breaks,
 ):
-    torch._dynamo.config.suppress_errors = True
-
     dataset = FakeDataset(
         num_rows=10,
         with_nan=False,
