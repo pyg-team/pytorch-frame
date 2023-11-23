@@ -43,7 +43,10 @@ def test_multi_nested_tensor_basics(device):
         for _ in range(num_cols):
             length = random.randint(0, 10)
             tensor = torch.randint(
-                0, max_value, size=(length, ), device=device,
+                0,
+                max_value,
+                size=(length, ),
+                device=device,
             )
             tensor_list.append(tensor)
         tensor_mat.append(tensor_list)
