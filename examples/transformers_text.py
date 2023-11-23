@@ -78,6 +78,7 @@ parser.add_argument(
 )
 parser.add_argument("--pooling", type=str, default="mean",
                     choices=["mean", "cls"])
+parser.add_argument("--compile", action="store_true")
 args = parser.parse_args()
 
 if args.lora and not args.finetune:
@@ -262,7 +263,7 @@ model = FTTransformer(
     col_names_dict=train_tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
-
+model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 

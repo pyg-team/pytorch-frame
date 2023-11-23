@@ -50,6 +50,7 @@ parser.add_argument("--batch_size", type=int, default=512)
 parser.add_argument("--lr", type=float, default=0.0001)
 parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--seed", type=int, default=0)
+parser.add_argument("--compile", action="store_true")
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -102,7 +103,7 @@ model = FTTransformer(
     col_names_dict=train_tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
-
+model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
