@@ -57,6 +57,9 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
     if has_nan:
         ser = ser.dropna()
 
+    if len(ser) == 0:
+        return None
+
     # Categorical minimum counting threshold. If the count of the most minor
     # categories is larger than this value, we treat the column as categorical.
     cat_min_count_thresh = 4
