@@ -11,12 +11,12 @@ authors:
   given-names: "Yiwen"
 - family-names: "Zhang"
   given-names: "Zecheng"
-- family-names: "Akihiro"
-  given-names: "Nitta"
-- family-names: "Kaidi"
-  given-names: "Cao"
-- family-names: "Vid"
-  given-names: "Kocijan"
+- family-names: "Nitta"
+  given-names: "Akihiro"
+- family-names: "Cao"
+  given-names: "Kaidi"
+- family-names: "Kocijan"
+  given-names: "Vid"
 date-released: 2023-10-24
 license: MIT
 url: "https://github.com/pyg-team/pytorch-frame"
