@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added support for `torch_frame.text_embedded` in `XGBoost` ([#239](https://github.com/pyg-team/pytorch-frame/pull/239))
+- Added support for `torch_frame.text_embedded` in `GBDT` ([#239](https://github.com/pyg-team/pytorch-frame/pull/239))
 - Support `Metric` in `GBDT` ([#236](https://github.com/pyg-team/pytorch-frame/pull/236))
 - Added auto-inference of `stype` ([#221](https://github.com/pyg-team/pytorch-frame/pull/221))
 - Enabled `list` input in `multicategorical` stype ([#224](https://github.com/pyg-team/pytorch-frame/pull/224))
