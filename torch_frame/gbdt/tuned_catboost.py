@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,26 +37,38 @@ class CatBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if (stype.categorical in tf.feat_dict
-                and stype.numerical in tf.feat_dict):
-            categorical_df = pd.DataFrame(
-                tf.feat_dict[stype.categorical],
-                columns=tf.col_names_dict[stype.categorical])
-            numerical_df = pd.DataFrame(
-                tf.feat_dict[stype.numerical],
-                columns=tf.col_names_dict[stype.numerical])
-            df = pd.concat([categorical_df, numerical_df], axis=1)
-            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
-        elif stype.categorical in tf.feat_dict:
-            df = pd.DataFrame(tf.feat_dict[stype.categorical],
-                              columns=tf.col_names_dict[stype.categorical])
-            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
-        elif stype.numerical in tf.feat_dict:
-            df = pd.DataFrame(tf.feat_dict[stype.numerical],
-                              columns=tf.col_names_dict[stype.numerical])
-            cat_features = None
-        else:
+
+        dfs: List[DataFrame] = []
+        cat_features: List[np.ndarray] = []
+        offset: int = 0
+
+        if stype.categorical in tf.feat_dict:
+            feat = tf.feat_dict[stype.categorical].numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            cat_features.append(arange)
+            offset += feat.shape[1]
+
+        if stype.numerical in tf.feat_dict:
+            feat = tf.feat_dict[stype.numerical].numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            offset += feat.shape[1]
+
+        if stype.text_embedded in tf.feat_dict:
+            feat = tf.feat_dict[stype.text_embedded]
+            feat = feat.view(feat.size(0), -1).numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            offset += feat.shape[1]
+
+        # TODO Add support for other stypes.
+
+        if len(dfs) == 0:
             raise ValueError("The input TensorFrame object is empty.")
+
+        df = pd.concat(dfs, axis=1)
+        cat_features = np.concatenate(cat_features, axis=0)
         return df, y.numpy(), cat_features
 
     def _predict_helper(
