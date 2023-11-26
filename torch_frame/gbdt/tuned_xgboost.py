@@ -56,21 +56,32 @@ class XGBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if (stype.categorical in tf.feat_dict
-                and stype.numerical in tf.feat_dict):
-            feat_cat = neg_to_nan(tf.feat_dict[stype.categorical])
-            feat = torch.cat([tf.feat_dict[stype.numerical], feat_cat], dim=1)
-            feature_types = (["q"] * len(tf.col_names_dict[stype.numerical]) +
-                             ["c"] * len(tf.col_names_dict[stype.categorical]))
-        elif stype.categorical in tf.feat_dict:
-            feat = neg_to_nan(tf.feat_dict[stype.categorical])
-            feature_types = ["c"] * len(tf.col_names_dict[stype.categorical])
-        elif stype.numerical in tf.feat_dict:
-            feat = tf.feat_dict[stype.numerical]
-            feature_types = ["q"] * len(tf.col_names_dict[stype.numerical])
-        else:
+
+        feats: List[Tensor] = []
+        types: List[str] = []
+
+        if stype.categorical in tf.feat_dict:
+            feats.append(neg_to_nan(tf.feat_dict[stype.categorical]))
+            types.extend(['c'] * len(tf.col_names_dict[stype.categorical]))
+
+        if stype.numerical in tf.feat_dict:
+            feats.append(tf.feat_dict[stype.numerical])
+            types.extend(['q'] * len(tf.col_names_dict[stype.numerical]))
+
+        if stype.text_embedded in tf.feat_dict:
+            feat = tf.feat_dict[stype.text_embedded]
+            feat = feat.view(feat.size(0), -1)
+            feats.append(feat)
+            types.extend(['q'] * feat.size(-1))
+
+        # TODO Add support for other stypes.
+
+        if len(feats) == 0:
             raise ValueError("The input TensorFrame object is empty.")
-        return feat.numpy(), y.numpy(), feature_types
+
+        feat = torch.cat(feats, dim=-1)
+
+        return feat.numpy(), y.numpy(), types
 
     def objective(
         self,
