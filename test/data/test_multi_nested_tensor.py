@@ -235,7 +235,15 @@ def test_multi_nested_tensor_basics(device):
                                           cloned_multi_nested_tensor)
 
 
-def test_multi_nested_tensor_different_num_rows():
+def test_isnan():
+    pass
+
+
+def test_any():
+    pass
+
+
+def test_different_num_rows():
     tensor_mat = [
         [torch.tensor([1, 2, 3]),
          torch.tensor([4, 5])],

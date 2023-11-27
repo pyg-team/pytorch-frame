@@ -385,3 +385,12 @@ def test_cat(device):
     # case: list of non-MultiEmbeddingTensor should raise error
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.cat([object()], dim=0)
+
+
+
+def test_isnan():
+    pass
+
+
+def test_any():
+    pass

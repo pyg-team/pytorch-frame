@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -72,6 +72,8 @@ class _MultiTensor:
     def dtype(self) -> torch.dtype:
         return self.values.dtype
 
+    # Tensor operations #######################################################
+
     def clone(self) -> "_MultiTensor":
         return self.__class__(
             self.num_rows,
@@ -79,6 +81,22 @@ class _MultiTensor:
             self.values.clone(),
             self.offset.clone(),
         )
+
+    def isnan(self) -> "_MultiTensor":
+        return self.__class__(
+            self.num_rows,
+            self.num_cols,
+            self.values.isnan(),
+            self.offset,
+        )
+
+    def any(self, dim: Optional[int] = None) -> Tensor:
+        if dim is not None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__}.any(dim={dim}) is not supported."
+            )
+
+        return self.values.any()
 
     # Device Transfer #########################################################
 
