@@ -6,7 +6,7 @@ import torch
 
 import torch_frame
 from torch_frame import TensorFrame
-from torch_frame.data import MultiNestedTensor
+from torch_frame.data import MultiEmbeddingTensor, MultiNestedTensor
 
 
 @pytest.fixture()
@@ -21,6 +21,7 @@ def get_fake_tensor_frame() -> Callable:
             torch_frame.text_tokenized:
             ['text_tokenized_1', 'text_tokenized_2'],
             torch_frame.sequence_numerical: ['seq_num_1', 'seq_num_2'],
+            torch_frame.embedding: ['emb_1', 'emb_2'],
         }
         feat_dict = {
             torch_frame.categorical:
@@ -56,8 +57,13 @@ def get_fake_tensor_frame() -> Callable:
             torch_frame.sequence_numerical:
             MultiNestedTensor.from_tensor_mat([[
                 torch.randn(random.randint(0, 10)) for _ in range(
-                    len(col_names_dict[torch_frame.multicategorical]))
+                    len(col_names_dict[torch_frame.sequence_numerical]))
             ] for _ in range(num_rows)]),
+            torch_frame.embedding:
+            MultiEmbeddingTensor.from_tensor_list([
+                torch.randn(num_rows, random.randint(1, 5))
+                for _ in range(len(col_names_dict[torch_frame.embedding]))
+            ])
         }
 
         y = torch.randn(num_rows)

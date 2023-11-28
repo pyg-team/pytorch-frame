@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added dictionary of `text_embedder_cfg` and use `MultiEmbeddingTensor` for `text_embedded` ([#246](https://github.com/pyg-team/pytorch-frame/pull/246))
+- Added `col_encoder_dict` in `StypeWiseFeatureEncoder` ([#244](https://github.com/pyg-team/pytorch-frame/pull/244))
 - Added `LinearMultiEmbeddingEncoder` for `embedding` stype ([#243](https://github.com/pyg-team/pytorch-frame/pull/243))
 - Added support for `torch_frame.text_embedded` in `GBDT` ([#239](https://github.com/pyg-team/pytorch-frame/pull/239))
 - Support `Metric` in `GBDT` ([#236](https://github.com/pyg-team/pytorch-frame/pull/236))
