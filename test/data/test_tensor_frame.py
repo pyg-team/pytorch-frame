@@ -142,13 +142,13 @@ def test_equal_tensor_frame(get_fake_tensor_frame):
     assert tf2 != tf1
 
 
-def test_get_col_faet(get_fake_tensor_frame):
+def test_get_col_feat(get_fake_tensor_frame):
     num_rows = 10
     tf = get_fake_tensor_frame(num_rows=num_rows)
     for stype, cols in tf.col_names_dict.items():
         feat_list = []
         for col in cols:
-            feat = tf.get_col_faet(col)
+            feat = tf.get_col_feat(col)
             feat_list.append(feat)
             # Check that shapes are all (num_rows, 1, *)
             if stype.use_dict_multi_nested_tensor:
