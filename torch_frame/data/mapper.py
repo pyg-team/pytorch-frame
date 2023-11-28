@@ -267,6 +267,7 @@ class TimestampTensorMapper(TensorMapper):
             torch.from_numpy(
                 ser.dt.second.values).to(device=device).unsqueeze(1)
         ]
+        # [7, A, B] -> [A, B, 7]
         return torch.stack(tensors).permute(1, 2, 0).to(torch.float32)
 
     def backward(self, tensor: Tensor) -> pd.Series:

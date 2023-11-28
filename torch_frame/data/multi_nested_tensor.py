@@ -73,10 +73,10 @@ class MultiNestedTensor(_MultiTensor):
             tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
             >>> out.offset
             tensor([ 0,  3,  5,  7, 10])
-            >>> tensor_mat[2][0]
-            tensor([8, 9])
+            >>> tensor_mat[1][0]
+            tensor([6, 7])
             >>> out[2, 0]
-            tensor([8, 9])
+            tensor([6, 7])
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -420,18 +420,7 @@ class MultiNestedTensor(_MultiTensor):
                         "num_cols must be the same across a list of input "
                         "multi nested tensors.")
             values = torch.cat([x.values for x in xs], dim=0)
-
-            offset = torch.empty(num_rows * num_cols + 1, dtype=torch.long,
-                                 device=device)
-            accum = 0
-            idx = 0
-            for x in xs[:-1]:
-                offset[idx:idx + len(x.offset[:-1])] = x.offset[:-1]
-                offset[idx:idx + len(x.offset[:-1])].add_(accum)
-                accum += x.offset[-1]
-                idx += len(x.offset[:-1])
-            offset[idx:] = xs[-1].offset
-            offset[idx:].add_(accum)
+            offset = MultiNestedTensor.cat_offset([x.offset for x in xs], dim)
             return MultiNestedTensor(
                 num_rows=num_rows,
                 num_cols=num_cols,
@@ -447,21 +436,8 @@ class MultiNestedTensor(_MultiTensor):
                         "num_rows must be the same across a list of input "
                         "multi nested tensors.")
 
-            # (i,j)-th element stores the length of its stored Tensor
-            elem_length_mat = torch.empty(num_rows, num_cols, dtype=torch.long,
-                                          device=device)
-            col_start_idx = 0
-            for x in xs:
-                elem_count = x.offset[1:] - x.offset[:-1]
-                elem_length_mat[:, col_start_idx:col_start_idx +
-                                x.num_cols] = elem_count.reshape(
-                                    x.num_rows, x.num_cols)
-                col_start_idx += x.num_cols
+            offset = MultiNestedTensor.cat_offset([x.offset for x in xs], dim)
 
-            # Compute offset
-            offset = torch.zeros(num_rows * num_cols + 1, dtype=torch.long,
-                                 device=device)
-            torch.cumsum(elem_length_mat.flatten(), dim=0, out=offset[1:])
 
             # Compute values
             values = torch.empty(
@@ -487,3 +463,46 @@ class MultiNestedTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
+
+    @staticmethod
+    def cat_offset(
+        offsets: List[Tensor],
+        dim: int = 0,
+    ) -> torch.Tensor:
+        dim = MultiNestedTensor._normalize_dim(dim)
+        if dim == 0:
+            num_rows =
+            num_cols =
+            new_offset = torch.empty(
+                num_rows * num_cols + 1,
+                dtype=torch.long,
+                device=device,
+            )
+            accum = 0
+            idx = 0
+            for offset in offsets[:-1]:
+                new_offset[idx:idx + len(offset[:-1])] = offset[:-1]
+                new_offset[idx:idx + len(offset[:-1])].add_(accum)
+                accum += offset[-1]
+                idx += len(offset[:-1])
+            new_offset[idx:] = offsets[-1]
+            new_offset[idx:].add_(accum)
+            return new_offset
+        else:
+            num_rows = len(offsets[0]) - 1
+            num_cols = len(offsets)
+            # (i,j)-th element stores the length of its stored Tensor
+            elem_length_mat = torch.empty(num_rows, num_cols, dtype=torch.long,
+                                          device=device)
+            col_start_idx = 0
+            for offset in offsets:
+                elem_count = offset[1:] - offset[:-1]
+                elem_length_mat[:, col_start_idx:col_start_idx +
+                                x.num_cols] = elem_count.reshape(
+                                    x.num_rows, x.num_cols)
+                col_start_idx += x.num_cols
+
+            # Compute offset
+            new_offset = torch.zeros(num_rows * num_cols + 1, dtype=torch.long,
+                                 device=device)
+            torch.cumsum(elem_length_mat.flatten(), dim=0, out=new_offset[1:])

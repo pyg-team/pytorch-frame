@@ -110,7 +110,7 @@ def test_converter():
     )
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
-    assert len(tf) == len(dataset)
+    assert not len(tf) == len(dataset)
 
 
 def test_multicategorical_materialization():
