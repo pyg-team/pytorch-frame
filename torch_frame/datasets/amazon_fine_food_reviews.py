@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import pandas as pd
 
@@ -14,7 +14,8 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
     Args:
         text_stype (torch_frame.stype): Text stype to use for text columns
             in the dataset. (default: :obj:`torch_frame.text_embedded`)
-        text_embedder_cfg (TextEmbedderConfig, optional): Text embedder
+        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
+            Dict[str, TextEmbedderConfig]], optional): Text embedder
             config to use if :obj:`text_stype` is specified as
             `torch_frame.text_embedded`.
         text_tokenizer_cfg (TextTokenizerConfig, optional): Text tokenizer
@@ -47,7 +48,8 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
 
     def __init__(self, root: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+                 col_to_text_embedder_cfg: Optional[Union[Dict[
+                     str, TextEmbedderConfig], TextEmbedderConfig]] = None,
                  text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
         self.root = root
         self.text_stype = text_stype
@@ -67,5 +69,5 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
         df = pd.read_csv(path)[list(col_to_stype.keys())]
 
         super().__init__(df, col_to_stype, target_col='Score',
-                         text_embedder_cfg=text_embedder_cfg,
+                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                          text_tokenizer_cfg=text_tokenizer_cfg)

@@ -65,7 +65,7 @@ def test_stypewise_feature_encoder(
             stype.text_tokenized,
             stype.embedding,
         ],
-        text_embedder_cfg=TextEmbedderConfig(
+        col_to_text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels=16, ),
             batch_size=None,
         ),

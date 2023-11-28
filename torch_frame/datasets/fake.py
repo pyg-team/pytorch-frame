@@ -1,7 +1,7 @@
 import random
 import string
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -47,10 +47,13 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-        text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
-            config specifying :obj:`text_embedder` that maps sentences into
-            PyTorch embeddings and :obj:`batch_size` that specifies the
-            mini-batch size for :obj:`text_embedder` (default: :obj:`None`)
+        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
+            Dict[str, TextEmbedderConfig]], optional): A text
+            embedder configuration or a dictionary of configurations
+            specifying :obj:`text_embedder` that maps text columns into
+            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
+            specifies the mini-batch size for :obj:`text_embedder`.
+            (default: :obj:`None`)
         text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
             configuration that specifies the text tokenizer to map text columns
             into maps sentences into tensor of tokens (default: :obj:`None`)
@@ -62,7 +65,8 @@ class FakeDataset(torch_frame.data.Dataset):
         stypes: List[stype] = [stype.categorical, stype.numerical],
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
-        text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
     ):
         assert len(stypes) > 0
@@ -196,7 +200,7 @@ class FakeDataset(torch_frame.data.Dataset):
             col_to_stype,
             target_col='target',
             split_col='split' if create_split else None,
-            text_embedder_cfg=text_embedder_cfg,
+            col_to_text_embedder_cfg=col_to_text_embedder_cfg,
             text_tokenizer_cfg=text_tokenizer_cfg,
             col_to_time_format={
                 f'timestamp_{i}': TIME_FORMATS[i]

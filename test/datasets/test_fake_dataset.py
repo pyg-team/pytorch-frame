@@ -22,7 +22,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
 
     if use_per_col_text_embedder_cfg:
         text_embedded_cols = ['text_embedded_1', 'text_embedded_2']
-        text_embedder_cfg = {
+        col_to_text_embedder_cfg = {
             col:
             TextEmbedderConfig(
                 text_embedder=HashTextEmbedder(out_channels * (i + 1)),
@@ -30,7 +30,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
             for i, col in enumerate(text_embedded_cols)
         }
     else:
-        text_embedder_cfg = TextEmbedderConfig(
+        col_to_text_embedder_cfg = TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels),
             batch_size=text_batch_size)
 
@@ -47,7 +47,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
             torch_frame.embedding,
         ],
         create_split=True,
-        text_embedder_cfg=text_embedder_cfg,
+        col_to_text_embedder_cfg=col_to_text_embedder_cfg,
         text_tokenizer_cfg=TextTokenizerConfig(
             text_tokenizer=WhiteSpaceHashTokenizer(
                 num_hash_bins=12, batched=tokenize_with_batch),
