@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 from torch import Tensor
@@ -73,6 +73,11 @@ class TensorFrame:
         self.y = y
         self.validate()
 
+        self._col_to_stype_idx: Dict[str, Tuple[torch_frame.stype, int]] = {}
+        for stype_name, cols in self.col_names_dict.items():
+            for idx, col in enumerate(cols):
+                self._col_to_stype_idx[col] = (stype_name, idx)
+
     def validate(self):
         r"""Validates the :class:`TensorFrame` object."""
         if len(self.feat_dict) == 0:
@@ -122,6 +127,32 @@ class TensorFrame:
                 raise ValueError(
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
+
+    def get_col_faet(self, col_name: str) -> TensorData:
+        r"""Get feature of a given column.
+
+        Args:
+            col_name (str): Input column name.
+
+        Returns:
+            TensorData: Column feature for the given :obj:`col_name` of shape
+                :obj:`[num_rows, 1, *]`.
+        """
+        if col_name not in self._col_to_stype_idx:
+            raise ValueError(
+                f"{col_name} is not available in the TensorFrame object.")
+        stype, idx = self._col_to_stype_idx[col_name]
+        if stype.use_dict_multi_nested_tensor:
+            return {
+                key: item[:, idx]
+                for key, item in self.feat_dict[stype].items()
+            }
+        else:
+            if (stype.use_multi_nested_tensor
+                    or stype.use_multi_embedding_tensor):
+                return self.feat_dict[stype][:, idx]
+            else:
+                return self.feat_dict[stype][:, idx].unsqueeze(1)
 
     @property
     def stypes(self) -> List[stype]:
