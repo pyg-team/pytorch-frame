@@ -60,6 +60,13 @@ class stype(Enum):
         """
         return self in [stype.text_tokenized]
 
+    @property
+    def use_multi_tensor(self) -> bool:
+        r"""This property indicates if the data of an stype is stored in
+        :class:`torch_frame.data._MultiTensor`.
+        """
+        return self.use_multi_nested_tensor or self.use_multi_embedding_tensor
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')

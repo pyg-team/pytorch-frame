@@ -4,7 +4,11 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame.data import MultiNestedTensor, TensorFrame
+from torch_frame.data import (
+    MultiEmbeddingTensor,
+    MultiNestedTensor,
+    TensorFrame,
+)
 from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
 from torch_frame.typing import TensorData
@@ -15,9 +19,7 @@ def serialize_feat_dict(
 ) -> Dict[torch_frame.stype, Any]:
     feat_serialized_dict = {}
     for stype, feat in feat_dict.items():
-        # TODO: Add stype.use_multi_tensor and use the same code path for
-        # stype.embedding.
-        if stype.use_multi_nested_tensor:
+        if stype.use_multi_tensor:
             assert isinstance(feat, _MultiTensor)
             feat_serialized = feat.to_dict()
         elif stype.use_dict_multi_nested_tensor:
@@ -44,6 +46,8 @@ def deserialize_feat_dict(
             feat = {}
             for name, f_serialized in feat_serialized.items():
                 feat[name] = MultiNestedTensor(**f_serialized)
+        elif stype.use_multi_embedding_tensor:
+            feat = MultiEmbeddingTensor(**feat_serialized)
         else:
             assert isinstance(feat_serialized, Tensor)
             feat = feat_serialized

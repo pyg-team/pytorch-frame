@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 from torch import Tensor
@@ -73,6 +73,13 @@ class TensorFrame:
         self.y = y
         self.validate()
 
+        # Quick mapping from column names into their (stype, idx) pairs in
+        # col_names_dict. Used for fast get_col_feat.
+        self._col_to_stype_idx: Dict[str, Tuple[torch_frame.stype, int]] = {}
+        for stype_name, cols in self.col_names_dict.items():
+            for idx, col in enumerate(cols):
+                self._col_to_stype_idx[col] = (stype_name, idx)
+
     def validate(self):
         r"""Validates the :class:`TensorFrame` object."""
         if len(self.feat_dict) == 0:
@@ -122,6 +129,31 @@ class TensorFrame:
                 raise ValueError(
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
+
+    def get_col_feat(self, col_name: str) -> TensorData:
+        r"""Get feature of a given column.
+
+        Args:
+            col_name (str): Input column name.
+
+        Returns:
+            TensorData: Column feature for the given :obj:`col_name`. The shape
+                is :obj:`[num_rows, 1, *]`.
+        """
+        if col_name not in self._col_to_stype_idx:
+            raise ValueError(
+                f"{col_name} is not available in the TensorFrame object.")
+        stype_name, idx = self._col_to_stype_idx[col_name]
+        if stype_name.use_dict_multi_nested_tensor:
+            return {
+                key: item[:, idx]
+                for key, item in self.feat_dict[stype_name].items()
+            }
+        else:
+            if stype_name.use_multi_tensor:
+                return self.feat_dict[stype_name][:, idx]
+            else:
+                return self.feat_dict[stype_name][:, idx].unsqueeze(1)
 
     @property
     def stypes(self) -> List[stype]:
