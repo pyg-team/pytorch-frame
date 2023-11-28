@@ -31,7 +31,7 @@ def test_gbdt(gbdt_cls, task_type_and_metric):
         ],
         create_split=True,
         task_type=task_type,
-        text_embedder_cfg=TextEmbedderConfig(
+        col_to_text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(8)),
     )
     dataset.materialize()

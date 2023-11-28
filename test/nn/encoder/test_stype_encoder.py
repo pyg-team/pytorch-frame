@@ -254,7 +254,7 @@ def test_text_embedded_encoder():
         stypes=[
             torch_frame.text_embedded,
         ],
-        text_embedder_cfg=TextEmbedderConfig(
+        col_to_text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(text_emb_channels),
             batch_size=None),
     )

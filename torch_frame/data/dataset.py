@@ -35,8 +35,6 @@ from torch_frame.typing import (
 )
 from torch_frame.utils.split import SPLIT_TO_NUM
 
-TextEmbedderConfigs = Union[Dict[str, TextEmbedderConfig], TextEmbedderConfig]
-
 
 def requires_pre_materialization(func):
     @functools.wraps(func)
@@ -62,26 +60,28 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[str],
-                                                      Dict[str, str]],
-                                columns: List[str]) -> Dict[str, str]:
+def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[Any],
+                                                      Dict[str, Any]],
+                                columns: List[str]) -> Dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
-        col_to_pattern (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/pattern for the multi-categorical
-            or timestamp columns. If a string is specified, then the same
-            separator/format will be used throughout all the multi-categorical
-            or timestamp columns. If a dictionary is given, we use a separator
-            specified for each column. (default: :obj:`,`)
-        columns (List[str]): A list of multi-categorical or timestamp columns.
+        col_to_pattern (Union[Any, Dict[str, Any]]): A dictionary or an object
+            specifying the separator/pattern/configuration for the
+            multi-categorical, timestamp or text columns. If an object is
+            specified, then the same separator/pattern/configuration will be
+            used throughout all the multi-categorical, timestamp and text
+            columns. If a dictionary is given, we use each item in the
+            dictionary specified for each column.
+        columns (List[str]): A list of multi-categorical, timestamp or text
+            columns.
 
     Returns:
-        Dict[str, str]: :obj:`col_to_pattern` in a dictionary format, mapping
-            multi-categorical or timestamp columns into their specified
-            separators.
+        Dict[str, Any]: :obj:`col_to_pattern` in a dictionary format, mapping
+            multi-categorical, timestamp or text columns into their specified
+            separators, patterns or configurations.
     """
-    if col_to_pattern is None or isinstance(col_to_pattern, str):
+    if col_to_pattern is None or not isinstance(col_to_pattern, dict):
         pattern = col_to_pattern
         col_to_pattern = {}
         for col in columns:
@@ -113,7 +113,8 @@ class DataFrameToTensorFrameConverter:
             be used throughout all the multi-categorical columns. If a
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
-        text_embedder_cfg (dict or TextEmbedderConfig, optional): A text
+        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
+            Dict[str, TextEmbedderConfig]], optional): A text
             embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
@@ -145,14 +146,14 @@ class DataFrameToTensorFrameConverter:
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ",",
-        text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.text_embedder_cfg = text_embedder_cfg
         self.text_tokenizer_cfg = text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
@@ -177,10 +178,16 @@ class DataFrameToTensorFrameConverter:
             self.col_names_dict.get(torch_frame.timestamp, []),
         )
 
-        if (torch_frame.text_embedded
-                in self.col_names_dict) and (self.text_embedder_cfg is None):
-            raise ValueError("`text_embedder_cfg` needs to be specified when "
-                             "stype.text_embedded column exists.")
+        self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
+            col_to_text_embedder_cfg,
+            self.col_names_dict.get(torch_frame.text_embedded, []),
+        )
+
+        if (torch_frame.text_embedded in self.col_names_dict) \
+                and (self.col_to_text_embedder_cfg is None):
+            raise ValueError("`col_to_text_embedder_cfg` needs to be"
+                             "specified when stype.text_embedded column "
+                             "exists.")
 
         if (torch_frame.text_tokenized
                 in self.col_names_dict) and (self.text_tokenizer_cfg is None):
@@ -207,10 +214,10 @@ class DataFrameToTensorFrameConverter:
             return TimestampTensorMapper(
                 format=self.col_to_time_format.get(col, None))
         elif stype == torch_frame.text_embedded:
-            if isinstance(self.text_embedder_cfg, dict):
-                text_embedder_cfg = self.text_embedder_cfg[col]
+            if isinstance(self.col_to_text_embedder_cfg, dict):
+                text_embedder_cfg = self.col_to_text_embedder_cfg[col]
             else:
-                text_embedder_cfg = self.text_embedder_cfg
+                text_embedder_cfg = self.col_to_text_embedder_cfg
             return TextEmbeddingTensorMapper(
                 text_embedder_cfg.text_embedder,
                 text_embedder_cfg.batch_size,
@@ -284,7 +291,8 @@ class Dataset(ABC):
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
             (default: :obj:`,`)
-        text_embedder_cfg (dict or TextEmbedderConfig, optional): A text
+        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
+            Dict[str, TextEmbedderConfig]], optional): A text
             embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
@@ -316,7 +324,8 @@ class Dataset(ABC):
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ",",
-        text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
@@ -350,7 +359,7 @@ class Dataset(ABC):
             raise ValueError(
                 "Multilabel classification task is not yet supported.")
 
-        self.text_embedder_cfg = text_embedder_cfg
+        self.col_to_text_embedder_cfg = col_to_text_embedder_cfg
         self.text_tokenizer_cfg = text_tokenizer_cfg
         self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
@@ -364,6 +373,13 @@ class Dataset(ABC):
             [
                 col for col, stype in self.col_to_stype.items()
                 if stype == torch_frame.timestamp
+            ],
+        )
+        self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
+            col_to_text_embedder_cfg,
+            [
+                col for col, stype in self.col_to_stype.items()
+                if stype == torch_frame.text_embedded
             ],
         )
         self._is_materialized: bool = False
@@ -524,7 +540,7 @@ class Dataset(ABC):
             col_stats=self._col_stats,
             target_col=self.target_col,
             col_to_sep=self.col_to_sep,
-            text_embedder_cfg=self.text_embedder_cfg,
+            col_to_text_embedder_cfg=self.col_to_text_embedder_cfg,
             text_tokenizer_cfg=self.text_tokenizer_cfg,
             col_to_time_format=self.col_to_time_format,
         )

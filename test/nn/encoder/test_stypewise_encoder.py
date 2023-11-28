@@ -8,9 +8,9 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearBucketEncoder,
+    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
-    LinearMultiEmbeddingEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StypeWiseFeatureEncoder,
@@ -34,7 +34,7 @@ from torch_frame.testing.text_tokenizer import (
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
-    (LinearMultiEmbeddingEncoder, {}),
+    (LinearEmbeddingEncoder, {}),
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
@@ -42,12 +42,9 @@ from torch_frame.testing.text_tokenizer import (
         'in_channels': 12,
     }),
 ])
-@pytest.mark.parametrize(
-    'encoder_embedding_cls_kwargs',
-    [
-        # TODO: Migrate to LinearMultiEmbeddingEncoder
-        (LinearMultiEmbeddingEncoder, {}),
-    ])
+@pytest.mark.parametrize('encoder_embedding_cls_kwargs', [
+    (LinearEmbeddingEncoder, {}),
+])
 def test_stypewise_feature_encoder(
     encoder_cat_cls_kwargs,
     encoder_num_cls_kwargs,
@@ -68,7 +65,7 @@ def test_stypewise_feature_encoder(
             stype.text_tokenized,
             stype.embedding,
         ],
-        text_embedder_cfg=TextEmbedderConfig(
+        col_to_text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels=16, ),
             batch_size=None,
         ),

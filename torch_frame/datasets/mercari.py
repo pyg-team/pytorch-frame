@@ -1,5 +1,5 @@
 import os.path as osp
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import pandas as pd
 
@@ -37,8 +37,10 @@ class Mercari(torch_frame.data.Dataset):
     base_url = 'https://data.pyg.org/datasets/tables/mercari_price_suggestion/'
     files = ['train', 'test_stg2']
 
-    def __init__(self, root: str, num_rows: Optional[int] = None,
-                 text_embedder_cfg: Optional[TextEmbedderConfig] = None):
+    def __init__(
+        self, root: str, num_rows: Optional[int] = None,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None):
         self.dfs = dict()
         col_to_stype = {
             'name': torch_frame.text_embedded,
@@ -62,5 +64,5 @@ class Mercari(torch_frame.data.Dataset):
             df = df.head(num_rows)
         df.drop(['train_id'], axis=1, inplace=True)
         super().__init__(df, col_to_stype, target_col='price', col_to_sep="/",
-                         text_embedder_cfg=text_embedder_cfg,
+                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                          split_col=SPLIT_COL)

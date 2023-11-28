@@ -9,8 +9,6 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.utils.split import SPLIT_TO_NUM
 
-TextEmbedderConfigs = Union[Dict[str, TextEmbedderConfig], TextEmbedderConfig]
-
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
     r"""The tabular data with text columns benchmark datasets used by
@@ -455,7 +453,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def __init__(self, root: str, name: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
+                 col_to_text_embedder_cfg: Optional[Union[Dict[
+                     str, TextEmbedderConfig], TextEmbedderConfig]] = None,
                  text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -506,5 +505,5 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split', col_to_sep=col_to_sep,
-                         text_embedder_cfg=text_embedder_cfg,
+                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                          text_tokenizer_cfg=text_tokenizer_cfg)
