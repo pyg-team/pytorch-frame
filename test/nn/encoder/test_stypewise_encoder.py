@@ -11,6 +11,7 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
+    LinearMultiEmbeddingEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StypeWiseFeatureEncoder,
@@ -33,21 +34,31 @@ from torch_frame.testing.text_tokenizer import (
 @pytest.mark.parametrize('encoder_multicategorical_cls_kwargs', [
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
-@pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
-    (LinearEmbeddingEncoder, {}),
-])
+@pytest.mark.parametrize(
+    'encoder_text_embedded_cls_kwargs',
+    [
+        # TODO: Migrate to LinearMultiEmbeddingEncoder
+        (LinearEmbeddingEncoder, {}),
+    ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
         'model': RandomTextModel(12, 2),
         'in_channels': 12,
     }),
 ])
+@pytest.mark.parametrize(
+    'encoder_embedding_cls_kwargs',
+    [
+        # TODO: Migrate to LinearMultiEmbeddingEncoder
+        (LinearMultiEmbeddingEncoder, {}),
+    ])
 def test_stypewise_feature_encoder(
     encoder_cat_cls_kwargs,
     encoder_num_cls_kwargs,
     encoder_multicategorical_cls_kwargs,
     encoder_text_embedded_cls_kwargs,
     encoder_text_tokenized_cls_kwargs,
+    encoder_embedding_cls_kwargs,
 ):
     num_rows = 10
     dataset: Dataset = FakeDataset(
@@ -59,6 +70,7 @@ def test_stypewise_feature_encoder(
             stype.multicategorical,
             stype.text_embedded,
             stype.text_tokenized,
+            stype.embedding,
         ],
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels=16, ),
@@ -91,6 +103,8 @@ def test_stypewise_feature_encoder(
             stype.text_tokenized:
             encoder_text_tokenized_cls_kwargs[0](
                 **encoder_text_tokenized_cls_kwargs[1]),
+            stype.embedding:
+            encoder_embedding_cls_kwargs[0](**encoder_embedding_cls_kwargs[1]),
         },
     )
     x, col_names = encoder(tensor_frame)
@@ -109,4 +123,6 @@ def test_stypewise_feature_encoder(
         "multicat_2",
         "multicat_3",
         "multicat_4",
+        "emb_1",
+        "emb_2",
     ]
