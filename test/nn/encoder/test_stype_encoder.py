@@ -16,6 +16,7 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
+    LinearMultiEmbeddingEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StackEncoder,
@@ -252,10 +253,9 @@ def test_text_embedded_encoder():
     dataset = FakeDataset(
         num_rows=num_rows,
         stypes=[
-            torch_frame.numerical,
-            torch_frame.categorical,
             torch_frame.text_embedded,
         ],
+        # TODO: Allow different text embedder for each column
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(text_emb_channels),
             batch_size=None),
@@ -266,6 +266,7 @@ def test_text_embedded_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
+    # TODO: Use LinearMultiEmbeddingEncoder instead
     encoder = LinearEmbeddingEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
@@ -280,6 +281,35 @@ def test_text_embedded_encoder():
     )
 
 
+def test_embedding_encoder():
+    num_rows = 20
+    out_channels = 5
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=[
+            torch_frame.embedding,
+        ],
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.embedding]
+    ]
+    encoder = LinearMultiEmbeddingEncoder(
+        out_channels=out_channels,
+        stats_list=stats_list,
+        stype=stype.embedding,
+    )
+    x_text = tensor_frame.feat_dict[stype.embedding]
+    x = encoder(x_text)
+    assert x.shape == (
+        num_rows,
+        len(tensor_frame.col_names_dict[stype.embedding]),
+        out_channels,
+    )
+
+
 def test_text_tokenized_encoder():
     num_rows = 20
     num_hash_bins = 10
@@ -288,8 +318,6 @@ def test_text_tokenized_encoder():
     dataset = FakeDataset(
         num_rows=num_rows,
         stypes=[
-            torch_frame.numerical,
-            torch_frame.categorical,
             torch_frame.text_tokenized,
         ],
         text_tokenizer_cfg=TextTokenizerConfig(
