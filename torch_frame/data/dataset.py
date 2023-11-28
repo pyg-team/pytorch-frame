@@ -112,11 +112,13 @@ class DataFrameToTensorFrameConverter:
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
         text_embedder_cfg
-            (:class:`torch_frame.config.TextEmbedderConfig`, optional):
-            A text embedder config specifying :obj:`text_embedder` that
-            maps sentences into :class:`torch.nn.Embeddings` and
-            :obj:`batch_size` that specifies the mini-batch size for
-            :obj:`text_embedder`. (default: :obj:`None`)
+            (Union[:class:`torch_frame.config.TextEmbedderConfig`,
+            Dict[str, :class:`torch_frame.config.TextEmbedderConfig`]],
+            optional): A text embedder config or a dictionary of configs
+            specifying :obj:`text_embedder` that maps sentences into
+            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
+            specifies the mini-batch size for :obj:`text_embedder`.
+            (default: :obj:`None`)
         text_tokenizer_cfg
             (:class:`torch_frame.config.TextTokenizerConfig`, optional):
             A text tokenizer config specifying :obj:`text_tokenizer` that
@@ -205,9 +207,13 @@ class DataFrameToTensorFrameConverter:
             return TimestampTensorMapper(
                 format=self.col_to_time_format.get(col, None))
         elif stype == torch_frame.text_embedded:
+            if isinstance(self.text_embedder_cfg, dict):
+                text_embedder_cfg = self.text_embedder_cfg[col]
+            else:
+                text_embedder_cfg = self.text_embedder_cfg
             return TextEmbeddingTensorMapper(
-                self.text_embedder_cfg.text_embedder,
-                self.text_embedder_cfg.batch_size,
+                text_embedder_cfg.text_embedder,
+                text_embedder_cfg.batch_size,
             )
         elif stype == torch_frame.text_tokenized:
             return TextTokenizationTensorMapper(
@@ -525,14 +531,13 @@ class Dataset(ABC):
         if torch_frame.text_embedded in self._tensor_frame.feat_dict:
             # Text embedding dimensionality is only available after the tensor
             # frame actually gets created, so we compute col_stats here.
-            # For now, we set all EMB_DIM to be the same.
-            # TODO: Extend this to allow different embedding dimensionalities
-            # for different columns.
-            emb_dim = self._tensor_frame.feat_dict[
-                torch_frame.text_embedded].size(-1)
-            for col_name in self._tensor_frame.col_names_dict[
-                    torch_frame.text_embedded]:
-                self._col_stats[col_name][StatType.EMB_DIM] = emb_dim
+            for i, col_name in enumerate(self._tensor_frame.col_names_dict[
+                    torch_frame.text_embedded]):
+                start = self._tensor_frame.feat_dict[
+                    torch_frame.text_embedded].offset[i]
+                end = self._tensor_frame.feat_dict[
+                    torch_frame.text_embedded].offset[i + 1]
+                self._col_stats[col_name][StatType.EMB_DIM] = int(end - start)
 
     @property
     def is_materialized(self) -> bool:

@@ -14,9 +14,26 @@ from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 @pytest.mark.parametrize('with_nan', [True, False])
 @pytest.mark.parametrize('tokenize_with_batch', [True, False])
 @pytest.mark.parametrize('text_batch_size', [None, 5])
-def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
+@pytest.mark.parametrize('use_different_embedder_cfg', [False, True])
+def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
+                      use_different_embedder_cfg):
     num_rows = 20
     out_channels = 10
+
+    if use_different_embedder_cfg:
+        text_embedded_cols = ['text_embedded_1', 'text_embedded_2']
+        text_embedder_cfg = {
+            col:
+            TextEmbedderConfig(
+                text_embedder=HashTextEmbedder(out_channels * (i + 1)),
+                batch_size=3)
+            for i, col in enumerate(text_embedded_cols)
+        }
+    else:
+        text_embedder_cfg = TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(out_channels),
+            batch_size=text_batch_size)
+
     dataset = FakeDataset(
         num_rows=num_rows,
         with_nan=with_nan,
@@ -30,9 +47,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
             torch_frame.embedding,
         ],
         create_split=True,
-        text_embedder_cfg=TextEmbedderConfig(
-            text_embedder=HashTextEmbedder(out_channels),
-            batch_size=text_batch_size),
+        text_embedder_cfg=text_embedder_cfg,
         text_tokenizer_cfg=TextTokenizerConfig(
             text_tokenizer=WhiteSpaceHashTokenizer(
                 num_hash_bins=12, batched=tokenize_with_batch),
@@ -92,9 +107,11 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size):
 
     feat_text_embedded = tensor_frame.feat_dict[torch_frame.text_embedded]
     assert feat_text_embedded.dtype == torch.float
-    assert feat_text_embedded.shape == (
-        num_rows, len(tensor_frame.col_names_dict[torch_frame.text_embedded]),
-        out_channels)
+    text_embedded_cols = tensor_frame.col_names_dict[torch_frame.text_embedded]
+    assert feat_text_embedded.shape == (num_rows, len(text_embedded_cols), -1)
+    if use_different_embedder_cfg:
+        assert feat_text_embedded.offset.max() == out_channels * sum(
+            i + 1 for i in range(len(text_embedded_cols)))
 
     feat_text_tokenized = tensor_frame.feat_dict[torch_frame.text_tokenized]
     assert isinstance(feat_text_tokenized['input_ids'], MultiNestedTensor)
