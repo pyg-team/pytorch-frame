@@ -534,13 +534,13 @@ class Dataset(ABC):
         if torch_frame.text_embedded in self._tensor_frame.feat_dict:
             # Text embedding dimensionality is only available after the tensor
             # frame actually gets created, so we compute col_stats here.
+            offset = self._tensor_frame.feat_dict[
+                torch_frame.text_embedded].offset
+            emb_dim_list = offset[1:] - offset[:-1]
             for i, col_name in enumerate(self._tensor_frame.col_names_dict[
                     torch_frame.text_embedded]):
-                start = self._tensor_frame.feat_dict[
-                    torch_frame.text_embedded].offset[i]
-                end = self._tensor_frame.feat_dict[
-                    torch_frame.text_embedded].offset[i + 1]
-                self._col_stats[col_name][StatType.EMB_DIM] = int(end - start)
+                self._col_stats[col_name][StatType.EMB_DIM] = int(
+                    emb_dim_list[i])
 
     @property
     def is_materialized(self) -> bool:

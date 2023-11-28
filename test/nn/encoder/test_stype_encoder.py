@@ -13,9 +13,9 @@ from torch_frame.nn import (
     EmbeddingEncoder,
     ExcelFormerEncoder,
     LinearBucketEncoder,
+    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
-    LinearMultiEmbeddingEncoder,
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StackEncoder,
@@ -254,7 +254,6 @@ def test_text_embedded_encoder():
         stypes=[
             torch_frame.text_embedded,
         ],
-        # TODO: Allow different text embedder for each column
         text_embedder_cfg=TextEmbedderConfig(
             text_embedder=HashTextEmbedder(text_emb_channels),
             batch_size=None),
@@ -265,8 +264,7 @@ def test_text_embedded_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
-    # TODO: Use LinearMultiEmbeddingEncoder instead
-    encoder = LinearMultiEmbeddingEncoder(
+    encoder = LinearEmbeddingEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.text_embedded,
@@ -295,7 +293,7 @@ def test_embedding_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.embedding]
     ]
-    encoder = LinearMultiEmbeddingEncoder(
+    encoder = LinearEmbeddingEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.embedding,

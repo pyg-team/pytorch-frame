@@ -14,13 +14,13 @@ from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 @pytest.mark.parametrize('with_nan', [True, False])
 @pytest.mark.parametrize('tokenize_with_batch', [True, False])
 @pytest.mark.parametrize('text_batch_size', [None, 5])
-@pytest.mark.parametrize('use_different_embedder_cfg', [False, True])
+@pytest.mark.parametrize('use_per_col_text_embedder_cfg', [False, True])
 def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
-                      use_different_embedder_cfg):
+                      use_per_col_text_embedder_cfg):
     num_rows = 20
     out_channels = 10
 
-    if use_different_embedder_cfg:
+    if use_per_col_text_embedder_cfg:
         text_embedded_cols = ['text_embedded_1', 'text_embedded_2']
         text_embedder_cfg = {
             col:
@@ -109,7 +109,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
     assert feat_text_embedded.dtype == torch.float
     text_embedded_cols = tensor_frame.col_names_dict[torch_frame.text_embedded]
     assert feat_text_embedded.shape == (num_rows, len(text_embedded_cols), -1)
-    if use_different_embedder_cfg:
+    if use_per_col_text_embedder_cfg:
         assert feat_text_embedded.offset.max() == out_channels * sum(
             i + 1 for i in range(len(text_embedded_cols)))
 

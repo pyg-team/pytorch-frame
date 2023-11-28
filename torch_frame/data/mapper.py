@@ -306,19 +306,13 @@ class TextEmbeddingTensorMapper(TensorMapper):
         ser_list = ser.tolist()
         if self.batch_size is None:
             emb = self.text_embedder(ser_list)
-            return MultiEmbeddingTensor(
-                num_rows=len(ser),
-                num_cols=1,
-                values=emb,
-                offset=torch.tensor([0, len(emb[0])]),
-            ).to(device)
-
-        emb_list = []
-        for i in tqdm(range(0, len(ser_list), self.batch_size),
-                      desc="Embedding texts in mini-batch"):
-            emb = self.text_embedder(ser_list[i:i + self.batch_size])
-            emb_list.append(emb.to(device))
-        emb = torch.cat(emb_list, dim=0)
+        else:
+            emb_list = []
+            for i in tqdm(range(0, len(ser_list), self.batch_size),
+                          desc="Embedding texts in mini-batch"):
+                emb = self.text_embedder(ser_list[i:i + self.batch_size])
+                emb_list.append(emb.to(device))
+            emb = torch.cat(emb_list, dim=0)
         return MultiEmbeddingTensor(
             num_rows=len(ser),
             num_cols=1,

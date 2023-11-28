@@ -15,8 +15,8 @@ from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
+    LinearEmbeddingEncoder,
     LinearEncoder,
-    LinearMultiEmbeddingEncoder,
 )
 
 parser = argparse.ArgumentParser()
@@ -158,7 +158,7 @@ test_loader = DataLoader(test_dataset.tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearMultiEmbeddingEncoder(),
+    stype.text_embedded: LinearEmbeddingEncoder(),
 }
 
 model = FTTransformer(

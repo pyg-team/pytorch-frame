@@ -569,7 +569,7 @@ class ExcelFormerEncoder(StypeEncoder):
         kaiming_uniform_(self.b_2, a=math.sqrt(5))
 
 
-class LinearMultiEmbeddingEncoder(StypeEncoder):
+class LinearEmbeddingEncoder(StypeEncoder):
     r"""Linear function based encoder for pre-computed embedding features.
     It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
     on each embedding feature and concatenates the output embeddings. Note that
