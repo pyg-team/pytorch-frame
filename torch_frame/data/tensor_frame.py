@@ -143,17 +143,17 @@ class TensorFrame:
         if col_name not in self._col_to_stype_idx:
             raise ValueError(
                 f"{col_name} is not available in the TensorFrame object.")
-        stype, idx = self._col_to_stype_idx[col_name]
-        if stype.use_dict_multi_nested_tensor:
+        stype_name, idx = self._col_to_stype_idx[col_name]
+        if stype_name.use_dict_multi_nested_tensor:
             return {
                 key: item[:, idx]
-                for key, item in self.feat_dict[stype].items()
+                for key, item in self.feat_dict[stype_name].items()
             }
         else:
-            if stype.use_multi_tensor:
-                return self.feat_dict[stype][:, idx]
+            if stype_name.use_multi_tensor:
+                return self.feat_dict[stype_name][:, idx]
             else:
-                return self.feat_dict[stype][:, idx].unsqueeze(1)
+                return self.feat_dict[stype_name][:, idx].unsqueeze(1)
 
     @property
     def stypes(self) -> List[stype]:
