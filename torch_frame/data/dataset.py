@@ -111,11 +111,9 @@ class DataFrameToTensorFrameConverter:
             be used throughout all the multi-categorical columns. If a
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
-        text_embedder_cfg
-            (Union[:class:`torch_frame.config.TextEmbedderConfig`,
-            Dict[str, :class:`torch_frame.config.TextEmbedderConfig`]],
-            optional): A text embedder config or a dictionary of configs
-            specifying :obj:`text_embedder` that maps sentences into
+        text_embedder_cfg (dict or TextEmbedderConfig, optional): A text
+            embedder configuration or a dictionary of configurations
+            specifying :obj:`text_embedder` that maps text columns into
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
             specifies the mini-batch size for :obj:`text_embedder`.
             (default: :obj:`None`)
@@ -284,9 +282,12 @@ class Dataset(ABC):
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
             (default: :obj:`,`)
-        text_embedder_cfg (TextEmbedderConfig, optional): A text embedder
-            configuration that specifies the text embedder to map text columns
-            into :pytorch:`PyTorch` embeddings. (default: :obj:`None`)
+        text_embedder_cfg (dict or TextEmbedderConfig, optional): A text
+            embedder configuration or a dictionary of configurations
+            specifying :obj:`text_embedder` that maps text columns into
+            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
+            specifies the mini-batch size for :obj:`text_embedder`.
+            (default: :obj:`None`)
         text_tokenizer_cfg (TextTokenizerConfig, optional):
             A text tokenizer config specifying :obj:`text_tokenizer` that
             maps sentences into a list of dictionary of tensors. Each
