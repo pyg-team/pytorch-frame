@@ -33,6 +33,7 @@ def get_fake_dataset(
         torch_frame.text_embedded,
         torch_frame.text_tokenized,
         torch_frame.sequence_numerical,
+        torch_frame.embedding,
     ]
     dataset = FakeDataset(
         num_rows=num_rows,
