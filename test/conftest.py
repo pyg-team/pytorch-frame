@@ -37,9 +37,10 @@ def get_fake_tensor_frame() -> Callable:
                     len(col_names_dict[torch_frame.multicategorical]))
             ] for _ in range(num_rows)]),
             torch_frame.text_embedded:
-            torch.randn(size=(num_rows,
-                              len(col_names_dict[torch_frame.text_embedded]),
-                              16)),
+            MultiEmbeddingTensor.from_tensor_list([
+                torch.randn(num_rows, random.randint(1, 5))
+                for _ in range(len(col_names_dict[torch_frame.text_embedded]))
+            ]),
             torch_frame.text_tokenized: {
                 'input_id':
                 MultiNestedTensor.from_tensor_mat([[
