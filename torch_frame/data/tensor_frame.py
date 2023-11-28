@@ -73,6 +73,8 @@ class TensorFrame:
         self.y = y
         self.validate()
 
+        # Quick mapping from column names into their (stype, idx) pairs in
+        # col_names_dict. Used for fast get_col_faet.
         self._col_to_stype_idx: Dict[str, Tuple[torch_frame.stype, int]] = {}
         for stype_name, cols in self.col_names_dict.items():
             for idx, col in enumerate(cols):
@@ -135,8 +137,8 @@ class TensorFrame:
             col_name (str): Input column name.
 
         Returns:
-            TensorData: Column feature for the given :obj:`col_name` of shape
-                :obj:`[num_rows, 1, *]`.
+            TensorData: Column feature for the given :obj:`col_name`. The shape
+                is :obj:`[num_rows, 1, *]`.
         """
         if col_name not in self._col_to_stype_idx:
             raise ValueError(
