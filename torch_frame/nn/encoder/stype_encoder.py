@@ -4,10 +4,18 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
+from torch.nn import (
+    Embedding,
+    EmbeddingBag,
+    ModuleList,
+    Parameter,
+    ParameterList,
+    Sequential,
+)
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
@@ -562,16 +570,15 @@ class ExcelFormerEncoder(StypeEncoder):
 
 
 class LinearEmbeddingEncoder(StypeEncoder):
-    r"""Linear function based encoder for pre-computed embedding features.
-    It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
-    on each embedding feature and concatenates the output embeddings. Note that
-    the implementation does this for all :obj:`text_embedded` features in a
-    batched manner.
+    r"""Linear function based encoder for pre-computed embedding features with
+    the same dimensionalities. It applies a linear layer
+    :obj:`torch.nn.Linear(emb_dim, out_channels)` on each embedding feature and
+    concatenates the output embeddings. Note that the implementation does this
+    for all :obj:`text_embedded` features in a batched manner.
+    NOTE: We will soon shift this to a new LinearMultiEmbeddingEncoder that
+    takes :class:`MultiEmbeddingTensor` object as input.
     """
-
-    # NOTE: We currently support text embeddings but in principle, this encoder
-    # can support any pre-encoded embeddings, including image/audio/graph
-    # embeddings.
+    # TODO: To be deprecated in favaor of LinearMultiEmbeddingEncoder
     supported_stypes = {stype.text_embedded}
 
     def __init__(
@@ -613,6 +620,60 @@ class LinearEmbeddingEncoder(StypeEncoder):
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
+        return x
+
+
+class LinearMultiEmbeddingEncoder(StypeEncoder):
+    r"""Linear function based encoder for pre-computed embedding features.
+    It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
+    on each embedding feature and concatenates the output embeddings. Note that
+    the implementation does this for all :obj:`text_embedded` features in a
+    batched manner.
+    """
+    supported_stypes = {stype.text_embedded, stype.embedding}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+    ):
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        num_cols = len(self.stats_list)
+        emb_dim_list = [stats[StatType.EMB_DIM] for stats in self.stats_list]
+        self.weight_list = ParameterList([
+            Parameter(torch.empty(emb_dim, self.out_channels))
+            for emb_dim in emb_dim_list
+        ])
+        self.biases = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        for weight in self.weight_list:
+            torch.nn.init.normal_(weight, std=0.01)
+        torch.nn.init.zeros_(self.biases)
+
+    def encode_forward(self, feat: MultiEmbeddingTensor) -> Tensor:
+        x_lins: List[Tensor] = []
+        for start_idx, end_idx, weight in zip(feat.offset[:-1],
+                                              feat.offset[1:],
+                                              self.weight_list):
+            # [batch_size, emb_dim] * [emb_dim, out_channels]
+            # -> [batch_size, out_channels]
+            x_lin = torch.matmul(feat.values[:, start_idx:end_idx], weight)
+            x_lins.append(x_lin)
+        # [batch_size, num_cols, out_channels]
+        x = torch.stack(x_lins, dim=1)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x = x + self.biases
         return x
 
 
