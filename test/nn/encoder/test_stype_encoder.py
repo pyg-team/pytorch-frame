@@ -13,7 +13,6 @@ from torch_frame.nn import (
     EmbeddingEncoder,
     ExcelFormerEncoder,
     LinearBucketEncoder,
-    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
     LinearMultiEmbeddingEncoder,
@@ -267,7 +266,7 @@ def test_text_embedded_encoder():
         for col_name in tensor_frame.col_names_dict[stype.text_embedded]
     ]
     # TODO: Use LinearMultiEmbeddingEncoder instead
-    encoder = LinearEmbeddingEncoder(
+    encoder = LinearMultiEmbeddingEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.text_embedded,

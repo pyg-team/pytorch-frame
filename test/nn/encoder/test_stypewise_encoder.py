@@ -8,7 +8,6 @@ from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearBucketEncoder,
-    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
     LinearMultiEmbeddingEncoder,
@@ -34,12 +33,9 @@ from torch_frame.testing.text_tokenizer import (
 @pytest.mark.parametrize('encoder_multicategorical_cls_kwargs', [
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
-@pytest.mark.parametrize(
-    'encoder_text_embedded_cls_kwargs',
-    [
-        # TODO: Migrate to LinearMultiEmbeddingEncoder
-        (LinearEmbeddingEncoder, {}),
-    ])
+@pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
+    (LinearMultiEmbeddingEncoder, {}),
+])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
         'model': RandomTextModel(12, 2),
