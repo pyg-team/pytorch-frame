@@ -150,8 +150,7 @@ class TensorFrame:
                 for key, item in self.feat_dict[stype].items()
             }
         else:
-            if (stype.use_multi_nested_tensor
-                    or stype.use_multi_embedding_tensor):
+            if stype.use_multi_tensor:
                 return self.feat_dict[stype][:, idx]
             else:
                 return self.feat_dict[stype][:, idx].unsqueeze(1)
