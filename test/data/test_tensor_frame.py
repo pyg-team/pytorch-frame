@@ -14,7 +14,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
     assert tf.num_rows == len(tf) == 10
     assert str(tf) == (
         "TensorFrame(\n"
-        "  num_cols=14,\n"
+        "  num_cols=16,\n"
         "  num_rows=10,\n"
         "  categorical (3): ['cat_1', 'cat_2', 'cat_3'],\n"
         "  numerical (2): ['num_1', 'num_2'],\n"
@@ -23,6 +23,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
         " 'text_embedded_3'],\n"
         "  text_tokenized (2): ['text_tokenized_1', 'text_tokenized_2'],\n"
         "  sequence_numerical (2): ['seq_num_1', 'seq_num_2'],\n"
+        "  embedding (2): ['emb_1', 'emb_2'],\n"
         "  has_target=True,\n"
         "  device='cpu',\n"
         ")")
