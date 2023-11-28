@@ -24,6 +24,7 @@ from torch_frame.nn import (
     LinearEncoder,
     LinearModelEncoder,
     MultiCategoricalEmbeddingEncoder,
+    LinearMultiEmbeddingEncoder,
 )
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
@@ -199,12 +200,12 @@ if not args.finetune:
     text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
                                    device=device)
     text_stype = torch_frame.text_embedded
-    text_stype_encoder = LinearEmbeddingEncoder()
+    text_stype_encoder = LinearMultiEmbeddingEncoder()
     kwargs = {
         "text_stype":
         text_stype,
         "text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
+        {'description': TextEmbedderConfig(text_embedder=text_encoder, batch_size=5)},
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model,
