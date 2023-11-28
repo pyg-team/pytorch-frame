@@ -35,6 +35,8 @@ from torch_frame.typing import (
 )
 from torch_frame.utils.split import SPLIT_TO_NUM
 
+TextEmbedderConfigs = Union[Dict[str, TextEmbedderConfig], TextEmbedderConfig]
+
 
 def requires_pre_materialization(func):
     @functools.wraps(func)
@@ -133,7 +135,7 @@ class DataFrameToTensorFrameConverter:
             for more information on formats. If a string is specified,
             then the same format will be used throughout all the timestamp
             columns. If a dictionary is given, we use a different format
-            specified for each column. If not specified, pandas's internal
+            specified for each column. If not specified, Pandas' internal
             to_datetime function will be used to auto parse time columns.
             (default: None)
     """
@@ -143,7 +145,7 @@ class DataFrameToTensorFrameConverter:
         col_stats: Dict[str, Dict[StatType, Any]],
         target_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ",",
-        text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
@@ -314,7 +316,7 @@ class Dataset(ABC):
         target_col: Optional[str] = None,
         split_col: Optional[str] = None,
         col_to_sep: Union[str, Dict[str, str]] = ",",
-        text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+        text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):

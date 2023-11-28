@@ -1,5 +1,5 @@
 import os.path as osp
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,8 @@ import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.utils.split import SPLIT_TO_NUM
+
+TextEmbedderConfigs = Union[Dict[str, TextEmbedderConfig], TextEmbedderConfig]
 
 
 class MultimodalTextBenchmark(torch_frame.data.Dataset):
@@ -453,7 +455,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def __init__(self, root: str, name: str,
                  text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 text_embedder_cfg: Optional[TextEmbedderConfig] = None,
+                 text_embedder_cfg: Optional[TextEmbedderConfigs] = None,
                  text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
