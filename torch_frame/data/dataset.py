@@ -113,9 +113,8 @@ class DataFrameToTensorFrameConverter:
             be used throughout all the multi-categorical columns. If a
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
-        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
-            Dict[str, TextEmbedderConfig]], optional): A text
-            embedder configuration or a dictionary of configurations
+        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
+            A text embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
             specifies the mini-batch size for :obj:`text_embedder`.
@@ -291,9 +290,8 @@ class Dataset(ABC):
             dictionary is given, we use a separator specified for each
             column. (default: :obj:`,`)
             (default: :obj:`,`)
-        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
-            Dict[str, TextEmbedderConfig]], optional): A text
-            embedder configuration or a dictionary of configurations
+        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
+            A text embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
             specifies the mini-batch size for :obj:`text_embedder`.

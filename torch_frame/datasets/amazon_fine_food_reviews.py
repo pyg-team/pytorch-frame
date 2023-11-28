@@ -14,10 +14,9 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
     Args:
         text_stype (torch_frame.stype): Text stype to use for text columns
             in the dataset. (default: :obj:`torch_frame.text_embedded`)
-        col_to_text_embedder_cfg (Union[TextEmbedderConfig,
-            Dict[str, TextEmbedderConfig]], optional): Text embedder
-            config to use if :obj:`text_stype` is specified as
-            `torch_frame.text_embedded`.
+        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
+            Text embedder config to use if :obj:`text_stype` is specified
+            as `torch_frame.text_embedded`.
         text_tokenizer_cfg (TextTokenizerConfig, optional): Text tokenizer
             config to use if :obj:`text_stype` is specified as
             `torch_frame.text_tokenized`.
