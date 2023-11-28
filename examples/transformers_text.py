@@ -20,11 +20,10 @@ from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
-    LinearEmbeddingEncoder,
     LinearEncoder,
     LinearModelEncoder,
-    MultiCategoricalEmbeddingEncoder,
     LinearMultiEmbeddingEncoder,
+    MultiCategoricalEmbeddingEncoder,
 )
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
@@ -205,7 +204,7 @@ if not args.finetune:
         "text_stype":
         text_stype,
         "text_embedder_cfg":
-        {'description': TextEmbedderConfig(text_embedder=text_encoder, batch_size=5)},
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model,
