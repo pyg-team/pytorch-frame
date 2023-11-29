@@ -572,9 +572,7 @@ class ExcelFormerEncoder(StypeEncoder):
 class LinearEmbeddingEncoder(StypeEncoder):
     r"""Linear function based encoder for pre-computed embedding features.
     It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
-    on each embedding feature and concatenates the output embeddings. Note that
-    the implementation does this for all :obj:`text_embedded` features in a
-    batched manner.
+    on each embedding feature and concatenates the output embeddings.
     """
     supported_stypes = {stype.text_embedded, stype.embedding}
 
