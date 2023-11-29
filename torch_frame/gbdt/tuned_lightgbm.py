@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from torch_frame import Metric, TaskType, TensorFrame, stype
+from torch_frame import DataFrame, Metric, TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
 
 
@@ -56,6 +56,27 @@ class LightGBM(GBDT):
         feat = torch.cat(feats, dim=-1)
 
         return feat.numpy(), y.numpy()
+
+    def _predict_helper(
+        self,
+        model: Any,
+        x: DataFrame,
+    ) -> np.ndarray:
+        r"""A helper function that applies the lightgbm model on DataFrame
+        :obj:`x`.
+
+        Args:
+            model (lightgbm.Booster): The lightgbm model.
+            x (DataFrame): The input `DataFrame`.
+
+        Returns:
+            pred (np.ndarray): The prediction output.
+        """
+        pred = model.predict(x)
+        if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            pred = pred.argmax(axis=1)
+
+        return pred
 
     def objective(
         self,
@@ -136,7 +157,7 @@ class LightGBM(GBDT):
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
-        pred = boost.predict(eval_x)
+        pred = self._predict_helper(boost, eval_x)
         score = self.compute_metric(torch.from_numpy(eval_y),
                                     torch.from_numpy(pred))
         return score
@@ -176,5 +197,5 @@ class LightGBM(GBDT):
     def _predict(self, tf_test: TensorFrame) -> Tensor:
         device = tf_test.device
         test_x, _ = self._to_lightgbm_input(tf_test)
-        pred = self.model.predict(test_x)
+        pred = self._predict_helper(self.model, test_x)
         return torch.from_numpy(pred).to(device)
