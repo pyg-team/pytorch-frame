@@ -8,8 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `col_to_text_embedder_cfg` and use `MultiEmbeddingTensor` for `text_embedded` ([#246](https://github.com/pyg-team/pytorch-frame/pull/246))
 - Added `col_encoder_dict` in `StypeWiseFeatureEncoder` ([#244](https://github.com/pyg-team/pytorch-frame/pull/244))
-- Added `LinearMultiEmbeddingEncoder` for `embedding` stype ([#243](https://github.com/pyg-team/pytorch-frame/pull/243))
+- Added `LinearEmbeddingEncoder` for `embedding` stype ([#243](https://github.com/pyg-team/pytorch-frame/pull/243))
 - Added support for `torch_frame.text_embedded` in `GBDT` ([#239](https://github.com/pyg-team/pytorch-frame/pull/239))
 - Support `Metric` in `GBDT` ([#236](https://github.com/pyg-team/pytorch-frame/pull/236))
 - Added auto-inference of `stype` ([#221](https://github.com/pyg-team/pytorch-frame/pull/221))
@@ -35,6 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Made `Trompt` output 2-dim embeddings in `forward`
+- Renamed `text_embedder_cfg` into `col_to_text_embedder_cfg`
 
 ### Deprecated
 

@@ -78,7 +78,7 @@ in mini-batch, where :obj:`batch_size` represents the batch size.
     dataset = MultimodalTextBenchmark(
         root='/tmp/multimodal_text_benchmark/wine_reviews',
         name='wine_reviews',
-        text_embedder_cfg=text_embedder_cfg
+        col_to_text_embedder_cfg=text_embedder_cfg,
     )
 
     len(dataset)
