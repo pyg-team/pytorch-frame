@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added optional `col_names` argument in `StypeEncoder` ([#247](https://github.com/pyg-team/pytorch-frame/pull/247))
 - Added `col_to_text_embedder_cfg` and use `MultiEmbeddingTensor` for `text_embedded` ([#246](https://github.com/pyg-team/pytorch-frame/pull/246))
 - Added `col_encoder_dict` in `StypeWiseFeatureEncoder` ([#244](https://github.com/pyg-team/pytorch-frame/pull/244))
 - Added `LinearEmbeddingEncoder` for `embedding` stype ([#243](https://github.com/pyg-team/pytorch-frame/pull/243))
