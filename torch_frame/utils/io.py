@@ -48,8 +48,6 @@ def deserialize_feat_dict(
             feat = {}
             for name, f_serialized in feat_serialized.items():
                 feat[name] = MultiNestedTensor(**f_serialized)
-        elif stype.use_multi_embedding_tensor:
-            feat = MultiEmbeddingTensor(**feat_serialized)
         else:
             assert isinstance(feat_serialized, Tensor)
             feat = feat_serialized
