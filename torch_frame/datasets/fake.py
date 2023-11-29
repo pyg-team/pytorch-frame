@@ -47,15 +47,6 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
-        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
-            A text embedder configuration or a dictionary of configurations
-            specifying :obj:`text_embedder` that maps text columns into
-            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
-            specifies the mini-batch size for :obj:`text_embedder`.
-            (default: :obj:`None`)
-        text_tokenizer_cfg (TextTokenizerConfig, optional): A text tokenizer
-            configuration that specifies the text tokenizer to map text columns
-            into maps sentences into tensor of tokens (default: :obj:`None`)
     """
     def __init__(
         self,

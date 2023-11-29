@@ -14,12 +14,6 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
     Args:
         text_stype (torch_frame.stype): Text stype to use for text columns
             in the dataset. (default: :obj:`torch_frame.text_embedded`)
-        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
-            Text embedder config to use if :obj:`text_stype` is specified
-            as `torch_frame.text_embedded`.
-        text_tokenizer_cfg (TextTokenizerConfig, optional): Text tokenizer
-            config to use if :obj:`text_stype` is specified as
-            `torch_frame.text_tokenized`.
 
     **STATS:**
 
@@ -67,6 +61,10 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
 
         df = pd.read_csv(path)[list(col_to_stype.keys())]
 
-        super().__init__(df, col_to_stype, target_col='Score',
-                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-                         text_tokenizer_cfg=text_tokenizer_cfg)
+        super().__init__(
+            df,
+            col_to_stype,
+            target_col='Score',
+            col_to_text_embedder_cfg=col_to_text_embedder_cfg,
+            text_tokenizer_cfg=text_tokenizer_cfg,
+        )

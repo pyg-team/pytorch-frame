@@ -15,6 +15,10 @@ class Mercari(torch_frame.data.Dataset):
     <https://www.kaggle.com/c/mercari-price-suggestion-challenge/>`_
     dataset from Kaggle.
 
+    Args:
+        num_rows (int, optional): Number of rows to subsample.
+            (default: :obj:`None`)
+
     **STATS:**
 
     .. list-table::
@@ -38,9 +42,12 @@ class Mercari(torch_frame.data.Dataset):
     files = ['train', 'test_stg2']
 
     def __init__(
-        self, root: str, num_rows: Optional[int] = None,
+        self,
+        root: str,
+        num_rows: Optional[int] = None,
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None):
+                                                 TextEmbedderConfig]] = None,
+    ):
         self.dfs = dict()
         col_to_stype = {
             'name': torch_frame.text_embedded,

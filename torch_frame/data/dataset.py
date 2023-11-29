@@ -213,10 +213,7 @@ class DataFrameToTensorFrameConverter:
             return TimestampTensorMapper(
                 format=self.col_to_time_format.get(col, None))
         elif stype == torch_frame.text_embedded:
-            if isinstance(self.col_to_text_embedder_cfg, dict):
-                text_embedder_cfg = self.col_to_text_embedder_cfg[col]
-            else:
-                text_embedder_cfg = self.col_to_text_embedder_cfg
+            text_embedder_cfg = self.col_to_text_embedder_cfg[col]
             return TextEmbeddingTensorMapper(
                 text_embedder_cfg.text_embedder,
                 text_embedder_cfg.batch_size,
