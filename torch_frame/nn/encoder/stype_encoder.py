@@ -95,7 +95,21 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, feat: TensorData) -> Tensor:
+    def forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
+        if col_names is not None:
+            if isinstance(feat, dict):
+                num_cols = next(iter(feat.values())).shape[1]
+            else:
+                num_cols = feat.shape[1]
+            if num_cols != len(col_names):
+                raise ValueError(
+                    f"The number of columns in feat and the length of "
+                    f"col_names must match (got {num_cols} and "
+                    f"{len(col_names)}, respectively.)")
         # Clone the tensor to avoid in-place modification
         if not isinstance(feat, dict):
             feat = feat.clone()
@@ -104,14 +118,18 @@ class StypeEncoder(Module, ABC):
         # NaN handling of the input Tensor
         feat = self.na_forward(feat)
         # Main encoding into column embeddings
-        x = self.encode_forward(feat)
+        x = self.encode_forward(feat, col_names)
         # Handle NaN in case na_strategy is None
         x = torch.nan_to_num(x, nan=0)
         # Post-forward (e.g., normalization, activation)
         return self.post_forward(x)
 
     @abstractmethod
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
         :obj:`[batch_size, num_cols, out_channels]`.
@@ -208,7 +226,11 @@ class EmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
@@ -272,7 +294,11 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: MultiNestedTensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
@@ -325,7 +351,11 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -368,7 +398,11 @@ class StackEncoder(StypeEncoder):
     def reset_parameters(self):
         super().reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
         # x: [batch_size, num_cols, out_channels]
@@ -415,7 +449,11 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         encoded_values = []
         for i in range(feat.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
@@ -491,7 +529,11 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_in, std=0.01)
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         feat = (feat - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -554,7 +596,11 @@ class ExcelFormerEncoder(StypeEncoder):
         self.b_2 = Parameter(Tensor(num_cols, self.out_channels))
         self.reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         feat = (feat - self.mean) / self.std
         x1 = self.W_1[None] * feat[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * feat[:, :, None] + self.b_2[None]
@@ -604,7 +650,11 @@ class LinearEmbeddingEncoder(StypeEncoder):
             torch.nn.init.normal_(weight, std=0.01)
         torch.nn.init.zeros_(self.biases)
 
-    def encode_forward(self, feat: MultiEmbeddingTensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: MultiEmbeddingTensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         x_lins: List[Tensor] = []
         for start_idx, end_idx, weight in zip(feat.offset[:-1],
                                               feat.offset[1:],
@@ -680,7 +730,11 @@ class LinearModelEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         x = self.model(feat)
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
