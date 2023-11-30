@@ -13,17 +13,16 @@ class PositionalEncoding(Encoding):
 
     Args:
         out_size (int): The output dimension size.
-        d_model (int):
 
     """
-    def __init__(self, out_size: int, d_model: int):
+    def __init__(self, out_size: int):
         super().__init__()
         if out_size % 2 != 0:
             raise ValueError(
                 f"out_size should be divisible by 2 (got {out_size})")
         self.out_size = out_size
-        mult_term = torch.exp(-np.log(10000.0) * 2 *
-                              torch.arange(0, self.out_size // 2) / d_model)
+        mult_term = torch.exp(-np.log(10000.0) *
+                              torch.arange(0, self.out_size // 2) / out_size)
         self.register_buffer("mult_term", mult_term)
 
     def _forward(self, input_tensor: Tensor) -> Tensor:
