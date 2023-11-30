@@ -25,7 +25,9 @@ class PositionalEncoding(Module):
 
     def forward(self, input_tensor: Tensor) -> Tensor:
         assert torch.all(input_tensor >= 0)
+        # (*, 1) * (1, ..., 1, out_size // 2) -> (*, out_size // 2)
         mult_tensor = input_tensor.unsqueeze(-1) * self.mult_term.reshape(
             (1, ) * input_tensor.ndim + (-1, ))
+        # cat([(*, out_size // 2), (*, out_size // 2)]) -> (*, out_size)
         return torch.cat([torch.sin(mult_tensor),
                           torch.cos(mult_tensor)], dim=-1)
