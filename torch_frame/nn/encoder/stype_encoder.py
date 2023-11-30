@@ -825,8 +825,7 @@ class TimestampEncoder(StypeEncoder):
         self.positional_encoding = PositionalEncoding(self.out_size)
         self.cyclic_encoding = CyclicEncoding(self.out_size)
         self.linear = Linear(
-            stype.timestamp.timestamp_num_cols * self.out_size,
-            self.out_channels)
+            len(TIME_TO_INDEX) * self.out_size, self.out_channels)
         self.reset_parameters()
 
     def reset_parameters(self):

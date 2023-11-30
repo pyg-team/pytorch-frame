@@ -61,10 +61,6 @@ class stype(Enum):
         return self in [stype.text_tokenized]
 
     @property
-    def timestamp_num_cols(self) -> int:
-        """The number of columns for the timestamp type."""
-        return 7
-
     def use_multi_tensor(self) -> bool:
         r"""This property indicates if the data of an stype is stored in
         :class:`torch_frame.data._MultiTensor`.
