@@ -1,20 +1,19 @@
-import numpy as np
-import torch
+from abc import ABC, abstractmethod
+
 from torch import Tensor
 from torch.nn import Module
 
-from torch_frame import stype
-class PositionalEncoder(Module):
-    def __init__(self, positions: int, num_freqs: int):
-        self.num_freqs = num_freqs
-        div_term = torch.exp(
-            torch.arange(0, self.num_freqs, 2).float() *
-            (-np.log(10000.0) / self.num_freqs))
-        self.register_buffer("div_term", div_term)
-        position = torch.arange(0, positions,
-                                dtype=torch.float)
-        self.register_buffer("position", position)
-        super().__init__()
-    
+
+class Encoding(Module, ABC):
+    r"""Base class for feature encoding that transforms
+    input :obj:`Tensor` into :obj:`Tensor` encoding.
+    """
     def forward(self, tensor: Tensor) -> Tensor:
-        position = self.position
+        if tensor.isnan().any():
+            raise ValueError(f"'{self.__class__.__name__}' cannot "
+                             "handle tensors with nans.")
+        return self._forward(tensor)
+
+    @abstractmethod
+    def _forward(self, tensor: Tensor) -> Tensor:
+        raise NotImplementedError
