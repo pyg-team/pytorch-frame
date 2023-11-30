@@ -25,7 +25,7 @@ class PositionalEncoding(Encoding):
         self.register_buffer("position", position)
 
     def _forward(self, tensor: Tensor) -> Tensor:
-        assert torch.all(tensor > 0)
+        assert torch.all(tensor >= 0)
         positional_encoding = tensor.unsqueeze(-1) * self.position.reshape(
             (1, ) * tensor.ndim + (-1, ))
         positional_encoding[..., :self.num_freqs // 2] = torch.sin(
