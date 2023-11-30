@@ -6,6 +6,17 @@ from torch.nn import Module
 
 
 class CyclicEncoding(Module):
+    r"""Cyclic encoding for input data containing values between 0 and 1.
+    This function maps each value in the input using sine and cosine
+    functions of different wavelengths to preserve the cyclical nature. This
+    is particularly useful for encoding cyclical features like hours of a
+    day, days of the week, etc. Given an input tensor of shape
+    :obj:`(*, )`, this encoding expands it into an output tensor of shape
+    :obj:`(*, out_size)`.
+
+    Args:
+        out_size (int): The output dimension size.
+    """
     def __init__(self, out_size: int):
         super().__init__()
         if out_size % 2 != 0:
