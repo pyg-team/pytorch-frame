@@ -22,3 +22,9 @@ def test_cyclic_encoding_values():
                               torch.zeros_like(out_tensor[..., :4]), atol=1e-5)
         assert torch.all(torch.abs(out_tensor[..., 4:] - 1) < 1e-5)
         assert out_tensor.shape == input_tensor.shape + (out_size, )
+
+        input_zeros_tensor = torch.zeros(size)
+        input_ones_tensor = torch.ones(size)
+        out_zeros_tensor = cyclic_encoding(input_zeros_tensor)
+        out_ones_tensor = cyclic_encoding(input_ones_tensor)
+        assert torch.allclose(out_zeros_tensor, out_ones_tensor, atol=1e-5)
