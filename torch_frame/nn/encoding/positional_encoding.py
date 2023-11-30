@@ -7,31 +7,28 @@ from torch_frame.nn.encoding import Encoding
 
 class PositionalEncoding(Encoding):
     r"""Positional encoding introduced in `"Attention Is All You Need"
-    <https://arxiv.org/abs/1706.03762>`_ paper.
+    <https://arxiv.org/abs/1706.03762>`_ paper. Given an input tensor of shape
+    :obj:`(*, )`, this encoding expands it to a encoded value of size
+    :obj:`(*, out_size)`.
 
     Args:
-        num_freqs (int): Number of frequencies to be applied to the
-            input :obj:`Tensor`, which is also the dimension of the output
-            :obj:`Tensor`.
+        out_size (int): The output dimension size.
+        d_model (int):
 
     """
-    def __init__(self, num_freqs: int = 8):
+    def __init__(self, out_size: int, d_model: int):
         super().__init__()
-        self.num_freqs = num_freqs
-        div_term = torch.exp(
-            torch.arange(0, self.num_freqs, 2).float() *
-            (-np.log(10000.0) / self.num_freqs))
-        self.register_buffer("div_term", div_term)
-        position = torch.arange(self.num_freqs)
-        self.register_buffer("position", position)
+        if out_size % 2 != 0:
+            raise ValueError(
+                f"out_size should be divisible by 2 (got {out_size})")
+        self.out_size = out_size
+        mult_term = torch.exp(-np.log(10000.0) * 2 *
+                              torch.arange(0, self.out_size // 2) / d_model)
+        self.register_buffer("mult_term", mult_term)
 
-    def _forward(self, tensor: Tensor) -> Tensor:
-        assert torch.all(tensor >= 0)
-        positional_encoding = tensor.unsqueeze(-1) * self.position.reshape(
-            (1, ) * tensor.ndim + (-1, ))
-        positional_encoding[..., :self.num_freqs // 2] = torch.sin(
-            positional_encoding[..., :self.num_freqs // 2] *
-            self.div_term[:self.num_freqs // 2])
-        positional_encoding[..., self.num_freqs // 2:] = torch.cos(
-            positional_encoding[..., self.num_freqs // 2:] * self.div_term)
-        return positional_encoding
+    def _forward(self, input_tensor: Tensor) -> Tensor:
+        assert torch.all(input_tensor >= 0)
+        mult_tensor = input_tensor.unsqueeze(-1) * self.mult_term.reshape(
+            (1, ) * input_tensor.ndim + (-1, ))
+        return torch.cat([torch.sin(mult_tensor),
+                          torch.cos(mult_tensor)], dim=-1)
