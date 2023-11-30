@@ -17,7 +17,7 @@ class PositionalEncoding(Module):
         super().__init__()
         if out_size % 2 != 0:
             raise ValueError(
-                f"out_size should be divisible by 2 (got {out_size})")
+                f"out_size should be divisible by 2 (got {out_size}).")
         self.out_size = out_size
         mult_term = torch.exp(-np.log(10000.0) *
                               torch.arange(0, self.out_size // 2) / out_size)
