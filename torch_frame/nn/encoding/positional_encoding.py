@@ -14,7 +14,7 @@ class PositionalEncoding(Encoding):
         input :obj:`Tensor`, which is also the dimension of the output
         :obj:`Tensor`.
     """
-    def __init__(self, num_freqs: int):
+    def __init__(self, num_freqs: int = 8):
         super().__init__()
         self.num_freqs = num_freqs
         div_term = torch.exp(
@@ -25,6 +25,7 @@ class PositionalEncoding(Encoding):
         self.register_buffer("position", position)
 
     def _forward(self, tensor: Tensor) -> Tensor:
+        assert torch.all(tensor > 0)
         positional_encoding = tensor.unsqueeze(-1) * self.position.reshape(
             (1, ) * tensor.ndim + (-1, ))
         positional_encoding[..., :self.num_freqs // 2] = torch.sin(
