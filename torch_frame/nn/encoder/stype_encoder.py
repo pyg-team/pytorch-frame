@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.nn import (
     Embedding,
     EmbeddingBag,
+    Linear,
     ModuleList,
     Parameter,
     ParameterList,
@@ -19,9 +20,31 @@ from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.nn.encoding import CyclicEncoding, PositionalEncoding
 from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
+
+NUM_MONTHS_PER_YEAR = 12
+'''
+TODO: We might want to revisit the normalization
+constant for NUM_DAYS_PER_MONTH as some months only
+have 28-30 days.
+'''
+NUM_DAYS_PER_MONTH = 31
+NUM_DAYS_PER_WEEK = 7
+NUM_HOURS_PER_DAY = 24
+NUM_MINUTES_PER_HOUR = 60
+NUM_SECONDS_PER_MINUTE = 60
+TIME_TO_INDEX = {
+    'YEAR': 0,
+    'MONTH': 1,
+    'DAY': 2,
+    'DAYOFWEEK': 3,
+    'HOUR': 4,
+    'MINUTE': 5,
+    'SECOND': 6
+}
 
 
 def reset_parameters_soft(module: Module):
@@ -80,7 +103,12 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on multicategorical"
                     " columns.")
-            if self.stype == stype.text_embedded:
+            if (self.stype == stype.timestamp
+                    and not self.na_strategy.is_timestamp_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on timestamp"
+                    " columns.")
+            elif self.stype == stype.text_embedded:
                 raise ValueError(f"Only the default `na_strategy` (None) "
                                  f"can be used on embedded text columns, but "
                                  f"{self.na_strategy} is given.")
@@ -168,10 +196,12 @@ class StypeEncoder(Module, ABC):
             column_data = feat[:, col]
             if isinstance(feat, MultiNestedTensor):
                 column_data = column_data.values
+            if len(column_data.shape) == 1:
+                column_data = column_data.unsqueeze(1)
             if self.stype == stype.numerical:
-                nan_mask = torch.isnan(column_data)
+                nan_mask = torch.isnan(column_data).any(dim=1)
             else:
-                nan_mask = column_data == -1
+                nan_mask = torch.where((column_data == -1).any(dim=1))[0]
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
@@ -182,6 +212,15 @@ class StypeEncoder(Module, ABC):
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
                 fill_value = 0
+            elif self.na_strategy == NAStrategy.NEWEST_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.NEWEST_TIME].to(
+                    feat.device)
+            elif self.na_strategy == NAStrategy.OLDEST_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.OLDEST_TIME].to(
+                    feat.device)
+            elif self.na_strategy == NAStrategy.MEDIAN_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.MEDIAN_TIME].to(
+                    feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
@@ -744,3 +783,67 @@ class LinearModelEncoder(StypeEncoder):
         # -> [batch_size, num_cols, out_channels]
         x = x_lin + self.bias
         return x
+
+
+class TimestampEncoder(StypeEncoder):
+    r"""TimestampEncoder for timestamp stype. The encoder applies
+    different frequencies to the timestamps to calculate the
+    positional encoding and then adds the positional encoding to
+    the original :obj:`Tensor`. Year is encoded with
+    :class:`torch_frame.nn.encoding.PositionalEncoding`. The other
+    features, including month, day, dayofweek, hour, minute and second,
+    are encoded using :class:`torch_frame.nn.encoding.CyclicEncoding`.
+    We then use a :class:`~torch.nn.Linear` layer to map back to
+    out_channels.
+
+    Args:
+        out_size (int): Output dimension of the positional and cyclic
+            encoding.
+    """
+    supported_stypes = {stype.timestamp}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        out_size: int = 8,
+    ):
+        self.out_size = out_size
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        min_year = torch.tensor([
+            self.stats_list[i][StatType.YEAR_RANGE][0]
+            for i in range(len(self.stats_list))
+        ])
+        self.register_buffer("min_year", min_year)
+        self.positional_encoding = PositionalEncoding(self.out_size)
+        self.cyclic_encoding = CyclicEncoding(self.out_size)
+        self.linear = Linear(
+            stype.timestamp.timestamp_num_cols * self.out_size,
+            self.out_channels)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+
+    def encode_forward(self, feat: Tensor,
+                       col_names: Optional[List[str]] = None) -> Tensor:
+        feat = feat.to(torch.float32)
+        max_values = torch.tensor([
+            1, NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
+            NUM_HOURS_PER_DAY, NUM_MINUTES_PER_HOUR, NUM_SECONDS_PER_MINUTE
+        ])
+        feat[..., TIME_TO_INDEX['YEAR']] = feat[:, :, 0] - self.min_year
+        feat /= max_values.view(1, -1)
+        encodings = [
+            self.positional_encoding(feat[..., :1]),
+            self.cyclic_encoding(feat[..., 1:])
+        ]
+        out = torch.cat(encodings, dim=2).view(feat.size(0), feat.size(1), -1)
+        return self.linear(out)

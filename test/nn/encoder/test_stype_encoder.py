@@ -19,6 +19,7 @@ from torch_frame.nn import (
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StackEncoder,
+    TimestampEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
@@ -151,6 +152,33 @@ def test_multicategorical_feature_encoder(encoder_cls_kwargs):
     assert (x_perturbed[:, 1:, :] == x[:, 1:, :]).all()
 
 
+@pytest.mark.parametrize(
+    "encoder_cls_kwargs",
+    [(
+        TimestampEncoder,
+        {},
+    )],
+)
+def test_timestamp_feature_encoder(encoder_cls_kwargs):
+    dataset: Dataset = FakeDataset(num_rows=10, stypes=[stype.timestamp])
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.timestamp]
+    ]
+
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.timestamp,
+        **encoder_cls_kwargs[1],
+    )
+    feat_timestamp = tensor_frame.feat_dict[stype.timestamp]
+    x = encoder(feat_timestamp)
+    assert x.shape == (feat_timestamp.size(0), feat_timestamp.size(1), 8)
+
+
 @pytest.mark.parametrize('encoder_cls_kwargs', [
     (EmbeddingEncoder, {
         'na_strategy': NAStrategy.MOST_FREQUENT,
@@ -249,6 +277,45 @@ def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert (feat_multicat.values[isnan_mask] == -1).all()
+
+
+@pytest.mark.parametrize(
+    "encoder_cls_kwargs",
+    [(
+        TimestampEncoder,
+        {
+            "na_strategy": NAStrategy.NEWEST_TIMESTAMP
+        },
+        TimestampEncoder,
+        {
+            "na_strategy": NAStrategy.MEDIAN_TIMESTAMP
+        },
+        TimestampEncoder,
+        {
+            "na_strategy": NAStrategy.OLDEST_TIMESTAMP
+        },
+    )],
+)
+def test_timestamp_feature_encoder_with_nan(encoder_cls_kwargs):
+    dataset: Dataset = FakeDataset(num_rows=10, stypes=[stype.timestamp],
+                                   with_nan=True)
+    dataset.materialize()
+    assert len(dataset.df) != len(dataset.df.dropna())
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.timestamp]
+    ]
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.timestamp,
+        **encoder_cls_kwargs[1],
+    )
+    feat_timestamp = tensor_frame.feat_dict[stype.timestamp]
+    x = encoder(feat_timestamp)
+    assert x.shape == (feat_timestamp.size(0), feat_timestamp.size(1), 8)
+    assert (~torch.isnan(x)).all()
 
 
 def test_text_embedded_encoder():

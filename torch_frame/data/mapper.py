@@ -251,13 +251,15 @@ class TimestampTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        ser = pd.to_datetime(ser, format=self.format)
+        ser = pd.to_datetime(ser, format=self.format, errors='coerce')
+        # 1 is subtracted from month and day so the values start from 0
         tensors = [
             torch.from_numpy(
                 ser.dt.year.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.month.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.day.values).to(device=device).unsqueeze(1),
+            torch.from_numpy(ser.dt.month.values -
+                             1).to(device=device).unsqueeze(1),
+            torch.from_numpy(ser.dt.day.values -
+                             1).to(device=device).unsqueeze(1),
             torch.from_numpy(
                 ser.dt.dayofweek.values).to(device=device).unsqueeze(1),
             torch.from_numpy(
@@ -267,7 +269,8 @@ class TimestampTensorMapper(TensorMapper):
             torch.from_numpy(
                 ser.dt.second.values).to(device=device).unsqueeze(1)
         ]
-        return torch.stack(tensors).permute(1, 2, 0).to(torch.float32)
+        stacked = torch.stack(tensors).permute(1, 2, 0).squeeze(1)
+        return torch.nan_to_num(stacked, nan=-1.0).to(torch.long)
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
