@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import Tensor
 from torch.nn import Module
@@ -19,7 +18,7 @@ class PositionalEncoding(Module):
             raise ValueError(
                 f"out_size should be divisible by 2 (got {out_size}).")
         self.out_size = out_size
-        mult_term = torch.exp(-np.log(10000.0) *
+        mult_term = torch.exp(-torch.log(10000.0) *
                               torch.arange(0, self.out_size // 2) / out_size)
         self.register_buffer("mult_term", mult_term)
 
