@@ -137,7 +137,7 @@ class LightGBM(GBDT):
             if self.metric == Metric.ROCAUC:
                 self.params["metric"] = "auc"
             elif self.metric == Metric.ACCURACY:
-                self.params["metric"] = "accuracy"
+                self.params["metric"] = "binary_logloss"
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "multiclass"
             self.params["metric"] = "multi_error"
