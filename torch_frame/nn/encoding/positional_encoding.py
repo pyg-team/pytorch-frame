@@ -11,8 +11,9 @@ class PositionalEncoding(Encoding):
 
     Args:
         num_freqs (int): Number of frequencies to be applied to the
-        input :obj:`Tensor`, which is also the dimension of the output
-        :obj:`Tensor`.
+            input :obj:`Tensor`, which is also the dimension of the output
+            :obj:`Tensor`.
+
     """
     def __init__(self, num_freqs: int = 8):
         super().__init__()
