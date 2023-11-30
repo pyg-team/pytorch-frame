@@ -15,8 +15,8 @@ from torch_frame.stype import stype
     TaskType.BINARY_CLASSIFICATION,
     TaskType.MULTICLASS_CLASSIFICATION,
 ])
-def test_excelformer(task_type):
-    batch_size = 10
+@pytest.mark.parametrize('batch_size', [0, 5])
+def test_excelformer(task_type, batch_size):
     in_channels = 8
     num_heads = 2
     num_layers = 6
@@ -29,7 +29,7 @@ def test_excelformer(task_type):
     else:
         out_channels = 1
     num_cols = len(dataset.col_stats) - 1
-    tensor_frame = dataset.tensor_frame
+    tensor_frame = dataset.tensor_frame[:batch_size]
     model = ExcelFormer(
         in_channels=in_channels,
         out_channels=out_channels,

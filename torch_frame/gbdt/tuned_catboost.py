@@ -1,11 +1,11 @@
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
 
-from torch_frame import DataFrame, TaskType, TensorFrame, stype
+from torch_frame import DataFrame, Metric, TaskType, TensorFrame, stype
 from torch_frame.gbdt import GBDT
 
 
@@ -17,7 +17,9 @@ class CatBoost(GBDT):
     by optimizing the given objective function.
     """
     def _to_catboost_input(
-            self, tf) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
+        self,
+        tf,
+    ) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -35,26 +37,39 @@ class CatBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         assert y is not None
-        if (stype.categorical in tf.feat_dict
-                and stype.numerical in tf.feat_dict):
-            categorical_df = pd.DataFrame(
-                tf.feat_dict[stype.categorical],
-                columns=tf.col_names_dict[stype.categorical])
-            numerical_df = pd.DataFrame(
-                tf.feat_dict[stype.numerical],
-                columns=tf.col_names_dict[stype.numerical])
-            df = pd.concat([categorical_df, numerical_df], axis=1)
-            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
-        elif stype.categorical in tf.feat_dict:
-            df = pd.DataFrame(tf.feat_dict[stype.categorical],
-                              columns=tf.col_names_dict[stype.categorical])
-            cat_features = np.arange(tf.feat_dict[stype.categorical].shape[1])
-        elif stype.numerical in tf.feat_dict:
-            df = pd.DataFrame(tf.feat_dict[stype.numerical],
-                              columns=tf.col_names_dict[stype.numerical])
-            cat_features = None
-        else:
+
+        dfs: List[DataFrame] = []
+        cat_features: List[np.ndarray] = []
+        offset: int = 0
+
+        if stype.categorical in tf.feat_dict:
+            feat = tf.feat_dict[stype.categorical].numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            cat_features.append(arange)
+            offset += feat.shape[1]
+
+        if stype.numerical in tf.feat_dict:
+            feat = tf.feat_dict[stype.numerical].numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            offset += feat.shape[1]
+
+        if stype.text_embedded in tf.feat_dict:
+            feat = tf.feat_dict[stype.text_embedded]
+            feat = feat.values
+            feat = feat.view(feat.size(0), -1).numpy()
+            arange = np.arange(offset, offset + feat.shape[1])
+            dfs.append(pd.DataFrame(feat, columns=arange))
+            offset += feat.shape[1]
+
+        # TODO Add support for other stypes.
+
+        if len(dfs) == 0:
             raise ValueError("The input TensorFrame object is empty.")
+
+        df = pd.concat(dfs, axis=1)
+        cat_features = np.concatenate(cat_features, axis=0)
         return df, y.numpy(), cat_features
 
     def _predict_helper(
@@ -130,13 +145,18 @@ class CatBoost(GBDT):
             trial.suggest_float("eta", 1e-6, 1.0, log=True),
         }
         if self.task_type == TaskType.REGRESSION:
-            self.params["objective"] = trial.suggest_categorical(
-                "objective", ["RMSE", "MAE"])
-            self.params["eval_metric"] = "RMSE"
+            if self.metric == Metric.RMSE:
+                self.params["objective"] = "RMSE"
+                self.params["eval_metric"] = "RMSE"
+            elif self.metric == Metric.MAE:
+                self.params["objective"] = "MAE"
+                self.params["eval_metric"] = "MAE"
         elif self.task_type == TaskType.BINARY_CLASSIFICATION:
-            self.params["objective"] = trial.suggest_categorical(
-                "objective", ["CrossEntropy", "Logloss"])
-            self.params["eval_metric"] = "AUC"
+            self.params["objective"] = "Logloss"
+            if self.metric == Metric.ROCAUC:
+                self.params["eval_metric"] = "AUC"
+            elif self.metric == Metric.ACCURACY:
+                self.params["eval_metric"] = "Accuracy"
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "MultiClass"
             self.params["eval_metric"] = "Accuracy"
@@ -145,6 +165,7 @@ class CatBoost(GBDT):
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
+
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
         eval_x, eval_y, _ = self._to_catboost_input(tf_val)
         boost = catboost.CatBoost(self.params)
@@ -153,7 +174,7 @@ class CatBoost(GBDT):
                           early_stopping_rounds=50, logging_level="Silent")
         pred = self._predict_helper(boost, eval_x)
         score = self.compute_metric(torch.from_numpy(eval_y),
-                                    torch.from_numpy(pred))[self.metric]
+                                    torch.from_numpy(pred))
         return score
 
     def _tune(

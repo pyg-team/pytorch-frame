@@ -241,14 +241,15 @@ def train(
         y = tf.y
         if isinstance(model, ExcelFormer):
             pred, y = model.forward_mixup(tf)
+        elif isinstance(model, Trompt):
+            # Trompt uses the layer-wise loss
+            pred = model.forward_stacked(tf)
+            num_layers = pred.size(1)
+            # [batch_size * num_layers, num_classes]
+            pred = pred.view(-1, out_channels)
+            y = tf.y.repeat_interleave(num_layers)
         else:
-            pred = model.forward(tf)
-            if isinstance(model, Trompt):
-                # Trompt uses the layer-wise loss
-                num_layers = pred.size(1)
-                # [batch_size * num_layers, num_classes]
-                pred = pred.view(-1, out_channels)
-                y = tf.y.repeat_interleave(num_layers)
+            pred = model(tf)
 
         if pred.size(1) == 1:
             pred = pred.view(-1, )
@@ -273,8 +274,6 @@ def test(
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        if isinstance(model, Trompt):
-            pred = pred.mean(dim=1)  # [batch_size, out_channels]
         if dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             pred = pred.argmax(dim=-1)
         elif dataset.task_type == TaskType.REGRESSION:
@@ -422,11 +421,9 @@ def main_gbdt():
     model.tune(tf_train=train_dataset.tensor_frame,
                tf_val=val_dataset.tensor_frame, num_trials=args.num_trials)
     val_pred = model.predict(tf_test=val_dataset.tensor_frame)
-    val_metric = model.compute_metric(val_dataset.tensor_frame.y,
-                                      val_pred)[model.metric]
+    val_metric = model.compute_metric(val_dataset.tensor_frame.y, val_pred)
     test_pred = model.predict(tf_test=test_dataset.tensor_frame)
-    test_metric = model.compute_metric(test_dataset.tensor_frame.y,
-                                       test_pred)[model.metric]
+    test_metric = model.compute_metric(test_dataset.tensor_frame.y, test_pred)
     end_time = time.time()
     result_dict = {
         'args': args.__dict__,

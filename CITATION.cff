@@ -1,0 +1,22 @@
+---
+cff-version: 1.2.0
+message: "Please cite our paper if you use this code in your own work."
+title: "PyTorch Frame: A Deep Learning Framework for Tabular Data"
+authors:
+- family-names: "Hu"
+  given-names: "Weihua"
+- family-names: "Fey"
+  given-names: "Matthias"
+- family-names: "Yuan"
+  given-names: "Yiwen"
+- family-names: "Zhang"
+  given-names: "Zecheng"
+- family-names: "Nitta"
+  given-names: "Akihiro"
+- family-names: "Cao"
+  given-names: "Kaidi"
+- family-names: "Kocijan"
+  given-names: "Vid"
+date-released: 2023-10-24
+license: MIT
+url: "https://github.com/pyg-team/pytorch-frame"

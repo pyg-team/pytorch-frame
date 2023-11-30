@@ -5,6 +5,8 @@ import torch
 
 import torch_frame
 from torch_frame import TensorFrame
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 
 
 def test_tensor_frame_basics(get_fake_tensor_frame):
@@ -12,7 +14,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
     assert tf.num_rows == len(tf) == 10
     assert str(tf) == (
         "TensorFrame(\n"
-        "  num_cols=14,\n"
+        "  num_cols=16,\n"
         "  num_rows=10,\n"
         "  categorical (3): ['cat_1', 'cat_2', 'cat_3'],\n"
         "  numerical (2): ['num_1', 'num_2'],\n"
@@ -21,6 +23,7 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
         " 'text_embedded_3'],\n"
         "  text_tokenized (2): ['text_tokenized_1', 'text_tokenized_2'],\n"
         "  sequence_numerical (2): ['seq_num_1', 'seq_num_2'],\n"
+        "  embedding (2): ['emb_1', 'emb_2'],\n"
         "  has_target=True,\n"
         "  device='cpu',\n"
         ")")
@@ -137,3 +140,36 @@ def test_equal_tensor_frame(get_fake_tensor_frame):
     tf2 = get_fake_tensor_frame(num_rows=11)
     assert tf1 != tf2
     assert tf2 != tf1
+
+
+def test_get_col_feat(get_fake_tensor_frame):
+    num_rows = 10
+    tf = get_fake_tensor_frame(num_rows=num_rows)
+    for stype, cols in tf.col_names_dict.items():
+        feat_list = []
+        for col in cols:
+            feat = tf.get_col_feat(col)
+            feat_list.append(feat)
+            # Check that shapes are all (num_rows, 1, *)
+            if stype.use_dict_multi_nested_tensor:
+                assert all(value.shape[:2] == (num_rows, 1)
+                           for value in feat.values())
+            else:
+                assert feat.shape[:2] == (num_rows, 1)
+        # Check that concatenation of feat_list reproduces the original
+        # feat_dict[stype]
+        if stype.use_multi_nested_tensor:
+            assert MultiNestedTensor.allclose(
+                MultiNestedTensor.cat(feat_list, dim=1), tf.feat_dict[stype])
+        elif stype.use_multi_embedding_tensor:
+            assert MultiEmbeddingTensor.allclose(
+                MultiEmbeddingTensor.cat(feat_list, dim=1),
+                tf.feat_dict[stype])
+        elif stype.use_dict_multi_nested_tensor:
+            for key in tf.feat_dict[stype].keys():
+                assert MultiNestedTensor.allclose(
+                    MultiNestedTensor.cat([feat[key] for feat in feat_list],
+                                          dim=1), tf.feat_dict[stype][key])
+        else:
+            assert torch.allclose(torch.cat(feat_list, dim=1),
+                                  tf.feat_dict[stype])

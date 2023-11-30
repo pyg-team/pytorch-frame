@@ -155,8 +155,7 @@ class ExcelFormer(Module):
             torch.Tensor: The output embeddings of size
                 [batch_size, out_channels].
         """
-        if stype.numerical not in tf.feat_dict or len(
-                tf.feat_dict[stype.numerical]) == 0:
+        if stype.numerical not in tf.feat_dict:
             raise ValueError(
                 "Excelformer only takes in numerical features, but the input "
                 "TensorFrame object does not have numerical features.")

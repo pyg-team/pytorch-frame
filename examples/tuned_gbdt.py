@@ -1,6 +1,5 @@
 """Reported (reproduced) results of Tuned XGBoost on TabularBenchmark of
 the Trompt paper https://arxiv.org/abs/2305.18446.
-Requires "--use_acc" flag.
 
 electricity (A4): 88.52 (91.09)
 eye_movements (A5): 66.57 (64.21)
@@ -13,7 +12,6 @@ jannis (mathcal B4): 79.67 (77.81)
 
 Reported (reproduced) results of Tuned CatBoost on TabularBenchmark of
 the Trompt paper: https://arxiv.org/abs/2305.18446
-Requires "--use_acc" flag.
 
 electricity (A4): 87.73 (88.09)
 eye_movements (A5): 66.84 (64.27)
@@ -33,14 +31,13 @@ import torch
 
 from torch_frame.datasets import TabularBenchmark
 from torch_frame.gbdt import CatBoost, XGBoost
-from torch_frame.typing import TaskType
+from torch_frame.typing import Metric
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gbdt_type', type=str, default='xgboost',
                     choices=['xgboost', 'catboost'])
 parser.add_argument('--dataset', type=str, default='eye_movements')
 # Add this flag to match the reported number.
-parser.add_argument('--use_acc', action='store_true')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -63,27 +60,25 @@ dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.7], dataset[
     0.7:0.79], dataset[0.79:]
 
+num_classes = None
+metric = None
+task_type = dataset.task_type
 if dataset.task_type.is_classification:
-    if args.use_acc:
-        # We cast binary classification as multi-class classification so that
-        # eval metric becomes classification accuracy.
-        task_type = TaskType.MULTICLASS_CLASSIFICATION
-    else:
-        # By default, GBDT will use the following eval metric for different
-        # task types: RMSE for regression, ROC-AUC for binary classification,
-        # and accuracy for multi-class classification.
-        task_type = dataset.task_type
+    metric = Metric.ACCURACY
     num_classes = dataset.num_classes
 else:
+    metric = Metric.RMSE
     num_classes = None
 
 gbdt_cls_dict = {'xgboost': XGBoost, 'catboost': CatBoost}
-gbdt = gbdt_cls_dict[args.gbdt_type](task_type=task_type,
-                                     num_classes=num_classes)
+gbdt = gbdt_cls_dict[args.gbdt_type](
+    task_type=task_type,
+    num_classes=num_classes,
+    metric=metric,
+)
 
 gbdt.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
           num_trials=20)
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
-metric = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
-# metric in the form of e.g., {'acc': 0.75} or {'rocauc': 0.75}
-print(metric)
+score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
+print(f"{gbdt.metric} : {score}")

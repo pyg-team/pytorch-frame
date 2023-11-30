@@ -5,6 +5,7 @@ import torch
 from torch import Tensor
 
 import torch_frame
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.typing import TensorData
@@ -59,6 +60,8 @@ def _cat_helper(
                 feat[name] = MultiNestedTensor.cat(
                     [feat[name] for feat in feat_list], dim=dim)
             feat_dict[stype] = feat
+        elif stype.use_multi_embedding_tensor:
+            feat_dict[stype] = MultiEmbeddingTensor.cat(feat_list, dim=dim)
         else:
             feat_dict[stype] = torch.cat(feat_list, dim=dim)
 
