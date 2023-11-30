@@ -830,6 +830,7 @@ class TimestampEncoder(StypeEncoder):
 
     def reset_parameters(self):
         super().reset_parameters()
+        self.linear.reset_parameters()
 
     def encode_forward(self, feat: Tensor,
                        col_names: Optional[List[str]] = None) -> Tensor:
