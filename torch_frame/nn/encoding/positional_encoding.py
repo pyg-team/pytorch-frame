@@ -23,7 +23,7 @@ class PositionalEncoding(Module):
                               torch.arange(0, self.out_size // 2) / out_size)
         self.register_buffer("mult_term", mult_term)
 
-    def _forward(self, input_tensor: Tensor) -> Tensor:
+    def forward(self, input_tensor: Tensor) -> Tensor:
         assert torch.all(input_tensor >= 0)
         mult_tensor = input_tensor.unsqueeze(-1) * self.mult_term.reshape(
             (1, ) * input_tensor.ndim + (-1, ))

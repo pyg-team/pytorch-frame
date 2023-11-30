@@ -3,9 +3,10 @@ import torch
 from torch_frame.nn import PositionalEncoding
 
 
-def test_positional_encoding_shape():
+def test_positional_encoding():
     encoding_size = 8
-    input_tensor = torch.arange(10)
-    positional_encoding = PositionalEncoding(encoding_size)
-    out = positional_encoding(input_tensor)
-    assert out.shape == input_tensor.shape + (encoding_size, )
+    for size in [(10, ), (10, 4), (10, 5, 8)]:
+        input_tensor = torch.randint(0, 10, size=size)
+        positional_encoding = PositionalEncoding(encoding_size)
+        out = positional_encoding(input_tensor)
+        assert out.shape == input_tensor.shape + (encoding_size, )
