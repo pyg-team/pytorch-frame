@@ -1,3 +1,4 @@
+r"""Encoding package."""
 from .encoding import Encoding
 from .positional_encoding import PositionalEncoding
 
