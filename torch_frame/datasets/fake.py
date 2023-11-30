@@ -71,7 +71,7 @@ class FakeDataset(torch_frame.data.Dataset):
             if num_rows < 3:
                 raise ValueError("Number of rows needs to be at"
                                  " least 3 for multiclass classification")
-            # make sure the final label exists
+            # make sure every label exists
             labels[0] = 0
             labels[1] = 1
             labels[2] = 2
