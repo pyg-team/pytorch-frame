@@ -22,7 +22,7 @@ torch_frame.nn.encoder
 
 
 torch_frame.nn.encoding
-----------------------
+------------------------
 
 .. currentmodule:: torch_frame.nn.encoding
 
@@ -36,7 +36,7 @@ torch_frame.nn.encoding
    {% endfor %}
 
 torch_frame.nn.conv
-----------------------
+------------------------
 
 .. currentmodule:: torch_frame.nn.conv
 
@@ -50,7 +50,7 @@ torch_frame.nn.conv
    {% endfor %}
 
 torch_frame.nn.decoder
-----------------------
+------------------------
 
 .. currentmodule:: torch_frame.nn.decoder
 
@@ -64,7 +64,7 @@ torch_frame.nn.decoder
    {% endfor %}
 
 torch_frame.nn.models
----------------------
+------------------------
 
 .. currentmodule:: torch_frame.nn.models
 
