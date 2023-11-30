@@ -36,7 +36,7 @@ torch_frame.nn.encoding
    {% endfor %}
 
 torch_frame.nn.conv
--------------------
+----------------------
 
 .. currentmodule:: torch_frame.nn.conv
 
