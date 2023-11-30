@@ -8,12 +8,11 @@ from torch_frame.nn.encoding import Encoding
 class PositionalEncoding(Encoding):
     r"""Positional encoding introduced in `"Attention Is All You Need"
     <https://arxiv.org/abs/1706.03762>`_ paper. Given an input tensor of shape
-    :obj:`(*, )`, this encoding expands it to a encoded value of size
+    :obj:`(*, )`, this encoding expands it into an output tensor of shape
     :obj:`(*, out_size)`.
 
     Args:
         out_size (int): The output dimension size.
-
     """
     def __init__(self, out_size: int):
         super().__init__()
