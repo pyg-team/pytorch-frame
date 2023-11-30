@@ -1,5 +1,5 @@
 import os.path as osp
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -451,10 +451,15 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             df[df[target_col] < 0][target_col] = 0
         return df
 
-    def __init__(self, root: str, name: str,
-                 text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 text_embedder_cfg: Optional[TextEmbedderConfig] = None,
-                 text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
+    def __init__(
+        self,
+        root: str,
+        name: str,
+        text_stype: torch_frame.stype = torch_frame.text_embedded,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None,
+        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+    ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
         self.name = name
@@ -504,5 +509,5 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split', col_to_sep=col_to_sep,
-                         text_embedder_cfg=text_embedder_cfg,
+                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                          text_tokenizer_cfg=text_tokenizer_cfg)

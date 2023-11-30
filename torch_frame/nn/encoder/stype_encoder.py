@@ -4,10 +4,18 @@ from typing import Any, Dict, List, Optional, Set
 
 import torch
 from torch import Tensor
-from torch.nn import Embedding, EmbeddingBag, ModuleList, Parameter, Sequential
+from torch.nn import (
+    Embedding,
+    EmbeddingBag,
+    ModuleList,
+    Parameter,
+    ParameterList,
+    Sequential,
+)
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
@@ -87,7 +95,21 @@ class StypeEncoder(Module, ABC):
             else:
                 reset_parameters_soft(self.post_module)
 
-    def forward(self, feat: TensorData) -> Tensor:
+    def forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
+        if col_names is not None:
+            if isinstance(feat, dict):
+                num_cols = next(iter(feat.values())).shape[1]
+            else:
+                num_cols = feat.shape[1]
+            if num_cols != len(col_names):
+                raise ValueError(
+                    f"The number of columns in feat and the length of "
+                    f"col_names must match (got {num_cols} and "
+                    f"{len(col_names)}, respectively.)")
         # Clone the tensor to avoid in-place modification
         if not isinstance(feat, dict):
             feat = feat.clone()
@@ -96,14 +118,18 @@ class StypeEncoder(Module, ABC):
         # NaN handling of the input Tensor
         feat = self.na_forward(feat)
         # Main encoding into column embeddings
-        x = self.encode_forward(feat)
+        x = self.encode_forward(feat, col_names)
         # Handle NaN in case na_strategy is None
         x = torch.nan_to_num(x, nan=0)
         # Post-forward (e.g., normalization, activation)
         return self.post_forward(x)
 
     @abstractmethod
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
         :obj:`[batch_size, num_cols, out_channels]`.
@@ -200,7 +226,11 @@ class EmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
@@ -264,7 +294,11 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         for emb in self.embs:
             emb.reset_parameters()
 
-    def encode_forward(self, feat: MultiNestedTensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: MultiNestedTensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
@@ -317,7 +351,11 @@ class LinearEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
         # [batch_size, num_cols], [channels, num_cols]
@@ -360,7 +398,11 @@ class StackEncoder(StypeEncoder):
     def reset_parameters(self):
         super().reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
         # x: [batch_size, num_cols, out_channels]
@@ -407,7 +449,11 @@ class LinearBucketEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         encoded_values = []
         for i in range(feat.size(1)):
             # Utilize torch.bucketize to find the corresponding bucket indices
@@ -483,7 +529,11 @@ class LinearPeriodicEncoder(StypeEncoder):
         torch.nn.init.normal_(self.linear_in, std=0.01)
         torch.nn.init.normal_(self.linear_out, std=0.01)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         feat = (feat - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
         # 'self.linear_in', and applying a 2π periodic
@@ -546,7 +596,11 @@ class ExcelFormerEncoder(StypeEncoder):
         self.b_2 = Parameter(Tensor(num_cols, self.out_channels))
         self.reset_parameters()
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
+    def encode_forward(
+        self,
+        feat: Tensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         feat = (feat - self.mean) / self.std
         x1 = self.W_1[None] * feat[:, :, None] + self.b_1[None]
         x2 = self.W_2[None] * feat[:, :, None] + self.b_2[None]
@@ -564,15 +618,9 @@ class ExcelFormerEncoder(StypeEncoder):
 class LinearEmbeddingEncoder(StypeEncoder):
     r"""Linear function based encoder for pre-computed embedding features.
     It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
-    on each embedding feature and concatenates the output embeddings. Note that
-    the implementation does this for all :obj:`text_embedded` features in a
-    batched manner.
+    on each embedding feature and concatenates the output embeddings.
     """
-
-    # NOTE: We currently support text embeddings but in principle, this encoder
-    # can support any pre-encoded embeddings, including image/audio/graph
-    # embeddings.
-    supported_stypes = {stype.text_embedded}
+    supported_stypes = {stype.text_embedded, stype.embedding}
 
     def __init__(
         self,
@@ -589,30 +637,37 @@ class LinearEmbeddingEncoder(StypeEncoder):
         super().init_modules()
         num_cols = len(self.stats_list)
         emb_dim_list = [stats[StatType.EMB_DIM] for stats in self.stats_list]
-        if not all(emb_dim == emb_dim_list[0] for emb_dim in emb_dim_list):
-            # TODO: Relax this by using feat: MultiEmbeddedTensor
-            raise RuntimeError(
-                "All embeddings must be of the same dimensionality.")
-        emb_dim = emb_dim_list[0]
-
-        self.weight = Parameter(
-            torch.empty(num_cols, emb_dim, self.out_channels))
-        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.weight_list = ParameterList([
+            Parameter(torch.empty(emb_dim, self.out_channels))
+            for emb_dim in emb_dim_list
+        ])
+        self.biases = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
-        torch.nn.init.normal_(self.weight, std=0.01)
-        torch.nn.init.zeros_(self.bias)
+        for weight in self.weight_list:
+            torch.nn.init.normal_(weight, std=0.01)
+        torch.nn.init.zeros_(self.biases)
 
-    def encode_forward(self, feat: Tensor) -> Tensor:
-        # [batch_size, num_cols, in_channels] *
-        # [num_cols, in_channels, out_channels]
-        # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum("ijk,jkl->ijl", feat, self.weight)
+    def encode_forward(
+        self,
+        feat: MultiEmbeddingTensor,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
+        x_lins: List[Tensor] = []
+        for start_idx, end_idx, weight in zip(feat.offset[:-1],
+                                              feat.offset[1:],
+                                              self.weight_list):
+            # [batch_size, emb_dim] * [emb_dim, out_channels]
+            # -> [batch_size, out_channels]
+            x_lin = torch.matmul(feat.values[:, start_idx:end_idx], weight)
+            x_lins.append(x_lin)
+        # [batch_size, num_cols, out_channels]
+        x = torch.stack(x_lins, dim=1)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
-        x = x_lin + self.bias
+        x = x + self.biases
         return x
 
 
@@ -675,7 +730,11 @@ class LinearModelEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: TensorData) -> Tensor:
+    def encode_forward(
+        self,
+        feat: TensorData,
+        col_names: Optional[List[str]] = None,
+    ) -> Tensor:
         x = self.model(feat)
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]

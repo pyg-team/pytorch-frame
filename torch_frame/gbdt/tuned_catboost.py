@@ -57,6 +57,7 @@ class CatBoost(GBDT):
 
         if stype.text_embedded in tf.feat_dict:
             feat = tf.feat_dict[stype.text_embedded]
+            feat = feat.values
             feat = feat.view(feat.size(0), -1).numpy()
             arange = np.arange(offset, offset + feat.shape[1])
             dfs.append(pd.DataFrame(feat, columns=arange))

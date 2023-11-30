@@ -70,6 +70,7 @@ class XGBoost(GBDT):
 
         if stype.text_embedded in tf.feat_dict:
             feat = tf.feat_dict[stype.text_embedded]
+            feat = feat.values
             feat = feat.view(feat.size(0), -1)
             feats.append(feat)
             types.extend(['q'] * feat.size(-1))
