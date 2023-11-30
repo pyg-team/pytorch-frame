@@ -23,12 +23,14 @@ class CyclicEncoding(Module):
             raise ValueError(
                 f"out_size should be divisible by 2 (got {out_size}).")
         self.out_size = out_size
-        mult_term = (torch.arange(0, self.out_size, 2) + 2) * math.pi
+        mult_term = torch.arange(1, self.out_size // 2 + 1)
         self.register_buffer("mult_term", mult_term)
 
     def forward(self, input_tensor: Tensor) -> Tensor:
         assert torch.all((input_tensor >= 0) & (input_tensor <= 1))
         mult_tensor = input_tensor.unsqueeze(-1) * self.mult_term.reshape(
             (1, ) * input_tensor.ndim + (-1, ))
-        return torch.cat([torch.sin(mult_tensor),
-                          torch.cos(mult_tensor)], dim=-1)
+        return torch.cat([
+            torch.sin(mult_tensor * math.pi),
+            torch.cos(mult_tensor * 2 * math.pi)
+        ], dim=-1)
