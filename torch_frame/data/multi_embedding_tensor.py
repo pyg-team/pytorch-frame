@@ -105,7 +105,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         """
         i = self._normalize_index(i, dim=0)
         j = self._normalize_index(j, dim=1)
-        return self.values[i, self.offset[j]:self.offset[j+1]]
+        return self.values[i, self.offset[j]:self.offset[j + 1]]
 
     def select(
         self,
@@ -162,64 +162,26 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         raise NotImplementedError
 
-    def narrow(
-        self,
-        dim: int,
-        start: int,
-        length: int,
-    ) -> "MultiEmbeddingTensor":
-        """Returns a narrowed version of input :class:`MultiEmbeddingTensor`.
+    def _row_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+        r"""Helper function called by :obj:`narrow`."""
+        return MultiEmbeddingTensor(
+            num_rows=length,
+            num_cols=self.num_cols,
+            values=self.values[start:start + length],
+            offset=self.offset,
+        )
 
-        Args:
-            dim (int): The dimension along which to narrow.
-            start (int): The starting dimension index to narrow.
-            length (int): The length of the dimension to narrow.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> out.narrow(dim=1, start=1, length=2)
-            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
-        """
-        dim = self._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if start == 0 and start + length >= num_data:
-            return self
-        elif length <= 0:
-            return MultiEmbeddingTensor(
-                num_rows=0 if dim == 0 else self.num_rows,
-                num_cols=0 if dim == 1 else self.num_cols,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device)
-                if dim == 1 else self.offset,
-            )
-
-        elif dim == 0:
-            return MultiEmbeddingTensor(
-                num_rows=length,
-                num_cols=self.num_cols,
-                values=self.values[start:start + length],
-                offset=self.offset,
-            )
-        elif dim == 1:
-            offset = self.offset[start:start + length + 1] - self.offset[start]
-            return MultiEmbeddingTensor(
-                num_rows=self.num_rows,
-                num_cols=length,
-                values=self.values[:, self.offset[start]:self.offset[start +
-                                                                     length]],
-                offset=offset,
-            )
+    def _col_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+        r"""Helper function called by :obj:`narrow`."""
+        offset = self.offset[start:start + length + 1] - self.offset[start]
+        col_offset_start = self.offset[start]
+        col_offset_end = self.offset[start + length]
+        return MultiEmbeddingTensor(
+            num_rows=self.num_rows,
+            num_cols=length,
+            values=self.values[:, col_offset_start:col_offset_end],
+            offset=offset,
+        )
 
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
         return MultiEmbeddingTensor(

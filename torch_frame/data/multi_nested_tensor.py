@@ -155,42 +155,6 @@ class MultiNestedTensor(_MultiTensor):
         else:
             raise NotImplementedError
 
-    def narrow(self, dim: int, start: int, length: int) -> "MultiNestedTensor":
-        """Narrow the tensor along the given dimension.
-
-        Args:
-            dim (int): The dimension along which to narrow.
-            start (int): The starting index.
-            length (int): The length of the slice.
-        """
-        assert start >= 0
-        dim = MultiNestedTensor._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if start == 0 and start + length >= num_data:
-            # Do nothing, just return the full data
-            return self
-        elif length > 0:
-            if dim == 0:
-                return self._row_narrow(start, length)
-            else:
-                return self._col_narrow(start, length)
-        else:
-            # Return empty MultiNestedTensor if length is 0 or negative
-            if dim == 0:
-                num_rows = 0
-                num_cols = self.num_cols
-            else:
-                num_rows = self.num_rows
-                num_cols = 0
-            values = torch.tensor([], device=self.device, dtype=self.dtype)
-            offset = torch.zeros(1, device=self.device, dtype=torch.long)
-            return MultiNestedTensor(
-                num_rows=num_rows,
-                num_cols=num_cols,
-                values=values,
-                offset=offset,
-            )
-
     def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0

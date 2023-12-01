@@ -252,6 +252,25 @@ class _MultiTensor:
                 length=end_idx - start_idx,
             )
 
+    def narrow(self, dim: int, start: int, length: int) -> "_MultiTensor":
+        assert start >= 0
+        dim = self._normalize_dim(dim)
+        num_data = self.num_rows if dim == 0 else self.num_cols
+        if start == 0 and start + length >= num_data:
+            return self
+        elif length <= 0:
+            return self.__class__(
+                num_rows=0 if dim == 0 else self.num_rows,
+                num_cols=0 if dim == 1 else self.num_cols,
+                values=torch.tensor([], device=self.device),
+                offset=torch.tensor([0], device=self.device)
+                if dim == 1 else self.offset,
+            )
+        elif dim == 0:
+            return self._row_narrow(start, length)
+        elif dim == 1:
+            return self._col_narrow(start, length)
+
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
