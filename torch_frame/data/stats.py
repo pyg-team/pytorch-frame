@@ -123,13 +123,16 @@ class StatType(Enum):
             return [min(year_range), max(year_range)]
 
         elif self == StatType.NEWEST_TIME:
-            return TimestampTensorMapper.extract_time(ser.iloc[-1])
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[-1])).squeeze(0)
 
         elif self == StatType.OLDEST_TIME:
-            return TimestampTensorMapper.extract_time(ser.iloc[0])
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[0])).squeeze(0)
 
         elif self == StatType.MEDIAN_TIME:
-            return TimestampTensorMapper.extract_time(ser.iloc[len(ser) // 2])
+            return TimestampTensorMapper.to_tensor(
+                pd.Series(ser.iloc[len(ser) // 2])).squeeze(0)
 
         elif self == StatType.EMB_DIM:
             return len(ser[0])

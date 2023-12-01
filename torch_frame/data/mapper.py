@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import (
     Any,
     Callable,
@@ -257,14 +256,20 @@ class TimestampTensorMapper(TensorMapper):
         self.format = format
 
     @staticmethod
-    def extract_time(t: datetime) -> Tensor:
+    def to_tensor(ser: Series) -> Tensor:
         # subtracting one so that the smallest months and days can
         # start from 0.
-        times = [
-            t.year, t.month - 1, t.day - 1,
-            t.weekday(), t.hour, t.minute, t.second
+        tensors = [
+            torch.from_numpy(ser.dt.year.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.month.values - 1).unsqueeze(1),
+            torch.from_numpy(ser.dt.day.values - 1).unsqueeze(1),
+            torch.from_numpy(ser.dt.dayofweek.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.hour.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.minute.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.second.values).unsqueeze(1)
         ]
-        return torch.tensor(times)
+        stacked = torch.stack(tensors).permute(1, 2, 0).squeeze(1)
+        return torch.nan_to_num(stacked, nan=-1.0).to(torch.long)
 
     def forward(
         self,
@@ -274,24 +279,8 @@ class TimestampTensorMapper(TensorMapper):
     ) -> Tensor:
         ser = pd.to_datetime(ser, format=self.format, errors='coerce')
         # 1 is subtracted from month and day so the values start from 0
-        tensors = [
-            torch.from_numpy(
-                ser.dt.year.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.month.values -
-                             1).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.day.values -
-                             1).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.dayofweek.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.hour.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.minute.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.second.values).to(device=device).unsqueeze(1)
-        ]
-        stacked = torch.stack(tensors).permute(1, 2, 0).squeeze(1)
-        return torch.nan_to_num(stacked, nan=-1.0).to(torch.long)
+        tensor = TimestampTensorMapper.to_tensor(ser)
+        return tensor.to(device)
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
