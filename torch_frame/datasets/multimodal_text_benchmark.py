@@ -252,12 +252,11 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             torch_frame.multicategorical: ['key_skills'],
         },
         'melbourne_airbnb': {
-            # `host_since` should be time column
             torch_frame.text_embedded: [
                 'name', 'summary', 'space', 'description',
                 'neighborhood_overview', 'notes', 'transit', 'access',
-                'interaction', 'house_rules', 'host_since', 'host_about',
-                'first_review', 'last_review'
+                'interaction', 'house_rules', 'host_about', 'first_review',
+                'last_review'
             ],
             torch_frame.categorical: [
                 'host_location', 'host_response_time', 'host_response_rate',
@@ -296,6 +295,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'reviews_per_month'
             ],
             torch_frame.multicategorical: ['host_verifications', 'amenities'],
+            torch_frame.timestamp: ['host_since'],
         },
         'news_channel': {
             torch_frame.numerical: [
@@ -331,13 +331,11 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             ]
         },
         'kick_starter_funding': {
-            # `deadline` should be time column
-            # `created_at` should be time column
-            torch_frame.text_embedded:
-            ['name', 'desc', 'keywords', 'deadline', 'created_at'],
+            torch_frame.text_embedded: ['name', 'desc', 'keywords'],
             torch_frame.categorical:
             ['disable_communication', 'country', 'currency', 'final_status'],
             torch_frame.numerical: ['goal'],
+            torch_frame.timestamp: ['deadline', 'created_at'],
         },
         'google_qa_answer_type_reason_explanation': {
             torch_frame.text_embedded:
@@ -396,12 +394,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'High School Distance', 'Tax assessed value',
                 'Annual tax amount', 'Listed Price', 'Last Sold Price'
             ],
-            # `Listed On` should be time column
-            # `Last Sold On` should be time column
             torch_frame.categorical: [
                 'Type', 'Region', 'Elementary School', 'Middle School',
-                'High School', 'Listed On', 'Last Sold On', 'City', 'Zip',
-                'State'
+                'High School', 'City', 'Zip', 'State'
             ],
             torch_frame.multicategorical: [
                 'Heating',
@@ -414,6 +409,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 'Laundry features',
                 'Parking features',
             ],
+            torch_frame.timestamp: ['Listed On', 'Last Sold On'],
         },
         'mercari_price_suggestion100K': {
             torch_frame.text_embedded: ['name', 'item_description'],
