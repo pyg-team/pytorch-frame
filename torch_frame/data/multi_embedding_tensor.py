@@ -221,33 +221,6 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=offset,
             )
 
-    def _slice(
-        self,
-        index: slice,
-        dim: int,
-    ) -> "MultiEmbeddingTensor":
-        dim = self._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if index.step is not None and index.step > 1:
-            idx = torch.tensor(
-                range(num_data)[index],
-                device=self.device,
-                dtype=torch.long,
-            )
-            return self.index_select(idx, dim=dim)
-        else:
-            start_idx: int = self._normalize_index(index.start or 0, dim=dim)
-            end_idx: int = self._normalize_index(
-                index.stop or num_data,
-                dim=dim,
-                is_slice_end=True,
-            )
-            return self.narrow(
-                dim=dim,
-                start=start_idx,
-                length=end_idx - start_idx,
-            )
-
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
         return MultiEmbeddingTensor(
             num_rows=index.size(0),

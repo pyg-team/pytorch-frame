@@ -191,21 +191,6 @@ class MultiNestedTensor(_MultiTensor):
                 offset=offset,
             )
 
-    def _slice(self, slice: slice, dim: int) -> "MultiNestedTensor":
-        dim = MultiNestedTensor._normalize_dim(dim)
-
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if slice.step is not None and slice.step > 1:
-            # If step is larger than 1, we reuse index_select along rows.
-            idx = torch.tensor(range(num_data)[slice], device=self.device)
-            return self.index_select(idx, dim=dim)
-        else:
-            start_idx: int = self._normalize_index(slice.start or 0, dim=dim)
-            end_idx: int = self._normalize_index(slice.stop or num_data,
-                                                 dim=dim, is_slice_end=True)
-            return self.narrow(dim=dim, start=start_idx,
-                               length=end_idx - start_idx)
-
     def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`narrow`."""
         assert start >= 0

@@ -229,6 +229,29 @@ class _MultiTensor:
         elif dim == 1:
             return self._col_index_select(index)
 
+    def _slice(self, index: slice, dim: int) -> "MultiEmbeddingTensor":
+        dim = self._normalize_dim(dim)
+        num_data = self.num_rows if dim == 0 else self.num_cols
+        if index.step is not None and index.step > 1:
+            idx = torch.tensor(
+                range(num_data)[index],
+                device=self.device,
+                dtype=torch.long,
+            )
+            return self.index_select(idx, dim=dim)
+        else:
+            start_idx: int = self._normalize_index(index.start or 0, dim=dim)
+            end_idx: int = self._normalize_index(
+                index.stop or num_data,
+                dim=dim,
+                is_slice_end=True,
+            )
+            return self.narrow(
+                dim=dim,
+                start=start_idx,
+                length=end_idx - start_idx,
+            )
+
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
