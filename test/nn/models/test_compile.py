@@ -73,6 +73,7 @@ def test_compile_graph_break(
     expected_graph_breaks,
 ):
     torch._dynamo.config.suppress_errors = True
+
     dataset = FakeDataset(
         num_rows=10,
         with_nan=False,
