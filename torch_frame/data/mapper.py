@@ -273,7 +273,7 @@ class TimestampTensorMapper(TensorMapper):
 
     @staticmethod
     def to_tensor(ser: Series) -> Tensor:
-        # subtracting one so that the smallest months and days can
+        # subtracting 1 so that the smallest months and days can
         # start from 0.
         tensors = [
             torch.from_numpy(ser.dt.year.values).unsqueeze(1),
@@ -294,7 +294,6 @@ class TimestampTensorMapper(TensorMapper):
         device: Optional[torch.device] = None,
     ) -> Tensor:
         ser = pd.to_datetime(ser, format=self.format, errors='coerce')
-        # 1 is subtracted from month and day so the values start from 0
         tensor = TimestampTensorMapper.to_tensor(ser)
         return tensor.to(device)
 
