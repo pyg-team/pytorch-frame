@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `TimestampEncoder` ([#225](https://github.com/pyg-team/pytorch-frame/pull/225))
+- Added time columns to the `MultimodalTextBenchmark` ([#253](https://github.com/pyg-team/pytorch-frame/pull/253))
 - Added `CyclicEncoding` ([#251](https://github.com/pyg-team/pytorch-frame/pull/251))
 - Added `PositionalEncoding` ([#249](https://github.com/pyg-team/pytorch-frame/pull/249))
 - Added optional `col_names` argument in `StypeEncoder` ([#247](https://github.com/pyg-team/pytorch-frame/pull/247))
