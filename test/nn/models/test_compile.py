@@ -47,7 +47,7 @@ from torch_frame.testing import withPackage
                 ffn_dropout=0.5,
             ),
             None,
-            2,
+            4,
             id="TabTransformer",
         ),
         pytest.param(
@@ -61,7 +61,7 @@ from torch_frame.testing import withPackage
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
             [stype.numerical],
-            2,
+            4,
             id="ExcelFormer",
         ),
     ],
