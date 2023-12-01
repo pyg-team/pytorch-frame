@@ -248,28 +248,6 @@ class MultiEmbeddingTensor(_MultiTensor):
                 length=end_idx - start_idx,
             )
 
-    def index_select(
-        self,
-        index: Tensor,
-        dim: int,
-    ) -> 'MultiEmbeddingTensor':
-        """Returns a :class:`MultiEmbeddingTensor` which indexes the input
-        :class:`MultiEmbeddingTensor` along the specified dimension.
-
-        Args:
-            index (Tensor): A 1-D tensor of indices to select.
-            dim (int): The dimension to index in.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-        """
-        dim = self._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
-        if dim == 0:
-            return self._row_index_select(index)
-        elif dim == 1:
-            return self._col_index_select(index)
-
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
         return MultiEmbeddingTensor(
             num_rows=index.size(0),

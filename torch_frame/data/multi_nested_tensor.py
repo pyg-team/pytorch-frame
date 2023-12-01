@@ -253,14 +253,6 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def index_select(self, index: Tensor, dim: int) -> "MultiNestedTensor":
-        dim = MultiNestedTensor._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
-        if dim == 0:
-            return self._row_index_select(index)
-        else:
-            return self._col_index_select(index)
-
     def _row_index_select(self, index: Tensor) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values

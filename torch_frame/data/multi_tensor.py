@@ -211,6 +211,24 @@ class _MultiTensor:
             # Return type: self.__class__
             return self.select(index, dim=0)
 
+    def index_select(self, index: Tensor, dim: int) -> "_MultiTensor":
+        """Returns a :class:`_MultiTensor` which indexes the input
+                :class:`_MultiTensor` along the specified dimension.
+
+        Args:
+            index (Tensor): A 1-D tensor of indices to select.
+            dim (int): The dimension to index in.
+
+        Returns:
+            MultiEmbeddingTensor: A :class:`_MultiTensor` instance.
+        """
+        dim = self._normalize_dim(dim)
+        index = self._normalize_index(index, dim=dim)
+        if dim == 0:
+            return self._row_index_select(index)
+        elif dim == 1:
+            return self._col_index_select(index)
+
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
