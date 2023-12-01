@@ -189,6 +189,28 @@ class _MultiTensor:
             return False
         return True
 
+    # Indexing Functions ######################################################
+
+    def __getitem__(
+        self,
+        index: Any,
+    ) -> Union["_MultiTensor", Tensor]:
+        if isinstance(index, tuple):
+            # index[0] for row indexing, index[1] for column indexing
+            assert len(index) == 2
+            if all(isinstance(idx, int) for idx in index):
+                # Return type: torch.Tensor
+                return self._get_value(index[0], index[1])
+            else:
+                # Return type: self.__class__
+                out = self
+                for dim, idx in enumerate(index):
+                    out = out.select(idx, dim)
+                return out
+        else:
+            # Return type: self.__class__
+            return self.select(index, dim=0)
+
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.

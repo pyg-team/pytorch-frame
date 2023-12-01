@@ -109,26 +109,6 @@ class MultiNestedTensor(_MultiTensor):
 
         return cls(num_rows, num_cols, values, offset)
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union["MultiNestedTensor", Tensor]:
-        if isinstance(index, tuple):
-            # index[0] for row indexing, index[1] for column indexing
-            assert len(index) == 2
-            if all(isinstance(idx, int) for idx in index):
-                # Returns Tensor
-                return self._get_value(index[0], index[1])
-            else:
-                # Returns MultiNestedTensor
-                out = self
-                for dim, idx in enumerate(index):
-                    out = out.select(idx, dim)
-                return out
-        else:
-            # Returns MultiNestedTensor
-            return self.select(index, dim=0)
-
     def _get_value(self, i: int, j: int) -> Tensor:
         r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
 

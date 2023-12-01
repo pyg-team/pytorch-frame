@@ -96,23 +96,16 @@ class MultiEmbeddingTensor(_MultiTensor):
         offset = torch.tensor(offset_list, device=values.device)
         return cls(num_rows, num_cols, values, offset)
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union["MultiEmbeddingTensor", Tensor]:
-        if isinstance(index, tuple):
-            assert len(index) == 2
-            if all(isinstance(idx, int) for idx in index):
-                i = self._normalize_index(index[0], dim=0)
-                j = self._normalize_index(index[1], dim=1)
-                return self.values[i, self.offset[j]:self.offset[j + 1]]
-            else:
-                out = self
-                for dim, idx in enumerate(index):
-                    out = out.select(idx, dim=dim)
-                return out
-        else:
-            return self.select(index, dim=0)
+    def _get_value(self, i: int, j: int) -> Tensor:
+        r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
+
+        Args:
+            i (int): The row integer index.
+            j (int): The column integer index.
+        """
+        i = self._normalize_index(i, dim=0)
+        j = self._normalize_index(j, dim=1)
+        return self.values[i, self.offset[j]:self.offset[j+1]]
 
     def select(
         self,
