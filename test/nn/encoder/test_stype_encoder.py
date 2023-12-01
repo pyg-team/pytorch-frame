@@ -282,20 +282,17 @@ def test_multicategorical_feature_encoder_with_nan(encoder_cls_kwargs):
 
 @pytest.mark.parametrize(
     "encoder_cls_kwargs",
-    [(
-        TimestampEncoder,
-        {
+    [
+        (TimestampEncoder, {
             "na_strategy": NAStrategy.NEWEST_TIMESTAMP
-        },
-        TimestampEncoder,
-        {
+        }),
+        (TimestampEncoder, {
             "na_strategy": NAStrategy.MEDIAN_TIMESTAMP
-        },
-        TimestampEncoder,
-        {
+        }),
+        (TimestampEncoder, {
             "na_strategy": NAStrategy.OLDEST_TIMESTAMP
-        },
-    )],
+        }),
+    ],
 )
 def test_timestamp_feature_encoder_with_nan(encoder_cls_kwargs):
     dataset: Dataset = FakeDataset(num_rows=10, stypes=[stype.timestamp],
