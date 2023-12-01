@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Union
+from typing import List, Sequence, Union
 
 import torch
 from torch import Tensor
@@ -123,37 +123,6 @@ class MultiNestedTensor(_MultiTensor):
         end_idx = self.offset[idx + 1]
         out = self.values[start_idx:end_idx]
         return out
-
-    def select(
-        self,
-        index: Union[int, Tensor, List, slice],
-        dim: int,
-    ) -> "MultiNestedTensor":
-        r"""Supports all types of row/column-level advanced indexing.
-
-        Args:
-            index (Union[int, Tensor, List, slice]): Input :obj:`index`.
-            dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
-        """
-        if isinstance(index, int):
-            return self._single_index_select(index, dim=dim)
-        elif isinstance(index, slice):
-            return self._slice(index, dim=dim)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-        elif isinstance(index, List):
-            return self.index_select(
-                torch.tensor(index, device=self.device),
-                dim=dim,
-            )
-        elif isinstance(index, range):
-            step = None
-            if index.step > 1:
-                step = index.step
-            index = slice(index.start, index.stop, step)
-            return self._slice(index, dim=dim)
-        else:
-            raise NotImplementedError
 
     def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`narrow`."""

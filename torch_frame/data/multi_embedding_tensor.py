@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Union
+from typing import List, Sequence
 
 import torch
 from torch import Tensor
@@ -106,61 +106,6 @@ class MultiEmbeddingTensor(_MultiTensor):
         i = self._normalize_index(i, dim=0)
         j = self._normalize_index(j, dim=1)
         return self.values[i, self.offset[j]:self.offset[j + 1]]
-
-    def select(
-        self,
-        index: Union[int, Tensor, Sequence[int], slice, range],
-        dim: int,
-    ) -> "MultiEmbeddingTensor":
-        """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
-        :class:`MultiEmbeddingTensor` along the specified dimension.
-
-        Args:
-            index (Union[int, Tensor, Sequence[int], slice, range]): An index
-                to select.
-            dim (int): The dimension to index in.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Note:
-            :obj:`select(index, dim=0)` is equivalent to
-            :obj:`multi_embedding_tensor[index]`, and
-            :obj:`select(index, dim=1)` is equivalent to
-            :obj:`multi_embedding_tensor[:, index]`.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> # int can select one row/col
-            >>> out.select(0, dim=0)
-            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
-            >>> # list/tensor/range can select multiple rows/cols
-            >>> out.select([0, 2], dim=1)
-            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
-        """
-        dim = self._normalize_dim(dim)
-        if isinstance(index, int):
-            return self._single_index_select(index, dim=dim)
-        elif isinstance(index, slice):
-            return self._slice(index, dim=dim)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-        # TODO: Don't materialize range but instead pass it to PyTorch tensor
-        # directly for possible better performance.
-        elif isinstance(index, (list, range)):
-            return self.index_select(
-                torch.tensor(index, dtype=torch.long, device=self.device),
-                dim=dim,
-            )
-        raise NotImplementedError
 
     def _row_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
         r"""Helper function called by :obj:`narrow`."""

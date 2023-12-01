@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Sequence, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -229,7 +229,7 @@ class _MultiTensor:
         elif dim == 1:
             return self._col_index_select(index)
 
-    def _slice(self, index: slice, dim: int) -> "MultiEmbeddingTensor":
+    def _slice(self, index: slice, dim: int) -> "_MultiTensor":
         dim = self._normalize_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if index.step is not None and index.step > 1:
@@ -270,6 +270,27 @@ class _MultiTensor:
             return self._row_narrow(start, length)
         elif dim == 1:
             return self._col_narrow(start, length)
+
+    def select(
+        self,
+        index: Union[int, Tensor, Sequence[int], slice, range],
+        dim: int,
+    ) -> "_MultiTensor":
+        dim = self._normalize_dim(dim)
+        if isinstance(index, int):
+            return self._single_index_select(index, dim=dim)
+        elif isinstance(index, slice):
+            return self._slice(index, dim=dim)
+        elif isinstance(index, Tensor) and index.ndim == 1:
+            return self.index_select(index, dim=dim)
+        # TODO: Don't materialize range but instead pass it to PyTorch tensor
+        # directly for possible better performance.
+        elif isinstance(index, (list, range)):
+            return self.index_select(
+                torch.tensor(index, dtype=torch.long, device=self.device),
+                dim=dim,
+            )
+        raise NotImplementedError
 
 
 def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
