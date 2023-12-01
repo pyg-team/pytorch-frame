@@ -1,14 +1,15 @@
-from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
 
 import torch_frame
-from torch_frame.data.mapper import MultiCategoricalTensorMapper
+from torch_frame.data.mapper import (
+    MultiCategoricalTensorMapper,
+    TimestampTensorMapper,
+)
 from torch_frame.typing import Series
 
 
@@ -122,13 +123,14 @@ class StatType(Enum):
             return [min(year_range), max(year_range)]
 
         elif self == StatType.NEWEST_TIME:
-            return extract_time(ser.iloc[-1])
+            return TimestampTensorMapper.extract_time(ser.iloc[-1])
 
         elif self == StatType.OLDEST_TIME:
-            return extract_time(ser.iloc[0])
+            return TimestampTensorMapper.extract_time(ser.iloc[0])
 
         elif self == StatType.MEDIAN_TIME:
-            return extract_time(ser.iloc[len(ser) // 2])
+            return TimestampTensorMapper.extract_time(ser.iloc[len(ser) // 2])
+
         elif self == StatType.EMB_DIM:
             return len(ser[0])
 
@@ -172,13 +174,3 @@ def compute_col_stats(
         }
 
     return stats
-
-
-def extract_time(t: datetime) -> Tensor:
-    # subtracting one so that the smallest months and days can
-    # start from 0.
-    times = [
-        t.year, t.month - 1, t.day - 1,
-        t.weekday(), t.hour, t.minute, t.second
-    ]
-    return torch.tensor(times)

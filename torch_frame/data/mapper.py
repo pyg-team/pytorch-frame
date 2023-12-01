@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import (
     Any,
     Callable,
@@ -241,9 +242,29 @@ class NumericalSequenceTensorMapper(TensorMapper):
 
 class TimestampTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
+    TIME_TO_INDEX = {
+        'YEAR': 0,
+        'MONTH': 1,
+        'DAY': 2,
+        'DAYOFWEEK': 3,
+        'HOUR': 4,
+        'MINUTE': 5,
+        'SECOND': 6
+    }
+
     def __init__(self, format: str):
         super().__init__()
         self.format = format
+
+    @staticmethod
+    def extract_time(t: datetime) -> Tensor:
+        # subtracting one so that the smallest months and days can
+        # start from 0.
+        times = [
+            t.year, t.month - 1, t.day - 1,
+            t.weekday(), t.hour, t.minute, t.second
+        ]
+        return torch.tensor(times)
 
     def forward(
         self,

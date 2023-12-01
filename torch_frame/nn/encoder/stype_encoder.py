@@ -16,6 +16,7 @@ from torch.nn import (
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
@@ -36,15 +37,6 @@ NUM_DAYS_PER_WEEK = 7
 NUM_HOURS_PER_DAY = 24
 NUM_MINUTES_PER_HOUR = 60
 NUM_SECONDS_PER_MINUTE = 60
-TIME_TO_INDEX = {
-    'YEAR': 0,
-    'MONTH': 1,
-    'DAY': 2,
-    'DAYOFWEEK': 3,
-    'HOUR': 4,
-    'MINUTE': 5,
-    'SECOND': 6
-}
 
 
 def reset_parameters_soft(module: Module):
@@ -786,19 +778,16 @@ class LinearModelEncoder(StypeEncoder):
 
 
 class TimestampEncoder(StypeEncoder):
-    r"""TimestampEncoder for timestamp stype. The encoder applies
-    different frequencies to the timestamps to calculate the
-    positional encoding and then adds the positional encoding to
-    the original :obj:`Tensor`. Year is encoded with
+    r"""TimestampEncoder for timestamp stype. Year is encoded with
     :class:`torch_frame.nn.encoding.PositionalEncoding`. The other
     features, including month, day, dayofweek, hour, minute and second,
     are encoded using :class:`torch_frame.nn.encoding.CyclicEncoding`.
-    We then use a :class:`~torch.nn.Linear` layer to map back to
-    out_channels.
+    We then use a :class:`~torch.nn.Linear` layer to map the output
+    :obj:`Tensor` to dimension `out_channels`.
 
     Args:
         out_size (int): Output dimension of the positional and cyclic
-            encoding.
+            encodings.
     """
     supported_stypes = {stype.timestamp}
 
@@ -825,7 +814,8 @@ class TimestampEncoder(StypeEncoder):
         self.positional_encoding = PositionalEncoding(self.out_size)
         self.cyclic_encoding = CyclicEncoding(self.out_size)
         self.linear = Linear(
-            len(TIME_TO_INDEX) * self.out_size, self.out_channels)
+            len(TimestampTensorMapper.TIME_TO_INDEX) * self.out_size,
+            self.out_channels)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -836,14 +826,17 @@ class TimestampEncoder(StypeEncoder):
                        col_names: Optional[List[str]] = None) -> Tensor:
         feat = feat.to(torch.float32)
         max_values = torch.tensor([
-            1, NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
+            NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
             NUM_HOURS_PER_DAY, NUM_MINUTES_PER_HOUR, NUM_SECONDS_PER_MINUTE
         ])
-        feat[..., TIME_TO_INDEX['YEAR']] = feat[:, :, 0] - self.min_year
-        feat /= max_values.view(1, -1)
-        encodings = [
-            self.positional_encoding(feat[..., :1]),
-            self.cyclic_encoding(feat[..., 1:])
-        ]
-        out = torch.cat(encodings, dim=2).view(feat.size(0), feat.size(1), -1)
+        feat[..., TimestampTensorMapper.
+             TIME_TO_INDEX['YEAR']] = feat[:, :, 0] - self.min_year
+        feat_year = feat[..., :1]
+        feat_rest = feat[..., 1:] / max_values.view(1, -1)
+        out = torch.cat([
+            self.positional_encoding(feat_year),
+            self.positional_encoding(feat_rest)
+        ], dim=2).view(
+            feat.size(0), feat.size(1),
+            len(TimestampTensorMapper.TIME_TO_INDEX) * self.out_size)
         return self.linear(out)

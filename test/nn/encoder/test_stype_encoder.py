@@ -175,7 +175,8 @@ def test_timestamp_feature_encoder(encoder_cls_kwargs):
         **encoder_cls_kwargs[1],
     )
     feat_timestamp = tensor_frame.feat_dict[stype.timestamp]
-    x = encoder(feat_timestamp)
+    col_names = tensor_frame.col_names_dict[stype.timestamp]
+    x = encoder(feat_timestamp, col_names)
     assert x.shape == (feat_timestamp.size(0), feat_timestamp.size(1), 8)
 
 
@@ -313,7 +314,8 @@ def test_timestamp_feature_encoder_with_nan(encoder_cls_kwargs):
         **encoder_cls_kwargs[1],
     )
     feat_timestamp = tensor_frame.feat_dict[stype.timestamp]
-    x = encoder(feat_timestamp)
+    col_names = tensor_frame.col_names_dict[stype.timestamp]
+    x = encoder(feat_timestamp, col_names)
     assert x.shape == (feat_timestamp.size(0), feat_timestamp.size(1), 8)
     assert (~torch.isnan(x)).all()
 
