@@ -26,18 +26,6 @@ from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
 
-NUM_MONTHS_PER_YEAR = 12
-'''
-TODO: We might want to revisit the normalization
-constant for NUM_DAYS_PER_MONTH as some months only
-have 28-30 days.
-'''
-NUM_DAYS_PER_MONTH = 31
-NUM_DAYS_PER_WEEK = 7
-NUM_HOURS_PER_DAY = 24
-NUM_MINUTES_PER_HOUR = 60
-NUM_SECONDS_PER_MINUTE = 60
-
 
 def reset_parameters_soft(module: Module):
     r"""Call reset_parameters() only when it exists. Skip activation module."""
@@ -811,6 +799,8 @@ class TimestampEncoder(StypeEncoder):
             for i in range(len(self.stats_list))
         ])
         self.register_buffer("min_year", min_year)
+        max_values = TimestampTensorMapper.CYCLIC_VALUES_NORMALIZATION_CONSTANT
+        self.register_buffer("max_values", max_values)
         self.positional_encoding = PositionalEncoding(self.out_size)
         self.cyclic_encoding = CyclicEncoding(self.out_size)
         self.linear = Linear(
@@ -825,14 +815,10 @@ class TimestampEncoder(StypeEncoder):
     def encode_forward(self, feat: Tensor,
                        col_names: Optional[List[str]] = None) -> Tensor:
         feat = feat.to(torch.float32)
-        max_values = torch.tensor([
-            NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
-            NUM_HOURS_PER_DAY, NUM_MINUTES_PER_HOUR, NUM_SECONDS_PER_MINUTE
-        ])
         feat[..., TimestampTensorMapper.
              TIME_TO_INDEX['YEAR']] = feat[:, :, 0] - self.min_year
         feat_year = feat[..., :1]
-        feat_rest = feat[..., 1:] / max_values.view(1, -1)
+        feat_rest = feat[..., 1:] / self.max_values.view(1, -1)
         out = torch.cat([
             self.positional_encoding(feat_year),
             self.positional_encoding(feat_rest)

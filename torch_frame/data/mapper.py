@@ -21,6 +21,18 @@ from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
+NUM_MONTHS_PER_YEAR = 12
+'''
+TODO: We might want to revisit the normalization
+constant for NUM_DAYS_PER_MONTH as some months only
+have 28-30 days.
+'''
+NUM_DAYS_PER_MONTH = 31
+NUM_DAYS_PER_WEEK = 7
+NUM_HOURS_PER_DAY = 24
+NUM_MINUTES_PER_HOUR = 60
+NUM_SECONDS_PER_MINUTE = 60
+
 
 def _get_default_numpy_dtype() -> np.dtype:
     r"""Returns the default numpy dtype."""
@@ -250,6 +262,10 @@ class TimestampTensorMapper(TensorMapper):
         'MINUTE': 5,
         'SECOND': 6
     }
+    CYCLIC_VALUES_NORMALIZATION_CONSTANT = torch.tensor([
+        NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
+        NUM_HOURS_PER_DAY, NUM_MINUTES_PER_HOUR, NUM_SECONDS_PER_MINUTE
+    ])
 
     def __init__(self, format: str):
         super().__init__()
