@@ -6,12 +6,13 @@ pip install optuna
 pip install torchmetrics
 pip install xgboost
 pip install catboost
+pip install lightgbm
 ```
 
 Then run
 ```bash
 # Specify the model from [TabNet, FTTransformer, ResNet, TabTransformer, Trompt
-# ExcelFormer, FTTransformerBucket, XGBoost, CatBoost]
+# ExcelFormer, FTTransformerBucket, XGBoost, CatBoost, LightGBM]
 model_type=TabNet
 
 # Specify the task type from [binary_classification, regression,
@@ -135,12 +136,12 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 | XGBoost             | Too slow\*              | Too slow\*            | Too slow\*             |
 | CatBoost            | Too slow\*              | Too slow\*            | Too slow\*             |
 | Trompt              | OOM                     | 0.373±0.004 (9114s)   | OOM                    |
-| ResNet              | 0.951±0.000 (419s)      | 0.378±0.001 (171s)    | 0.723±0.001 (257s)     |
-| FTTransformerBucket | **0.879±0.006 (9104s)** | 0.365±0.002 (1067s)   | 0.722±0.001 (2366s)    |
-| ExcelFormer         | OOM                     | 0.375±0.004 (2168s)   | 0.732±0.000 (4138s)    |
+| ResNet              | **0.951±0.000 (419s)**  | **0.378±0.001 (171s)**| 0.723±0.001 (257s)     |
+| FTTransformerBucket | 0.879±0.006 (9104s)     | 0.365±0.002 (1067s)   | 0.722±0.001 (2366s)    |
+| ExcelFormer         | OOM                     | 0.375±0.004 (2168s)   | **0.732±0.000 (4138s)**|
 | FTTransformer       | 0.923±0.003 (14517s)    | 0.357±0.001 (754s)    | 0.724±0.004 (2621s)    |
-| TabNet              | 0.934±0.005 (218s)      | **0.349±0.001 (64s)** | 0.716±0.001 (153s)     |
-| TabTransformer      | 0.950±0.000 (160s)      | 0.352±0.001 (98s)     | **0.705±0.003 (103s)** |
+| TabNet              | 0.934±0.005 (218s)      | 0.349±0.001 (64s)     | 0.716±0.001 (153s)     |
+| TabTransformer      | 0.950±0.000 (160s)      | 0.352±0.001 (98s)     | 0.705±0.003 (103s)     |
 
 #### `scale: large`
 

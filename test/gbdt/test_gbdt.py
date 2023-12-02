@@ -4,13 +4,14 @@ from torch_frame import Metric, TaskType, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
-from torch_frame.gbdt import CatBoost, XGBoost
+from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('gbdt_cls', [
     CatBoost,
     XGBoost,
+    LightGBM,
 ])
 @pytest.mark.parametrize('task_type_and_metric', [
     (TaskType.REGRESSION, Metric.RMSE),
