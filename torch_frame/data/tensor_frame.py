@@ -106,20 +106,20 @@ class TensorFrame:
             else:
                 tensors = [feats]
 
-            for t in tensors:
-                if t.dim() < 2:
+            for tensor in tensors:
+                if tensor.dim() < 2:
                     raise ValueError(f"feat_dict['{stype_name}'] must be at "
                                      f"least 2-dimensional")
-                if num_cols != t.size(1):
+                if num_cols != tensor.size(1):
                     raise ValueError(
                         f"The expected number of columns for {stype_name} "
                         f"feature is {num_cols}, which does not align with "
                         f"the column dimensionality of "
-                        f"feat_dict[{stype_name}] (got {t.size(1)})")
-                if t.size(0) != num_rows:
+                        f"feat_dict[{stype_name}] (got {tensor.size(1)})")
+                if tensor.size(0) != num_rows:
                     raise ValueError(
                         f"The length of elements in feat_dict are "
-                        f"not aligned, got {t.size(0)} but "
+                        f"not aligned, got {tensor.size(0)} but "
                         f"expected {num_rows}.")
 
         if len(empty_stypes) > 0:
