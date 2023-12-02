@@ -31,12 +31,10 @@ parser.add_argument('--num_layers', type=int, default=5)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--mixup', type=bool, default=True)
+parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
 
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 args.dataset)
@@ -90,6 +88,7 @@ model = ExcelFormer(
     col_stats=mutual_info_sort.transformed_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
 ).to(device)
+model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
