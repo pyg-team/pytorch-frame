@@ -829,7 +829,7 @@ class TimestampEncoder(StypeEncoder):
         feat = feat.to(torch.float32)
         # [batch_size, num_cols, 1] - [1, num_cols, 1]
         feat_year = feat[..., :1] - self.min_year.view(1, -1, 1)
-        # [batch_size, num_cols, num_rest] - [1, 1, num_rest]
+        # [batch_size, num_cols, num_rest] / [1, 1, num_rest]
         feat_rest = feat[..., 1:] / self.max_values.view(1, 1, -1)
         # [batch_size, num_cols, num_time_feats, out_size]
         x = torch.cat([
