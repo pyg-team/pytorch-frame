@@ -1,9 +1,11 @@
 import pytest
 
 from torch_frame import Metric, TaskType, stype
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.gbdt import CatBoost, XGBoost
+from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('gbdt_cls', [
@@ -17,11 +19,21 @@ from torch_frame.gbdt import CatBoost, XGBoost
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_catboost(gbdt_cls, task_type_and_metric):
+def test_gbdt(gbdt_cls, task_type_and_metric):
     task_type, metric = task_type_and_metric
-    dataset: Dataset = FakeDataset(num_rows=30, with_nan=True,
-                                   stypes=[stype.numerical, stype.categorical],
-                                   create_split=True, task_type=task_type)
+    dataset: Dataset = FakeDataset(
+        num_rows=30,
+        with_nan=True,
+        stypes=[
+            stype.numerical,
+            stype.categorical,
+            stype.text_embedded,
+        ],
+        create_split=True,
+        task_type=task_type,
+        col_to_text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(8)),
+    )
     dataset.materialize()
     gbdt = gbdt_cls(
         task_type=task_type,

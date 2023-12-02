@@ -62,8 +62,8 @@ text_encoder = PretrainedTextEncoder(device=device)
 dataset = Mercari(
     root=path,
     num_rows=5000,  # set num_rows to use a subset of the dataset
-    text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
-                                         batch_size=5),
+    col_to_text_embedder_cfg=TextEmbedderConfig(text_embedder=text_encoder,
+                                                batch_size=5),
 )
 
 dataset.materialize(path=osp.join(path, "data.pt"))

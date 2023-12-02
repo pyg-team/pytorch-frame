@@ -118,10 +118,11 @@ def test_text_embedding_tensor_mapper():
     mapper = TextEmbeddingTensorMapper(HashTextEmbedder(out_channels),
                                        batch_size=8)
     emb = mapper.forward(ser)
-    assert emb.shape == (num_sentences + 1, out_channels)
+    assert emb.shape == (num_sentences + 1, 1, -1)
+    assert emb.values.shape == (num_sentences + 1, out_channels)
     mapper.batch_size = None
     emb2 = mapper.forward(ser)
-    assert torch.allclose(emb, emb2)
+    assert MultiEmbeddingTensor.allclose(emb, emb2)
 
 
 def test_embedding_tensor_mapper():

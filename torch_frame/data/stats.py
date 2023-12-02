@@ -60,6 +60,9 @@ class StatType(Enum):
             torch_frame.timestamp: [
                 StatType.YEAR_RANGE,
             ],
+            torch_frame.embedding: [
+                StatType.EMB_DIM,
+            ]
         }
         return stats_type.get(stype, [])
 
@@ -110,6 +113,9 @@ class StatType(Enum):
             ser = pd.to_datetime(ser, format=time_format)
             year_range = ser.dt.year.values
             return [min(year_range), max(year_range)]
+
+        elif self == StatType.EMB_DIM:
+            return len(ser[0])
 
 
 _default_values = {

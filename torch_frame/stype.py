@@ -51,7 +51,7 @@ class stype(Enum):
         r"""This property indicates if the data of an stype is stored in
         :class:`torch_frame.data.MultiNestedTensor`.
         """
-        return self in [stype.embedding]
+        return self in [stype.text_embedded, stype.embedding]
 
     @property
     def use_dict_multi_nested_tensor(self) -> bool:
@@ -59,6 +59,13 @@ class stype(Enum):
         a dictionary of :class:`torch_frame.data.MultiNestedTensor`.
         """
         return self in [stype.text_tokenized]
+
+    @property
+    def use_multi_tensor(self) -> bool:
+        r"""This property indicates if the data of an stype is stored in
+        :class:`torch_frame.data._MultiTensor`.
+        """
+        return self.use_multi_nested_tensor or self.use_multi_embedding_tensor
 
 
 numerical = stype('numerical')

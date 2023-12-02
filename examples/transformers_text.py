@@ -204,8 +204,8 @@ if not args.finetune:
     kwargs = {
         "text_stype":
         text_stype,
-        "text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
+        "col_to_text_embedder_cfg":
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model,
