@@ -108,7 +108,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         return self.values[i, self.offset[j]:self.offset[j + 1]]
 
     def _row_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
         return MultiEmbeddingTensor(
             num_rows=length,
             num_cols=self.num_cols,
@@ -117,7 +117,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         )
 
     def _col_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
         offset = self.offset[start:start + length + 1] - self.offset[start]
         col_offset_start = self.offset[start]
         col_offset_end = self.offset[start + length]
@@ -129,6 +129,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         )
 
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         return MultiEmbeddingTensor(
             num_rows=index.size(0),
             num_cols=self.num_cols,
@@ -137,6 +140,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         )
 
     def _col_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         if index.numel() == 0:
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
@@ -166,6 +172,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         index: int,
         dim: int,
     ) -> "MultiEmbeddingTensor":
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         index = self._normalize_index(index, dim=dim)
         if dim == 0:
             return MultiEmbeddingTensor(
@@ -184,6 +193,25 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
+
+    def empty(self, dim: int) -> "MultiEmbeddingTensor":
+        """Creates an empty :class:`MultiEmbeddingTensor`.
+
+        Args:
+            dim (int): The dimension to empty.
+
+        Returns:
+            MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
+                Note that if :obj:`dim=0`, it will return with the original
+                offset tensor.
+        """
+        return MultiEmbeddingTensor(
+            num_rows=0 if dim == 0 else self.num_rows,
+            num_cols=0 if dim == 1 else self.num_cols,
+            values=torch.tensor([], device=self.device),
+            offset=torch.tensor([0], device=self.device)
+            if dim == 1 else self.offset,
+        )
 
     @staticmethod
     def cat(

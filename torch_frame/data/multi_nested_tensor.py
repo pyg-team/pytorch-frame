@@ -125,7 +125,7 @@ class MultiNestedTensor(_MultiTensor):
         return out
 
     def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
         end = start + length
@@ -141,7 +141,7 @@ class MultiNestedTensor(_MultiTensor):
         )
 
     def _col_narrow(self, start: int, length: int) -> "MultiNestedTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
         end = start + length
@@ -289,6 +289,24 @@ class MultiNestedTensor(_MultiTensor):
         col = batch % self.num_cols
         dense[row, col, arange] = self.values
         return dense
+
+    def empty(self, dim: int) -> "MultiNestedTensor":
+        """Creates an empty :class:`MultiEmbeddingTensor`.
+
+        Args:
+            dim (int): The dimension to empty.
+
+        Returns:
+            MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
+        """
+        values = torch.tensor([], device=self.device, dtype=self.dtype)
+        offset = torch.zeros(1, device=self.device, dtype=torch.long)
+        return MultiNestedTensor(
+            num_rows=0 if dim == 0 else self.num_rows,
+            num_cols=0 if dim == 1 else self.num_cols,
+            values=values,
+            offset=offset,
+        )
 
     # Static methods ##########################################################
     @staticmethod

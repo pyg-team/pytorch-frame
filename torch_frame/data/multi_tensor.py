@@ -216,14 +216,11 @@ class _MultiTensor:
 
     def index_select(self, index: Tensor, dim: int) -> "_MultiTensor":
         """Returns a :class:`_MultiTensor` which indexes the input
-                :class:`_MultiTensor` along the specified dimension.
+        :class:`_MultiTensor` along the specified dimension.
 
         Args:
             index (Tensor): A 1-D tensor of indices to select.
             dim (int): The dimension to index in.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`_MultiTensor` instance.
         """
         dim = self._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
@@ -262,19 +259,20 @@ class _MultiTensor:
             )
 
     def narrow(self, dim: int, start: int, length: int) -> "_MultiTensor":
+        """Narrow the tensor along the given dimension.
+
+        Args:
+            dim (int): The dimension along which to narrow.
+            start (int): The starting index.
+            length (int): The length of the slice.
+        """
         assert start >= 0
         dim = self._normalize_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if start == 0 and start + length >= num_data:
             return self
         elif length <= 0:
-            return self.__class__(
-                num_rows=0 if dim == 0 else self.num_rows,
-                num_cols=0 if dim == 1 else self.num_cols,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device)
-                if dim == 1 else self.offset,
-            )
+            return self.empty(dim)
         elif dim == 0:
             return self._row_narrow(start, length)
         elif dim == 1:
@@ -286,11 +284,23 @@ class _MultiTensor:
     def _col_narrow(self, start: int, length: int) -> "_MultiTensor":
         raise NotImplementedError
 
+    def empty(self, dim: int) -> "_MultiTensor":
+        raise NotImplementedError
+
     def select(
         self,
         index: Union[int, Tensor, Sequence[int], slice, range],
         dim: int,
     ) -> "_MultiTensor":
+        """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
+        :class:`MultiEmbeddingTensor` along the specified dimension.
+
+        Args:
+            index (Union[int, Tensor, Sequence[int], slice, range]): A row or
+                column index of the tensor to select.
+            dim (int): The dimension to index in. If :obj:`dim=0`, it selects
+                rows. If :obj:`dim=1`, it selects columns.
+        """
         dim = self._normalize_dim(dim)
         if isinstance(index, int):
             return self._single_index_select(index, dim=dim)
@@ -298,8 +308,8 @@ class _MultiTensor:
             return self._slice(index, dim=dim)
         elif isinstance(index, Tensor) and index.ndim == 1:
             return self.index_select(index, dim=dim)
-        # TODO: Don't materialize range but instead pass it to PyTorch tensor
-        # directly for possible better performance.
+        # TODO: Don't materialize range, and instead pass it to PyTorch tensor
+        # as index directly to avoid unnecessary memory usage.
         elif isinstance(index, (list, range)):
             return self.index_select(
                 torch.tensor(index, dtype=torch.long, device=self.device),
