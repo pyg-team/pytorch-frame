@@ -7,7 +7,6 @@ from torch import Tensor
 from torch.nn import (
     Embedding,
     EmbeddingBag,
-    Linear,
     ModuleList,
     Parameter,
     ParameterList,
@@ -794,6 +793,10 @@ class TimestampEncoder(StypeEncoder):
 
     def init_modules(self):
         super().init_modules()
+        # Ensure that the first element is year.
+        assert TimestampTensorMapper.TIME_TO_INDEX['YEAR'] == 0
+
+        # Init normalization constant
         min_year = torch.tensor([
             self.stats_list[i][StatType.YEAR_RANGE][0]
             for i in range(len(self.stats_list))
@@ -801,28 +804,40 @@ class TimestampEncoder(StypeEncoder):
         self.register_buffer("min_year", min_year)
         max_values = TimestampTensorMapper.CYCLIC_VALUES_NORMALIZATION_CONSTANT
         self.register_buffer("max_values", max_values)
+
+        # Init positional/cyclic encoding
         self.positional_encoding = PositionalEncoding(self.out_size)
         self.cyclic_encoding = CyclicEncoding(self.out_size)
-        self.linear = Linear(
-            len(TimestampTensorMapper.TIME_TO_INDEX) * self.out_size,
-            self.out_channels)
+
+        # Init linear function
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, len(TimestampTensorMapper.TIME_TO_INDEX),
+                        self.out_size, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
-        self.linear.reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.01)
+        torch.nn.init.zeros_(self.bias)
 
     def encode_forward(self, feat: Tensor,
                        col_names: Optional[List[str]] = None) -> Tensor:
         feat = feat.to(torch.float32)
-        feat[..., TimestampTensorMapper.
-             TIME_TO_INDEX['YEAR']] = feat[:, :, 0] - self.min_year
-        feat_year = feat[..., :1]
-        feat_rest = feat[..., 1:] / self.max_values.view(1, -1)
-        out = torch.cat([
+        # [batch_size, num_cols, 1] - [1, num_cols, 1]
+        feat_year = feat[..., :1] - self.min_year.view(1, -1, 1)
+        # [batch_size, num_cols, num_rest] - [1, 1, num_rest]
+        feat_rest = feat[..., 1:] / self.max_values.view(1, 1, -1)
+        # [batch_size, num_cols, num_time_feats, out_size]
+        x = torch.cat([
             self.positional_encoding(feat_year),
             self.positional_encoding(feat_rest)
-        ], dim=2).view(
-            feat.size(0), feat.size(1),
-            len(TimestampTensorMapper.TIME_TO_INDEX) * self.out_size)
-        return self.linear(out)
+        ], dim=2)
+        # [batch_size, num_cols, num_time_feats, out_size] *
+        # [num_cols, num_time_feats, out_size, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x_lin = torch.einsum('ijkl,jklm->ijm', x, self.weight)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
+        x = x_lin + self.bias
+        return x
