@@ -18,6 +18,7 @@ from torch_frame import NAStrategy, stype
 from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
 from torch_frame.nn.encoding import CyclicEncoding, PositionalEncoding
@@ -173,14 +174,16 @@ class StypeEncoder(Module, ABC):
 
         for col in range(feat.size(1)):
             column_data = feat[:, col]
-            if isinstance(feat, MultiNestedTensor):
+            if isinstance(feat, _MultiTensor):
                 column_data = column_data.values
-            if len(column_data.shape) == 1:
-                column_data = column_data.unsqueeze(1)
-            if self.stype == stype.numerical:
-                nan_mask = torch.isnan(column_data).any(dim=1)
+            if column_data.is_floating_point():
+                nan_mask = torch.isnan(column_data)
             else:
-                nan_mask = (column_data == -1).any(dim=1)
+                nan_mask = column_data == -1
+            if nan_mask.ndim == 2:
+                nan_mask = nan_mask.any(dim=-1)
+            assert nan_mask.ndim == 1
+            assert len(nan_mask) == len(column_data)
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
