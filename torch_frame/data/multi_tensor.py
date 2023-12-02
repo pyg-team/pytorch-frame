@@ -211,6 +211,9 @@ class _MultiTensor:
             # Return type: self.__class__
             return self.select(index, dim=0)
 
+    def _get_value(self, row: int, col: int) -> Tensor:
+        raise NotImplementedError
+
     def index_select(self, index: Tensor, dim: int) -> "_MultiTensor":
         """Returns a :class:`_MultiTensor` which indexes the input
                 :class:`_MultiTensor` along the specified dimension.
@@ -228,6 +231,12 @@ class _MultiTensor:
             return self._row_index_select(index)
         elif dim == 1:
             return self._col_index_select(index)
+
+    def _row_index_select(self, index: Tensor) -> "_MultiTensor":
+        raise NotImplementedError
+
+    def _col_index_select(self, index: Tensor) -> "_MultiTensor":
+        raise NotImplementedError
 
     def _slice(self, index: slice, dim: int) -> "_MultiTensor":
         dim = self._normalize_dim(dim)
@@ -271,6 +280,12 @@ class _MultiTensor:
         elif dim == 1:
             return self._col_narrow(start, length)
 
+    def _row_narrow(self, start: int, length: int) -> "_MultiTensor":
+        raise NotImplementedError
+
+    def _col_narrow(self, start: int, length: int) -> "_MultiTensor":
+        raise NotImplementedError
+
     def select(
         self,
         index: Union[int, Tensor, Sequence[int], slice, range],
@@ -290,6 +305,9 @@ class _MultiTensor:
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=dim,
             )
+        raise NotImplementedError
+
+    def _single_index_select(self, index: int, dim: int) -> "_MultiTensor":
         raise NotImplementedError
 
 
