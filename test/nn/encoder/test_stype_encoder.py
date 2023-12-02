@@ -325,7 +325,7 @@ def test_text_tokenized_encoder():
         stypes=[
             torch_frame.text_tokenized,
         ],
-        text_tokenizer_cfg=TextTokenizerConfig(
+        col_to_text_tokenizer_cfg=TextTokenizerConfig(
             text_tokenizer=WhiteSpaceHashTokenizer(
                 num_hash_bins=num_hash_bins),
             batch_size=None,

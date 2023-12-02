@@ -69,7 +69,7 @@ def test_stypewise_feature_encoder(
             text_embedder=HashTextEmbedder(out_channels=16, ),
             batch_size=None,
         ),
-        text_tokenizer_cfg=TextTokenizerConfig(
+        col_to_text_tokenizer_cfg=TextTokenizerConfig(
             text_tokenizer=WhiteSpaceHashTokenizer(),
             batch_size=None,
         ),

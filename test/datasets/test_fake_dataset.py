@@ -14,14 +14,15 @@ from torch_frame.testing.text_tokenizer import WhiteSpaceHashTokenizer
 @pytest.mark.parametrize('with_nan', [True, False])
 @pytest.mark.parametrize('tokenize_with_batch', [True, False])
 @pytest.mark.parametrize('text_batch_size', [None, 5])
-@pytest.mark.parametrize('use_per_col_text_embedder_cfg', [False, True])
+@pytest.mark.parametrize('use_per_col_text_cfg', [False, True])
 def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
-                      use_per_col_text_embedder_cfg):
+                      use_per_col_text_cfg):
     num_rows = 20
     out_channels = 10
 
-    if use_per_col_text_embedder_cfg:
+    if use_per_col_text_cfg:
         text_embedded_cols = ['text_embedded_1', 'text_embedded_2']
+        text_tokenized_cols = ['text_tokenized_1', 'text_tokenized_2']
         col_to_text_embedder_cfg = {
             col:
             TextEmbedderConfig(
@@ -29,9 +30,21 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
                 batch_size=3)
             for i, col in enumerate(text_embedded_cols)
         }
+        col_to_text_tokenizer_cfg = {
+            col:
+            TextTokenizerConfig(
+                text_tokenizer=WhiteSpaceHashTokenizer(
+                    num_hash_bins=12 * (i + 1), batched=tokenize_with_batch),
+                batch_size=text_batch_size)
+            for i, col in enumerate(text_tokenized_cols)
+        }
     else:
         col_to_text_embedder_cfg = TextEmbedderConfig(
             text_embedder=HashTextEmbedder(out_channels),
+            batch_size=text_batch_size)
+        col_to_text_tokenizer_cfg = TextTokenizerConfig(
+            text_tokenizer=WhiteSpaceHashTokenizer(
+                num_hash_bins=12, batched=tokenize_with_batch),
             batch_size=text_batch_size)
 
     dataset = FakeDataset(
@@ -48,10 +61,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
         ],
         create_split=True,
         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-        text_tokenizer_cfg=TextTokenizerConfig(
-            text_tokenizer=WhiteSpaceHashTokenizer(
-                num_hash_bins=12, batched=tokenize_with_batch),
-            batch_size=text_batch_size),
+        col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
     )
     assert str(dataset) == 'FakeDataset()'
     assert len(dataset) == num_rows
@@ -109,7 +119,7 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
     assert feat_text_embedded.dtype == torch.float
     text_embedded_cols = tensor_frame.col_names_dict[torch_frame.text_embedded]
     assert feat_text_embedded.shape == (num_rows, len(text_embedded_cols), -1)
-    if use_per_col_text_embedder_cfg:
+    if use_per_col_text_cfg:
         assert feat_text_embedded.offset.max() == out_channels * sum(
             i + 1 for i in range(len(text_embedded_cols)))
 
