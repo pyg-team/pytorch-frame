@@ -49,6 +49,7 @@ full=[
     "xgboost>=1.7.0, <2.0.0",
     "optuna>=3.0.0",
     "catboost",
+    "lightgbm",
 ]
 
 [project.urls]
