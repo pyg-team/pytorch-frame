@@ -180,7 +180,7 @@ class StypeEncoder(Module, ABC):
             if self.stype == stype.numerical:
                 nan_mask = torch.isnan(column_data).any(dim=1)
             else:
-                nan_mask = torch.where((column_data == -1).any(dim=1))[0]
+                nan_mask = (column_data == -1).any(dim=1)
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
@@ -769,8 +769,7 @@ class TimestampEncoder(StypeEncoder):
     :class:`torch_frame.nn.encoding.PositionalEncoding`. The other
     features, including month, day, dayofweek, hour, minute and second,
     are encoded using :class:`torch_frame.nn.encoding.CyclicEncoding`.
-    We then use a :class:`~torch.nn.Linear` layer to map the output
-    :obj:`Tensor` to dimension `out_channels`.
+    It applies linear layer for each column in a batched manner.
 
     Args:
         out_size (int): Output dimension of the positional and cyclic
