@@ -14,6 +14,7 @@ from torch_frame.nn import (
     LinearPeriodicEncoder,
     MultiCategoricalEmbeddingEncoder,
     StypeWiseFeatureEncoder,
+    TimestampEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
@@ -33,6 +34,9 @@ from torch_frame.testing.text_tokenizer import (
 @pytest.mark.parametrize('encoder_multicategorical_cls_kwargs', [
     (MultiCategoricalEmbeddingEncoder, {}),
 ])
+@pytest.mark.parametrize('encoder_timestamp_cls_kwargs', [
+    (TimestampEncoder, {}),
+])
 @pytest.mark.parametrize('encoder_text_embedded_cls_kwargs', [
     (LinearEmbeddingEncoder, {}),
 ])
@@ -49,6 +53,7 @@ def test_stypewise_feature_encoder(
     encoder_cat_cls_kwargs,
     encoder_num_cls_kwargs,
     encoder_multicategorical_cls_kwargs,
+    encoder_timestamp_cls_kwargs,
     encoder_text_embedded_cls_kwargs,
     encoder_text_tokenized_cls_kwargs,
     encoder_embedding_cls_kwargs,
@@ -61,6 +66,7 @@ def test_stypewise_feature_encoder(
             stype.categorical,
             stype.numerical,
             stype.multicategorical,
+            stype.timestamp,
             stype.text_embedded,
             stype.text_tokenized,
             stype.embedding,
@@ -90,6 +96,8 @@ def test_stypewise_feature_encoder(
             stype.multicategorical:
             encoder_multicategorical_cls_kwargs[0](
                 **encoder_multicategorical_cls_kwargs[1]),
+            stype.timestamp:
+            encoder_timestamp_cls_kwargs[0](**encoder_timestamp_cls_kwargs[1]),
             stype.text_embedded:
             encoder_text_embedded_cls_kwargs[0](
                 **encoder_text_embedded_cls_kwargs[1]),
@@ -116,6 +124,9 @@ def test_stypewise_feature_encoder(
         "multicat_2",
         "multicat_3",
         "multicat_4",
+        'timestamp_0',
+        'timestamp_1',
+        'timestamp_2',
         "emb_1",
         "emb_2",
     ]

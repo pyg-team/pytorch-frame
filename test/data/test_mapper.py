@@ -52,12 +52,14 @@ def test_timestamp_tensor_mapper():
     mapper = TimestampTensorMapper(format=format)
 
     out = mapper.forward(ser)
-    assert out.shape == (2, 1, 7)
-    assert torch.isnan(out[0, :, :]).all()
+    assert out.shape == (2, 7)
+    assert torch.all(out[0] == -1)
     assert torch.allclose(
-        out[1, :, :],
-        torch.tensor([2020., 3., 9., 0, 17., 20., 4.]).view(1, -1))
-    assert out.dtype == torch.float32
+        out[1],
+        # the month and day starts with 1, but they are normalized
+        # to start from 0 in the TimestampTensorMapper
+        torch.tensor([2020, 2, 8, 0, 17, 20, 4]).view(1, -1))
+    assert out.dtype == torch.long
 
 
 def test_multicategorical_tensor_mapper():

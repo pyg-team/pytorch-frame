@@ -3,9 +3,13 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+import torch
 
 import torch_frame
-from torch_frame.data.mapper import MultiCategoricalTensorMapper
+from torch_frame.data.mapper import (
+    MultiCategoricalTensorMapper,
+    TimestampTensorMapper,
+)
 from torch_frame.typing import Series
 
 
@@ -36,6 +40,9 @@ class StatType(Enum):
 
     # timestamp
     YEAR_RANGE = "YEAR_RANGE"
+    OLDEST_TIME = "OLDEST_TIME"
+    NEWEST_TIME = "NEWEST_TIME"
+    MEDIAN_TIME = "MEDIAN_TIME"
 
     # text_embedded (Also, embedding)
     # Note: For text_embedded, this stats is computed in
@@ -59,6 +66,9 @@ class StatType(Enum):
             ],
             torch_frame.timestamp: [
                 StatType.YEAR_RANGE,
+                StatType.NEWEST_TIME,
+                StatType.OLDEST_TIME,
+                StatType.MEDIAN_TIME,
             ],
             torch_frame.embedding: [
                 StatType.EMB_DIM,
@@ -70,7 +80,6 @@ class StatType(Enum):
         self,
         ser: Series,
         sep: Optional[str] = None,
-        time_format: Optional[str] = None,
     ) -> Any:
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
@@ -110,9 +119,20 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.YEAR_RANGE:
-            ser = pd.to_datetime(ser, format=time_format)
             year_range = ser.dt.year.values
             return [min(year_range), max(year_range)]
+
+        elif self == StatType.NEWEST_TIME:
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[-1])).squeeze(0)
+
+        elif self == StatType.OLDEST_TIME:
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[0])).squeeze(0)
+
+        elif self == StatType.MEDIAN_TIME:
+            return TimestampTensorMapper.to_tensor(
+                pd.Series(ser.iloc[len(ser) // 2])).squeeze(0)
 
         elif self == StatType.EMB_DIM:
             return len(ser[0])
@@ -124,7 +144,10 @@ _default_values = {
     StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
     StatType.COUNT: ([], []),
     StatType.MULTI_COUNT: ([], []),
-    StatType.YEAR_RANGE: [np.nan, np.nan],
+    StatType.YEAR_RANGE: [-1, -1],
+    StatType.NEWEST_TIME: torch.tensor([-1, -1, -1, -1, -1, -1, -1]),
+    StatType.OLDEST_TIME: torch.tensor([-1, -1, -1, -1, -1, -1, -1]),
+    StatType.MEDIAN_TIME: torch.tensor([-1, -1, -1, -1, -1, -1, -1]),
     StatType.EMB_DIM: -1,
 }
 
@@ -145,8 +168,11 @@ def compute_col_stats(
             for stat_type in StatType.stats_for_stype(stype)
         }
     else:
+        if stype == torch_frame.timestamp:
+            ser = pd.to_datetime(ser, format=time_format)
+            ser = ser.sort_values()
         stats = {
-            stat_type: stat_type.compute(ser.dropna(), sep, time_format)
+            stat_type: stat_type.compute(ser.dropna(), sep)
             for stat_type in StatType.stats_for_stype(stype)
         }
 
