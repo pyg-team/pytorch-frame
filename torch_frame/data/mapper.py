@@ -285,7 +285,7 @@ class TimestampTensorMapper(TensorMapper):
             torch.from_numpy(ser.dt.second.values).unsqueeze(1)
         ]
         stacked = torch.stack(tensors).permute(1, 2, 0).squeeze(1)
-        return torch.nan_to_num(stacked, nan=-1.0).to(torch.long)
+        return torch.nan_to_num(stacked, nan=-1).to(torch.long)
 
     def forward(
         self,
