@@ -9,6 +9,7 @@ from torch import Tensor
 import torch_frame
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
@@ -158,7 +159,7 @@ class TensorFrame:
             return col_feat
         else:
             if stype_name.use_multi_tensor:
-                assert isinstance(feat, MultiNestedTensor)
+                assert isinstance(feat, _MultiTensor)
                 return feat[:, idx]
             else:
                 assert isinstance(feat, Tensor)
