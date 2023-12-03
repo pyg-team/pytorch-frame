@@ -57,7 +57,7 @@ torch.manual_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Prepare datasets
-path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data", "mercari")
+path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "..", "data", "mercari")
 text_encoder = PretrainedTextEncoder(device=device)
 dataset = Mercari(
     root=path,

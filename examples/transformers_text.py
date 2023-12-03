@@ -58,19 +58,19 @@ from torch_frame.typing import TensorData, TextTokenizationOutputs
 # Best Val Acc: 0.8125, Best Test Acc: 0.7150
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default="wine_reviews")
+parser.add_argument("--dataset", type=str, default="california_house_price")
 parser.add_argument("--channels", type=int, default=256)
 parser.add_argument("--num_layers", type=int, default=4)
 parser.add_argument("--batch_size", type=int, default=512)
 parser.add_argument("--lr", type=float, default=0.0001)
 parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--seed", type=int, default=0)
-parser.add_argument("--finetune", action="store_true")
-parser.add_argument("--lora", action="store_true")
+parser.add_argument("--finetune", action="store_true", default=False)
+parser.add_argument("--lora", action="store_true", default=False)
 parser.add_argument(
     "--model",
     type=str,
-    default="distilbert-base-uncased",
+    default="sentence-transformers/all-distilroberta-v1",
     choices=[
         "distilbert-base-uncased",
         "sentence-transformers/all-distilroberta-v1",
