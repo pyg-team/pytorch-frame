@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ class CatBoost(GBDT):
     def _to_catboost_input(
         self,
         tf,
-    ) -> Tuple[DataFrame, np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[DataFrame, np.ndarray, np.ndarray]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -31,7 +31,7 @@ class CatBoost(GBDT):
                 concatenating tensors of categorical and numerical features of
                 the input :class:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
-            cat_features (numpy.ndarray, optional): Array containing indexes of
+            cat_features (numpy.ndarray): Array containing indexes of
                 categorical features :obj:`numpy.ndarray`.
         """
         tf = tf.cpu()
@@ -69,7 +69,8 @@ class CatBoost(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
 
         df = pd.concat(dfs, axis=1)
-        cat_features = np.concatenate(cat_features, axis=0)
+        cat_features = np.concatenate(
+            cat_features, axis=0) if len(cat_features) else np.array([])
         return df, y.numpy(), cat_features
 
     def _predict_helper(

@@ -68,7 +68,8 @@ class LightGBM(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
 
         df = pd.concat(dfs, axis=1)
-        cat_features = np.concatenate(cat_features, axis=0).tolist()
+        cat_features = np.concatenate(
+            cat_features, axis=0).tolist() if len(cat_features) else []
 
         return df, y.numpy(), cat_features
 
