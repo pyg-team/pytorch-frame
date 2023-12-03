@@ -101,6 +101,10 @@ ignore = ["F811", "W503", "W504"]
 
 [tool.mypy]
 files = ["torch_frame"]
+exclude = [
+    "tests",
+    "examples",
+]
 install_types = true
 non_interactive = true
 ignore_missing_imports = true
