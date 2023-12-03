@@ -3,8 +3,8 @@ Handling Text Columns
 
 :pyf:`PyTorch Frame` supports text columns by utilizing external pre-trained
 text embedding models, such as language models. Currently, we support
-:obj:`~torch_frame.stype.text_embedded` :class:`~torch_frame.stype` for text columns,
-which use an text embedding model to pre-encode text columns into embeddings
+:class:`stype.text_embedded<torch_frame.stype>` for text columns,
+which use a text embedding model to pre-encode text columns into embeddings
 (frozen during model training). We plan to support fine-tuning of the text embedding
 models soon.
 
@@ -19,15 +19,15 @@ Handling Text Columns in a Benchmark Dataset
 with text columns, such as :obj:`~torch_frame.datasets.MultimodalTextBenchmark`.
 
 In :pyf:`PyTorch Frame`, you can specify text columns as
-:obj:`~torch_frame.stype.text_embedded` :class:`~torch_frame.stype`.  This will
+:class:`stype.text_embedded<torch_frame.stype>`. This will
 encode text columns using a user-specified text embedding model during the
 dataset materialization stage.
 
 The processes of initializing and materializing datasets are similar
 to :doc:`/get_started/introduction`. Below we highlight the difference.
 
-First you need to specify your text embedding model. Here we use the
-`SentenceTransformer <https://www.sbert.net/>`_ pakcage.
+First you need to specify your text embedding model. Here, we use the
+`SentenceTransformer <https://www.sbert.net/>`_ package.
 
 .. code-block:: none
 
@@ -54,7 +54,7 @@ Next we create a text encoder class that encodes a list of strings into text emb
                                         convert_to_tensor=True)
         return embeddings.cpu()
 
-Then we instantiate :obj:`TextEmbedderConfig` for our text embedding model as follows.
+Then we instantiate :obj:`~torch_frame.config.TextEmbedderConfig` for our text embedding model as follows.
 
 .. code-block:: python
 
