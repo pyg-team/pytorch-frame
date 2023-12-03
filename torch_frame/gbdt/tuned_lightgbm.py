@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ class LightGBM(GBDT):
     def _to_lightgbm_input(
         self,
         tf: TensorFrame,
-    ) -> Tuple[np.ndarray, np.ndarray, Optional[List[int]]]:
+    ) -> Tuple[np.ndarray, np.ndarray, List[int]]:
         r"""Convert :class:`TensorFrame` into LightGBM-compatible input format:
         :obj:`(feat, y, cat_features)`.
 
@@ -30,7 +30,7 @@ class LightGBM(GBDT):
                 concatenating tensors of numerical and categorical features of
                 the input :class:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
-            cat_features (List[int], optional): Array containing indexes of
+            cat_features (List[int]): Array containing indexes of
                 categorical features :obj:`List[int]`.
         """
         tf = tf.cpu()
