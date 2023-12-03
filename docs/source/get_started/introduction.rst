@@ -5,7 +5,7 @@ Introduction by Example
 Modern data is stored in a table format with heterogeneous columns each with its own semantic type, *e.g.*, numerical (such as age or price), categorical (such as gender or product type), time, text (such as descriptions or comments), images, etc.
 The goal of :pyf:`PyTorch Frame` is to build a deep learning framework to perform effective machine learning on such complex and diverse data.
 
-Many recent tabular models follow the modular design of :obj:`FeatureEncoder`, :obj:`TableConv`, and :obj:`Decoder`.
+Many recent tabular models follow the modular design of :obj:`~torch_frame.nn.encoder.FeatureEncoder`, :obj:`~torch_frame.nn.conv.TableConv`, and :obj:`~torch_frame.nn.decoder.Decoder`.
 :pyf:`PyTorch Frame` is designed to facilitate the creation, implementation and evaluation of deep learning models for tabular data under such modular architecture.
 Please refer to the :doc:`/get_started/modular_design` page for more information.
 
@@ -53,7 +53,7 @@ An initialization of a dataset will automatically download its raw files and pro
 :pyf:`PyTorch Frame` also supports a custom dataset, so that you can use :pyf:`PyTorch Frame` for your own problem.
 Let's say you prepare your :class:`pandas.DataFrame` as :obj:`df` with five columns:
 :obj:`cat1`, :obj:`cat2`, :obj:`num1`, :obj:`num2`, and :obj:`y`.
-Creating :obj:`dataset` object is very easy:
+Creating :obj:`torch_frame.data.Dataset` object is very easy:
 
 .. code-block:: python
 
@@ -72,36 +72,36 @@ Creating :obj:`dataset` object is very easy:
 Data Handling of Tables
 -----------------------
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
-Currently :pyf:`PyTorch Frame` supports the following :class:`~torch_frame.stype`\ s:
+Currently :pyf:`PyTorch Frame` supports the following :class:`stypes<torch_frame.stype>`:
 
-- :class:`~torch_frame.stype.categorical` denotes categorical columns.
-- :obj:`~torch_frame.stype.numerical` denotes numerical columns.
-- :obj:`~torch_frame.stype.multicategorical` denotes multi_categorical columns.
-- :obj:`~torch_frame.stype.text_embedded` denotes text columns that are pre-embedded via some text encoder.
+- :obj:`stype.categorical<torch_frame.stype>` denotes categorical columns.
+- :obj:`stype.numerical<torch_frame.stype>` denotes numerical columns.
+- :obj:`stype.multicategorical<torch_frame.stype>` denotes multi_categorical columns.
+- :obj:`stype.text_embedded<torch_frame.stype>` denotes text columns that are pre-embedded via some text encoder.
 
-A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_frame.TensorFrame`, which holds the following attributes by default:
+A table in :pyf:`PyTorch Frame` is described by an instance of :class:`~torch_frame.data.TensorFrame`, which holds the following attributes by default:
 
 - :obj:`col_names_dict`: A dictionary holding the column names for each :class:`~torch_frame.stype`.
-- :obj:`feat_dict`: A dictionary holding the :obj:`Tensor` of different :class:`~torch_frame.stype`\ s.
-  For :obj:`stype.numerical` and obj:`stype.categorical`, the shape of :obj:`Tensor` is [`num_rows`, `num_cols`], while for :obj:`stype.text_embedded`, the shape is [`num_rows`, `num_cols`, `emb_dim`].
+- :obj:`feat_dict`: A dictionary holding the :obj:`~torch.Tensor` of different :class:`stypes<torch_frame.stype>`.
+  For :obj:`stype.numerical<torch_frame.stype>` and :obj:`stype.categorical<torch_frame.stype>`, the shape of :obj:`~torch.Tensor` is [`num_rows`, `num_cols`], while for :obj:`stype.text_embedded<torch_frame.stype>`, the shape is [`num_rows`, `num_cols`, `emb_dim`].
 - :obj:`y` (optional): A tensor containing the target values for prediction.
 
 .. note::
     The set of keys in :obj:`feat_dict` must exactly match with the set of keys in :obj:`col_names_dict`.
-    :class:`~torch_frame.TensorFrame` is validated at initialization time.
+    :class:`~torch_frame.data.TensorFrame` is validated at initialization time.
 
-Creating a :class:`~torch_frame.TensorFrame` from :class:`torch_frame.data.Dataset` is referred to as materialization.
-:meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`torch_frame.data.Dataset` into :class:`torch.Tensor`\ s and stores them in a :class:`torch_frame.TensorFrame`.
-:meth:`~torch_frame.data.Dataset.materialize` also provides an optional argument `path` to cache the :class:`~torch_frame.TensorFrame` and `col_stats`. If `path` is specified,
-during the materialization :pyf:`PyTorch Frame` will try to load saved :class:`~torch_frame.TensorFrame` and `col_stats` at first. If there is no saved object found for that `path`, :pyf:`PyTorch Frame`
-will materialize the dataset and save the materialized :class:`~torch_frame.TensorFrame` and `col_stats` to the `path`.
+Creating a :class:`~torch_frame.data.TensorFrame` from :class:`~torch_frame.data.Dataset` is referred to as materialization.
+:meth:`~torch_frame.data.Dataset.materialize` converts raw data frame in :class:`~torch_frame.data.Dataset` into :class:`Tensors<torch.Tensor>` and stores them in a :class:`~torch_frame.data.TensorFrame`.
+:meth:`~torch_frame.data.Dataset.materialize` also provides an optional argument `path` to cache the :class:`~torch_frame.data.TensorFrame` and `col_stats`. If `path` is specified,
+during the materialization :pyf:`PyTorch Frame` will try to load saved :class:`~torch_frame.data.TensorFrame` and `col_stats` at first. If there is no saved object found for that `path`, :pyf:`PyTorch Frame`
+will materialize the dataset and save the materialized :class:`~torch_frame.data.TensorFrame` and `col_stats` to the `path`.
 
 .. note::
     Note that materialization does minimal processing of the original features, e.g., no normalization and missing value handling are performed.
     PyTorch Frame converts missing values in categorical :class:`torch_frame.stype` to `-1` and missing values in numerical :class:`torch_frame.stype` to `NaN`.
     We expect `NaN`/missing-value handling and normalization to be handled by the model side via :class:`torch_frame.nn.encoder.StypeEncoder`.
 
-The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In :pyf:`PyTorch Frame`, we build data loaders and models around :class:`TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
+The :class:`~torch_frame.data.TensorFrame` object has :class:`~torch.Tensor` at its core; therefore, it's friendly for training and inference with PyTorch. In :pyf:`PyTorch Frame`, we build data loaders and models around :class:`~torch_frame.data.TensorFrame`, benefitting from all the efficiency and flexibility from PyTorch.
 
 .. code-block:: python
 
@@ -142,7 +142,7 @@ The :class:`~torch_frame.TensorFrame` object has :class:`torch.Tensor` at its co
     tensor_frame.y
     >>> tensor([0, 1, 1,  ..., 0, 1, 0])
 
-A :class:`~torch_frame.TensorFrame` contains the following basic properties:
+A :class:`~torch_frame.data.TensorFrame` contains the following basic properties:
 
 .. code-block:: python
 
@@ -159,7 +159,7 @@ A :class:`~torch_frame.TensorFrame` contains the following basic properties:
     >>> device(type='cpu')
 
 
-We support transferring the data in a :class:`~torch_frame.TensorFrame` to devices supported by :pytorch:`PyTorch`.
+We support transferring the data in a :class:`~torch_frame.data.TensorFrame` to devices supported by :pytorch:`PyTorch`.
 
 .. code-block:: python
 
@@ -167,7 +167,7 @@ We support transferring the data in a :class:`~torch_frame.TensorFrame` to devic
 
     tensor_frame.to("cuda")
 
-Once a :obj:`torch_frame.dataset.Dataset` is materialized, we can retrieve column statistics on the data.
+Once a :obj:`~torch_frame.data.Dataset` is materialized, we can retrieve column statistics on the data.
 For each :class:`~torch_frame.stype`, a different set of statistics is calculated.
 
 For categorical features,
@@ -192,7 +192,7 @@ For numerical features,
     >>> {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
 
 Now let's say you have a new :class:`pandas.DataFrame` called :obj:`new_df`, and
-you want to convert it to a corresponding :class:`~torch_frame.TensorFrame` object.
+you want to convert it to a corresponding :class:`~torch_frame.data.TensorFrame` object.
 You can achieve this as follows:
 
 .. code-block:: python
@@ -202,7 +202,7 @@ You can achieve this as follows:
 
 Mini-batches
 ------------
-Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame` contains its own :class:`torch_frame.data.DataLoader`, which can load :class:`torch_frame.data.Dataset` or :class:`~torch_frame.TensorFrame` in mini batches.
+Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame` contains its own :class:`~torch_frame.data.DataLoader`, which can load :class:`~torch_frame.data.Dataset` or :class:`~torch_frame.data.TensorFrame` in mini batches.
 
 .. code-block:: python
 

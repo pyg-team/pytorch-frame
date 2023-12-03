@@ -74,6 +74,9 @@ class NAStrategy(Enum):
     MEAN = 'mean'
     MOST_FREQUENT = 'most_frequent'
     ZEROS = 'zeros'
+    OLDEST_TIMESTAMP = 'oldest_timestamp'
+    NEWEST_TIMESTAMP = 'newest_timestamp'
+    MEDIAN_TIMESTAMP = 'median_timestamp'
 
     @property
     def is_categorical_strategy(self) -> bool:
@@ -86,6 +89,13 @@ class NAStrategy(Enum):
     @property
     def is_numerical_strategy(self) -> bool:
         return self in [NAStrategy.MEAN, NAStrategy.ZEROS]
+
+    @property
+    def is_timestamp_strategy(self):
+        return self in [
+            NAStrategy.NEWEST_TIMESTAMP, NAStrategy.OLDEST_TIMESTAMP,
+            NAStrategy.MEDIAN_TIMESTAMP
+        ]
 
 
 Series = pd.Series

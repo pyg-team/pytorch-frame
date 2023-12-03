@@ -41,8 +41,7 @@ parser.add_argument('--dataset', type=str, default='eye_movements')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-device = (torch.device('cuda')
-          if torch.cuda.is_available() else torch.device('cpu'))
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 random.seed(args.seed)
 np.random.seed(args.seed)

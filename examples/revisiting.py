@@ -45,6 +45,7 @@ parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -108,6 +109,7 @@ elif args.model_type == 'resnet':
 else:
     raise ValueError(f'Unsupported model type: {args.model_type}')
 
+model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 

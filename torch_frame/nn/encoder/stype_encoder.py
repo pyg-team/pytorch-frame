@@ -15,10 +15,13 @@ from torch.nn import (
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
 from torch_frame.nn.base import Module
+from torch_frame.nn.encoding import CyclicEncoding, PositionalEncoding
 from torch_frame.typing import TensorData
 
 from ..utils.init import attenuated_kaiming_uniform_
@@ -80,7 +83,12 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on multicategorical"
                     " columns.")
-            if self.stype == stype.text_embedded:
+            if (self.stype == stype.timestamp
+                    and not self.na_strategy.is_timestamp_strategy):
+                raise ValueError(
+                    f"{self.na_strategy} cannot be used on timestamp"
+                    " columns.")
+            elif self.stype == stype.text_embedded:
                 raise ValueError(f"Only the default `na_strategy` (None) "
                                  f"can be used on embedded text columns, but "
                                  f"{self.na_strategy} is given.")
@@ -166,12 +174,16 @@ class StypeEncoder(Module, ABC):
 
         for col in range(feat.size(1)):
             column_data = feat[:, col]
-            if isinstance(feat, MultiNestedTensor):
+            if isinstance(feat, _MultiTensor):
                 column_data = column_data.values
-            if self.stype == stype.numerical:
+            if column_data.is_floating_point():
                 nan_mask = torch.isnan(column_data)
             else:
                 nan_mask = column_data == -1
+            if nan_mask.ndim == 2:
+                nan_mask = nan_mask.any(dim=-1)
+            assert nan_mask.ndim == 1
+            assert len(nan_mask) == len(column_data)
             if not nan_mask.any():
                 continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
@@ -182,6 +194,15 @@ class StypeEncoder(Module, ABC):
                 fill_value = self.stats_list[col][StatType.MEAN]
             elif self.na_strategy == NAStrategy.ZEROS:
                 fill_value = 0
+            elif self.na_strategy == NAStrategy.NEWEST_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.NEWEST_TIME].to(
+                    feat.device)
+            elif self.na_strategy == NAStrategy.OLDEST_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.OLDEST_TIME].to(
+                    feat.device)
+            elif self.na_strategy == NAStrategy.MEDIAN_TIMESTAMP:
+                fill_value = self.stats_list[col][StatType.MEDIAN_TIME].to(
+                    feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             column_data[nan_mask] = fill_value
@@ -742,5 +763,83 @@ class LinearModelEncoder(StypeEncoder):
         x_lin = torch.einsum("ijk,jkl->ijl", x, self.weight)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         # -> [batch_size, num_cols, out_channels]
+        x = x_lin + self.bias
+        return x
+
+
+class TimestampEncoder(StypeEncoder):
+    r"""TimestampEncoder for timestamp stype. Year is encoded with
+    :class:`torch_frame.nn.encoding.PositionalEncoding`. The other
+    features, including month, day, dayofweek, hour, minute and second,
+    are encoded using :class:`torch_frame.nn.encoding.CyclicEncoding`.
+    It applies linear layer for each column in a batched manner.
+
+    Args:
+        out_size (int): Output dimension of the positional and cyclic
+            encodings.
+    """
+    supported_stypes = {stype.timestamp}
+
+    def __init__(
+        self,
+        out_channels: Optional[int] = None,
+        stats_list: Optional[List[Dict[StatType, Any]]] = None,
+        stype: Optional[stype] = None,
+        post_module: Optional[Module] = None,
+        na_strategy: Optional[NAStrategy] = None,
+        out_size: int = 8,
+    ):
+        self.out_size = out_size
+        super().__init__(out_channels, stats_list, stype, post_module,
+                         na_strategy)
+
+    def init_modules(self):
+        super().init_modules()
+        # Ensure that the first element is year.
+        assert TimestampTensorMapper.TIME_TO_INDEX['YEAR'] == 0
+
+        # Init normalization constant
+        min_year = torch.tensor([
+            self.stats_list[i][StatType.YEAR_RANGE][0]
+            for i in range(len(self.stats_list))
+        ])
+        self.register_buffer("min_year", min_year)
+        max_values = TimestampTensorMapper.CYCLIC_VALUES_NORMALIZATION_CONSTANT
+        self.register_buffer("max_values", max_values)
+
+        # Init positional/cyclic encoding
+        self.positional_encoding = PositionalEncoding(self.out_size)
+        self.cyclic_encoding = CyclicEncoding(self.out_size)
+
+        # Init linear function
+        num_cols = len(self.stats_list)
+        self.weight = Parameter(
+            torch.empty(num_cols, len(TimestampTensorMapper.TIME_TO_INDEX),
+                        self.out_size, self.out_channels))
+        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        torch.nn.init.normal_(self.weight, std=0.01)
+        torch.nn.init.zeros_(self.bias)
+
+    def encode_forward(self, feat: Tensor,
+                       col_names: Optional[List[str]] = None) -> Tensor:
+        feat = feat.to(torch.float32)
+        # [batch_size, num_cols, 1] - [1, num_cols, 1]
+        feat_year = feat[..., :1] - self.min_year.view(1, -1, 1)
+        # [batch_size, num_cols, num_rest] / [1, 1, num_rest]
+        feat_rest = feat[..., 1:] / self.max_values.view(1, 1, -1)
+        # [batch_size, num_cols, num_time_feats, out_size]
+        x = torch.cat([
+            self.positional_encoding(feat_year),
+            self.positional_encoding(feat_rest)
+        ], dim=2)
+        # [batch_size, num_cols, num_time_feats, out_size] *
+        # [num_cols, num_time_feats, out_size, out_channels]
+        # -> [batch_size, num_cols, out_channels]
+        x_lin = torch.einsum('ijkl,jklm->ijm', x, self.weight)
+        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
         x = x_lin + self.bias
         return x

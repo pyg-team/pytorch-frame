@@ -4,13 +4,20 @@ from torch_frame import Metric, TaskType, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
-from torch_frame.gbdt import CatBoost, XGBoost
+from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('gbdt_cls', [
     CatBoost,
     XGBoost,
+    LightGBM,
+])
+@pytest.mark.parametrize('stypes', [
+    [stype.numerical],
+    [stype.categorical],
+    [stype.text_embedded],
+    [stype.numerical, stype.numerical, stype.text_embedded],
 ])
 @pytest.mark.parametrize('task_type_and_metric', [
     (TaskType.REGRESSION, Metric.RMSE),
@@ -19,16 +26,12 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_gbdt(gbdt_cls, task_type_and_metric):
+def test_gbdt(gbdt_cls, stypes, task_type_and_metric):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
         num_rows=30,
         with_nan=True,
-        stypes=[
-            stype.numerical,
-            stype.categorical,
-            stype.text_embedded,
-        ],
+        stypes=stypes,
         create_split=True,
         task_type=task_type,
         col_to_text_embedder_cfg=TextEmbedderConfig(

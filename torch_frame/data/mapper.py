@@ -21,6 +21,18 @@ from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
 
+NUM_MONTHS_PER_YEAR = 12
+'''
+TODO: We might want to revisit the normalization
+constant for NUM_DAYS_PER_MONTH as some months only
+have 28-30 days.
+'''
+NUM_DAYS_PER_MONTH = 31
+NUM_DAYS_PER_WEEK = 7
+NUM_HOURS_PER_DAY = 24
+NUM_MINUTES_PER_HOUR = 60
+NUM_SECONDS_PER_MINUTE = 60
+
 
 def _get_default_numpy_dtype() -> np.dtype:
     r"""Returns the default numpy dtype."""
@@ -241,9 +253,39 @@ class NumericalSequenceTensorMapper(TensorMapper):
 
 class TimestampTensorMapper(TensorMapper):
     r"""Maps any sequence series into an :class:`MultiNestedTensor`."""
+    TIME_TO_INDEX = {
+        'YEAR': 0,
+        'MONTH': 1,
+        'DAY': 2,
+        'DAYOFWEEK': 3,
+        'HOUR': 4,
+        'MINUTE': 5,
+        'SECOND': 6
+    }
+    CYCLIC_VALUES_NORMALIZATION_CONSTANT = torch.tensor([
+        NUM_MONTHS_PER_YEAR, NUM_DAYS_PER_MONTH, NUM_DAYS_PER_WEEK,
+        NUM_HOURS_PER_DAY, NUM_MINUTES_PER_HOUR, NUM_SECONDS_PER_MINUTE
+    ])
+
     def __init__(self, format: str):
         super().__init__()
         self.format = format
+
+    @staticmethod
+    def to_tensor(ser: Series) -> Tensor:
+        # subtracting 1 so that the smallest months and days can
+        # start from 0.
+        tensors = [
+            torch.from_numpy(ser.dt.year.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.month.values - 1).unsqueeze(1),
+            torch.from_numpy(ser.dt.day.values - 1).unsqueeze(1),
+            torch.from_numpy(ser.dt.dayofweek.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.hour.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.minute.values).unsqueeze(1),
+            torch.from_numpy(ser.dt.second.values).unsqueeze(1)
+        ]
+        stacked = torch.cat(tensors, dim=1)
+        return torch.nan_to_num(stacked, nan=-1).to(torch.long)
 
     def forward(
         self,
@@ -251,23 +293,9 @@ class TimestampTensorMapper(TensorMapper):
         *,
         device: Optional[torch.device] = None,
     ) -> Tensor:
-        ser = pd.to_datetime(ser, format=self.format)
-        tensors = [
-            torch.from_numpy(
-                ser.dt.year.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.month.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(ser.dt.day.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.dayofweek.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.hour.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.minute.values).to(device=device).unsqueeze(1),
-            torch.from_numpy(
-                ser.dt.second.values).to(device=device).unsqueeze(1)
-        ]
-        return torch.stack(tensors).permute(1, 2, 0).to(torch.float32)
+        ser = pd.to_datetime(ser, format=self.format, errors='coerce')
+        tensor = TimestampTensorMapper.to_tensor(ser)
+        return tensor.to(device)
 
     def backward(self, tensor: Tensor) -> pd.Series:
         raise NotImplementedError
