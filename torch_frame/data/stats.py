@@ -160,6 +160,7 @@ def compute_col_stats(
 ) -> Dict[StatType, Any]:
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
+        ser = pd.to_numeric(ser, errors='coerce')
 
     if ser.isnull().all():
         # NOTE: We may just error out here if eveything is NaN
