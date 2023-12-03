@@ -25,6 +25,16 @@ def test_compute_col_stats_numerical():
     }
 
 
+def test_compute_col_stats_numerical_with_dirty_columns():
+    ser = pd.Series([1, 2, 3, 'One', np.inf, np.nan])
+    stype = numerical
+    assert compute_col_stats(ser, stype) == {
+        StatType.MEAN: 2.0,
+        StatType.STD: 0.816496580927726,
+        StatType.QUANTILES: [1.0, 1.5, 2.0, 2.5, 3.0],
+    }
+
+
 def test_compute_col_stats_categorical():
     ser = pd.Series(['a', 'a', 'a', 'b', 'c'])
     stype = categorical
