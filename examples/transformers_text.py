@@ -217,7 +217,7 @@ else:
     kwargs = {
         "text_stype":
         text_stype,
-        "text_tokenizer_cfg":
+        "col_to_text_tokenizer_cfg":
         TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
                             batch_size=10000),
     }

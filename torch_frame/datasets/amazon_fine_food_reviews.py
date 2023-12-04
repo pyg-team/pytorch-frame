@@ -39,11 +39,13 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
 
     url = "https://data.pyg.org/datasets/tables/amazon_fine_food_reviews.zip"
 
-    def __init__(self, root: str,
-                 text_stype: torch_frame.stype = torch_frame.text_embedded,
-                 col_to_text_embedder_cfg: Optional[Union[Dict[
-                     str, TextEmbedderConfig], TextEmbedderConfig]] = None,
-                 text_tokenizer_cfg: Optional[TextTokenizerConfig] = None):
+    def __init__(
+        self, root: str,
+        text_stype: torch_frame.stype = torch_frame.text_embedded,
+        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
+                                                 TextEmbedderConfig]] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[
+            str, TextTokenizerConfig], TextTokenizerConfig]] = None):
         self.root = root
         self.text_stype = text_stype
         path = self.download_url(self.url, root)
@@ -66,5 +68,5 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
             col_to_stype,
             target_col='Score',
             col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-            text_tokenizer_cfg=text_tokenizer_cfg,
+            col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
         )
