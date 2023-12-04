@@ -36,6 +36,12 @@ class _MultiTensor:
             f"{self.__class__.__name__} object does not support setting "
             "values. It should be used for read-only.")
 
+    def __getitem__(
+        self,
+        index: Any,
+    ) -> Union["_MultiTensor", Tensor]:
+        raise NotImplementedError
+
     def __repr__(self) -> str:
         return " ".join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",

@@ -16,7 +16,7 @@ from tqdm import tqdm
 from torch_frame import stype
 from torch_frame.data import DataLoader
 from torch_frame.datasets import DataFrameBenchmark
-from torch_frame.gbdt import CatBoost, XGBoost
+from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.nn.encoder import EmbeddingEncoder, LinearBucketEncoder
 from torch_frame.nn.models import (
     ExcelFormer,
@@ -29,7 +29,7 @@ from torch_frame.nn.models import (
 from torch_frame.typing import TaskType
 
 TRAIN_CONFIG_KEYS = ["batch_size", "gamma_rate", "base_lr"]
-GBDT_MODELS = ["XGBoost", "CatBoost"]
+GBDT_MODELS = ["XGBoost", "CatBoost", "LightGBM"]
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -51,7 +51,7 @@ parser.add_argument(
 parser.add_argument(
     '--model_type', type=str, default='TabNet', choices=[
         'TabNet', 'FTTransformer', 'ResNet', 'TabTransformer', 'Trompt',
-        'ExcelFormer', 'FTTransformerBucket', 'XGBoost', 'CatBoost'
+        'ExcelFormer', 'FTTransformerBucket', 'XGBoost', 'CatBoost', 'LightGBM'
     ])
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--result_path', type=str, default='')
@@ -73,7 +73,11 @@ val_tensor_frame = val_dataset.tensor_frame
 test_tensor_frame = test_dataset.tensor_frame
 
 if args.model_type in GBDT_MODELS:
-    gbdt_cls_dict = {'XGBoost': XGBoost, 'CatBoost': CatBoost}
+    gbdt_cls_dict = {
+        'XGBoost': XGBoost,
+        'CatBoost': CatBoost,
+        'LightGBM': LightGBM
+    }
     model_cls = gbdt_cls_dict[args.model_type]
 else:
     if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
@@ -443,7 +447,7 @@ if __name__ == '__main__':
     print(args)
     if os.path.exists(args.result_path):
         exit(-1)
-    if args.model_type in ["XGBoost", "CatBoost"]:
+    if args.model_type in ["XGBoost", "CatBoost", "LightGBM"]:
         main_gbdt()
     else:
         main_deep_models()

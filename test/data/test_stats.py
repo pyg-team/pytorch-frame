@@ -87,8 +87,7 @@ def test_compute_col_stats_timestamp_with_nan():
     ser = pd.Series([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
     stype = timestamp
     year_range = compute_col_stats(ser, stype)[StatType.YEAR_RANGE]
-    print(year_range[0])
-    assert np.isnan(year_range[0]) and np.isnan(year_range[1])
+    assert year_range[0] == -1 and year_range[1] == -1
 
 
 def test_compute_col_stats_sequence_numerical():
