@@ -119,15 +119,14 @@ class DataFrameToTensorFrameConverter:
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
             specifies the mini-batch size for :obj:`text_embedder`.
             (default: :obj:`None`)
-        text_tokenizer_cfg
-            (:class:`torch_frame.config.TextTokenizerConfig`, optional):
-            A text tokenizer config specifying :obj:`text_tokenizer` that
-            maps sentences into a list of dictionary of tensors. Each
-            element in the list corresponds to each sentence, keys are
-            input arguments to the model such as :obj:`input_ids`, and
-            values are tensors such as tokens.
-            :obj:`batch_size` specifies the mini-batch size for
-            :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_text_tokenizer_cfg (TextTokenizerConfig or dict, optional):
+            A text tokenizer configuration or dictionary of configurations
+            specifying :obj:`text_tokenizer` that maps sentences into a
+            list of dictionary of tensors. Each element in the list
+            corresponds to each sentence, keys are input arguments to
+            the model such as :obj:`input_ids`, and values are tensors
+            such as tokens. :obj:`batch_size` specifies the mini-batch
+            size for :obj:`text_tokenizer`. (default: :obj:`None`)
         col_to_time_format (Union[str, Dict[str, str]], optional): A
             dictionary or a string specifying the format for the timestamp
             columns. See `strfttime documentation
@@ -147,13 +146,15 @@ class DataFrameToTensorFrameConverter:
         col_to_sep: Union[str, Dict[str, str]] = ",",
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
-        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
+                                                       TextTokenizerConfig],
+                                                  TextTokenizerConfig]] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.text_tokenizer_cfg = text_tokenizer_cfg
+        self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
@@ -189,9 +190,11 @@ class DataFrameToTensorFrameConverter:
                              "exists.")
 
         if (torch_frame.text_tokenized
-                in self.col_names_dict) and (self.text_tokenizer_cfg is None):
-            raise ValueError("`text_tokenizer_cfg` needs to be specified when "
-                             "stype.text_tokenized column exists.")
+                in self.col_names_dict) and (self.col_to_text_tokenizer_cfg
+                                             is None):
+            raise ValueError("`col_to_text_tokenizer_cfg` needs to be "
+                             "specified when stype.text_tokenized column "
+                             "exists.")
 
     @property
     def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
@@ -219,9 +222,10 @@ class DataFrameToTensorFrameConverter:
                 text_embedder_cfg.batch_size,
             )
         elif stype == torch_frame.text_tokenized:
+            text_tokenizer_cfg = self.col_to_text_tokenizer_cfg[col]
             return TextTokenizationTensorMapper(
-                self.text_tokenizer_cfg.text_tokenizer,
-                self.text_tokenizer_cfg.batch_size,
+                text_tokenizer_cfg.text_tokenizer,
+                text_tokenizer_cfg.batch_size,
             )
         elif stype == torch_frame.sequence_numerical:
             return NumericalSequenceTensorMapper()
@@ -293,14 +297,14 @@ class Dataset(ABC):
             :class:`torch.nn.Embeddings` and :obj:`batch_size` that
             specifies the mini-batch size for :obj:`text_embedder`.
             (default: :obj:`None`)
-        text_tokenizer_cfg (TextTokenizerConfig, optional):
-            A text tokenizer config specifying :obj:`text_tokenizer` that
-            maps sentences into a list of dictionary of tensors. Each
-            element in the list corresponds to each sentence, keys are
-            input arguments to the model such as :obj:`input_ids`, and
-            values are tensors such as tokens.
-            :obj:`batch_size` specifies the mini-batch size for
-            :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_text_tokenizer_cfg (TextTokenizerConfig or dict, optional):
+            A text tokenizer configuration or dictionary of configurations
+            specifying :obj:`text_tokenizer` that maps sentences into a
+            list of dictionary of tensors. Each element in the list
+            corresponds to each sentence, keys are input arguments to
+            the model such as :obj:`input_ids`, and values are tensors
+            such as tokens. :obj:`batch_size` specifies the mini-batch
+            size for :obj:`text_tokenizer`. (default: :obj:`None`)
         col_to_time_format (Union[str, Dict[str, str]], optional): A
             dictionary or a string specifying the format for the timestamp
             columns. See `strfttime documentation
@@ -321,7 +325,9 @@ class Dataset(ABC):
         col_to_sep: Union[str, Dict[str, str]] = ",",
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
-        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
+                                                       TextTokenizerConfig],
+                                                  TextTokenizerConfig]] = None,
         col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
     ):
         self.df = df
@@ -354,8 +360,6 @@ class Dataset(ABC):
             raise ValueError(
                 "Multilabel classification task is not yet supported.")
 
-        self.col_to_text_embedder_cfg = col_to_text_embedder_cfg
-        self.text_tokenizer_cfg = text_tokenizer_cfg
         self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
             [
@@ -375,6 +379,13 @@ class Dataset(ABC):
             [
                 col for col, stype in self.col_to_stype.items()
                 if stype == torch_frame.text_embedded
+            ],
+        )
+        self.col_to_text_tokenizer_cfg = canonicalize_col_to_pattern(
+            col_to_text_tokenizer_cfg,
+            [
+                col for col, stype in self.col_to_stype.items()
+                if stype == torch_frame.text_tokenized
             ],
         )
         self._is_materialized: bool = False
@@ -536,7 +547,7 @@ class Dataset(ABC):
             target_col=self.target_col,
             col_to_sep=self.col_to_sep,
             col_to_text_embedder_cfg=self.col_to_text_embedder_cfg,
-            text_tokenizer_cfg=self.text_tokenizer_cfg,
+            col_to_text_tokenizer_cfg=self.col_to_text_tokenizer_cfg,
             col_to_time_format=self.col_to_time_format,
         )
 
