@@ -424,17 +424,10 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def _pre_transform(self, df: pd.DataFrame,
                        target_col: str) -> pd.DataFrame:
-        if self.name == 'melbourne_airbnb':
-            df['host_verifications'] = df['host_verifications'].strip('[]')
-            df['amenities'] = df['amenities'].strip('[]')
-        elif self.name == 'kick_starter_funding':
+        if self.name == 'kick_starter_funding':
             df['keywords'] = [
                 item.replace('-', ' ') for item in df['keywords']
             ]
-        elif self.name == 'ae_price_prediction':
-            df['style_attributes'] = df['style_attributes'].str.strip('[]')
-            df['total_sizes'] = df['total_sizes'].str.strip('[]')
-            df['available_size'] = df['available_size'].str.strip('[]')
         # Post transform some regression datasets' target column
         # by transforming from log scale to original scale
         elif self.name == 'bookprice_prediction':
@@ -454,7 +447,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         text_stype: torch_frame.stype = torch_frame.text_embedded,
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
-        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
+                                                       TextTokenizerConfig],
+                                                  TextTokenizerConfig]] = None,
     ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -506,4 +501,4 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split', col_to_sep=col_to_sep,
                          col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-                         text_tokenizer_cfg=text_tokenizer_cfg)
+                         col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg)

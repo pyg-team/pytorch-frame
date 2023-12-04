@@ -57,7 +57,9 @@ class FakeDataset(torch_frame.data.Dataset):
         task_type: TaskType = TaskType.REGRESSION,
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
-        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
+                                                       TextTokenizerConfig],
+                                                  TextTokenizerConfig]] = None,
     ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
@@ -196,7 +198,7 @@ class FakeDataset(torch_frame.data.Dataset):
             target_col='target',
             split_col='split' if create_split else None,
             col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-            text_tokenizer_cfg=text_tokenizer_cfg,
+            col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
             col_to_time_format={
                 f'timestamp_{i}': TIME_FORMATS[i]
                 for i in range(len(TIME_FORMATS))

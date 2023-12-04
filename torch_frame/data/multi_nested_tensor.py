@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Union
+from typing import List, Sequence, Union
 
 import torch
 from torch import Tensor
@@ -109,26 +109,6 @@ class MultiNestedTensor(_MultiTensor):
 
         return cls(num_rows, num_cols, values, offset)
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union["MultiNestedTensor", Tensor]:
-        if isinstance(index, tuple):
-            # index[0] for row indexing, index[1] for column indexing
-            assert len(index) == 2
-            if all(isinstance(idx, int) for idx in index):
-                # Returns Tensor
-                return self._get_value(index[0], index[1])
-            else:
-                # Returns MultiNestedTensor
-                out = self
-                for dim, idx in enumerate(index):
-                    out = out.select(idx, dim)
-                return out
-        else:
-            # Returns MultiNestedTensor
-            return self.select(index, dim=0)
-
     def _get_value(self, i: int, j: int) -> Tensor:
         r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
 
@@ -144,90 +124,8 @@ class MultiNestedTensor(_MultiTensor):
         out = self.values[start_idx:end_idx]
         return out
 
-    def select(
-        self,
-        index: Union[int, Tensor, List, slice],
-        dim: int,
-    ) -> "MultiNestedTensor":
-        r"""Supports all types of row/column-level advanced indexing.
-
-        Args:
-            index (Union[int, Tensor, List, slice]): Input :obj:`index`.
-            dim (int): row (:obj:`dim = 0`) or column (:obj:`dim = 1`)
-        """
-        if isinstance(index, int):
-            return self._single_index_select(index, dim=dim)
-        elif isinstance(index, slice):
-            return self._slice(index, dim=dim)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-        elif isinstance(index, List):
-            return self.index_select(
-                torch.tensor(index, device=self.device),
-                dim=dim,
-            )
-        elif isinstance(index, range):
-            step = None
-            if index.step > 1:
-                step = index.step
-            index = slice(index.start, index.stop, step)
-            return self._slice(index, dim=dim)
-        else:
-            raise NotImplementedError
-
-    def narrow(self, dim: int, start: int, length: int) -> "MultiNestedTensor":
-        """Narrow the tensor along the given dimension.
-
-        Args:
-            dim (int): The dimension along which to narrow.
-            start (int): The starting index.
-            length (int): The length of the slice.
-        """
-        assert start >= 0
-        dim = MultiNestedTensor._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if start == 0 and start + length >= num_data:
-            # Do nothing, just return the full data
-            return self
-        elif length > 0:
-            if dim == 0:
-                return self._row_narrow(start, length)
-            else:
-                return self._col_narrow(start, length)
-        else:
-            # Return empty MultiNestedTensor if length is 0 or negative
-            if dim == 0:
-                num_rows = 0
-                num_cols = self.num_cols
-            else:
-                num_rows = self.num_rows
-                num_cols = 0
-            values = torch.tensor([], device=self.device, dtype=self.dtype)
-            offset = torch.zeros(1, device=self.device, dtype=torch.long)
-            return MultiNestedTensor(
-                num_rows=num_rows,
-                num_cols=num_cols,
-                values=values,
-                offset=offset,
-            )
-
-    def _slice(self, slice: slice, dim: int) -> "MultiNestedTensor":
-        dim = MultiNestedTensor._normalize_dim(dim)
-
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if slice.step is not None and slice.step > 1:
-            # If step is larger than 1, we reuse index_select along rows.
-            idx = torch.tensor(range(num_data)[slice], device=self.device)
-            return self.index_select(idx, dim=dim)
-        else:
-            start_idx: int = self._normalize_index(slice.start or 0, dim=dim)
-            end_idx: int = self._normalize_index(slice.stop or num_data,
-                                                 dim=dim, is_slice_end=True)
-            return self.narrow(dim=dim, start=start_idx,
-                               length=end_idx - start_idx)
-
     def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
         end = start + length
@@ -243,7 +141,7 @@ class MultiNestedTensor(_MultiTensor):
         )
 
     def _col_narrow(self, start: int, length: int) -> "MultiNestedTensor":
-        r"""Helper function called by :obj:`narrow`."""
+        r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
         end = start + length
@@ -272,14 +170,6 @@ class MultiNestedTensor(_MultiTensor):
             values=values,
             offset=offset,
         )
-
-    def index_select(self, index: Tensor, dim: int) -> "MultiNestedTensor":
-        dim = MultiNestedTensor._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
-        if dim == 0:
-            return self._row_index_select(index)
-        else:
-            return self._col_index_select(index)
 
     def _row_index_select(self, index: Tensor) -> "MultiNestedTensor":
         r"""Helper function called by :obj:`index_select`."""
@@ -399,6 +289,24 @@ class MultiNestedTensor(_MultiTensor):
         col = batch % self.num_cols
         dense[row, col, arange] = self.values
         return dense
+
+    def _empty(self, dim: int) -> "MultiNestedTensor":
+        r"""Creates an empty :class:`MultiEmbeddingTensor`.
+
+        Args:
+            dim (int): The dimension to empty.
+
+        Returns:
+            MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
+        """
+        values = torch.tensor([], device=self.device, dtype=self.dtype)
+        offset = torch.zeros(1, device=self.device, dtype=torch.long)
+        return MultiNestedTensor(
+            num_rows=0 if dim == 0 else self.num_rows,
+            num_cols=0 if dim == 1 else self.num_cols,
+            values=values,
+            offset=offset,
+        )
 
     # Static methods ##########################################################
     @staticmethod
