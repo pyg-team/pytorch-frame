@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Renamed `text_tokenized_cfg` into `col_to_text_tokenized_cfg` ([#257](https://github.com/pyg-team/pytorch-frame/pull/257))
 - Made `Trompt` output 2-dim embeddings in `forward`
 - Renamed `text_embedder_cfg` into `col_to_text_embedder_cfg`
 

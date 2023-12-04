@@ -24,7 +24,7 @@ def teardown_module():
 def get_fake_dataset(
     num_rows: int,
     col_to_text_embedder_cfg: TextEmbedderConfig,
-    text_tokenizer_cfg: TextTokenizerConfig,
+    col_to_text_tokenizer_cfg: TextTokenizerConfig,
 ) -> FakeDataset:
     stypes = [
         torch_frame.numerical,
@@ -39,7 +39,7 @@ def get_fake_dataset(
         num_rows=num_rows,
         stypes=stypes,
         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-        text_tokenizer_cfg=text_tokenizer_cfg,
+        col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
     )
     return dataset
 
@@ -50,12 +50,12 @@ def test_dataset_cache():
 
     col_to_text_embedder_cfg = TextEmbedderConfig(
         text_embedder=HashTextEmbedder(out_channels))
-    text_tokenizer_cfg = TextTokenizerConfig(
+    col_to_text_tokenizer_cfg = TextTokenizerConfig(
         text_tokenizer=WhiteSpaceHashTokenizer())
     dataset = get_fake_dataset(
         num_rows,
         col_to_text_embedder_cfg,
-        text_tokenizer_cfg,
+        col_to_text_tokenizer_cfg,
     )
 
     path = osp.join(TEST_DIR.name, TEST_DATASET_NAME)
@@ -64,7 +64,7 @@ def test_dataset_cache():
     new_dataset = get_fake_dataset(
         num_rows,
         col_to_text_embedder_cfg,
-        text_tokenizer_cfg,
+        col_to_text_tokenizer_cfg,
     )
     new_dataset.df = dataset.df
 
@@ -84,7 +84,7 @@ def test_dataset_cache():
     new_dataset = get_fake_dataset(
         num_rows,
         col_to_text_embedder_cfg,
-        text_tokenizer_cfg,
+        col_to_text_tokenizer_cfg,
     )
     new_dataset.df = new_dataset.df
 
@@ -100,12 +100,12 @@ def test_save_load_tensor_frame():
     out_channels = 8
     col_to_text_embedder_cfg = TextEmbedderConfig(
         text_embedder=HashTextEmbedder(out_channels))
-    text_tokenizer_cfg = TextTokenizerConfig(
+    col_to_text_tokenizer_cfg = TextTokenizerConfig(
         text_tokenizer=WhiteSpaceHashTokenizer(),
         batch_size=None,
     )
     dataset = get_fake_dataset(num_rows, col_to_text_embedder_cfg,
-                               text_tokenizer_cfg)
+                               col_to_text_tokenizer_cfg)
     dataset.materialize()
 
     path = osp.join(TEST_DIR.name, TEST_SAVE_LOAD_NAME)
