@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Union
+from typing import List, Sequence
 
 import torch
 from torch import Tensor
@@ -96,188 +96,42 @@ class MultiEmbeddingTensor(_MultiTensor):
         offset = torch.tensor(offset_list, device=values.device)
         return cls(num_rows, num_cols, values, offset)
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union["MultiEmbeddingTensor", Tensor]:
-        if isinstance(index, tuple):
-            assert len(index) == 2
-            if all(isinstance(idx, int) for idx in index):
-                i = self._normalize_index(index[0], dim=0)
-                j = self._normalize_index(index[1], dim=1)
-                return self.values[i, self.offset[j]:self.offset[j + 1]]
-            else:
-                out = self
-                for dim, idx in enumerate(index):
-                    out = out.select(idx, dim=dim)
-                return out
-        else:
-            return self.select(index, dim=0)
-
-    def select(
-        self,
-        index: Union[int, Tensor, Sequence[int], slice, range],
-        dim: int,
-    ) -> "MultiEmbeddingTensor":
-        """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
-        :class:`MultiEmbeddingTensor` along the specified dimension.
+    def _get_value(self, i: int, j: int) -> Tensor:
+        r"""Get :obj:`(i, j)`-th :class:`Tensor` object.
 
         Args:
-            index (Union[int, Tensor, Sequence[int], slice, range]): An index
-                to select.
-            dim (int): The dimension to index in.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Note:
-            :obj:`select(index, dim=0)` is equivalent to
-            :obj:`multi_embedding_tensor[index]`, and
-            :obj:`select(index, dim=1)` is equivalent to
-            :obj:`multi_embedding_tensor[:, index]`.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> # int can select one row/col
-            >>> out.select(0, dim=0)
-            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
-            >>> # list/tensor/range can select multiple rows/cols
-            >>> out.select([0, 2], dim=1)
-            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
+            i (int): The row integer index.
+            j (int): The column integer index.
         """
-        dim = self._normalize_dim(dim)
-        if isinstance(index, int):
-            return self._single_index_select(index, dim=dim)
-        elif isinstance(index, slice):
-            return self._slice(index, dim=dim)
-        elif isinstance(index, Tensor) and index.ndim == 1:
-            return self.index_select(index, dim=dim)
-        # TODO: Don't materialize range but instead pass it to PyTorch tensor
-        # directly for possible better performance.
-        elif isinstance(index, (list, range)):
-            return self.index_select(
-                torch.tensor(index, dtype=torch.long, device=self.device),
-                dim=dim,
-            )
-        raise NotImplementedError
+        i = self._normalize_index(i, dim=0)
+        j = self._normalize_index(j, dim=1)
+        return self.values[i, self.offset[j]:self.offset[j + 1]]
 
-    def narrow(
-        self,
-        dim: int,
-        start: int,
-        length: int,
-    ) -> "MultiEmbeddingTensor":
-        """Returns a narrowed version of input :class:`MultiEmbeddingTensor`.
+    def _row_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+        r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
+        return MultiEmbeddingTensor(
+            num_rows=length,
+            num_cols=self.num_cols,
+            values=self.values[start:start + length],
+            offset=self.offset,
+        )
 
-        Args:
-            dim (int): The dimension along which to narrow.
-            start (int): The starting dimension index to narrow.
-            length (int): The length of the dimension to narrow.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> out.narrow(dim=1, start=1, length=2)
-            MultiEmbeddingTensor(num_rows=2, num_cols=2, device='cpu')
-        """
-        dim = self._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if start == 0 and start + length >= num_data:
-            return self
-        elif length <= 0:
-            return MultiEmbeddingTensor(
-                num_rows=0 if dim == 0 else self.num_rows,
-                num_cols=0 if dim == 1 else self.num_cols,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device)
-                if dim == 1 else self.offset,
-            )
-
-        elif dim == 0:
-            return MultiEmbeddingTensor(
-                num_rows=length,
-                num_cols=self.num_cols,
-                values=self.values[start:start + length],
-                offset=self.offset,
-            )
-        elif dim == 1:
-            offset = self.offset[start:start + length + 1] - self.offset[start]
-            return MultiEmbeddingTensor(
-                num_rows=self.num_rows,
-                num_cols=length,
-                values=self.values[:, self.offset[start]:self.offset[start +
-                                                                     length]],
-                offset=offset,
-            )
-
-    def _slice(
-        self,
-        index: slice,
-        dim: int,
-    ) -> "MultiEmbeddingTensor":
-        dim = self._normalize_dim(dim)
-        num_data = self.num_rows if dim == 0 else self.num_cols
-        if index.step is not None and index.step > 1:
-            idx = torch.tensor(
-                range(num_data)[index],
-                device=self.device,
-                dtype=torch.long,
-            )
-            return self.index_select(idx, dim=dim)
-        else:
-            start_idx: int = self._normalize_index(index.start or 0, dim=dim)
-            end_idx: int = self._normalize_index(
-                index.stop or num_data,
-                dim=dim,
-                is_slice_end=True,
-            )
-            return self.narrow(
-                dim=dim,
-                start=start_idx,
-                length=end_idx - start_idx,
-            )
-
-    def index_select(
-        self,
-        index: Tensor,
-        dim: int,
-    ) -> 'MultiEmbeddingTensor':
-        """Returns a :class:`MultiEmbeddingTensor` which indexes the input
-        :class:`MultiEmbeddingTensor` along the specified dimension.
-
-        Args:
-            index (Tensor): A 1-D tensor of indices to select.
-            dim (int): The dimension to index in.
-
-        Returns:
-            MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-        """
-        dim = self._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
-        if dim == 0:
-            return self._row_index_select(index)
-        elif dim == 1:
-            return self._col_index_select(index)
+    def _col_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+        r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
+        offset = self.offset[start:start + length + 1] - self.offset[start]
+        col_offset_start = self.offset[start]
+        col_offset_end = self.offset[start + length]
+        return MultiEmbeddingTensor(
+            num_rows=self.num_rows,
+            num_cols=length,
+            values=self.values[:, col_offset_start:col_offset_end],
+            offset=offset,
+        )
 
     def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         return MultiEmbeddingTensor(
             num_rows=index.size(0),
             num_cols=self.num_cols,
@@ -286,6 +140,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         )
 
     def _col_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         if index.numel() == 0:
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
@@ -315,6 +172,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         index: int,
         dim: int,
     ) -> "MultiEmbeddingTensor":
+        r"""Helper function called by
+        :meth:`MultiEmbeddingTensor.index_select`.
+        """
         index = self._normalize_index(index, dim=dim)
         if dim == 0:
             return MultiEmbeddingTensor(
@@ -333,6 +193,25 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
+
+    def _empty(self, dim: int) -> "MultiEmbeddingTensor":
+        """Creates an empty :class:`MultiEmbeddingTensor`.
+
+        Args:
+            dim (int): The dimension to empty.
+
+        Returns:
+            MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
+                Note that if :obj:`dim=0`, it will return with the original
+                offset tensor.
+        """
+        return MultiEmbeddingTensor(
+            num_rows=0 if dim == 0 else self.num_rows,
+            num_cols=0 if dim == 1 else self.num_cols,
+            values=torch.tensor([], device=self.device),
+            offset=torch.tensor([0], device=self.device)
+            if dim == 1 else self.offset,
+        )
 
     @staticmethod
     def cat(
