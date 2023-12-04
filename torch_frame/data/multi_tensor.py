@@ -278,7 +278,7 @@ class _MultiTensor:
         if start == 0 and start + length >= num_data:
             return self
         elif length <= 0:
-            return self.empty(dim)
+            return self._empty(dim)
         elif dim == 0:
             return self._row_narrow(start, length)
         elif dim == 1:
