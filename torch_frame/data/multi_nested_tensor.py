@@ -291,7 +291,7 @@ class MultiNestedTensor(_MultiTensor):
         return dense
 
     def empty(self, dim: int) -> "MultiNestedTensor":
-        """Creates an empty :class:`MultiEmbeddingTensor`.
+        r"""Creates an empty :class:`MultiEmbeddingTensor`.
 
         Args:
             dim (int): The dimension to empty.
