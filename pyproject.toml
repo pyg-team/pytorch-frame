@@ -122,7 +122,6 @@ module = [
     "torch_frame.data.multi_nested_tensor",
     "torch_frame.data.multi_tensor",
     "torch_frame.data.stats",
-    "torch_frame.data.tensor_frame",
     "torch_frame.datasets.data_frame_benchmark",
     "torch_frame.datasets.fake",
     "torch_frame.datasets.kdd_census_income",
