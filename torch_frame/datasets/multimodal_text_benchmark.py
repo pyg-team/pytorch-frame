@@ -424,17 +424,10 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def _pre_transform(self, df: pd.DataFrame,
                        target_col: str) -> pd.DataFrame:
-        if self.name == 'melbourne_airbnb':
-            df['host_verifications'] = df['host_verifications'].strip('[]')
-            df['amenities'] = df['amenities'].strip('[]')
-        elif self.name == 'kick_starter_funding':
+        if self.name == 'kick_starter_funding':
             df['keywords'] = [
                 item.replace('-', ' ') for item in df['keywords']
             ]
-        elif self.name == 'ae_price_prediction':
-            df['style_attributes'] = df['style_attributes'].str.strip('[]')
-            df['total_sizes'] = df['total_sizes'].str.strip('[]')
-            df['available_size'] = df['available_size'].str.strip('[]')
         # Post transform some regression datasets' target column
         # by transforming from log scale to original scale
         elif self.name == 'bookprice_prediction':
