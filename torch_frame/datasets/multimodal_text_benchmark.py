@@ -20,6 +20,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         name (str): The name of the dataset to download.
         text_stype (torch_frame.stype): Text stype to use for text columns
             in the dataset. (default: :obj:`torch_frame.text_embedded`)
+        num_rows (int, optional): Number of rows to subsample.
+            (default: :obj:`None`)
 
     **STATS:**
 
@@ -425,8 +427,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
     def _pre_transform(self, df: pd.DataFrame,
                        target_col: str) -> pd.DataFrame:
         if self.name == 'melbourne_airbnb':
-            df['host_verifications'] = df['host_verifications'].strip('[]')
-            df['amenities'] = df['amenities'].strip('[]')
+            df['host_verifications'] = df['host_verifications']
+            df['amenities'] = df['amenities']
         elif self.name == 'kick_starter_funding':
             df['keywords'] = [
                 item.replace('-', ' ') for item in df['keywords']
@@ -455,6 +457,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
         text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        num_rows: Optional[int] = None,
     ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -501,6 +504,8 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                     col_to_stype[col] = stype
 
         df = self._pre_transform(df=df, target_col=target_col)
+        if num_rows is not None:
+            df = df.head(num_rows)
         col_to_sep = self._dataset_col_to_sep.get(name, '')
 
         super().__init__(df, col_to_stype, target_col=target_col,

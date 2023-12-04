@@ -12,6 +12,8 @@ from transformers import AutoModel, AutoTokenizer
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import DataLoader
 from torch_frame.data.mapper import TextEmbeddingTensorMapper
 from torch_frame.datasets import MultimodalTextBenchmark
@@ -21,6 +23,7 @@ from torch_frame.nn import (
     LinearEncoder,
     MultiCategoricalEmbeddingEncoder,
 )
+from torch_frame.nn.encoder.stype_encoder import LinearModelEncoder
 from torch_frame.typing import TensorData, TextTokenizationOutputs
 
 parser = argparse.ArgumentParser()
@@ -38,6 +41,8 @@ parser.add_argument("--pooling", type=str, default="mean",
 parser.add_argument("--compile", action="store_true")
 args = parser.parse_args()
 
+torch.manual_seed(args.seed)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class SimpleTextToEmbedding:
     def __init__(self, model: str, device: torch.device):
@@ -58,6 +63,16 @@ class SimpleTextToEmbedding:
         out = self.model(**inputs)
         return out.last_hidden_state[:, 0, :].detach().cpu()
 
+text_encoder = SimpleTextToEmbedding(model=args.model, device=device)
+text_stype_encoder = LinearModelEncoder(in_channels=768,
+                                            model=text_encoder)
+kwargs = {
+        "text_stype": stype.text_embedded,
+        "col_to_text_embedder_cfg": TextEmbedderConfig(
+            text_embedder=text_encoder,
+            batch_size=5,
+        ),
+    }
 
 torch.manual_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,26 +82,23 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "..", "data",
                 args.dataset)
 
 # Load Dataset
-dataset = MultimodalTextBenchmark(root=path, name=args.dataset)
+dataset = MultimodalTextBenchmark(root=path, name=args.dataset, num_rows=5000, **kwargs)
 print(dataset.df.columns)
-text_encoder = SimpleTextToEmbedding(model=args.model, device=device)
-mapper = TextEmbeddingTensorMapper(text_encoder, batch_size=50)
+mapper = TextEmbeddingTensorMapper(text_encoder, batch_size=5)
 df = dataset.df
 df['Summary'].fillna('', inplace=True)
 df['Address'].fillna('', inplace=True)
 df['Summary'] = mapper.forward(dataset.df['Summary'].values)
 df['Address'] = mapper.forward(dataset.df['Address'].values)
-print(df)
 
+print(df['Summary'])
 model_name = args.model.replace('/', '')
 filename = f"{model_name}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
 is_classification = dataset.task_type.is_classification
 
-train_dataset, val_dataset, test_dataset = dataset.split()
-if len(val_dataset) == 0:
-    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
+train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[0.8:0.9], dataset[0.9:]
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame
@@ -100,7 +112,7 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    text_stype: text_stype_encoder,
+    stype.embedding: text_stype_encoder,
     stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
 }
 
