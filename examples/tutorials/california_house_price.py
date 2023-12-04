@@ -70,7 +70,7 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "..", "data",
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset)
 print(dataset.df.columns)
 text_encoder = SimpleTextToEmbedding(model=args.model, device=device)
-mapper = TextEmbeddingTensorMapper(text_encoder,batch_size=50)
+mapper = TextEmbeddingTensorMapper(text_encoder, batch_size=50)
 df = dataset.df
 df['Summary'].fillna('', inplace=True)
 df['Address'].fillna('', inplace=True)
