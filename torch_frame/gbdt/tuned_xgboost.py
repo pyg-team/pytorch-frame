@@ -222,3 +222,8 @@ class XGBoost(GBDT):
                                 enable_categorical=True)
         pred = self.model.predict(dtest)
         return torch.from_numpy(pred).to(device)
+
+    def load(self, path: str) -> None:
+        import xgboost
+
+        self.model = xgboost.Booster(model_file=path)

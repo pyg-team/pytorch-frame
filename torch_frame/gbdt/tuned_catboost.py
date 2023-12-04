@@ -208,3 +208,9 @@ class CatBoost(GBDT):
         test_x, _, _ = self._to_catboost_input(tf_test)
         pred = self._predict_helper(self.model, test_x)
         return torch.from_numpy(pred).to(device)
+
+    def load(self, path: str) -> None:
+        import catboost
+
+        self.model = catboost.CatBoost()
+        self.model.load_model(path)
