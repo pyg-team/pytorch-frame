@@ -426,23 +426,19 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
     def _pre_transform(self, df: pd.DataFrame,
                        target_col: str) -> pd.DataFrame:
-        if self.name == 'melbourne_airbnb':
-            df['host_verifications'] = df['host_verifications']
-            df['amenities'] = df['amenities']
-        elif self.name == 'kick_starter_funding':
+        if self.name == 'kick_starter_funding':
             df['keywords'] = [
                 item.replace('-', ' ') for item in df['keywords']
             ]
-        elif self.name == 'ae_price_prediction':
-            df['style_attributes'] = df['style_attributes'].str.strip('[]')
-            df['total_sizes'] = df['total_sizes'].str.strip('[]')
-            df['available_size'] = df['available_size'].str.strip('[]')
         # Post transform some regression datasets' target column
         # by transforming from log scale to original scale
         elif self.name == 'bookprice_prediction':
             df[target_col] = np.power(10, df[target_col]) - 1
             df[df[target_col] < 0][target_col] = 0
         elif self.name == 'california_house_price':
+            df['Bedrooms'] = pd.to_numeric(df['Bedrooms'], errors='coerce')
+            #for col in self._dataset_stype_to_col[self.name][torch_frame.multicategorical]:
+            #    df[col] = df[col].fillna('')
             df[target_col] = np.exp(df[target_col])
         elif self.name == 'mercari_price_suggestion100K':
             df[target_col] = np.exp(df[target_col]) - 1
@@ -503,9 +499,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
                 else:
                     col_to_stype[col] = stype
 
-        df = self._pre_transform(df=df, target_col=target_col)
         if num_rows is not None:
             df = df.head(num_rows)
+        df = self._pre_transform(df=df, target_col=target_col)
         col_to_sep = self._dataset_col_to_sep.get(name, '')
 
         super().__init__(df, col_to_stype, target_col=target_col,

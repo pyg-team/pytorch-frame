@@ -23,8 +23,8 @@ from torch_frame.nn import (
     LinearEncoder,
     MultiCategoricalEmbeddingEncoder,
 )
-from torch_frame.nn.encoder.stype_encoder import LinearModelEncoder
-from torch_frame.typing import TensorData, TextTokenizationOutputs
+from torch_frame.nn.encoder.stype_encoder import LinearEmbeddingEncoder, LinearModelEncoder, TimestampEncoder
+from torch_frame.typing import NAStrategy, TensorData, TextTokenizationOutputs
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="california_house_price")
@@ -63,9 +63,9 @@ class SimpleTextToEmbedding:
         out = self.model(**inputs)
         return out.last_hidden_state[:, 0, :].detach().cpu()
 
+
 text_encoder = SimpleTextToEmbedding(model=args.model, device=device)
-text_stype_encoder = LinearModelEncoder(in_channels=768,
-                                            model=text_encoder)
+
 kwargs = {
         "text_stype": stype.text_embedded,
         "col_to_text_embedder_cfg": TextEmbedderConfig(
@@ -74,34 +74,25 @@ kwargs = {
         ),
     }
 
-torch.manual_seed(args.seed)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "..", "data",
                 args.dataset)
 
 # Load Dataset
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset, num_rows=5000, **kwargs)
-print(dataset.df.columns)
-mapper = TextEmbeddingTensorMapper(text_encoder, batch_size=5)
-df = dataset.df
-df['Summary'].fillna('', inplace=True)
-df['Address'].fillna('', inplace=True)
-df['Summary'] = mapper.forward(dataset.df['Summary'].values)
-df['Address'] = mapper.forward(dataset.df['Address'].values)
 
-print(df['Summary'])
 model_name = args.model.replace('/', '')
 filename = f"{model_name}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
+dataset.tensor_frame.col_names_dict[stype.embedding] = dataset.tensor_frame.col_names_dict.pop(stype.text_embedded)
+dataset.tensor_frame.feat_dict[stype.embedding] = dataset.tensor_frame.feat_dict.pop(stype.text_embedded)
 
 is_classification = dataset.task_type.is_classification
 
 train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[0.8:0.9], dataset[0.9:]
-
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame
+
 val_tensor_frame = val_dataset.tensor_frame
 test_tensor_frame = test_dataset.tensor_frame
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
@@ -112,8 +103,9 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.embedding: text_stype_encoder,
+    stype.embedding: LinearEmbeddingEncoder(),
     stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
+    stype.timestamp: TimestampEncoder(na_strategy=NAStrategy.MEDIAN_TIMESTAMP)
 }
 
 if is_classification:
@@ -131,3 +123,75 @@ model = FTTransformer(
 ).to(device)
 model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+
+
+def train(epoch: int) -> float:
+    model.train()
+    loss_accum = total_count = 0
+
+    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
+        tf = tf.to(device)
+        pred = model(tf)
+        if is_classification:
+            loss = F.cross_entropy(pred, tf.y)
+        else:
+            loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
+        optimizer.zero_grad()
+        loss.backward()
+        loss_accum += float(loss) * len(tf.y)
+        total_count += len(tf.y)
+        optimizer.step()
+    return loss_accum / total_count
+
+
+@torch.no_grad()
+def test(loader: DataLoader) -> float:
+    model.eval()
+    accum = total_count = 0
+
+    for tf in loader:
+        tf = tf.to(device)
+        pred = model(tf)
+        if is_classification:
+            pred_class = pred.argmax(dim=-1)
+            accum += float((tf.y == pred_class).sum())
+        else:
+            accum += float(
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
+        total_count += len(tf.y)
+
+    if is_classification:
+        accuracy = accum / total_count
+        return accuracy
+    else:
+        rmse = (accum / total_count)**0.5
+        return rmse
+
+
+if is_classification:
+    metric = "Acc"
+    best_val_metric = 0
+    best_test_metric = 0
+else:
+    metric = "RMSE"
+    best_val_metric = float("inf")
+    best_test_metric = float("inf")
+
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_metric = test(train_loader)
+    val_metric = test(val_loader)
+    test_metric = test(test_loader)
+
+    if is_classification and val_metric > best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+    elif not is_classification and val_metric < best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
+
+    print(f"Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, "
+          f"Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}")
+
+print(f"Best Val {metric}: {best_val_metric:.4f}, "
+      f"Best Test {metric}: {best_test_metric:.4f}")
