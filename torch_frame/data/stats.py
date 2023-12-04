@@ -163,7 +163,9 @@ def compute_col_stats(
         try:
             np.isfinite(ser) | ser.isna()
         except TypeError:
-            raise TypeError("Numerical series contains invalid entries.")
+            raise TypeError("Numerical series contains invalid entries."
+                            "Please make sure your numerical series "
+                            "contains only numerical values or nans.")
 
     if ser.isnull().all():
         # NOTE: We may just error out here if eveything is NaN
