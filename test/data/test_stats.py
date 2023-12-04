@@ -29,8 +29,7 @@ def test_compute_col_stats_numerical():
 def test_compute_col_stats_numerical_with_dirty_columns():
     ser = pd.Series([1, 2, 3, 'One', np.inf, np.nan])
     stype = numerical
-    with pytest.raises(ValueError,
-                       match='Numerical series contains invalid entries.'):
+    with pytest.raises(ValueError, match='invalid entries'):
         compute_col_stats(ser, stype)
 
 
