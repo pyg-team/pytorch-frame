@@ -194,7 +194,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=offset,
             )
 
-    def empty(self, dim: int) -> "MultiEmbeddingTensor":
+    def _empty(self, dim: int) -> "MultiEmbeddingTensor":
         """Creates an empty :class:`MultiEmbeddingTensor`.
 
         Args:

@@ -290,7 +290,7 @@ class _MultiTensor:
     def _col_narrow(self, start: int, length: int) -> "_MultiTensor":
         raise NotImplementedError
 
-    def empty(self, dim: int) -> "_MultiTensor":
+    def _empty(self, dim: int) -> "_MultiTensor":
         raise NotImplementedError
 
     def select(

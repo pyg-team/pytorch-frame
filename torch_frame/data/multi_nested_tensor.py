@@ -290,7 +290,7 @@ class MultiNestedTensor(_MultiTensor):
         dense[row, col, arange] = self.values
         return dense
 
-    def empty(self, dim: int) -> "MultiNestedTensor":
+    def _empty(self, dim: int) -> "MultiNestedTensor":
         r"""Creates an empty :class:`MultiEmbeddingTensor`.
 
         Args:
