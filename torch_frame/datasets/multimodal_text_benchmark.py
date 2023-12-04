@@ -454,7 +454,9 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         text_stype: torch_frame.stype = torch_frame.text_embedded,
         col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
                                                  TextEmbedderConfig]] = None,
-        text_tokenizer_cfg: Optional[TextTokenizerConfig] = None,
+        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
+                                                       TextTokenizerConfig],
+                                                  TextTokenizerConfig]] = None,
     ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
@@ -506,4 +508,4 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split', col_to_sep=col_to_sep,
                          col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-                         text_tokenizer_cfg=text_tokenizer_cfg)
+                         col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg)
