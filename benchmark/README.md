@@ -25,12 +25,20 @@ scale=small
 # Specify the dataset idx from [0, 1, ...]
 idx=0
 
+# Specify the number of AutoML search trials
+num_trials=20
+
 # Specify the path to save the results
 result_path=results.pt
 
 # Run hyper-parameter tuning and training of the specified model on a specified
 # dataset.
-python data_frame_benchmark.py --model_type $model_type --task_type $task_type --scale $scale --idx $idx --result_path $result_path
+python data_frame_benchmark.py --model_type $model_type\
+                               --task_type $task_type\
+                               --scale $scale\
+                               --idx $idx\
+                               --num_trials $num_trials\
+                               --result_path $result_path
 ```
 
 ## Leaderboard
