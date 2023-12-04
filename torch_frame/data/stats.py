@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+import pandas.api.types as ptypes
 import torch
 
 import torch_frame
@@ -160,9 +161,7 @@ def compute_col_stats(
 ) -> Dict[StatType, Any]:
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
-        try:
-            np.isfinite(ser) | ser.isna()
-        except TypeError:
+        if not ptypes.is_numeric_dtype(ser):
             raise TypeError("Numerical series contains invalid entries."
                             "Please make sure your numerical series "
                             "contains only numerical values or nans.")
