@@ -13,6 +13,7 @@ from transformers import AutoModel, AutoTokenizer
 import torch_frame
 from torch_frame import stype
 from torch_frame.data import DataLoader
+from torch_frame.data.mapper import TextEmbeddingTensorMapper
 from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
@@ -69,15 +70,12 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "..", "data",
 dataset = MultimodalTextBenchmark(root=path, name=args.dataset)
 print(dataset.df.columns)
 text_encoder = SimpleTextToEmbedding(model=args.model, device=device)
-df_train_sample = dataset.df[dataset.df['split'] == 'train'].head(9000)
-df_val_sample = dataset.df[dataset.df['split'] == 'val'].head(1000)
-df_test_sample = dataset.df[dataset.df['split'] == 'test'].head(1000)
-df = pd.concat([df_train_sample, df_val_sample, df_test_sample],
-               ignore_index=True)
+mapper = TextEmbeddingTensorMapper(text_encoder,batch_size=50)
+df = dataset.df
 df['Summary'].fillna('', inplace=True)
 df['Address'].fillna('', inplace=True)
-df['Summary'] = text_encoder(dataset.df['Summary'].values.tolist())
-df['Address'] = text_encoder(dataset.df['Address'].values.tolist())
+df['Summary'] = mapper.forward(dataset.df['Summary'].values)
+df['Address'] = mapper.forward(dataset.df['Address'].values)
 print(df)
 
 model_name = args.model.replace('/', '')
