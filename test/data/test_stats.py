@@ -44,7 +44,7 @@ def test_compute_col_stats_categorical():
 
 def test_compute_col_stats_multi_categorical():
     for ser in [
-            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None]),
+            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None, np.nan]),
             # # Testing with leading and traling whitespace
             pd.Series(['a| a | b', 'a| c', 'c |a', '  a| b| c', '  ', None]),
             # Testing with list representation
