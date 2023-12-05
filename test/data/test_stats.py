@@ -2,6 +2,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.datasets.fake import _random_timestamp
@@ -23,6 +24,14 @@ def test_compute_col_stats_numerical():
         StatType.STD: 0.816496580927726,
         StatType.QUANTILES: [1.0, 1.5, 2.0, 2.5, 3.0],
     }
+
+
+def test_compute_col_stats_numerical_with_dirty_columns():
+    ser = pd.Series([1, 2, 3, 'One', np.inf, np.nan])
+    stype = numerical
+    with pytest.raises(TypeError,
+                       match='Numerical series contains invalid entries.'):
+        compute_col_stats(ser, stype)
 
 
 def test_compute_col_stats_categorical():
