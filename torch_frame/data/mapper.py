@@ -151,7 +151,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
     @staticmethod
     def split_by_sep(row: Optional[Union[str, List[Any]]],
                      sep: str) -> Set[Any]:
-        if row is None:
+        if row is None or row is np.nan:
             return set([-1])
         elif isinstance(row, str):
             if row.strip() == '':
