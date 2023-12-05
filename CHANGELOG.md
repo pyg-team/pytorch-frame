@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))
 - Fixed documentation with updated links & corrected typos ([#259](https://github.com/pyg-team/pytorch-frame/pull/259))
 - Added `TimestampEncoder` ([#225](https://github.com/pyg-team/pytorch-frame/pull/225))
 - Added `LightGBM` ([#248](https://github.com/pyg-team/pytorch-frame/pull/248))
