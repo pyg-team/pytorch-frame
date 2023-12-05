@@ -59,7 +59,7 @@ class GBDT:
         raise NotImplementedError
 
     @abstractmethod
-    def load(self, path: str) -> None:
+    def _load(self, path: str) -> None:
         raise NotImplementedError
 
     @property
@@ -124,6 +124,15 @@ class GBDT:
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self.model.save_model(path)
+
+    def load(self, path: str) -> None:
+        r"""Load the model.
+
+        Args:
+            path (str): The path to load tuned GBDTs model.
+        """
+        self._load(path)
+        self._is_fitted = True
 
     @torch.no_grad()
     def compute_metric(

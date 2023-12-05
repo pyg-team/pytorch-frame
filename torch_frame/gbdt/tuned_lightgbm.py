@@ -215,7 +215,7 @@ class LightGBM(GBDT):
         pred = self._predict_helper(self.model, test_x)
         return torch.from_numpy(pred).to(device)
 
-    def load(self, path: str) -> None:
+    def _load(self, path: str) -> None:
         import lightgbm
 
         self.model = lightgbm.Booster(model_file=path)
