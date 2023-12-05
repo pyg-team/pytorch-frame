@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import copy
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Optional, Union
 
 import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame import stype
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.typing import IndexSelectType, TensorData
 
 
@@ -64,10 +66,10 @@ class TensorFrame:
     """
     def __init__(
         self,
-        feat_dict: Dict[torch_frame.stype, TensorData],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        feat_dict: dict[torch_frame.stype, TensorData],
+        col_names_dict: dict[torch_frame.stype, list[str]],
         y: Optional[Tensor] = None,
-    ):
+    ) -> None:
         self.feat_dict = feat_dict
         self.col_names_dict = col_names_dict
         self.y = y
@@ -75,12 +77,12 @@ class TensorFrame:
 
         # Quick mapping from column names into their (stype, idx) pairs in
         # col_names_dict. Used for fast get_col_feat.
-        self._col_to_stype_idx: Dict[str, Tuple[torch_frame.stype, int]] = {}
+        self._col_to_stype_idx: dict[str, tuple[torch_frame.stype, int]] = {}
         for stype_name, cols in self.col_names_dict.items():
             for idx, col in enumerate(cols):
                 self._col_to_stype_idx[col] = (stype_name, idx)
 
-    def validate(self):
+    def validate(self) -> None:
         r"""Validates the :class:`TensorFrame` object."""
         if len(self.feat_dict) == 0:
             raise ValueError("feat_dict should not be empty.")
@@ -92,31 +94,33 @@ class TensorFrame:
                 f"{self.col_names_dict.keys()} for col_names_dict.")
 
         num_rows = self.num_rows
-        empty_stypes: List[stype] = []
+        empty_stypes: list[torch_frame.stype] = []
         for stype_name, feats in self.feat_dict.items():
             num_cols = len(self.col_names_dict[stype_name])
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            if not isinstance(feats, dict):
-                feats = [feats]
+            tensors: list[Union[Tensor, MultiNestedTensor,
+                                MultiEmbeddingTensor]]
+            if isinstance(feats, dict):
+                tensors = [feat for feat in feats.values()]
             else:
-                feats = [feat for feat in feats.values()]
+                tensors = [feats]
 
-            for feat in feats:
-                if feat.dim() < 2:
+            for tensor in tensors:
+                if tensor.dim() < 2:
                     raise ValueError(f"feat_dict['{stype_name}'] must be at "
                                      f"least 2-dimensional")
-                if num_cols != feat.size(1):
+                if num_cols != tensor.size(1):
                     raise ValueError(
                         f"The expected number of columns for {stype_name} "
                         f"feature is {num_cols}, which does not align with "
                         f"the column dimensionality of "
-                        f"feat_dict[{stype_name}] (got {feat.size(1)})")
-                if feat.size(0) != num_rows:
+                        f"feat_dict[{stype_name}] (got {tensor.size(1)})")
+                if tensor.size(0) != num_rows:
                     raise ValueError(
                         f"The length of elements in feat_dict are "
-                        f"not aligned, got {feat.size(0)} but "
+                        f"not aligned, got {tensor.size(0)} but "
                         f"expected {num_rows}.")
 
         if len(empty_stypes) > 0:
@@ -144,19 +148,25 @@ class TensorFrame:
             raise ValueError(
                 f"{col_name} is not available in the TensorFrame object.")
         stype_name, idx = self._col_to_stype_idx[col_name]
+        feat = self.feat_dict[stype_name]
         if stype_name.use_dict_multi_nested_tensor:
-            return {
-                key: item[:, idx]
-                for key, item in self.feat_dict[stype_name].items()
-            }
+            assert isinstance(feat, dict)
+            col_feat: dict[str, MultiNestedTensor] = {}
+            for key, mnt in feat.items():
+                value = mnt[:, idx]
+                assert isinstance(value, MultiNestedTensor)
+                col_feat[key] = value
+            return col_feat
         else:
             if stype_name.use_multi_tensor:
-                return self.feat_dict[stype_name][:, idx]
+                assert isinstance(feat, _MultiTensor)
+                return feat[:, idx]
             else:
-                return self.feat_dict[stype_name][:, idx].unsqueeze(1)
+                assert isinstance(feat, Tensor)
+                return feat[:, idx].unsqueeze(1)
 
     @property
-    def stypes(self) -> List[stype]:
+    def stypes(self) -> list[torch_frame.stype]:
         r"""Returns a canonical ordering of stypes in :obj:`feat_dict`."""
         return list(
             filter(lambda x: x in self.feat_dict, list(torch_frame.stype)))
@@ -321,10 +331,12 @@ class TensorFrame:
 
     # Helper Functions ########################################################
 
-    def _apply(self, fn: Callable[[Tensor], Tensor]) -> "TensorFrame":
+    def _apply(self, fn: Callable[[TensorData], TensorData]) -> "TensorFrame":
         out = copy.copy(self)
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:
-            out.y = fn(out.y)
+            y = fn(out.y)
+            assert isinstance(y, Tensor)
+            out.y = y
 
         return out
