@@ -121,10 +121,11 @@ class MultiEmbeddingTensor(_MultiTensor):
         offset = self.offset[start:start + length + 1] - self.offset[start]
         col_offset_start = self.offset[start]
         col_offset_end = self.offset[start + length]
+        col_index = slice(col_offset_start, col_offset_end)
         return MultiEmbeddingTensor(
             num_rows=self.num_rows,
             num_cols=length,
-            values=self.values[:, col_offset_start:col_offset_end],
+            values=self.values.select(col_index, dim=1),
             offset=offset,
         )
 
@@ -159,11 +160,11 @@ class MultiEmbeddingTensor(_MultiTensor):
         new_col_dims = col_dims[index]
         torch.cumsum(new_col_dims, dim=0, out=offset[1:])
         batch, arange = _batched_arange(new_col_dims)
-        value_index = self.offset[index][batch] + arange
+        col_index = self.offset[index][batch] + arange
         return MultiEmbeddingTensor(
             num_rows=self.num_rows,
             num_cols=index.size(0),
-            values=self.values[:, value_index],
+            values=self.values.select(col_index, dim=1),
             offset=offset,
         )
 
@@ -185,7 +186,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         elif dim == 1:
             value_index = slice(self.offset[index], self.offset[index + 1])
-            values = self.values[:, value_index]
+            values = self.values.select(value_index, dim=1)
             offset = self.offset[[0, index + 1]] - self.offset[[0, index]]
             return MultiEmbeddingTensor(
                 num_rows=self.num_rows,
