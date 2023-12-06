@@ -62,10 +62,9 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(
-    col_to_pattern: Any | dict[str, Any] | None,
-    columns: list[str],
-    all_inclusive: bool = True) -> dict[str, Any]:
+def canonicalize_col_to_pattern(col_to_pattern: Any | dict[str, Any] | None,
+                                columns: list[str],
+                                all_inclusive: bool = True) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
