@@ -162,7 +162,7 @@ If a string is specified, the same delimiter will be used throughout all the mul
 If a dictionary is given, we use a different delimiter specified for each column.
 Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`.
 
-Here is an example of handing a :obj:`~pandas.DataFrame` with multiple multicategorical columns.
+Here is an example of handing a :class:`~pandas.DataFrame` with multiple multicategorical columns.
 
 .. code-block:: python
 
