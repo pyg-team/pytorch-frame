@@ -1,28 +1,32 @@
 Handling Heterogeneous Stypes
 =============================
 
-:pyf:`PyTorch Frame` supports many heterogeneous stypes, including
-:class:`stype.multicategorical`, :class:`stype.timestamp`, :class:`stype.embedding`.
-In this tutorial, we will show how to deal with datasets with different stypes.
+:pyf:`PyTorch Frame` supports many heterogeneous :obj:`stypes<torch_frame.stype>`, including but not limited to :class:`~stype.multicategorical`, :class:`~stype.timestamp` and :class:`~stype.embedding`.
+In this tutorial, we will show you a simple example of handling heterogeneous data types with :pyf:`PyTorch Frame`.
 
 .. contents::
     :local:
 
-Handling Heterogeneous Columns in a Benchmark Dataset
------------------------------------------------------
-First, let us create a dataset with many different stypes.
+Handling Heterogeneous Columns
+------------------------------
+First, let us create a sample dataset with many different stypes.
 
 .. code-block:: none
 
+    import random
+
+    import numpy as np
+    import pandas as pd
+
     # Numerical column
     numerical = np.random.randint(0, 100,
-                                size=100)
+                                size=10)
 
     # Categorical column
     simple_categories = ['Type 1', 'Type 2', 'Type 3']
     categorical = np.random.choice(simple_categories, size=100)
 
-    # Time column
+    # Timestamp column
     time = pd.date_range(start='2023-01-01', periods=100, freq='D')
 
     # Multicategorical column
@@ -46,12 +50,11 @@ First, let us create a dataset with many different stypes.
     })
 
 
-Now let's load the dataset
+Now let's load the dataset into :class:`~torch_frame.data.Dataset` class.
 
 .. code-block:: none
 
-    # Displaying the first few rows of the DataFrame
-    print(df.head())
+    df.head()
     >>>
         Numerical Categorical       Time                                  Multicategorical                                          Embedding
     0         44      Type 2 2023-01-01              [Category D, Category A, Category B]  [0.2879910043632805, 0.38346222503494787, 0.74...
@@ -71,7 +74,7 @@ Now let's load the dataset
         })
     dataset.materialize()
 
-    print(dataset.tensor_frame)
+    dataset.tensor_frame
     >>> TensorFrame(
         num_cols=4,
         num_rows=100,
@@ -83,7 +86,7 @@ Now let's load the dataset
         device='cpu',
         )
 
-We can specify the :obj:`stype_encoder_dict` for each semantic types.
+For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`stype_encoder_dict`.
 
 .. code-block:: none
 
@@ -104,7 +107,8 @@ We can specify the :obj:`stype_encoder_dict` for each semantic types.
         stype.timestamp: TimestampEncoder(na_strategy=NAStrategy.MEDIAN_TIMESTAMP)
     }
 
-Now we can run the model with a model.
+Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
+Note that some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`. For example, :class:`torch_frame.nn.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
 .. code-block:: none
 
@@ -117,8 +121,8 @@ Now we can run the model with a model.
         col_names_dict=train_tensor_frame.col_names_dict,
         stype_encoder_dict=stype_encoder_dict,
     )
-    print(model(test_dataset.tensor_frame))
 
+    model(dataset.tensor_frame)
     >>> tensor([[ 0.9405],
         [ 0.3857],
         [ 0.5265],
@@ -129,3 +133,111 @@ Now we can run the model with a model.
         [ 0.1326],
         [ 0.4388],
         [-0.1665]], grad_fn=<AddmmBackward0>)
+
+Auto Inference of Semantic Types
+--------------------------------
+We offer a simple utils function :class:`~torch_frame.utils.infer_df_stype` where you can automatically infer the :class:`~torch_frame.stype` of different columns in the provided :obj:`~pd.DataFrame`.
+
+.. code-block:: none
+
+    infer_df_stype(df)
+    >>> {'Numerical': <stype.numerical: 'numerical'>,
+        'Categorical': <stype.categorical: 'categorical'>,
+        'Time': <stype.timestamp: 'timestamp'>,
+        'Multicategorical': <stype.multicategorical: 'multicategorical'>,
+        'Embedding': <stype.embedding: 'embedding'>}
+
+However, the inference may not be always correct/best for your data.
+We recommend you double-checking the correctness yourself before actually using it.
+
+
+Dealing with Complex Raw Data
+-----------------------------
+
+Often times the raw data from a dataset can be complex.
+For example, different multicategorical columns can have different delimiters and different time columns can have different time formats.
+
+Currently, raw column data of type :class:`list` or :class:`string` are supported for :class:`~torch_frame.stype.multi_categorical`.
+You can also specify different delimiters for different columns through :obj:`col_to_sep` argument.
+If a string is specified, then the same delimiter will be used throughout all the multicategorical columns.
+If a dictionary is given, we use a different delimiter specified for each column.
+Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :obj:`string`.
+
+Here is an example of handing a :obj:`~pd.DataFrame` with multiple multicategorical columns.
+
+.. code-block:: none
+
+    categories = ['Category A', 'Category B', 'Category C', 'Category D']
+    multicategorical1 = [
+        random.sample(categories, k=random.randint(0, len(categories)))
+        for _ in range(100)
+    ]
+    multicategorical2 = [
+        ','.join(random.sample(categories, k=random.randint(0, len(categories))))
+        for _ in range(100)
+    ]
+    multicategorical3 = [
+        '/'.join(random.sample(categories, k=random.randint(0, len(categories))))
+        for _ in range(100)
+    ]
+    # Create the DataFrame
+    df = pd.DataFrame({
+        'Multicategorical1': multicategorical1,
+        'Multicategorical2': multicategorical2,
+        'Multicategorical3': multicategorical3,
+    })
+
+    # Displaying the first few rows of the DataFrame
+    print(df.head())
+    dataset = Dataset(
+        df, col_to_stype={
+            'Multicategorical1': stype.multicategorical,
+            'Multicategorical2': stype.multicategorical,
+            'Multicategorical3': stype.multicategorical,
+        }, col_to_sep={'Multicategorical2': ',', 'Multicategorical3': '/'})
+
+    >>>> {'Multicategorical1': {<StatType.MULTI_COUNT: 'MULTI_COUNT'>:
+    (['Category B', 'Category D', 'Category A', 'Category C'], [61, 60, 56, 49])},
+    'Multicategorical2': {<StatType.MULTI_COUNT: 'MULTI_COUNT'>:
+    (['Category D', 'Category A', 'Category B', 'Category C'], [53, 52, 51, 46])},
+    'Multicategorical3': {<StatType.MULTI_COUNT: 'MULTI_COUNT'>:
+    (['Category D', 'Category B', 'Category C', 'Category A'], [52, 52, 51, 46])}}
+
+For :class:`~torch_frame.stype.timestamp`, you can similarly specify the time format in :obj:`col_to_time_format`.
+See `strfttime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ for more information on formats.
+If not specified, pandas's internal :class:`pandas.to_datetime` function will be used to auto parse time columns.
+
+.. code-block:: none
+
+    dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
+
+    df = pd.DataFrame({
+            'Time1': dates,  # ISO 8601 format (default)
+            'Time2': dates.strftime('%Y-%m-%d %H:%M:%S'),
+    })
+
+    df.head()
+    >>>        Time1                Time2
+        0 2023-01-01  2023-01-01 00:00:00
+        1 2023-01-02  2023-01-02 00:00:00
+        2 2023-01-03  2023-01-03 00:00:00
+        3 2023-01-04  2023-01-04 00:00:00
+        4 2023-01-05  2023-01-05 00:00:00
+
+    dataset = Dataset(
+        df, col_to_stype={
+            'Time1': stype.timestamp,
+            'Time2': stype.timestamp,
+        }, col_to_time_format='%Y-%m-%d %H:%M:%S')
+
+    dataset.materialize()
+    print(dataset.col_stats)
+
+    >>> {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
+    'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}

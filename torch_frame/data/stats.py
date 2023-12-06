@@ -112,9 +112,9 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.MULTI_COUNT:
-            assert sep is not None
-            ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
-                            split_by_sep(row, sep))
+            if sep is not None:
+                ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
+                                split_by_sep(row, sep))
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
@@ -165,7 +165,6 @@ def compute_col_stats(
             raise TypeError("Numerical series contains invalid entries."
                             "Please make sure your numerical series "
                             "contains only numerical values or nans.")
-
     if ser.isnull().all():
         # NOTE: We may just error out here if eveything is NaN
         stats = {

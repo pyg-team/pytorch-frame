@@ -14,9 +14,10 @@ from torch_frame.nn.encoder.stype_encoder import (
 )
 from torch_frame.nn.models.ft_transformer import FTTransformer
 from torch_frame.typing import NAStrategy
+from torch_frame.utils.infer_stype import infer_df_stype
 
 # Numerical column
-numerical = np.random.randint(0, 100, size=100)
+numerical = np.random.randint(0, 10, size=100)
 
 # Categorical column
 simple_categories = ['Type 1', 'Type 2', 'Type 3']
@@ -29,6 +30,10 @@ time = pd.date_range(start='2023-01-01', periods=100, freq='D')
 categories = ['Category A', 'Category B', 'Category C', 'Category D']
 multicategorical = [
     random.sample(categories, k=random.randint(0, len(categories)))
+    for _ in range(100)
+]
+multicategorical2 = [
+    ','.join(random.sample(categories, k=random.randint(0, len(categories))))
     for _ in range(100)
 ]
 
@@ -47,7 +52,7 @@ df = pd.DataFrame({
 
 # Displaying the first few rows of the DataFrame
 print(df.head())
-
+print(infer_df_stype(df))
 dataset = Dataset(
     df, col_to_stype={
         'Numerical': stype.numerical,
@@ -58,13 +63,6 @@ dataset = Dataset(
     }, target_col='Numerical')
 dataset.materialize()
 print(dataset.tensor_frame)
-train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
-    0.8:0.9], dataset[0.9:]
-# Set up data loaders
-train_tensor_frame = train_dataset.tensor_frame
-
-val_tensor_frame = val_dataset.tensor_frame
-test_tensor_frame = test_dataset.tensor_frame
 
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
@@ -79,8 +77,89 @@ model = FTTransformer(
     out_channels=1,
     num_layers=2,
     col_stats=dataset.col_stats,
-    col_names_dict=train_tensor_frame.col_names_dict,
+    col_names_dict=dataset.tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 )
 
-print(model(test_dataset.tensor_frame))
+print(model(dataset.tensor_frame[:10]))
+
+# Multicategorical column
+categories = ['Category A', 'Category B', 'Category C', 'Category D']
+multicategorical1 = [
+    random.sample(categories, k=random.randint(0, len(categories)))
+    for _ in range(100)
+]
+multicategorical2 = [
+    ','.join(random.sample(categories, k=random.randint(0, len(categories))))
+    for _ in range(100)
+]
+multicategorical3 = [
+    '/'.join(random.sample(categories, k=random.randint(0, len(categories))))
+    for _ in range(100)
+]
+# Create the DataFrame
+df = pd.DataFrame({
+    'Multicategorical1': multicategorical1,
+    'Multicategorical2': multicategorical2,
+    'Multicategorical3': multicategorical3,
+})
+
+# Displaying the first few rows of the DataFrame
+print(df.head())
+dataset = Dataset(
+    df, col_to_stype={
+        'Multicategorical1': stype.multicategorical,
+        'Multicategorical2': stype.multicategorical,
+        'Multicategorical3': stype.multicategorical,
+    }, col_to_sep={
+        'Multicategorical2': ',',
+        'Multicategorical3': '/'
+    })
+dataset.materialize()
+print(dataset.col_stats)
+
+# Multicategorical column
+categories = ['Category A', 'Category B', 'Category C', 'Category D']
+multicategorical1 = [
+    random.sample(categories, k=random.randint(0, len(categories)))
+    for _ in range(100)
+]
+multicategorical2 = [
+    ','.join(random.sample(categories, k=random.randint(0, len(categories))))
+    for _ in range(100)
+]
+multicategorical3 = [
+    '/'.join(random.sample(categories, k=random.randint(0, len(categories))))
+    for _ in range(100)
+]
+# Create the DataFrame
+df = pd.DataFrame({
+    'Multicategorical1': multicategorical1,
+    'Multicategorical2': multicategorical2,
+})
+
+# Displaying the first few rows of the DataFrame
+print(df.head())
+dataset = Dataset(
+    df, col_to_stype={
+        'Multicategorical1': stype.multicategorical,
+        'Multicategorical2': stype.multicategorical,
+    }, col_to_sep=',')
+dataset.materialize()
+print(dataset.col_stats)
+
+dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
+# Different timestamp formats
+df = pd.DataFrame({
+    'Time1': dates,  # ISO 8601 format (default)
+    'Time2': dates.strftime('%Y-%m-%d %H:%M:%S'),
+})
+print(df.head())
+dataset = Dataset(
+    df, col_to_stype={
+        'Time1': stype.timestamp,
+        'Time2': stype.timestamp,
+    }, col_to_time_format='%Y-%m-%d %H:%M:%S')
+
+dataset.materialize()
+print(dataset.col_stats)
