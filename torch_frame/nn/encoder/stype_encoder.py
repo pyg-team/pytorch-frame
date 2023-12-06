@@ -737,16 +737,19 @@ class LinearModelEncoder(StypeEncoder):
 
     def init_modules(self):
         super().init_modules()
-        self.weight = torch.nn.ModuleDict()
+        self.weight = torch.nn.ParameterDict()
+        self.bias = torch.nn.ParameterDict()
         for col_name, model_cfg in self.col_to_model_cfg.items():
-            self.weight[col_name] = torch.nn.Linear(model_cfg.out_channels,
-                                                    self.out_channels)
+            self.weight[col_name] = Parameter(
+                torch.empty(model_cfg.out_channels, self.out_channels))
+            self.bias[col_name] = Parameter(torch.empty(self.out_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
         for col_name in self.weight:
-            self.weight[col_name].reset_parameters()
+            torch.nn.init.normal_(self.weight[col_name], std=0.01)
+            torch.nn.init.zeros_(self.bias[col_name])
 
     def encode_forward(
         self,
@@ -760,7 +763,8 @@ class LinearModelEncoder(StypeEncoder):
                 {key: feat[key][:, i]
                  for key in feat})
             # [batch_size, out_channels]
-            xs.append(self.weight[col_name](x))
+            x_lin = x @ self.weight[col_name] + self.bias[col_name]
+            xs.append(x_lin)
         # [batch_size, num_cols, out_channels]
         x = torch.cat(xs, dim=1)
         return x
