@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pandas as pd
 import pandas.api.types as ptypes
@@ -25,14 +27,14 @@ def _is_timestamp(ser: Series) -> bool:
 
 
 def _lst_is_all_type(
-    lst: List[Any],
-    types: Union[Tuple[type], type],
+    lst: list[Any],
+    types: tuple[type] | type,
 ) -> bool:
     assert isinstance(lst, list)
     return all(isinstance(x, types) for x in lst)
 
 
-def _lst_is_free_of_nan_and_inf(lst: List[Any]):
+def _lst_is_free_of_nan_and_inf(lst: list[Any]):
     assert isinstance(lst, list)
     return all(not math.isnan(x) and not math.isinf(x) for x in lst)
 
@@ -41,7 +43,7 @@ def _min_count(ser: Series) -> int:
     return ser.value_counts().min()
 
 
-def infer_series_stype(ser: Series) -> Optional[stype]:
+def infer_series_stype(ser: Series) -> stype | None:
     """Infer :obj:`stype` given :class:`Series` object. The inference may not
     be always correct/best for your data. We recommend you double-checking the
     correctness yourself before actually using it.
@@ -135,7 +137,7 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                 return stype.text_embedded
 
 
-def infer_df_stype(df: DataFrame) -> Dict[str, stype]:
+def infer_df_stype(df: DataFrame) -> dict[str, stype]:
     """Infer :obj:`col_to_stype` given :class:`DataFrame` object.
 
     Args:

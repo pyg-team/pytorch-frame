@@ -1,4 +1,5 @@
-from typing import Union
+from __future__ import annotations
+
 
 import torch
 
@@ -32,7 +33,7 @@ class DataLoader(torch.utils.data.DataLoader):
     """
     def __init__(
         self,
-        dataset: Union[Dataset, TensorFrame],
+        dataset: Dataset | TensorFrame,
         *args,
         **kwargs,
     ):

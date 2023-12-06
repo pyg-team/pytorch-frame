@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os.path as osp
 import zipfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,7 +14,7 @@ SPLIT_COL = 'split_col'
 TARGET_COL = 'target_col'
 
 
-def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
+def load_numpy_dict(path: str) -> dict[str, np.ndarray]:
     r"""Load numpy files from a ZIP file.
 
     Args:
@@ -22,7 +24,7 @@ def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
         numpy_dict (Dict[str, np.ndarray]): A dictionary that maps the name of
             .npy file to the loaded numpy array.
     """
-    numpy_dict: Dict[str, np.ndarray] = {}
+    numpy_dict: dict[str, np.ndarray] = {}
     with zipfile.ZipFile(path, 'r') as zip_ref:
         for file_name in zip_ref.namelist():
             if file_name.endswith('.npy'):
@@ -33,7 +35,7 @@ def load_numpy_dict(path: str) -> Dict[str, np.ndarray]:
 
 
 def get_df_and_col_to_stype(
-        zip_file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        zip_file_path: str) -> tuple[pd.DataFrame, dict[str, Any]]:
     r"""Get DataFrame and :obj:`col_to_stype` from a ZIP file.
 
     Args:
@@ -45,8 +47,8 @@ def get_df_and_col_to_stype(
             column names to their respective semantic types.
     """
     numpy_dict = load_numpy_dict(zip_file_path)
-    dataframes: List[pd.DataFrame] = []
-    col_to_stype: Dict[str, torch_frame.stype] = {}
+    dataframes: list[pd.DataFrame] = []
+    col_to_stype: dict[str, torch_frame.stype] = {}
 
     for split in ['train', 'val', 'test']:
         categorical_features = numpy_dict.get(f'C_{split}', None)
@@ -55,7 +57,7 @@ def get_df_and_col_to_stype(
         assert not ((categorical_features is None) and
                     (numerical_features is None))
 
-        features: Optional[np.ndarray] = None
+        features: np.ndarray | None = None
         if (categorical_features is not None
                 and numerical_features is not None):
             features = np.concatenate(
@@ -205,7 +207,7 @@ class Yandex(torch_frame.data.Dataset):
 
     @classmethod
     @property
-    def name_list(cls) -> List[str]:
+    def name_list(cls) -> list[str]:
         r"""List of dataset names available."""
         return sorted(
             list(cls.classification_datasets) + list(cls.regression_datasets))

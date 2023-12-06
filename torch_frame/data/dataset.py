@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import copy
 import functools
 import os.path as osp
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pandas as pd
 import torch
@@ -60,9 +62,9 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: Union[Optional[Any],
-                                                      Dict[str, Any]],
-                                columns: List[str]) -> Dict[str, Any]:
+def canonicalize_col_to_pattern(col_to_pattern: (Any | None |
+                                                      dict[str, Any]),
+                                columns: list[str]) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
@@ -140,16 +142,16 @@ class DataFrameToTensorFrameConverter:
     """
     def __init__(
         self,
-        col_to_stype: Dict[str, torch_frame.stype],
-        col_stats: Dict[str, Dict[StatType, Any]],
-        target_col: Optional[str] = None,
-        col_to_sep: Union[str, Dict[str, str]] = ",",
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
-                                                       TextTokenizerConfig],
-                                                  TextTokenizerConfig]] = None,
-        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
+        col_to_stype: dict[str, torch_frame.stype],
+        col_stats: dict[str, dict[StatType, Any]],
+        target_col: str | None = None,
+        col_to_sep: str | dict[str, str] = ",",
+        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
+                                                 TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None | (dict[str,
+                                                       TextTokenizerConfig] |
+                                                  TextTokenizerConfig) = None,
+        col_to_time_format: str | dict[str, str] | None = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
@@ -157,7 +159,7 @@ class DataFrameToTensorFrameConverter:
         self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
-        self._col_names_dict: Dict[torch_frame.stype, List[str]] = {}
+        self._col_names_dict: dict[torch_frame.stype, list[str]] = {}
         for col, stype in self.col_to_stype.items():
             if col != self.target_col:
                 if stype not in self._col_names_dict:
@@ -197,7 +199,7 @@ class DataFrameToTensorFrameConverter:
                              "exists.")
 
     @property
-    def col_names_dict(self) -> Dict[torch_frame.stype, List[str]]:
+    def col_names_dict(self) -> dict[torch_frame.stype, list[str]]:
         return self._col_names_dict
 
     def _get_mapper(self, col: str) -> TensorMapper:
@@ -238,12 +240,12 @@ class DataFrameToTensorFrameConverter:
     def __call__(
         self,
         df: DataFrame,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> TensorFrame:
         r"""Convert a given :class:`DataFrame` object into :class:`TensorFrame`
         object.
         """
-        xs_dict: Dict[torch_frame.stype, List[TensorData]] = defaultdict(list)
+        xs_dict: dict[torch_frame.stype, list[TensorData]] = defaultdict(list)
 
         for stype, col_names in self.col_names_dict.items():
             for col in col_names:
@@ -255,7 +257,7 @@ class DataFrameToTensorFrameConverter:
             if stype.use_multi_nested_tensor:
                 feat_dict[stype] = MultiNestedTensor.cat(xs, dim=1)
             elif stype.use_dict_multi_nested_tensor:
-                feat_dict[stype]: Dict[str, MultiNestedTensor] = {}
+                feat_dict[stype]: dict[str, MultiNestedTensor] = {}
                 for key in xs[0].keys():
                     feat_dict[stype][key] = MultiNestedTensor.cat(
                         [x[key] for x in xs], dim=1)
@@ -264,7 +266,7 @@ class DataFrameToTensorFrameConverter:
             else:
                 feat_dict[stype] = torch.stack(xs, dim=1)
 
-        y: Optional[Tensor] = None
+        y: Tensor | None = None
         if self.target_col is not None:
             y = self._get_mapper(self.target_col).forward(
                 df[self.target_col], device=device)
@@ -319,16 +321,16 @@ class Dataset(ABC):
     def __init__(
         self,
         df: DataFrame,
-        col_to_stype: Dict[str, torch_frame.stype],
-        target_col: Optional[str] = None,
-        split_col: Optional[str] = None,
-        col_to_sep: Union[str, Dict[str, str]] = ",",
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
-                                                       TextTokenizerConfig],
-                                                  TextTokenizerConfig]] = None,
-        col_to_time_format: Optional[Union[str, Dict[str, str]]] = None,
+        col_to_stype: dict[str, torch_frame.stype],
+        target_col: str | None = None,
+        split_col: str | None = None,
+        col_to_sep: str | dict[str, str] = ",",
+        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
+                                                 TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None | (dict[str,
+                                                       TextTokenizerConfig] |
+                                                  TextTokenizerConfig) = None,
+        col_to_time_format: str | dict[str, str] | None = None,
     ):
         self.df = df
         self.target_col = target_col
@@ -389,14 +391,14 @@ class Dataset(ABC):
             ],
         )
         self._is_materialized: bool = False
-        self._col_stats: Dict[str, Dict[StatType, Any]] = {}
-        self._tensor_frame: Optional[TensorFrame] = None
+        self._col_stats: dict[str, dict[StatType, Any]] = {}
+        self._tensor_frame: TensorFrame | None = None
 
     @staticmethod
     def download_url(
         url: str,
         root: str,
-        filename: Optional[str] = None,
+        filename: str | None = None,
         *,
         log: bool = True,
     ) -> str:
@@ -419,7 +421,7 @@ class Dataset(ABC):
     def __len__(self) -> int:
         return len(self.df)
 
-    def __getitem__(self, index: IndexSelectType) -> "Dataset":
+    def __getitem__(self, index: IndexSelectType) -> Dataset:
         is_col_select = isinstance(index, str)
         is_col_select |= (isinstance(index, (list, tuple)) and len(index) > 0
                           and isinstance(index[0], str))
@@ -430,7 +432,7 @@ class Dataset(ABC):
         return self.index_select(index)
 
     @property
-    def feat_cols(self) -> List[str]:
+    def feat_cols(self) -> list[str]:
         r"""The input feature columns of the dataset."""
         cols = list(self.col_to_stype.keys())
         if self.target_col is not None:
@@ -471,8 +473,8 @@ class Dataset(ABC):
 
     # Materialization #########################################################
 
-    def materialize(self, device: Optional[torch.device] = None,
-                    path: Optional[str] = None) -> "Dataset":
+    def materialize(self, device: torch.device | None = None,
+                    path: str | None = None) -> Dataset:
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only.
 
@@ -577,14 +579,14 @@ class Dataset(ABC):
 
     @property
     @requires_post_materialization
-    def col_stats(self) -> Dict[str, Dict[StatType, Any]]:
+    def col_stats(self) -> dict[str, dict[StatType, Any]]:
         r"""Returns column-wise dataset statistics."""
         return self._col_stats
 
     # Indexing ################################################################
 
     @requires_post_materialization
-    def index_select(self, index: IndexSelectType) -> "Dataset":
+    def index_select(self, index: IndexSelectType) -> Dataset:
         r"""Returns a subset of the dataset from specified indices
         :obj:`index`.
         """
@@ -611,14 +613,14 @@ class Dataset(ABC):
 
     def shuffle(
         self, return_perm: bool = False
-    ) -> Union["Dataset", Tuple["Dataset", Tensor]]:
+    ) -> Dataset | tuple[Dataset, Tensor]:
         r"""Randomly shuffles the rows in the dataset."""
         perm = torch.randperm(len(self))
         dataset = self.index_select(perm)
         return (dataset, perm) if return_perm is True else dataset
 
     @requires_pre_materialization
-    def col_select(self, cols: ColumnSelectType) -> "Dataset":
+    def col_select(self, cols: ColumnSelectType) -> Dataset:
         r"""Returns a subset of the dataset from specified columns
         :obj:`cols`.
         """
@@ -634,7 +636,7 @@ class Dataset(ABC):
 
         return dataset
 
-    def get_split(self, split: str) -> "Dataset":
+    def get_split(self, split: str) -> Dataset:
         r"""Returns a subset of the dataset that belongs to a given training
         split (as defined in :obj:`split_col`).
 
@@ -653,7 +655,7 @@ class Dataset(ABC):
                                 SPLIT_TO_NUM[split]].tolist()
         return self[indices]
 
-    def split(self) -> Tuple["Dataset", "Dataset", "Dataset"]:
+    def split(self) -> tuple[Dataset, Dataset, Dataset]:
         r"""Splits the dataset into training, validation and test splits."""
         return (
             self.get_split("train"),

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import torch
 from torch import Tensor
@@ -68,7 +68,7 @@ class TensorFrame:
         self,
         feat_dict: dict[torch_frame.stype, TensorData],
         col_names_dict: dict[torch_frame.stype, list[str]],
-        y: Optional[Tensor] = None,
+        y: Tensor | None = None,
     ) -> None:
         self.feat_dict = feat_dict
         self.col_names_dict = col_names_dict
@@ -100,8 +100,8 @@ class TensorFrame:
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            tensors: list[Union[Tensor, MultiNestedTensor,
-                                MultiEmbeddingTensor]]
+            tensors: list[(Tensor | MultiNestedTensor |
+                                MultiEmbeddingTensor)]
             if isinstance(feats, dict):
                 tensors = [feat for feat in feats.values()]
             else:
@@ -269,7 +269,7 @@ class TensorFrame:
                 f"  device='{self.device}',\n"
                 f")")
 
-    def __getitem__(self, index: IndexSelectType) -> "TensorFrame":
+    def __getitem__(self, index: IndexSelectType) -> TensorFrame:
         if isinstance(index, int):
             index = [index]
 
@@ -284,7 +284,7 @@ class TensorFrame:
 
         return self._apply(fn)
 
-    def __copy__(self) -> "TensorFrame":
+    def __copy__(self) -> TensorFrame:
         out = self.__class__.__new__(self.__class__)
         for key, value in self.__dict__.items():
             out.__dict__[key] = value
@@ -331,7 +331,7 @@ class TensorFrame:
 
     # Helper Functions ########################################################
 
-    def _apply(self, fn: Callable[[TensorData], TensorData]) -> "TensorFrame":
+    def _apply(self, fn: Callable[[TensorData], TensorData]) -> TensorFrame:
         out = copy.copy(self)
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:

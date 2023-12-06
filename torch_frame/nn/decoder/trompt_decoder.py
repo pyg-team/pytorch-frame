@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, ReLU, Sequential

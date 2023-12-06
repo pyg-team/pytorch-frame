@@ -1,4 +1,5 @@
-from typing import Dict, Optional, Union
+from __future__ import annotations
+
 
 import pandas as pd
 
@@ -42,10 +43,10 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
     def __init__(
         self, root: str,
         text_stype: torch_frame.stype = torch_frame.text_embedded,
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-        col_to_text_tokenizer_cfg: Optional[Union[Dict[
-            str, TextTokenizerConfig], TextTokenizerConfig]] = None):
+        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
+                                                 TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None | (dict[
+            str, TextTokenizerConfig] | TextTokenizerConfig) = None):
         self.root = root
         self.text_stype = text_stype
         path = self.download_url(self.url, root)

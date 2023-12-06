@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import (
     Any,
     Callable,
-    Dict,
     Iterable,
     List,
     Mapping,
-    Optional,
-    Set,
-    Union,
 )
 
 import numpy as np
@@ -53,7 +51,7 @@ class TensorMapper(ABC):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> TensorData:
         r"""Maps raw input data into a compact tensor representation."""
         raise NotImplementedError
@@ -74,7 +72,7 @@ class NumericalTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> Tensor:
         dtype = _get_default_numpy_dtype()
         value = ser.values.astype(dtype)
@@ -100,7 +98,7 @@ class CategoricalTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> Tensor:
         index = pd.merge(
             ser.rename('data'),
@@ -136,7 +134,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
     """
     def __init__(
         self,
-        categories: List[Any],
+        categories: list[Any],
         sep: str = ',',
     ):
         super().__init__()
@@ -149,15 +147,15 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
     @staticmethod
-    def split_by_sep(row: Optional[Union[str, List[Any]]],
-                     sep: str) -> Set[Any]:
+    def split_by_sep(row: str | list[Any] | None,
+                     sep: str) -> set[Any]:
         if row is None or row is np.nan:
-            return set([-1])
+            return {-1}
         elif isinstance(row, str):
             if row.strip() == '':
                 return set()
             else:
-                return set([cat.strip() for cat in row.split(sep)])
+                return {cat.strip() for cat in row.split(sep)}
         elif isinstance(row, list):
             return set(row)
         else:
@@ -169,7 +167,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> MultiNestedTensor:
         if ser.dtype != 'object':
             raise ValueError('Multi-categorical types expect string as input')
@@ -227,7 +225,7 @@ class NumericalSequenceTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> MultiNestedTensor:
         values = []
         num_rows = len(ser)
@@ -291,7 +289,7 @@ class TimestampTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> Tensor:
         ser = pd.to_datetime(ser, format=self.format, errors='coerce')
         tensor = TimestampTensorMapper.to_tensor(ser)
@@ -317,8 +315,8 @@ class TextEmbeddingTensorMapper(TensorMapper):
     """
     def __init__(
         self,
-        text_embedder: Callable[[List[str]], Tensor],
-        batch_size: Optional[int],
+        text_embedder: Callable[[list[str]], Tensor],
+        batch_size: int | None,
     ):
         super().__init__()
         self.text_embedder = text_embedder
@@ -328,7 +326,7 @@ class TextEmbeddingTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> MultiEmbeddingTensor:
         ser = ser.astype(str)
         ser_list = ser.tolist()
@@ -368,8 +366,8 @@ class TextTokenizationTensorMapper(TensorMapper):
     """
     def __init__(
         self,
-        text_tokenizer: Callable[[List[str]], TextTokenizationOutputs],
-        batch_size: Optional[int],
+        text_tokenizer: Callable[[list[str]], TextTokenizationOutputs],
+        batch_size: int | None,
     ):
         super().__init__()
         self.text_tokenizer = text_tokenizer
@@ -379,8 +377,8 @@ class TextTokenizationTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
-    ) -> Dict[str, MultiNestedTensor]:
+        device: torch.device | None = None,
+    ) -> dict[str, MultiNestedTensor]:
         ser = ser.astype(str)
         ser_list = ser.tolist()
 
@@ -406,7 +404,7 @@ class TextTokenizationTensorMapper(TensorMapper):
                     feat_dict[key] = MultiNestedTensor.from_tensor_mat(xs)
             return feat_dict
 
-        tokenized_outputs: List[TextTokenizationOutputs] = []
+        tokenized_outputs: list[TextTokenizationOutputs] = []
         for i in tqdm(range(0, len(ser_list), self.batch_size),
                       desc="Tokenizing texts in mini-batch"):
             tokenized_batch: TextTokenizationOutputs = self.text_tokenizer(
@@ -444,7 +442,7 @@ class EmbeddingTensorMapper(TensorMapper):
         self,
         ser: Series,
         *,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> MultiEmbeddingTensor:
         dtype = _get_default_numpy_dtype()
         values = torch.from_numpy(np.stack(ser.values).astype(dtype))

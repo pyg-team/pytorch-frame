@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
@@ -35,4 +37,3 @@ class FeatureEncoder(Module, ABC):
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""
-        pass

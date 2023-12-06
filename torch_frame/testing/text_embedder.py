@@ -1,4 +1,5 @@
-from typing import List, Optional
+from __future__ import annotations
+
 
 import torch
 from torch import Tensor
@@ -19,13 +20,13 @@ class HashTextEmbedder:
             module. (default: :obj:`None`)
     """
     def __init__(self, out_channels: int, num_hash_bins: int = 64,
-                 device: Optional[torch.device] = None):
+                 device: torch.device | None = None):
         self.out_channels = out_channels
         self.num_hash_bins = num_hash_bins
         self.device = device
         self.embedding = Embedding(num_hash_bins, out_channels).to(device)
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         idx = torch.tensor([hash(s) % self.num_hash_bins for s in sentences],
                            device=self.device)
         return self.embedding(idx).detach()
