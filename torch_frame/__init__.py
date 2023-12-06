@@ -1,5 +1,5 @@
 r"""Utility package."""
-from .stype import (
+from ._stype import (
     stype,
     numerical,
     categorical,

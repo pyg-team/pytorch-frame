@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.datasets.fake import _random_timestamp
-from torch_frame.stype import (
+from torch_frame import (
     categorical,
     embedding,
     multicategorical,
@@ -14,6 +12,8 @@ from torch_frame.stype import (
     sequence_numerical,
     timestamp,
 )
+from torch_frame.data.stats import StatType, compute_col_stats
+from torch_frame.datasets.fake import _random_timestamp
 
 
 def test_compute_col_stats_numerical():
