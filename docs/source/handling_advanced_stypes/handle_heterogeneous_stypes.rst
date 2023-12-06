@@ -19,8 +19,7 @@ First, let us create a sample dataset with many different stypes.
     import pandas as pd
 
     # Numerical column
-    numerical = np.random.randint(0, 100,
-                                size=10)
+    numerical = np.random.randint(0, 100, size=10)
 
     # Categorical column
     simple_categories = ['Type 1', 'Type 2', 'Type 3']
@@ -49,11 +48,6 @@ First, let us create a sample dataset with many different stypes.
         'Embedding': list(embedding)
     })
 
-
-Now let's load the dataset into :class:`~torch_frame.data.Dataset` class.
-
-.. code-block:: none
-
     df.head()
     >>>
         Numerical Categorical       Time                                  Multicategorical                                          Embedding
@@ -63,6 +57,10 @@ Now let's load the dataset into :class:`~torch_frame.data.Dataset` class.
     3         67      Type 1 2023-01-04                          [Category C, Category A]  [0.2603409275874047, 0.5370225213757797, 0.447...
     4         67      Type 2 2023-01-05                                      [Category A]  [0.46924917399024213, 0.8411401297855995, 0.90...
 
+
+Now let's load the :class:`pandas.DataFrame` into :class:`~torch_frame.data.Dataset` class.
+
+.. code-block:: none
 
     dataset = Dataset(
         df, col_to_stype={
@@ -88,7 +86,7 @@ Now let's load the dataset into :class:`~torch_frame.data.Dataset` class.
 
 For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`stype_encoder_dict`.
 
-.. code-block:: none
+.. code-block:: python
 
     from torch_frame.nn.encoder.stype_encoder import (
         EmbeddingEncoder,
@@ -108,7 +106,8 @@ For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`st
     }
 
 Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
-Note that some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`. For example, :class:`torch_frame.nn.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
+Note that some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
+For example, :class:`torch_frame.nn.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
 .. code-block:: none
 
@@ -136,7 +135,7 @@ Note that some pre-implemented models do not support all :obj:`stypes<torch_fram
 
 Auto Inference of Semantic Types
 --------------------------------
-We offer a simple utils function :class:`~torch_frame.utils.infer_df_stype` where you can automatically infer the :class:`~torch_frame.stype` of different columns in the provided :obj:`~pd.DataFrame`.
+We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` where you can automatically infer the :class:`~torch_frame.stype` of different columns in the provided :class:`~pandas.DataFrame`.
 
 .. code-block:: none
 
@@ -155,17 +154,17 @@ Dealing with Complex Raw Data
 -----------------------------
 
 Often times the raw data from a dataset can be complex.
-For example, different multicategorical columns can have different delimiters and different time columns can have different time formats.
+For example, different multicategorical columns can have different delimiters, and different time columns can have different time formats.
 
-Currently, raw column data of type :class:`list` or :class:`string` are supported for :class:`~torch_frame.stype.multi_categorical`.
+Currently, raw column data of type :class:`list` or :class:`str` are supported for :class:`~torch_frame.stype.multicategorical`.
 You can also specify different delimiters for different columns through :obj:`col_to_sep` argument.
-If a string is specified, then the same delimiter will be used throughout all the multicategorical columns.
+If a string is specified, the same delimiter will be used throughout all the multicategorical columns.
 If a dictionary is given, we use a different delimiter specified for each column.
-Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :obj:`string`.
+Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`.
 
-Here is an example of handing a :obj:`~pd.DataFrame` with multiple multicategorical columns.
+Here is an example of handing a :obj:`~pandas.DataFrame` with multiple multicategorical columns.
 
-.. code-block:: none
+.. code-block:: python
 
     categories = ['Category A', 'Category B', 'Category C', 'Category D']
     multicategorical1 = [

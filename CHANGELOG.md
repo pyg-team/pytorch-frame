@@ -56,7 +56,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fixed documentation with updated links & corrected typos ([#259](https://github.com/pyg-team/pytorch-frame/pull/259))
 
 ## [0.1.0] - 2023-10-23
 
