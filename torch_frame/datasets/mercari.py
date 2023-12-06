@@ -46,8 +46,8 @@ class Mercari(torch_frame.data.Dataset):
         self,
         root: str,
         num_rows: int | None = None,
-        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
-                                                 TextEmbedderConfig) = None,
+        col_to_text_embedder_cfg: None |
+        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
     ):
         self.dfs = dict()
         col_to_stype = {

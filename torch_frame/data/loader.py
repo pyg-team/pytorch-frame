@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import torch
 
 from torch_frame.data import Dataset, TensorFrame

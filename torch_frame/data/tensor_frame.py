@@ -100,8 +100,7 @@ class TensorFrame:
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
-            tensors: list[(Tensor | MultiNestedTensor |
-                                MultiEmbeddingTensor)]
+            tensors: list[(Tensor | MultiNestedTensor | MultiEmbeddingTensor)]
             if isinstance(feats, dict):
                 tensors = [feat for feat in feats.values()]
             else:

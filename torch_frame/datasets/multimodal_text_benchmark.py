@@ -446,11 +446,10 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         root: str,
         name: str,
         text_stype: torch_frame.stype = torch_frame.text_embedded,
-        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
-                                                 TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None | (dict[str,
-                                                       TextTokenizerConfig] |
-                                                  TextTokenizerConfig) = None,
+        col_to_text_embedder_cfg: None |
+        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None |
+        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
     ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root

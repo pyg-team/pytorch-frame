@@ -62,8 +62,7 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: (Any | None |
-                                                      dict[str, Any]),
+def canonicalize_col_to_pattern(col_to_pattern: (Any | None | dict[str, Any]),
                                 columns: list[str]) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
@@ -146,11 +145,10 @@ class DataFrameToTensorFrameConverter:
         col_stats: dict[str, dict[StatType, Any]],
         target_col: str | None = None,
         col_to_sep: str | dict[str, str] = ",",
-        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
-                                                 TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None | (dict[str,
-                                                       TextTokenizerConfig] |
-                                                  TextTokenizerConfig) = None,
+        col_to_text_embedder_cfg: None |
+        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None |
+        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
         col_to_time_format: str | dict[str, str] | None = None,
     ):
         self.col_to_stype = col_to_stype
@@ -325,11 +323,10 @@ class Dataset(ABC):
         target_col: str | None = None,
         split_col: str | None = None,
         col_to_sep: str | dict[str, str] = ",",
-        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
-                                                 TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None | (dict[str,
-                                                       TextTokenizerConfig] |
-                                                  TextTokenizerConfig) = None,
+        col_to_text_embedder_cfg: None |
+        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None |
+        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
         col_to_time_format: str | dict[str, str] | None = None,
     ):
         self.df = df
@@ -611,9 +608,8 @@ class Dataset(ABC):
 
         return dataset
 
-    def shuffle(
-        self, return_perm: bool = False
-    ) -> Dataset | tuple[Dataset, Tensor]:
+    def shuffle(self,
+                return_perm: bool = False) -> Dataset | tuple[Dataset, Tensor]:
         r"""Randomly shuffles the rows in the dataset."""
         perm = torch.randperm(len(self))
         dataset = self.index_select(perm)

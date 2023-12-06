@@ -240,8 +240,7 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _single_index_select(self, index: int,
-                             dim: int) -> MultiNestedTensor:
+    def _single_index_select(self, index: int, dim: int) -> MultiNestedTensor:
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)

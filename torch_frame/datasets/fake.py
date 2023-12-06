@@ -56,11 +56,10 @@ class FakeDataset(torch_frame.data.Dataset):
         stypes: list[stype] = [stype.categorical, stype.numerical],
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
-        col_to_text_embedder_cfg: None | (dict[str, TextEmbedderConfig] |
-                                                 TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None | (dict[str,
-                                                       TextTokenizerConfig] |
-                                                  TextTokenizerConfig) = None,
+        col_to_text_embedder_cfg: None |
+        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
+        col_to_text_tokenizer_cfg: None |
+        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
     ):
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:

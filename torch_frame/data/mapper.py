@@ -1,13 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    List,
-    Mapping,
-)
+from typing import Any, Callable, Iterable, List, Mapping
 
 import numpy as np
 import pandas as pd
@@ -147,8 +141,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
     @staticmethod
-    def split_by_sep(row: str | list[Any] | None,
-                     sep: str) -> set[Any]:
+    def split_by_sep(row: str | list[Any] | None, sep: str) -> set[Any]:
         if row is None or row is np.nan:
             return {-1}
         elif isinstance(row, str):
