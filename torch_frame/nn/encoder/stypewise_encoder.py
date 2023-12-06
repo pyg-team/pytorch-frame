@@ -68,7 +68,6 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
             col_names = self.col_names_dict[stype]
             x = self.encoder_dict[stype.value](feat, col_names)
             xs.append(x)
-            col_names = self.col_names_dict[stype]
             all_col_names.extend(col_names)
         x = torch.cat(xs, dim=1)
         return x, all_col_names
