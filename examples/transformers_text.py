@@ -130,7 +130,8 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, device: torch.device, pooling: str = "mean", lora: bool = False):
+    def __init__(self, model: str, device: torch.device, pooling: str = "mean",
+                 lora: bool = False):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model).to(device)
@@ -161,8 +162,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         input_ids = feat["input_ids"].to_dense(fill_value=0).squeeze(dim=1)
         mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
         # Get text embeddings over each column
-        out = self.model(input_ids=input_ids,
-                         attention_mask=mask)
+        out = self.model(input_ids=input_ids, attention_mask=mask)
         if self.pooling == "mean":
             return mean_pooling(out.last_hidden_state, mask)
         elif self.pooling == "cls":
@@ -204,8 +204,7 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
-    text_encoder = TextToEmbeddingFinetune(model=args.model,
-                                           device=device,
+    text_encoder = TextToEmbeddingFinetune(model=args.model, device=device,
                                            pooling=args.pooling,
                                            lora=args.lora)
     text_stype = torch_frame.text_tokenized
