@@ -1,4 +1,3 @@
-import copy
 import os.path as osp
 import tempfile
 
@@ -51,7 +50,6 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
         if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
         metric=metric,
     )
-    copy_gbdt = copy.deepcopy(gbdt)
 
     path = osp.join(TEST_DIR.name, f'{gbdt_cls.__name__}.txt')
     with pytest.raises(RuntimeError, match="is not yet fitted"):
@@ -64,15 +62,23 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
         num_boost_round=2,
     )
     gbdt.save(path)
-    copy_gbdt.load(path)
+
+    loaded_gbdt = gbdt_cls(
+        task_type=task_type,
+        num_classes=dataset.num_classes
+        if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
+        metric=metric,
+    )
+    loaded_gbdt.load(path)
+
     pred = gbdt.predict(tf_test=dataset.tensor_frame)
     score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
+    loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
+    loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
 
-    copy_pred = copy_gbdt.predict(tf_test=dataset.tensor_frame)
-    copy_score = copy_gbdt.compute_metric(dataset.tensor_frame.y, pred)
-    assert torch.allclose(pred, copy_pred, atol=1e-2)
+    assert torch.allclose(pred, loaded_pred, atol=1e-2)
     assert gbdt.metric == metric
-    assert score == copy_score
+    assert score == loaded_score
     if task_type == TaskType.REGRESSION:
         assert (score >= 0)
     elif task_type == TaskType.BINARY_CLASSIFICATION:
