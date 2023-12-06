@@ -42,7 +42,7 @@ from torch_frame.testing.text_tokenizer import (
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
-        'model': RandomTextModel(12, 2),
+        'col_to_model': RandomTextModel(12),
         'in_channels': 12,
     }),
 ])
@@ -90,22 +90,33 @@ def test_stypewise_feature_encoder(
         col_names_dict=tensor_frame.col_names_dict,
         stype_encoder_dict={
             stype.categorical:
-            encoder_cat_cls_kwargs[0](**encoder_cat_cls_kwargs[1]),
+            encoder_cat_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.categorical],
+                **encoder_cat_cls_kwargs[1]),
             stype.numerical:
-            encoder_num_cls_kwargs[0](**encoder_num_cls_kwargs[1]),
+            encoder_num_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.numerical],
+                **encoder_num_cls_kwargs[1]),
             stype.multicategorical:
             encoder_multicategorical_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.multicategorical],
                 **encoder_multicategorical_cls_kwargs[1]),
             stype.timestamp:
-            encoder_timestamp_cls_kwargs[0](**encoder_timestamp_cls_kwargs[1]),
+            encoder_timestamp_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.timestamp],
+                **encoder_timestamp_cls_kwargs[1]),
             stype.text_embedded:
             encoder_text_embedded_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.text_embedded],
                 **encoder_text_embedded_cls_kwargs[1]),
             stype.text_tokenized:
             encoder_text_tokenized_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.text_tokenized],
                 **encoder_text_tokenized_cls_kwargs[1]),
             stype.embedding:
-            encoder_embedding_cls_kwargs[0](**encoder_embedding_cls_kwargs[1]),
+            encoder_embedding_cls_kwargs[0](
+                col_names=tensor_frame.col_names_dict[stype.embedding],
+                **encoder_embedding_cls_kwargs[1]),
         },
     )
     x, col_names = encoder(tensor_frame)

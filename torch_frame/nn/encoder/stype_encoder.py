@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 import torch
 from torch import Tensor
@@ -54,7 +54,7 @@ class StypeEncoder(Module, ABC):
     """
 
     supported_stypes: Set[stype] = {}
-    LAZY_ATTRS = {"out_channels", "stats_list", "stype"}
+    LAZY_ATTRS = {"out_channels", "stats_list", "stype", "col_names"}
 
     def __init__(
         self,
@@ -63,9 +63,10 @@ class StypeEncoder(Module, ABC):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         if self.na_strategy is not None:
@@ -106,18 +107,17 @@ class StypeEncoder(Module, ABC):
     def forward(
         self,
         feat: TensorData,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
-        if col_names is not None:
+        if self.col_names is not None:
             if isinstance(feat, dict):
                 num_cols = next(iter(feat.values())).shape[1]
             else:
                 num_cols = feat.shape[1]
-            if num_cols != len(col_names):
+            if num_cols != len(self.col_names):
                 raise ValueError(
                     f"The number of columns in feat and the length of "
                     f"col_names must match (got {num_cols} and "
-                    f"{len(col_names)}, respectively.)")
+                    f"{len(self.col_names)}, respectively.)")
         # Clone the tensor to avoid in-place modification
         if not isinstance(feat, dict):
             feat = feat.clone()
@@ -126,7 +126,7 @@ class StypeEncoder(Module, ABC):
         # NaN handling of the input Tensor
         feat = self.na_forward(feat)
         # Main encoding into column embeddings
-        x = self.encode_forward(feat, col_names)
+        x = self.encode_forward(feat)
         # Handle NaN in case na_strategy is None
         x = torch.nan_to_num(x, nan=0)
         # Post-forward (e.g., normalization, activation)
@@ -136,7 +136,6 @@ class StypeEncoder(Module, ABC):
     def encode_forward(
         self,
         feat: TensorData,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         r"""The main forward function. Maps input :obj:`feat` from TensorFrame
         (shape [batch_size, num_cols]) into output :obj:`x` of shape
@@ -224,9 +223,10 @@ class EmbeddingEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -250,7 +250,6 @@ class EmbeddingEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
@@ -284,6 +283,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
         mode: str = "mean",
     ):
         self.mode = mode
@@ -293,7 +293,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
                 "Please use 'mean', 'sum' or 'max'.",
             )
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -318,7 +318,6 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: MultiNestedTensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         # TODO: Make this more efficient.
         # Increment the index by one so that NaN index (-1) becomes 0
@@ -350,9 +349,10 @@ class LinearEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -375,7 +375,6 @@ class LinearEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
@@ -403,9 +402,10 @@ class StackEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -422,7 +422,6 @@ class StackEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
@@ -448,9 +447,10 @@ class LinearBucketEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -473,7 +473,6 @@ class LinearBucketEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         encoded_values = []
         for i in range(feat.size(1)):
@@ -525,11 +524,12 @@ class LinearPeriodicEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
         n_bins: Optional[int] = 16,
     ):
         self.n_bins = n_bins
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -553,7 +553,6 @@ class LinearPeriodicEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         feat = (feat - self.mean) / self.std
         # Compute the value 'v' by scaling the input 'x' with
@@ -598,9 +597,10 @@ class ExcelFormerEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -620,7 +620,6 @@ class ExcelFormerEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: Tensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         feat = (feat - self.mean) / self.std
         x1 = self.W_1[None] * feat[:, :, None] + self.b_1[None]
@@ -650,9 +649,10 @@ class LinearEmbeddingEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -674,7 +674,6 @@ class LinearEmbeddingEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: MultiEmbeddingTensor,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
         x_lins: List[Tensor] = []
         for start_idx, end_idx, weight in zip(feat.offset[:-1],
@@ -721,13 +720,15 @@ class LinearModelEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
         in_channels: Optional[int] = None,
-        model: Optional[torch.nn.Module] = None,
+        col_to_model: Optional[Union[Dict[str, torch.nn.Module],
+                                     torch.nn.Module]] = None,
     ):
         if in_channels is None:
             raise ValueError("Please manually specify the `in_channels`, "
                              "which is the text embedding dimensionality.")
-        if model is None:
+        if col_to_model is None:
             raise ValueError("Please manually specify the `model`, "
                              "which outputs embeddings that will be feed "
                              "to the linear layer.")
@@ -735,8 +736,9 @@ class LinearModelEncoder(StypeEncoder):
         self.in_channels = in_channels
 
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
-        self.model = model
+                         na_strategy, col_names)
+
+        self._col_to_model = col_to_model
 
     def init_modules(self):
         super().init_modules()
@@ -746,6 +748,14 @@ class LinearModelEncoder(StypeEncoder):
         self.bias = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
 
+        if isinstance(self._col_to_model, torch.nn.Module):
+            self.col_to_model = {
+                col_name: self._col_to_model
+                for col_name in self.col_names
+            }
+        else:
+            self.col_to_model = self._col_to_model
+
     def reset_parameters(self):
         super().reset_parameters()
         torch.nn.init.normal_(self.weight, std=0.01)
@@ -754,9 +764,14 @@ class LinearModelEncoder(StypeEncoder):
     def encode_forward(
         self,
         feat: TensorData,
-        col_names: Optional[List[str]] = None,
     ) -> Tensor:
-        x = self.model(feat)
+        xs = []
+        for i, col_name in enumerate(self.col_names):
+            xs.append(self.col_to_model[col_name]({
+                key: feat[key][:, i]
+                for key in feat
+            }))
+        x = torch.cat(xs, dim=1)
         # [batch_size, num_cols, in_channels] *
         # [num_cols, in_channels, out_channels]
         # -> [batch_size, num_cols, out_channels]
@@ -787,11 +802,12 @@ class TimestampEncoder(StypeEncoder):
         stype: Optional[stype] = None,
         post_module: Optional[Module] = None,
         na_strategy: Optional[NAStrategy] = None,
+        col_names: Optional[List[str]] = None,
         out_size: int = 8,
     ):
         self.out_size = out_size
         super().__init__(out_channels, stats_list, stype, post_module,
-                         na_strategy)
+                         na_strategy, col_names)
 
     def init_modules(self):
         super().init_modules()
@@ -824,8 +840,7 @@ class TimestampEncoder(StypeEncoder):
         torch.nn.init.normal_(self.weight, std=0.01)
         torch.nn.init.zeros_(self.bias)
 
-    def encode_forward(self, feat: Tensor,
-                       col_names: Optional[List[str]] = None) -> Tensor:
+    def encode_forward(self, feat: Tensor) -> Tensor:
         feat = feat.to(torch.float32)
         # [batch_size, num_cols, 1] - [1, num_cols, 1]
         feat_year = feat[..., :1] - self.min_year.view(1, -1, 1)

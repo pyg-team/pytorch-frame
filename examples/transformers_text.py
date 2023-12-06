@@ -161,15 +161,15 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         mask = feat["attention_mask"].to_dense(fill_value=0)
         outs = []
         # Get text embeddings over each column
-        for i in range(input_ids.shape[1]):
-            out = self.model(input_ids=input_ids[:, i, :],
-                             attention_mask=mask[:, i, :])
-            if self.pooling == "mean":
-                outs.append(mean_pooling(out.last_hidden_state, mask[:, i, :]))
-            elif self.pooling == "cls":
-                outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
-            else:
-                raise ValueError(f"{self.pooling} is not supported.")
+        out = self.model(input_ids=input_ids.squeeze(dim=1),
+                         attention_mask=mask.squeeze(dim=1))
+        if self.pooling == "mean":
+            outs.append(
+                mean_pooling(out.last_hidden_state, mask.squeeze(dim=1)))
+        elif self.pooling == "cls":
+            outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
+        else:
+            raise ValueError(f"{self.pooling} is not supported.")
         # Concatenate output embeddings for different columns
         return torch.cat(outs, dim=1)
 
@@ -213,7 +213,7 @@ else:
                                            lora=args.lora)
     text_stype = torch_frame.text_tokenized
     text_stype_encoder = LinearModelEncoder(in_channels=768,
-                                            model=text_encoder)
+                                            col_to_model=text_encoder)
     kwargs = {
         "text_stype":
         text_stype,
