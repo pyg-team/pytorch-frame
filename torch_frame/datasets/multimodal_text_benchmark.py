@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os.path as osp
-from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -445,11 +446,10 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         root: str,
         name: str,
         text_stype: torch_frame.stype = torch_frame.text_embedded,
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
-                                                       TextTokenizerConfig],
-                                                  TextTokenizerConfig]] = None,
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | TextEmbedderConfig | None = None,
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
+        | TextTokenizerConfig | None = None,
     ):
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root

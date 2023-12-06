@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import os
 import os.path as osp
 import tarfile
 import zipfile
-from typing import Dict
 
 import pandas as pd
 
@@ -106,7 +107,7 @@ class KDDCensusIncome(torch_frame.data.Dataset):
             'weeks worked in year',
         }
 
-        col_to_stype: Dict[str, stype] = {}
+        col_to_stype: dict[str, stype] = {}
         for name in names:
             if name in continuous_cols:
                 col_to_stype[name] = torch_frame.numerical

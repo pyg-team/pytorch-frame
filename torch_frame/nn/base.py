@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 from inspect import signature
-from typing import Any, Set
+from typing import Any
 
 import torch
 
@@ -16,7 +18,7 @@ class Module(torch.nn.Module):
     (via :meth:`init_modules`) until all attributes in :obj:`LAZY_ATTRS` are
     fully-specified.
     """
-    LAZY_ATTRS: Set[str] = set()
+    LAZY_ATTRS: set[str] = set()
 
     def init_modules(self):
         pass

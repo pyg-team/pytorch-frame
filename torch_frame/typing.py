@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Dict, List, Mapping, Union
 
@@ -49,7 +51,7 @@ class TaskType(Enum):
         return self == TaskType.REGRESSION
 
     @property
-    def supported_metrics(self) -> List[Metric]:
+    def supported_metrics(self) -> list[Metric]:
         if self == TaskType.REGRESSION:
             return [Metric.RMSE, Metric.MAE]
         elif self == TaskType.BINARY_CLASSIFICATION:
@@ -91,10 +93,11 @@ class NAStrategy(Enum):
         return self in [NAStrategy.MEAN, NAStrategy.ZEROS]
 
     @property
-    def is_timestamp_strategy(self):
+    def is_timestamp_strategy(self) -> bool:
         return self in [
-            NAStrategy.NEWEST_TIMESTAMP, NAStrategy.OLDEST_TIMESTAMP,
-            NAStrategy.MEDIAN_TIMESTAMP
+            NAStrategy.NEWEST_TIMESTAMP,
+            NAStrategy.OLDEST_TIMESTAMP,
+            NAStrategy.MEDIAN_TIMESTAMP,
         ]
 
 

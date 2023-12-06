@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -15,8 +17,8 @@ from torch_frame.typing import TensorData
 
 
 def serialize_feat_dict(
-    feat_dict: Dict[torch_frame.stype, TensorData]
-) -> Dict[torch_frame.stype, Any]:
+    feat_dict: dict[torch_frame.stype, TensorData]
+) -> dict[torch_frame.stype, Any]:
     feat_serialized_dict = {}
     for stype, feat in feat_dict.items():
         if stype.use_multi_tensor:
@@ -36,8 +38,8 @@ def serialize_feat_dict(
 
 
 def deserialize_feat_dict(
-    feat_serialized_dict: Dict[torch_frame.stype, Any]
-) -> Dict[torch_frame.stype, TensorData]:
+    feat_serialized_dict: dict[torch_frame.stype, Any]
+) -> dict[torch_frame.stype, TensorData]:
     feat_dict = {}
     for stype, feat_serialized in feat_serialized_dict.items():
         if stype.use_multi_nested_tensor:
@@ -56,7 +58,7 @@ def deserialize_feat_dict(
 
 
 def save(tensor_frame: TensorFrame,
-         col_stats: Optional[Dict[str, Dict[StatType, Any]]], path: str):
+         col_stats: dict[str, dict[StatType, Any]] | None, path: str):
     r"""Save a :class:`TensorFrame` object and optional :obj:`col_stats`
     to specified path.
 
@@ -76,8 +78,8 @@ def save(tensor_frame: TensorFrame,
 
 
 def load(
-    path: str, device: Optional[torch.device] = None
-) -> Tuple[TensorFrame, Optional[Dict[str, Dict[StatType, Any]]]]:
+    path: str, device: torch.device | None = None
+) -> tuple[TensorFrame, dict[str, dict[StatType, Any]] | None]:
     r"""Load saved :class:`TensorFrame` object and optional :obj:`col_stats`
     from a specified path.
 

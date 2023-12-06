@@ -5,9 +5,10 @@ https://www.kaggle.com/c/mercari-price-suggestion-challenge/.
 Train Loss: 540.2466, Train RMSE: 22.6720, Val RMSE: 26.2494
 Private Score: 0.50207 Public Score: 0.50156.
 """
+from __future__ import annotations
+
 import argparse
 import os.path as osp
-from typing import List
 
 import numpy as np
 import torch
@@ -35,7 +36,7 @@ class PretrainedTextEncoder:
     def __init__(self, device: torch.device) -> None:
         self.model = SentenceTransformer("all-distilroberta-v1", device=device)
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         # Inference on GPU (if available)
         embeddings = self.model.encode(sentences, convert_to_numpy=False,
                                        convert_to_tensor=True)

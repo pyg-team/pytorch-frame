@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 import torch
@@ -43,7 +45,7 @@ class MutualInformationSort(FittableBaseTransform):
                 f"Cannot use {na_strategy} for numerical features.")
         self.na_strategy = na_strategy
 
-    def _fit(self, tf_train: TensorFrame, col_stats: Dict[str, Dict[StatType,
+    def _fit(self, tf_train: TensorFrame, col_stats: dict[str, dict[StatType,
                                                                     Any]]):
         if tf_train.y is None:
             raise RuntimeError(

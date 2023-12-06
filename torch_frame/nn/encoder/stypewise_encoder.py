@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -18,16 +20,16 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
     Args:
         out_channels (int): Output dimensionality.
         col_stats
-            (Dict[str, Dict[:class:`torch_frame.data.stats.StatType`, Any]]):
+            (dict[str, dict[:class:`torch_frame.data.stats.StatType`, Any]]):
             A dictionary that maps column name into stats. Available as
             :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+        col_names_dict (dict[:class:`torch_frame.stype`, list[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`.
             Available as :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict
-            (Dict[:class:`torch_frame.stype`,
+            (dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`]):
             A dictionary that maps :class:`torch_frame.stype` into
             :class:`torch_frame.nn.encoder.StypeEncoder` class.
@@ -35,10 +37,10 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
     def __init__(
         self,
         out_channels: int,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
-        stype_encoder_dict: Dict[torch_frame.stype, StypeEncoder],
-    ):
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder],
+    ) -> None:
         super().__init__()
 
         self.col_stats = col_stats
@@ -60,7 +62,7 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                 stype_encoder.stats_list = stats_list
                 self.encoder_dict[stype.value] = stype_encoder
 
-    def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
+    def forward(self, tf: TensorFrame) -> tuple[Tensor, list[str]]:
         all_col_names = []
         xs = []
         for stype in tf.stypes:

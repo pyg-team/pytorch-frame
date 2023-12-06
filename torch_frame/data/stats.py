@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -51,7 +53,7 @@ class StatType(Enum):
     EMB_DIM = "EMB_DIM"
 
     @staticmethod
-    def stats_for_stype(stype: torch_frame.stype) -> List["StatType"]:
+    def stats_for_stype(stype: torch_frame.stype) -> list[StatType]:
         stats_type = {
             torch_frame.numerical: [
                 StatType.MEAN,
@@ -80,7 +82,7 @@ class StatType(Enum):
     def compute(
         self,
         ser: Series,
-        sep: Optional[str] = None,
+        sep: str | None = None,
     ) -> Any:
         if self == StatType.MEAN:
             flattened = np.hstack(np.hstack(ser.values))
@@ -156,9 +158,9 @@ _default_values = {
 def compute_col_stats(
     ser: Series,
     stype: torch_frame.stype,
-    sep: Optional[str] = None,
-    time_format: Optional[str] = None,
-) -> Dict[StatType, Any]:
+    sep: str | None = None,
+    time_format: str | None = None,
+) -> dict[StatType, Any]:
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
         if not ptypes.is_numeric_dtype(ser):
