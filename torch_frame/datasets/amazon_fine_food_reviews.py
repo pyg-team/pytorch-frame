@@ -43,8 +43,10 @@ class AmazonFineFoodReviews(torch_frame.data.Dataset):
         self,
         root: str,
         text_stype: torch_frame.stype = torch_frame.text_embedded,
-        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig] | TextEmbedderConfig | None = None,
-        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig] | TextTokenizerConfig | None = None,
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | TextEmbedderConfig | None = None,
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
+        | TextTokenizerConfig | None = None,
     ) -> None:
         self.root = root
         self.text_stype = text_stype
