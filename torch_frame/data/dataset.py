@@ -62,8 +62,10 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: (Any | None | dict[str, Any]),
-                                columns: list[str]) -> dict[str, Any]:
+def canonicalize_col_to_pattern(
+    col_to_pattern: Any | dict[str, Any] | None,
+    columns: list[str],
+) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
@@ -323,10 +325,10 @@ class Dataset(ABC):
         target_col: str | None = None,
         split_col: str | None = None,
         col_to_sep: str | dict[str, str] = ",",
-        col_to_text_embedder_cfg: None |
-        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None |
-        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | TextEmbedderConfig | None = None,
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
+        | TextTokenizerConfig | None = None,
         col_to_time_format: str | dict[str, str] | None = None,
     ):
         self.df = df
@@ -470,8 +472,11 @@ class Dataset(ABC):
 
     # Materialization #########################################################
 
-    def materialize(self, device: torch.device | None = None,
-                    path: str | None = None) -> Dataset:
+    def materialize(
+        self,
+        device: torch.device | None = None,
+        path: str | None = None,
+    ) -> Dataset:
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only.
 
@@ -608,8 +613,10 @@ class Dataset(ABC):
 
         return dataset
 
-    def shuffle(self,
-                return_perm: bool = False) -> Dataset | tuple[Dataset, Tensor]:
+    def shuffle(
+        self,
+        return_perm: bool = False,
+    ) -> Dataset | tuple[Dataset, Tensor]:
         r"""Randomly shuffles the rows in the dataset."""
         perm = torch.randperm(len(self))
         dataset = self.index_select(perm)

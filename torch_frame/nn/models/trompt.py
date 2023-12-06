@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -52,8 +52,8 @@ class Trompt(Module):
         num_prompts: int,
         num_layers: int,
         # kwargs for encoder
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
     ):
         super().__init__()
         if num_layers <= 0:

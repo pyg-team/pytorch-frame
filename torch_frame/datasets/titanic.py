@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pandas as pd
 
 import torch_frame
@@ -34,7 +32,7 @@ class Titanic(torch_frame.data.Dataset):
 
     url = 'https://github.com/datasciencedojo/datasets/raw/master/titanic.csv'
 
-    def __init__(self, root: str):
+    def __init__(self, root: str) -> None:
         path = self.download_url(self.url, root)
         df = pd.read_csv(path, index_col=['PassengerId'])
 

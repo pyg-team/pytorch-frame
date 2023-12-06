@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import torch
 import torch.nn.functional as F
@@ -61,8 +61,8 @@ class TabNet(Module):
         split_feat_channels: int,
         split_attn_channels: int,
         gamma: float,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
         num_shared_glu_layers: int = 2,
         num_dependent_glu_layers: int = 2,
         cat_emb_channels: int = 2,
@@ -142,7 +142,7 @@ class TabNet(Module):
         self,
         tf: TensorFrame,
         return_reg: bool = False,
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+    ) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings.
 
         Args:

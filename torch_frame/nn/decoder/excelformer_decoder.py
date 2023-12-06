@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import torch
 from torch import Tensor
 from torch.nn import Linear, PReLU
@@ -17,7 +15,12 @@ class ExcelFormerDecoder(Decoder):
         out_channels (int): Output channel dimensionality
         num_cols (int): Number of columns.
     """
-    def __init__(self, in_channels: int, out_channels: int, num_cols: int):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        num_cols: int,
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -26,7 +29,7 @@ class ExcelFormerDecoder(Decoder):
         self.lin_d = Linear(self.in_channels, 1)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin_f.reset_parameters()
         self.lin_d.reset_parameters()
         with torch.no_grad():

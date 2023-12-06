@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import math
 
 import torch
@@ -19,7 +17,7 @@ class CyclicEncoding(Module):
     Args:
         out_size (int): The output dimension size.
     """
-    def __init__(self, out_size: int):
+    def __init__(self, out_size: int) -> None:
         super().__init__()
         if out_size % 2 != 0:
             raise ValueError(

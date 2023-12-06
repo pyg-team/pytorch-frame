@@ -18,8 +18,12 @@ class HashTextEmbedder:
         device (torch.device, optional): The device to put :class:`Embedding`
             module. (default: :obj:`None`)
     """
-    def __init__(self, out_channels: int, num_hash_bins: int = 64,
-                 device: torch.device | None = None):
+    def __init__(
+        self,
+        out_channels: int,
+        num_hash_bins: int = 64,
+        device: torch.device | None = None,
+    ) -> None:
         self.out_channels = out_channels
         self.num_hash_bins = num_hash_bins
         self.device = device

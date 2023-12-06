@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, List, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 import numpy as np
 import pandas as pd
@@ -206,7 +206,7 @@ class NumericalSequenceTensorMapper(TensorMapper):
         super().__init__()
 
     def get_sequence_length(self, row):
-        if isinstance(row, List):
+        if isinstance(row, list):
             return len(row)
         elif row is None or (isinstance(row, float) and pd.isna(row)):
             return 0

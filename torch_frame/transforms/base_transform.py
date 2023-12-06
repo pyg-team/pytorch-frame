@@ -15,7 +15,7 @@ class BaseTransform(ABC):
     :class:`TensorFrame`
     """
     def __init__(self):
-        self._transformed_stats: None | (dict[str, dict[StatType, Any]]) = None
+        self._transformed_stats: dict[str, dict[StatType, Any]] | None = None
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:
         # Shallow-copy the data so that we prevent in-place data modification.

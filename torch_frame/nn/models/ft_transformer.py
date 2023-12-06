@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
@@ -32,18 +32,18 @@ class FTTransformer(Module):
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
         num_layers (int): Numner of layers.  (default: :obj:`3`)
-        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+        col_stats(dict[str,dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+        col_names_dict (dict[:obj:`torch_frame.stype`, list[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict
-            (Optional[Dict[:class:`torch_frame.stype`,
+            (Optional[dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`]):
-            Dictionary containing encoder type per column statistics (default:
+            dictionary containing encoder type per column statistics (default:
             :obj:`None`, will call
             :class:`torch_frame.nn.encoder.EmbeddingEncoder()` for categorial
             feature and :class:`torch_frame.nn.encoder.LinearEncoder()`
@@ -54,10 +54,10 @@ class FTTransformer(Module):
         channels: int,
         out_channels: int,
         num_layers: int,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
-        stype_encoder_dict: Optional[Dict[torch_frame.stype,
-                                          StypeEncoder]] = None,
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
     ):
         super().__init__()
         if num_layers <= 0:

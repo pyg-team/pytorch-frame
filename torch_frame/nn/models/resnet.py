@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from torch import Tensor
 from torch.nn import (
@@ -41,9 +41,9 @@ class FCResidualBlock(Module):
         self,
         in_channels: int,
         out_channels: int,
-        normalization: Optional[str] = "layernorm",
+        normalization: str | None = "layernorm",
         dropout_prob: float = 0.0,
-    ):
+    ) -> None:
         super().__init__()
         self.lin1 = Linear(in_channels, out_channels)
         self.lin2 = Linear(out_channels, out_channels)
@@ -64,7 +64,7 @@ class FCResidualBlock(Module):
         else:
             self.shortcut = None
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin1.reset_parameters()
         self.lin2.reset_parameters()
         if self.norm1 is not None:
@@ -133,13 +133,13 @@ class ResNet(Module):
         channels: int,
         out_channels: int,
         num_layers: int,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
-        stype_encoder_dict: Optional[Dict[torch_frame.stype,
-                                          StypeEncoder]] = None,
-        normalization: Optional[str] = "layernorm",
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
+        normalization: str | None = "layernorm",
         dropout_prob: float = 0.2,
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -178,7 +178,7 @@ class ResNet(Module):
 
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.encoder.reset_parameters()
         for block in self.backbone:
             block.reset_parameters()
