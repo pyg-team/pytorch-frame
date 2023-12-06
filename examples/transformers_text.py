@@ -130,10 +130,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
+    def __init__(self, model: str, device: torch.device, pooling: str = "mean", lora: bool = False):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.model = AutoModel.from_pretrained(model)
+        self.model = AutoModel.from_pretrained(model).to(device)
 
         if lora:
             if model == "distilbert-base-uncased":
@@ -158,21 +158,17 @@ class TextToEmbeddingFinetune(torch.nn.Module):
 
     def forward(self, feat: TensorData) -> Tensor:
         # [batch_size, num_cols, batch_max_seq_len]
-        input_ids = feat["input_ids"].to_dense(fill_value=0)
-        mask = feat["attention_mask"].to_dense(fill_value=0)
-        outs = []
+        input_ids = feat["input_ids"].to_dense(fill_value=0).squeeze(dim=1)
+        mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
         # Get text embeddings over each column
-        out = self.model(input_ids=input_ids.squeeze(dim=1),
-                         attention_mask=mask.squeeze(dim=1))
+        out = self.model(input_ids=input_ids,
+                         attention_mask=mask)
         if self.pooling == "mean":
-            outs.append(
-                mean_pooling(out.last_hidden_state, mask.squeeze(dim=1)))
+            return mean_pooling(out.last_hidden_state, mask)
         elif self.pooling == "cls":
-            outs.append(out.last_hidden_state[:, 0, :].unsqueeze(1))
+            return out.last_hidden_state[:, 0, :].unsqueeze(1)
         else:
             raise ValueError(f"{self.pooling} is not supported.")
-        # Concatenate output embeddings for different columns
-        return torch.cat(outs, dim=1)
 
     def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
         # Tokenize batches of sentences
@@ -209,6 +205,7 @@ if not args.finetune:
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model,
+                                           device=device,
                                            pooling=args.pooling,
                                            lora=args.lora)
     text_stype = torch_frame.text_tokenized
