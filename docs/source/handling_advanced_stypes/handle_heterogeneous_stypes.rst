@@ -58,7 +58,7 @@ First, let us create a sample dataset with many different stypes.
     4         67      Type 2 2023-01-05                                      [Category A]  [0.46924917399024213, 0.8411401297855995, 0.90...
 
 
-Now let's load the :class:`pandas.DataFrame` into :class:`~torch_frame.data.Dataset` class.
+Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Dataset` class so that we have :class:`~torch_frame.data.tensor_frame.TensorFrame` representation of the :class:`pandas.DataFrame`.
 
 .. code-block:: none
 
