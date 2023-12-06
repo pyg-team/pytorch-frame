@@ -74,7 +74,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  Supports learning across various column types like categorical, numberical, and texts. Future plans encompass sequences, multicategories, images, and time.
+  Supports learning across various column types like categorical, numberical, texts, multicategories and timestamps.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -215,7 +215,7 @@ for epoch in range(50):
 ```
 </details>
 
-Currently, PyTorch Frame support the following semantic types: `numerical`, `categorical`, `multicategorical`, `text_embedded`. [Here](https://github.com/pyg-team/pytorch-frame/blob/master/examples/mercari.py) is an example of how to train a model on dataset with all four semantic types.
+Currently, PyTorch Frame support the following semantic types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`. [Here](https://github.com/pyg-team/pytorch-frame/blob/master/examples/mercari.py) is an example of how to train a model on dataset with all four semantic types.
 
 ## Implemented Deep Tabular Models
 

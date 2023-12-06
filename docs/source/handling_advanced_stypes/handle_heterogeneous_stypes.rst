@@ -107,7 +107,7 @@ For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`st
 
 Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
 Note that some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
-For example, :class:`torch_frame.nn.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
+For example, :class:`~torch_frame.nn.models.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
 .. code-block:: none
 
@@ -157,10 +157,10 @@ Often times the raw data from a dataset can be complex.
 For example, different multicategorical columns can have different delimiters, and different time columns can have different time formats.
 
 Currently, raw column data of type :class:`list` or :class:`str` are supported for :class:`~torch_frame.stype.multicategorical`.
-You can also specify different delimiters for different columns through :obj:`col_to_sep` argument.
+You can also specify different delimiters for different columns through :obj:`col_to_sep` argument in :class:`torch_frame.data.Dataset`.
 If a string is specified, the same delimiter will be used throughout all the multicategorical columns.
 If a dictionary is given, we use a different delimiter specified for each column.
-Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`.
+Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
 
 Here is an example of handing a :class:`~pandas.DataFrame` with multiple multicategorical columns.
 
@@ -186,8 +186,6 @@ Here is an example of handing a :class:`~pandas.DataFrame` with multiple multica
         'Multicategorical3': multicategorical3,
     })
 
-    # Displaying the first few rows of the DataFrame
-    print(df.head())
     dataset = Dataset(
         df, col_to_stype={
             'Multicategorical1': stype.multicategorical,
@@ -195,6 +193,7 @@ Here is an example of handing a :class:`~pandas.DataFrame` with multiple multica
             'Multicategorical3': stype.multicategorical,
         }, col_to_sep={'Multicategorical2': ',', 'Multicategorical3': '/'})
 
+    dataset.col_stats
     >>>> {'Multicategorical1': {<StatType.MULTI_COUNT: 'MULTI_COUNT'>:
     (['Category B', 'Category D', 'Category A', 'Category C'], [61, 60, 56, 49])},
     'Multicategorical2': {<StatType.MULTI_COUNT: 'MULTI_COUNT'>:
@@ -230,8 +229,8 @@ If not specified, pandas's internal :class:`pandas.to_datetime` function will be
         }, col_to_time_format='%Y-%m-%d %H:%M:%S')
 
     dataset.materialize()
-    print(dataset.col_stats)
 
+    dataset.col_stats
     >>> {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
     <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
     <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
