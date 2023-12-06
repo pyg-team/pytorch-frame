@@ -80,7 +80,7 @@ class GBDT:
             raise RuntimeError("tf_train.y must be a Tensor, but None given.")
         if tf_val.y is None:
             raise RuntimeError("tf_val.y must be a Tensor, but None given.")
-        self._tune(tf_train, tf_val, num_trials, *args, **kwargs)
+        self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
         self._is_fitted = True
 
     def predict(self, tf_test: TensorFrame) -> Tensor:

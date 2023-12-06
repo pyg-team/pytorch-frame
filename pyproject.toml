@@ -128,6 +128,7 @@ module = [
     "torch_frame.datasets.mercari",
     "torch_frame.datasets.tabular_benchmark",
     "torch_frame.datasets.yandex",
+    "torch_frame.gbdt.gbdt",
     "torch_frame.gbdt.tuned_catboost",
     "torch_frame.gbdt.tuned_lightgbm",
     "torch_frame.gbdt.tuned_xgboost",
