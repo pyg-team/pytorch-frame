@@ -13,7 +13,13 @@ PyTorch Frame Documentation
    get_started/installation
    get_started/introduction
    get_started/modular_design
-   get_started/handle_text
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Handling Advanced Stypes
+
+   handling_advanced_stypes/handle_heterogeneous_stypes
+   handling_advanced_stypes/handle_text
 
 .. toctree::
    :maxdepth: 1
