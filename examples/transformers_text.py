@@ -13,6 +13,7 @@ from transformers import AutoModel, AutoTokenizer
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.config import TextModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import DataLoader
@@ -200,7 +201,6 @@ if not args.finetune:
     text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
                                    device=device)
     text_stype = torch_frame.text_embedded
-    text_stype_encoder = LinearEmbeddingEncoder()
     kwargs = {
         "text_stype":
         text_stype,
@@ -212,8 +212,6 @@ else:
                                            pooling=args.pooling,
                                            lora=args.lora)
     text_stype = torch_frame.text_tokenized
-    text_stype_encoder = LinearModelEncoder(in_channels=768,
-                                            col_to_model=text_encoder)
     kwargs = {
         "text_stype":
         text_stype,
@@ -242,6 +240,17 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
+
+if not args.finetune:
+    text_stype_encoder = LinearEmbeddingEncoder()
+else:
+    model_cfg = TextModelConfig(model=text_encoder, out_channels=768)
+    col_to_model_cfg = {
+        col_name: model_cfg
+        for col_name in train_tensor_frame.col_names_dict[
+            torch_frame.text_tokenized]
+    }
+    text_stype_encoder = LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
 
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
