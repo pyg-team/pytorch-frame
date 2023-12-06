@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os.path as osp
-from typing import Dict, Optional, Union
 
 import pandas as pd
 
@@ -44,10 +45,10 @@ class Mercari(torch_frame.data.Dataset):
     def __init__(
         self,
         root: str,
-        num_rows: Optional[int] = None,
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-    ):
+        num_rows: int | None = None,
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | TextEmbedderConfig | None = None,
+    ) -> None:
         self.dfs = dict()
         col_to_stype = {
             'name': torch_frame.text_embedded,

@@ -20,7 +20,7 @@ class TromptDecoder(Decoder):
         in_channels: int,
         out_channels: int,
         num_prompts: int,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.num_prompts = num_prompts
@@ -33,13 +33,13 @@ class TromptDecoder(Decoder):
         )
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin_attn.reset_parameters()
         for m in self.mlp:
             if not isinstance(m, ReLU):
                 m.reset_parameters()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         batch_size = len(x)
         assert x.shape == (batch_size, self.num_prompts, self.in_channels)
         # [batch_size, num_prompts, 1]

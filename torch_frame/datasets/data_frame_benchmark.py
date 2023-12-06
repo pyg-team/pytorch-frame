@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import pandas as pd
 
@@ -719,7 +721,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
         cls,
         task_type: TaskType,
         scale: str,
-    ) -> List[Tuple[str, Dict[str, Any]]]:
+    ) -> list[tuple[str, dict[str, Any]]]:
         r"""List of datasets available for a given :obj:`task_type` and
         :obj:`scale`.
         """

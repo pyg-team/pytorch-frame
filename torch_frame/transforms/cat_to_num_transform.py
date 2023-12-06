@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 import torch
@@ -25,7 +27,7 @@ class CatToNumTransform(FittableBaseTransform):
     def _fit(
         self,
         tf_train: TensorFrame,
-        col_stats: Dict[str, Dict[StatType, Any]],
+        col_stats: dict[str, dict[StatType, Any]],
     ):
         if tf_train.y is None:
             raise RuntimeError(

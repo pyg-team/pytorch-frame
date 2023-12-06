@@ -23,14 +23,19 @@ class FFN(Module):
         mult (int): Expansion factor of the first layer (default: :obj:`4`)
         dropout (float): Percentage of random deactivation (default: :obj:`0.`)
     """
-    def __init__(self, channels: int, mult: int = 4, dropout: float = 0.):
+    def __init__(
+        self,
+        channels: int,
+        mult: int = 4,
+        dropout: float = 0.,
+    ) -> None:
         super().__init__()
         self.lin_1 = Linear(channels, mult * channels * 2)
         self.geglu = GEGLU()
         self.dropout = Dropout(dropout)
         self.lin_2 = Linear(channels * mult, channels)
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin_1.reset_parameters()
         self.lin_2.reset_parameters()
 

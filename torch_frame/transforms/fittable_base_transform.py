@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -64,7 +66,7 @@ class FittableBaseTransform(BaseTransform):
     def fit(
         self,
         tf: TensorFrame,
-        col_stats: Dict[str, Dict[StatType, Any]],
+        col_stats: dict[str, dict[StatType, Any]],
     ):
         r"""Fit the transform with train data.
 
@@ -91,7 +93,7 @@ class FittableBaseTransform(BaseTransform):
     def _fit(
         self,
         tf: TensorFrame,
-        col_stats: Dict[str, Dict[StatType, Any]],
+        col_stats: dict[str, dict[StatType, Any]],
     ):
         raise NotImplementedError
 
@@ -99,9 +101,9 @@ class FittableBaseTransform(BaseTransform):
     def _forward(self, tf: TensorFrame) -> TensorFrame:
         raise NotImplementedError
 
-    def state_dict(self) -> Dict[str, Any]:
+    def state_dict(self) -> dict[str, Any]:
         return self.__dict__
 
-    def load_state_dict(self, state_dict: Dict[str, Any]):
+    def load_state_dict(self, state_dict: dict[str, Any]):
         self.__dict__.update(state_dict)
         return self
