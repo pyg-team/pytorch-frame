@@ -1,4 +1,4 @@
-    Introduction by Example
+Introduction by Example
 =======================
 
 :pyf:`PyTorch Frame` is a tabular deep learning extension library for :pytorch:`null` `PyTorch <https://pytorch.org>`_.

@@ -123,7 +123,7 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                 return stype.categorical
 
             # Candates: multicategorical, text_(embedded/tokenized), embedding
-            if ptypes.is_list_like(ser):
+            if not ptypes.is_string_dtype(ser):
                 if _min_count(ser) > cat_min_count_thresh:
                     return stype.multicategorical
                 else:
