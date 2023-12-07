@@ -26,7 +26,7 @@ class _MultiTensor:
         self.validate()
 
     def validate(self) -> None:
-        r"""Validates the :class:`_MultiTensor` object."""
+        pass
 
     def to_dict(self) -> dict[str, Any]:
         r"""Serialize the object into a dictionary."""

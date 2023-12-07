@@ -774,7 +774,11 @@ class TimestampEncoder(StypeEncoder):
     :class:`torch_frame.nn.encoding.PositionalEncoding`. The other
     features, including month, day, dayofweek, hour, minute and second,
     are encoded using :class:`torch_frame.nn.encoding.CyclicEncoding`.
-    It applies linear layer for each column in a batched manner.
+    It applies linear layer for each column in a batched manner. The
+    TimestampEncoder does not support NaN timestamps, because
+    :class:`torch_frame.nn.encoding.PositionalEncoding` does not support
+    negative tensor values. So :class:`torch_frame.NAStrategy.MEDIAN_TIMESTAMP`
+    is applied as the default :class:`~torch_frame.NAStrategy`.
 
     Args:
         out_size (int): Output dimension of the positional and cyclic
@@ -788,7 +792,7 @@ class TimestampEncoder(StypeEncoder):
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
         post_module: Module | None = None,
-        na_strategy: NAStrategy | None = None,
+        na_strategy: NAStrategy | None = NAStrategy.MEDIAN_TIMESTAMP,
         out_size: int = 8,
     ) -> None:
         self.out_size = out_size
