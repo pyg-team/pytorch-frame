@@ -3,11 +3,10 @@ import copy
 import pytest
 import torch
 
-from torch_frame import TaskType
+from torch_frame import TaskType, stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.nn import ExcelFormer
-from torch_frame.stype import stype
 
 
 @pytest.mark.parametrize('task_type', [

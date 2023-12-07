@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from torch_frame import stype
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn.models import (
     ExcelFormer,
@@ -10,7 +11,6 @@ from torch_frame.nn.models import (
     TabTransformer,
     Trompt,
 )
-from torch_frame.stype import stype
 from torch_frame.testing import withPackage
 
 
