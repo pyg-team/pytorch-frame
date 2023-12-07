@@ -37,7 +37,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--gbdt_type', type=str, default='xgboost',
                     choices=['xgboost', 'catboost', 'lightgbm'])
 parser.add_argument('--dataset', type=str, default='eye_movements')
-parser.add_argument('--storage', type=str, default='storage/gbdts.txt')
+parser.add_argument('--saved_model_path', type=str,
+                    default='storage/gbdts.txt')
 # Add this flag to match the reported number.
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
@@ -81,12 +82,12 @@ gbdt = gbdt_cls_dict[args.gbdt_type](
     metric=metric,
 )
 
-if osp.exists(args.storage):
-    gbdt.load(args.storage)
+if osp.exists(args.saved_model_path):
+    gbdt.load(args.saved_model_path)
 else:
     gbdt.tune(tf_train=train_dataset.tensor_frame,
               tf_val=val_dataset.tensor_frame, num_trials=20)
-    gbdt.save(args.storage)
+    gbdt.save(args.saved_model_path)
 
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
 score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
