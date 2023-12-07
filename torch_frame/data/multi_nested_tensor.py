@@ -9,12 +9,14 @@ from torch_frame.data.multi_tensor import _batched_arange, _MultiTensor
 
 
 class MultiNestedTensor(_MultiTensor):
-    r"""A PyTorch tensor-based data structure that stores
+    r"""A read-only PyTorch tensor-based data structure that stores
     :obj:`[num_rows, num_cols, *]`, where the size of last dimension can be
     different for different row/column. Internally, we store the object in an
     efficient flattened format: :obj:`(values, offset)`, where the PyTorch
     Tensor at :obj:`(i, j)` is accessed by
     :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`.
+    It supports various advanced indexing, including slicing and list indexing
+    along both row and column.
 
     Args:
         num_rows (int): Number of rows.
@@ -31,15 +33,32 @@ class MultiNestedTensor(_MultiTensor):
         ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
         ...    [torch.tensor([8, 9]), torch.tensor([10])],
         ... ]
-        >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
-        >>> out.size(0)
-        3
-        >>> out.size(1)
-        2
-        >>> out.size(2)
-        Traceback (most recent call last):
-        File "<stdin>", line 1, in <module>
-        ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
+        >>> mnt = MultiNestedTensor.from_tensor_mat(tensor_mat)
+        >>> mnt
+        MultiNestedTensor(num_rows=3, num_cols=2, device='cpu')
+        >>> mnt.values
+        tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+        >>> mnt.offset
+        tensor([ 0,  2,  3,  4,  7,  9, 10])
+        >>> mnt[0, 0]
+        torch.tensor([1, 2])
+        >>> mnt[1, 1]
+        tensor([5, 6, 7])
+        >>> mnt[0] # Row integer indexing
+        MultiNestedTensor(num_rows=1, num_cols=2, device='cpu')
+        >>> mnt[:, 0] # Column integer indexing
+        MultiNestedTensor(num_rows=3, num_cols=1, device='cpu')
+        >>> mnt[:2] # Row integer slicing
+        MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
+        >>> mnt[[2, 1, 2, 0]] # Row list indexing
+        MultiNestedTensor(num_rows=4, num_cols=2, device='cpu')
+        >>> mnt.to_dense(fill_value = -1) # Map to a dense matrix via padding
+        tensor([[[ 1,  2, -1],
+                [ 3, -1, -1]],
+                [[ 4, -1, -1],
+                [ 5,  6,  7]],
+                [[ 8,  9, -1],
+                [10, -1, -1]]])
     """
     def validate(self):
         assert self.offset[0] == 0
@@ -62,23 +81,6 @@ class MultiNestedTensor(_MultiTensor):
 
         Returns:
             MultiNestedTensor: A :class:`MultiNestedTensor` instance.
-
-        Example:
-            >>> tensor_mat = [
-            ...    [torch.tensor([1, 2, 3]), torch.tensor([4, 5])],
-            ...    [torch.tensor([6, 7]), torch.tensor([8, 9, 10])],
-            ... ]
-            >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
-            >>> out
-            MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
-            >>> out.values
-            tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
-            >>> out.offset
-            tensor([ 0,  3,  5,  7, 10])
-            >>> tensor_mat[2][0]
-            tensor([8, 9])
-            >>> out[2, 0]
-            tensor([8, 9])
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -315,6 +317,17 @@ class MultiNestedTensor(_MultiTensor):
         xs: Sequence[MultiNestedTensor],
         dim: int = 0,
     ) -> MultiNestedTensor:
+        """Concatenates a sequence of :class:`MultiNestedTensor` along the
+        specified dimension.
+
+        Args:
+            xs (Sequence[MultiNestedTensor]): A sequence of
+                :class:`MultiNestedTensor` to be concatenated.
+            dim (int): The dimension to concatenate along.
+
+        Returns:
+            MultiNestedTensor: Concatenated multi nested tensor.
+        """
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
