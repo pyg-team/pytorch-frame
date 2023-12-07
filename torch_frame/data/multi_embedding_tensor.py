@@ -233,34 +233,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             dim (int): The dimension to concatenate along.
 
         Returns:
-            MultiEmbeddingTensor: Concatenated multi embedding tensor that
-                shares the same data as the input multi embedding tensors.
-
-        Example:
-            >>> from torch_frame.data import MultiEmbeddingTensor
-            >>> tensor_list1 = [
-            ...     torch.tensor([[0, 1, 2], [6, 7, 8]]),  # emb col 1
-            ...     torch.tensor([[3, 4], [9, 10]]),       # emb col 2
-            ...     torch.tensor([[5], [11]]),             # emb col 3
-            ... ]
-            >>> tenosor_list2 = [
-            ...     torch.tensor([[12, 13, 14]]),          # emb col 1
-            ...     torch.tensor([[15, 16]]),              # emb col 2
-            ...     torch.tensor([[17]]),                  # emb col 3
-            ... ]
-            >>> met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
-            >>> met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
-            >>> met1
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> met2
-            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
-            >>> met_cat = MultiEmbeddingTensor.cat([met1, met2], dim=0)
-            >>> met_cat
-            MultiEmbeddingTensor(num_rows=3, num_cols=3, device='cpu')
-            >>> met_cat.values
-            tensor([[ 0,  1,  2,  3,  4,  5],
-                    [ 6,  7,  8,  9, 10, 11],
-                    [12, 13, 14, 15, 16, 17]])
+            MultiEmbeddingTensor: Concatenated multi embedding tensor.
         """
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
