@@ -292,57 +292,6 @@ class TimestampTensorMapper(TensorMapper):
         raise NotImplementedError
 
 
-class TextEmbeddingTensorMapper(TensorMapper):
-    r"""Embed any text series into tensor.
-
-    Args:
-        text_embedder (callable): A callable function that takes list of
-            strings and returns embedding for that list of strings. For heavy
-            text embedding model (e.g., based on Transformer), we recommend
-            using GPU.
-        batch_size (int, optional): The mini-batch size used for the text
-            embedder. If :obj:`None`, we will encode all text in a full-batch
-            manner. If you use heavy text embedding model with GPU, we
-            recommend you setting :obj:`batch_size` to a reasonable number to
-            avoid the GPU OOM issue.
-    """
-    def __init__(
-        self,
-        text_embedder: Callable[[list[str]], Tensor],
-        batch_size: int | None,
-    ):
-        super().__init__()
-        self.text_embedder = text_embedder
-        self.batch_size = batch_size
-
-    def forward(
-        self,
-        ser: Series,
-        *,
-        device: torch.device | None = None,
-    ) -> MultiEmbeddingTensor:
-        ser = ser.astype(str)
-        ser_list = ser.tolist()
-        if self.batch_size is None:
-            emb = self.text_embedder(ser_list)
-        else:
-            emb_list = []
-            for i in tqdm(range(0, len(ser_list), self.batch_size),
-                          desc="Embedding texts in mini-batch"):
-                emb = self.text_embedder(ser_list[i:i + self.batch_size])
-                emb_list.append(emb.to(device))
-            emb = torch.cat(emb_list, dim=0)
-        return MultiEmbeddingTensor(
-            num_rows=len(ser),
-            num_cols=1,
-            values=emb,
-            offset=torch.tensor([0, len(emb[0])]),
-        ).to(device)
-
-    def backward(self, tensor: Tensor) -> pd.Series:
-        raise NotImplementedError
-
-
 class TextTokenizationTensorMapper(TensorMapper):
     r"""Tokenize any text series into a dictionary of
     :class:`MultiNestedTensor`.
@@ -430,23 +379,62 @@ class TextTokenizationTensorMapper(TensorMapper):
 
 
 class EmbeddingTensorMapper(TensorMapper):
-    r"""Maps embedding columns into tensors."""
+    r"""Maps embeddings columns into tensors. It can take either raw data,
+        e.g. text, images and convert them into embeddings with the specified
+        embedder, or embeddings as column values directly.
+
+    Args:
+        embedder (callable, optional): A callable function that takes list of
+            raw data and returns embedding for that list of raw data. For heavy
+            embedding model (e.g., based on Transformer), we recommend using
+            GPU.
+        batch_size (int, optional): The mini-batch size used for the embedder.
+            If :obj:`None`, we will encode all text in a full-batch manner.
+            If you use heavy embedding model with GPU, we recommend you setting
+            :obj:`batch_size` to a reasonable number to avoid the GPU OOM
+            issue.
+    """
+    def __init__(
+        self,
+        embedder: Callable[[list[str]], Tensor] | None = None,
+        batch_size: int | None = None,
+    ):
+        super().__init__()
+        self.embedder = embedder
+        self.batch_size = batch_size
+
     def forward(
         self,
         ser: Series,
         *,
         device: torch.device | None = None,
     ) -> MultiEmbeddingTensor:
-        dtype = _get_default_numpy_dtype()
-        values = torch.from_numpy(np.stack(ser.values).astype(dtype))
+
+        if self.embedder is not None:
+            ser = ser.astype(str)
+            ser_list = ser.tolist()
+            if self.batch_size is None:
+                values = self.embedder(ser_list)
+            else:
+                emb_list = []
+                for i in tqdm(range(0, len(ser_list), self.batch_size),
+                              desc="Embedding raw data in mini-batch"):
+                    emb = self.embedder(ser_list[i:i + self.batch_size])
+                    emb_list.append(emb.to(device))
+                values = torch.cat(emb_list, dim=0)
+        else:
+            dtype = _get_default_numpy_dtype()
+            values = torch.from_numpy(np.stack(ser.values).astype(dtype))
         return MultiEmbeddingTensor(
             num_rows=len(ser),
             num_cols=1,
             values=values,
-            offset=torch.tensor([0, len(ser[0])]),
+            offset=torch.tensor([0, len(values[0])]),
         ).to(device)
 
     def backward(self, tensor: MultiEmbeddingTensor) -> pd.Series:
+        if self.embedder:
+            raise NotImplementedError
         values = tensor.values.cpu()
         offset = tensor.offset
         val = [v for v in values[:, 0:offset[1]].numpy()]

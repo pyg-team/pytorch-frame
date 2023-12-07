@@ -83,30 +83,41 @@ def test_stypewise_feature_encoder(
     dataset.materialize()
     tensor_frame = dataset.tensor_frame
     out_channels = 8
+    stype_encoder_dict = {
+        stype.categorical:
+        encoder_cat_cls_kwargs[0](**encoder_cat_cls_kwargs[1]),
+        stype.numerical:
+        encoder_num_cls_kwargs[0](**encoder_num_cls_kwargs[1]),
+        stype.multicategorical:
+        encoder_multicategorical_cls_kwargs[0](
+            **encoder_multicategorical_cls_kwargs[1]),
+        stype.timestamp:
+        encoder_timestamp_cls_kwargs[0](**encoder_timestamp_cls_kwargs[1]),
+        stype.text_embedded:
+        encoder_text_embedded_cls_kwargs[0](
+            **encoder_text_embedded_cls_kwargs[1]),
+        stype.text_tokenized:
+        encoder_text_tokenized_cls_kwargs[0](
+            **encoder_text_tokenized_cls_kwargs[1]),
+        stype.embedding:
+        encoder_embedding_cls_kwargs[0](**encoder_embedding_cls_kwargs[1]),
+    }
+    # Test that StypeWiseFeatureEncoder initialization
+    # fails when an encoder is declared for a child stype.
+    with pytest.raises(ValueError, match="is a child stype to"):
+        encoder = StypeWiseFeatureEncoder(
+            out_channels=out_channels,
+            col_stats=dataset.col_stats,
+            col_names_dict=tensor_frame.col_names_dict,
+            stype_encoder_dict=stype_encoder_dict,
+        )
 
+    stype_encoder_dict.pop(stype.text_embedded)
     encoder = StypeWiseFeatureEncoder(
         out_channels=out_channels,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
-        stype_encoder_dict={
-            stype.categorical:
-            encoder_cat_cls_kwargs[0](**encoder_cat_cls_kwargs[1]),
-            stype.numerical:
-            encoder_num_cls_kwargs[0](**encoder_num_cls_kwargs[1]),
-            stype.multicategorical:
-            encoder_multicategorical_cls_kwargs[0](
-                **encoder_multicategorical_cls_kwargs[1]),
-            stype.timestamp:
-            encoder_timestamp_cls_kwargs[0](**encoder_timestamp_cls_kwargs[1]),
-            stype.text_embedded:
-            encoder_text_embedded_cls_kwargs[0](
-                **encoder_text_embedded_cls_kwargs[1]),
-            stype.text_tokenized:
-            encoder_text_tokenized_cls_kwargs[0](
-                **encoder_text_tokenized_cls_kwargs[1]),
-            stype.embedding:
-            encoder_embedding_cls_kwargs[0](**encoder_embedding_cls_kwargs[1]),
-        },
+        stype_encoder_dict=stype_encoder_dict,
     )
     x, col_names = encoder(tensor_frame)
     assert x.shape == (num_rows, tensor_frame.num_cols, out_channels)
@@ -116,8 +127,6 @@ def test_stypewise_feature_encoder(
         "num_3",
         "cat_1",
         "cat_2",
-        "text_embedded_1",
-        "text_embedded_2",
         "text_tokenized_1",
         "text_tokenized_2",
         "multicat_1",
@@ -129,4 +138,6 @@ def test_stypewise_feature_encoder(
         'timestamp_2',
         "emb_1",
         "emb_2",
+        "text_embedded_1",
+        "text_embedded_2",
     ]

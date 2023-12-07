@@ -67,6 +67,13 @@ class stype(Enum):
         """
         return self.use_multi_nested_tensor or self.use_multi_embedding_tensor
 
+    @property
+    def parent(self):
+        if self == stype.text_embedded:
+            return stype.embedding
+        else:
+            return self
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')
