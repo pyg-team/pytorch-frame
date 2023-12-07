@@ -76,19 +76,6 @@ class MultiEmbeddingTensor(_MultiTensor):
 
         Returns:
             MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> out[0, 0]
-            tensor([0, 1, 2])
         """
         assert isinstance(tensor_list, list) and len(tensor_list) > 0
         num_rows = tensor_list[0].size(0)
