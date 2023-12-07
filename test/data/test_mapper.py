@@ -64,12 +64,12 @@ def test_timestamp_tensor_mapper():
 
 def test_multicategorical_tensor_mapper():
     for ser in [
-            pd.Series(['A,B', 'B', '', 'C', 'B,C', None]),
+            pd.Series(['A,B', 'B', '', 'C', 'B,C', None, np.nan]),
             # Testing with leading and traling whitespace
-            pd.Series([' A, B', '  B', ' ', 'C  ', 'B , C', None])
+            pd.Series([' A, B', '  B', ' ', 'C  ', 'B , C', None, np.nan])
     ]:
-        expected_values = torch.tensor([1, 0, 0, 0, -1])
-        expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5])
+        expected_values = torch.tensor([1, 0, 0, 0, -1, -1])
+        expected_boundaries = torch.tensor([0, 2, 3, 3, 3, 4, 5, 6])
         mapper = MultiCategoricalTensorMapper(['B', 'A'], sep=",")
 
         tensor = mapper.forward(ser)

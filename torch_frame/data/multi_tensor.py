@@ -1,28 +1,34 @@
+from __future__ import annotations
+
 import copy
-from typing import Any, Callable, Dict, Sequence, Tuple, Union
+from typing import Any, Callable, Sequence, TypeVar
 
 import torch
 from torch import Tensor
 
+T = TypeVar("T", int, Tensor)
+
 
 class _MultiTensor:
+    ndim = 3
+
     def __init__(
         self,
         num_rows: int,
         num_cols: int,
         values: Tensor,
         offset: Tensor,
-    ):
+    ) -> None:
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.values = values
         self.offset = offset
         self.validate()
 
-    def validate(self):
-        r"""Validates the :class:`_MultiTensor` object."""
+    def validate(self) -> None:
+        pass
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         r"""Serialize the object into a dictionary."""
         return {
             "num_rows": self.num_rows,
@@ -36,12 +42,6 @@ class _MultiTensor:
             f"{self.__class__.__name__} object does not support setting "
             "values. It should be used for read-only.")
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> Union["_MultiTensor", Tensor]:
-        raise NotImplementedError
-
     def __repr__(self) -> str:
         return " ".join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",
@@ -50,12 +50,8 @@ class _MultiTensor:
         ])
 
     @property
-    def shape(self) -> Tuple[int, int, int]:
+    def shape(self) -> tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)
-
-    @property
-    def ndim(self) -> int:
-        return 3
 
     def size(self, dim: int) -> int:
         dim = self._normalize_dim(dim)
@@ -63,11 +59,12 @@ class _MultiTensor:
             return self.num_rows
         elif dim == 1:
             return self.num_cols
+        assert False, "Should not reach here."
 
     def dim(self) -> int:
         return self.ndim
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num_rows
 
     @property
@@ -78,7 +75,7 @@ class _MultiTensor:
     def dtype(self) -> torch.dtype:
         return self.values.dtype
 
-    def clone(self) -> "_MultiTensor":
+    def clone(self) -> _MultiTensor:
         return self.__class__(
             self.num_rows,
             self.num_cols,
@@ -99,7 +96,7 @@ class _MultiTensor:
 
     # Helper Functions ########################################################
 
-    def _apply(self, fn: Callable[[Tensor], Tensor]) -> "_MultiTensor":
+    def _apply(self, fn: Callable[[Tensor], Tensor]) -> _MultiTensor:
         out = copy.copy(self)
         out.values = fn(out.values)
         out.offset = fn(out.offset)
@@ -126,10 +123,10 @@ class _MultiTensor:
 
     def _normalize_index(
         self,
-        index: Union[int, Tensor],
+        index: T,
         dim: int,
         is_slice_end: bool = False,
-    ) -> Union[int, Tensor]:
+    ) -> T:
         """Helper function to map negative indices to positive indices and
         raise :obj:`IndexError` when necessary.
 
@@ -166,8 +163,8 @@ class _MultiTensor:
     @classmethod
     def allclose(
         cls,
-        tensor1: "_MultiTensor",
-        tensor2: "_MultiTensor",
+        tensor1: _MultiTensor,
+        tensor2: _MultiTensor,
         equal_nan: bool = False,
     ) -> bool:
         r"""Returns whether given two tensors are all close or not.
@@ -200,7 +197,7 @@ class _MultiTensor:
     def __getitem__(
         self,
         index: Any,
-    ) -> Union["_MultiTensor", Tensor]:
+    ) -> _MultiTensor | Tensor:
         if isinstance(index, tuple):
             # index[0] for row indexing, index[1] for column indexing
             assert len(index) == 2
@@ -220,7 +217,7 @@ class _MultiTensor:
     def _get_value(self, row: int, col: int) -> Tensor:
         raise NotImplementedError
 
-    def index_select(self, index: Tensor, dim: int) -> "_MultiTensor":
+    def index_select(self, index: Tensor, dim: int) -> _MultiTensor:
         """Returns a :class:`_MultiTensor` which indexes the input
         :class:`_MultiTensor` along the specified dimension.
 
@@ -229,19 +226,20 @@ class _MultiTensor:
             dim (int): The dimension to index in.
         """
         dim = self._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
+        idx = self._normalize_index(index, dim=dim)
         if dim == 0:
-            return self._row_index_select(index)
+            return self._row_index_select(idx)
         elif dim == 1:
-            return self._col_index_select(index)
+            return self._col_index_select(idx)
+        assert False, "Should not reach here."
 
-    def _row_index_select(self, index: Tensor) -> "_MultiTensor":
+    def _row_index_select(self, index: Tensor) -> _MultiTensor:
         raise NotImplementedError
 
-    def _col_index_select(self, index: Tensor) -> "_MultiTensor":
+    def _col_index_select(self, index: Tensor) -> _MultiTensor:
         raise NotImplementedError
 
-    def _slice(self, index: slice, dim: int) -> "_MultiTensor":
+    def _slice(self, index: slice, dim: int) -> _MultiTensor:
         dim = self._normalize_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if index.step is not None and index.step > 1:
@@ -264,7 +262,7 @@ class _MultiTensor:
                 length=end_idx - start_idx,
             )
 
-    def narrow(self, dim: int, start: int, length: int) -> "_MultiTensor":
+    def narrow(self, dim: int, start: int, length: int) -> _MultiTensor:
         """Narrow the tensor along the given dimension.
 
         Args:
@@ -283,21 +281,22 @@ class _MultiTensor:
             return self._row_narrow(start, length)
         elif dim == 1:
             return self._col_narrow(start, length)
+        assert False, "Should not reach here."
 
-    def _row_narrow(self, start: int, length: int) -> "_MultiTensor":
+    def _row_narrow(self, start: int, length: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def _col_narrow(self, start: int, length: int) -> "_MultiTensor":
+    def _col_narrow(self, start: int, length: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def _empty(self, dim: int) -> "_MultiTensor":
+    def _empty(self, dim: int) -> _MultiTensor:
         raise NotImplementedError
 
     def select(
         self,
-        index: Union[int, Tensor, Sequence[int], slice, range],
+        index: int | Tensor | Sequence[int] | slice | range,
         dim: int,
-    ) -> "_MultiTensor":
+    ) -> _MultiTensor:
         """Returns a new :class:`MultiEmbeddingTensor` which indexes the input
         :class:`MultiEmbeddingTensor` along the specified dimension.
 
@@ -321,13 +320,13 @@ class _MultiTensor:
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=dim,
             )
+        assert False, "Should not reach here."
+
+    def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def _single_index_select(self, index: int, dim: int) -> "_MultiTensor":
-        raise NotImplementedError
 
-
-def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
+def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
     r"""Fast implementation of batched version of :meth:`torch.arange`.
     It essentially does the following.
 
@@ -356,7 +355,7 @@ def _batched_arange(count: Tensor) -> Tuple[Tensor, Tensor]:
     torch.cumsum(count, dim=0, out=ptr[1:])
 
     batch = torch.arange(count.numel(), device=count.device).repeat_interleave(
-        count, output_size=ptr[-1])  # type: ignore
+        count, output_size=ptr[-1])  # type: ignore[call-overload]
 
     arange = torch.arange(batch.numel(), device=count.device)
     arange -= ptr[batch]

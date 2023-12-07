@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Any
 
 import torch
 import torch.nn.functional as F
@@ -21,7 +23,7 @@ def feature_mixup(
     y: Tensor,
     num_classes: int,
     beta: float = 0.5,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
@@ -84,10 +86,10 @@ class ExcelFormer(Module):
         num_layers (int): Number of
             :class:`torch_frame.nn.conv.ExcelFormerConv` layers.
         num_heads (int): Number of attention heads used in :class:`DiaM`
-        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+        col_stats(dict[str,dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:obj:`torch_frame.stype`, List[str]]): A
+        col_names_dict (dict[:obj:`torch_frame.stype`, list[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
@@ -104,12 +106,12 @@ class ExcelFormer(Module):
         num_cols: int,
         num_layers: int,
         num_heads: int,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -138,7 +140,7 @@ class ExcelFormer(Module):
                                                       out_channels, num_cols)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.excelformer_encoder.reset_parameters()
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
@@ -168,8 +170,8 @@ class ExcelFormer(Module):
     def forward_mixup(
         self,
         tf: TensorFrame,
-        beta: Optional[float] = 0.5,
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+        beta: float = 0.5,
+    ) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings. If
         `mixup` is :obj:`True`, it produces the output embeddings together with
         the mixed-up targets.
@@ -198,7 +200,7 @@ class ExcelFormer(Module):
 
         # Create a new `feat_dict`, where stype.numerical is swapped with
         # mixed up feature.
-        feat_dict: Dict[stype, Tensor] = {}
+        feat_dict: dict[stype, Tensor] = {}
         for stype_name, x in tf.feat_dict.items():
             if stype_name == stype.numerical:
                 feat_dict[stype_name] = x_mixedup

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))
 - Fixed documentation with updated links & corrected typos ([#259](https://github.com/pyg-team/pytorch-frame/pull/259))
+- Added documentation on handling different stypes ([#271](https://github.com/pyg-team/pytorch-frame/pull/271))
 - Added `TimestampEncoder` ([#225](https://github.com/pyg-team/pytorch-frame/pull/225))
 - Added `LightGBM` ([#248](https://github.com/pyg-team/pytorch-frame/pull/248))
 - Added time columns to the `MultimodalTextBenchmark` ([#253](https://github.com/pyg-team/pytorch-frame/pull/253))
@@ -43,6 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Renamed `torch_frame.stype` module to `torch_frame._stype` ([#275](https://github.com/pyg-team/pytorch-frame/pull/275))
 - Renamed `text_tokenized_cfg` into `col_to_text_tokenized_cfg` ([#257](https://github.com/pyg-team/pytorch-frame/pull/257))
 - Made `Trompt` output 2-dim embeddings in `forward`
 - Renamed `text_embedder_cfg` into `col_to_text_embedder_cfg`

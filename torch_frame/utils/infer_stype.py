@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pandas as pd
 import pandas.api.types as ptypes
@@ -19,20 +21,20 @@ def _is_timestamp(ser: Series) -> bool:
         try:
             pd.to_datetime(ser, format=time_format)
             is_timestamp = True
-        except (ValueError, ParserError):
+        except (ValueError, ParserError, TypeError):
             pass
     return is_timestamp
 
 
 def _lst_is_all_type(
-    lst: List[Any],
-    types: Union[Tuple[type], type],
+    lst: list[Any],
+    types: tuple[type] | type,
 ) -> bool:
     assert isinstance(lst, list)
     return all(isinstance(x, types) for x in lst)
 
 
-def _lst_is_free_of_nan_and_inf(lst: List[Any]):
+def _lst_is_free_of_nan_and_inf(lst: list[Any]):
     assert isinstance(lst, list)
     return all(not math.isnan(x) and not math.isinf(x) for x in lst)
 
@@ -41,7 +43,7 @@ def _min_count(ser: Series) -> int:
     return ser.value_counts().min()
 
 
-def infer_series_stype(ser: Series) -> Optional[stype]:
+def infer_series_stype(ser: Series) -> stype | None:
     """Infer :obj:`stype` given :class:`Series` object. The inference may not
     be always correct/best for your data. We recommend you double-checking the
     correctness yourself before actually using it.
@@ -113,14 +115,21 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                     return stype.numerical
         else:
             # Candidates: timestamp, categorical, multicategorical,
-            # text_(embedded/tokenized)
+            # text_(embedded/tokenized), embedding
             if _is_timestamp(ser):
                 return stype.timestamp
 
             # Candates: categorical, multicategorical,
-            # text_(embedded/tokenized)
+            # text_(embedded/tokenized), embedding
             if _min_count(ser) > cat_min_count_thresh:
                 return stype.categorical
+
+            # Candates: multicategorical, text_(embedded/tokenized), embedding
+            if not ptypes.is_string_dtype(ser):
+                if _min_count(ser) > cat_min_count_thresh:
+                    return stype.multicategorical
+                else:
+                    return stype.embedding
 
             # Try different possible seps and mick the largest min_count.
             min_count_list = []
@@ -135,7 +144,7 @@ def infer_series_stype(ser: Series) -> Optional[stype]:
                 return stype.text_embedded
 
 
-def infer_df_stype(df: DataFrame) -> Dict[str, stype]:
+def infer_df_stype(df: DataFrame) -> dict[str, stype]:
     """Infer :obj:`col_to_stype` given :class:`DataFrame` object.
 
     Args:

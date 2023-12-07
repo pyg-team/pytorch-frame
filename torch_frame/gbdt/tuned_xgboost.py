@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import copy
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -35,7 +37,7 @@ class XGBoost(GBDT):
     def _to_xgboost_input(
         self,
         tf: TensorFrame,
-    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    ) -> tuple[np.ndarray, np.ndarray, list[str]]:
         r"""Convert :class:`TensorFrame` into XGBoost-compatible input format:
         :obj:`(feat, y, feat_types)`.
 
@@ -57,8 +59,8 @@ class XGBoost(GBDT):
         y = tf.y
         assert y is not None
 
-        feats: List[Tensor] = []
-        types: List[str] = []
+        feats: list[Tensor] = []
+        types: list[str] = []
 
         if stype.categorical in tf.feat_dict:
             feats.append(neg_to_nan(tf.feat_dict[stype.categorical]))

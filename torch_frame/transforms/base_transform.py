@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from torch_frame import TensorFrame
 from torch_frame.data.stats import StatType
@@ -13,8 +15,7 @@ class BaseTransform(ABC):
     :class:`TensorFrame`
     """
     def __init__(self):
-        self._transformed_stats: Optional[Dict[str, Dict[StatType,
-                                                         Any]]] = None
+        self._transformed_stats: dict[str, dict[StatType, Any]] | None = None
 
     def __call__(self, tf: TensorFrame) -> TensorFrame:
         # Shallow-copy the data so that we prevent in-place data modification.
@@ -33,7 +34,7 @@ class BaseTransform(ABC):
         return tf
 
     @property
-    def transformed_stats(self) -> Dict[str, Dict[StatType, Any]]:
+    def transformed_stats(self) -> dict[str, dict[StatType, Any]]:
         r"""The column stats after the transform.
 
         Returns:

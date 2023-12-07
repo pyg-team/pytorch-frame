@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import Callable
 
 from torch import Tensor
 
@@ -18,9 +20,9 @@ class TextEmbedderConfig:
             be obtained in a full-batch manner. (default: :obj:`None`)
 
     """
-    text_embedder: Callable[[List[str]], Tensor]
+    text_embedder: Callable[[list[str]], Tensor]
     # Batch size to use when encoding the sentences. It is recommended to set
     # it to a reasonable value when one uses a heavy text embedding model
     # (e.g., Transformer) on GPU. If set to :obj:`None`, the text embeddings
     # will be obtained in a full-batch manner.
-    batch_size: Optional[int] = None
+    batch_size: int | None = None

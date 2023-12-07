@@ -2,10 +2,9 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from torch_frame.data.stats import StatType, compute_col_stats
-from torch_frame.datasets.fake import _random_timestamp
-from torch_frame.stype import (
+from torch_frame import (
     categorical,
     embedding,
     multicategorical,
@@ -13,6 +12,8 @@ from torch_frame.stype import (
     sequence_numerical,
     timestamp,
 )
+from torch_frame.data.stats import StatType, compute_col_stats
+from torch_frame.datasets.fake import _random_timestamp
 
 
 def test_compute_col_stats_numerical():
@@ -25,6 +26,14 @@ def test_compute_col_stats_numerical():
     }
 
 
+def test_compute_col_stats_numerical_with_dirty_columns():
+    ser = pd.Series([1, 2, 3, 'One', np.inf, np.nan])
+    stype = numerical
+    with pytest.raises(TypeError,
+                       match='Numerical series contains invalid entries.'):
+        compute_col_stats(ser, stype)
+
+
 def test_compute_col_stats_categorical():
     ser = pd.Series(['a', 'a', 'a', 'b', 'c'])
     stype = categorical
@@ -35,7 +44,7 @@ def test_compute_col_stats_categorical():
 
 def test_compute_col_stats_multi_categorical():
     for ser in [
-            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None]),
+            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None, np.nan]),
             # # Testing with leading and traling whitespace
             pd.Series(['a| a | b', 'a| c', 'c |a', '  a| b| c', '  ', None]),
             # Testing with list representation

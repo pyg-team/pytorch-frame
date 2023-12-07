@@ -31,7 +31,7 @@ def withPackage(*args) -> Callable:
     r"""A decorator to skip tests if certain packages are not installed.
     Also supports version specification.
     """
-    na_packages = set(package for package in args if not has_package(package))
+    na_packages = {package for package in args if not has_package(package)}
 
     def decorator(func: Callable) -> Callable:
         import pytest
