@@ -195,7 +195,8 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
-        raise NotImplementedError
+        assert False, "Should not reach here."
+
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
@@ -305,4 +306,4 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset = torch.tensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
 
-        raise NotImplementedError
+        assert False, "Should not reach here."
