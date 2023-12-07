@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, TypeVar
 
 import torch
 from torch import Tensor
+
+T = TypeVar("T", int, Tensor)
 
 
 class _MultiTensor:
@@ -14,7 +16,7 @@ class _MultiTensor:
         num_cols: int,
         values: Tensor,
         offset: Tensor,
-    ):
+    ) -> None:
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.values = values
@@ -38,12 +40,6 @@ class _MultiTensor:
             f"{self.__class__.__name__} object does not support setting "
             "values. It should be used for read-only.")
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> _MultiTensor | Tensor:
-        raise NotImplementedError
-
     def __repr__(self) -> str:
         return " ".join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",
@@ -65,11 +61,12 @@ class _MultiTensor:
             return self.num_rows
         elif dim == 1:
             return self.num_cols
+        raise NotImplementedError
 
     def dim(self) -> int:
         return self.ndim
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num_rows
 
     @property
@@ -128,10 +125,10 @@ class _MultiTensor:
 
     def _normalize_index(
         self,
-        index: int | Tensor,
+        index: T,
         dim: int,
         is_slice_end: bool = False,
-    ) -> int | Tensor:
+    ) -> T:
         """Helper function to map negative indices to positive indices and
         raise :obj:`IndexError` when necessary.
 
@@ -231,11 +228,12 @@ class _MultiTensor:
             dim (int): The dimension to index in.
         """
         dim = self._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
+        idx = self._normalize_index(index, dim=dim)
         if dim == 0:
-            return self._row_index_select(index)
+            return self._row_index_select(idx)
         elif dim == 1:
-            return self._col_index_select(index)
+            return self._col_index_select(idx)
+        raise NotImplementedError
 
     def _row_index_select(self, index: Tensor) -> _MultiTensor:
         raise NotImplementedError
@@ -285,6 +283,7 @@ class _MultiTensor:
             return self._row_narrow(start, length)
         elif dim == 1:
             return self._col_narrow(start, length)
+        raise NotImplementedError
 
     def _row_narrow(self, start: int, length: int) -> _MultiTensor:
         raise NotImplementedError

@@ -38,7 +38,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         >>> out[0, 2]
         tensor([10])
     """
-    def validate(self):
+    def validate(self) -> None:
         assert self.offset[0] == 0
         assert len(self.offset) == self.num_cols + 1
         assert self.offset.ndim == 1
@@ -195,6 +195,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
+        raise NotImplementedError
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
@@ -303,3 +304,5 @@ class MultiEmbeddingTensor(_MultiTensor):
             # which is inconsistent with when dim=0
             offset = torch.tensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
+
+        raise NotImplementedError
