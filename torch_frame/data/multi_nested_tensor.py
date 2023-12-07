@@ -317,6 +317,17 @@ class MultiNestedTensor(_MultiTensor):
         xs: Sequence[MultiNestedTensor],
         dim: int = 0,
     ) -> MultiNestedTensor:
+        """Concatenates a sequence of :class:`MultiNestedTensor` along the
+        specified dimension.
+
+        Args:
+            xs (Sequence[MultiNestedTensor]): A sequence of
+                :class:`MultiNestedTensor` to be concatenated.
+            dim (int): The dimension to concatenate along.
+
+        Returns:
+            MultiNestedTensor: Concatenated multi nested tensor.
+        """
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
