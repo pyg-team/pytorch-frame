@@ -10,6 +10,8 @@ T = TypeVar("T", int, Tensor)
 
 
 class _MultiTensor:
+    ndim = 3
+
     def __init__(
         self,
         num_rows: int,
@@ -23,7 +25,7 @@ class _MultiTensor:
         self.offset = offset
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         r"""Validates the :class:`_MultiTensor` object."""
 
     def to_dict(self) -> dict[str, Any]:
@@ -50,10 +52,6 @@ class _MultiTensor:
     @property
     def shape(self) -> tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)
-
-    @property
-    def ndim(self) -> int:
-        return 3
 
     def size(self, dim: int) -> int:
         dim = self._normalize_dim(dim)

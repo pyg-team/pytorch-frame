@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Sequence, cast
 
 import torch
 from torch import Tensor
@@ -164,7 +164,8 @@ class MultiNestedTensor(_MultiTensor):
         accum = torch.cumsum(offset_mat_zero_start[:, -1], dim=0)
         offset_mat_zero_start[1:] += accum[:-1].view(-1, 1)
         num_cols = end - start
-        offset = torch.full((self.num_rows * num_cols + 1, ), accum[-1])
+        offset = torch.full((self.num_rows * num_cols + 1, ),
+                            cast(int, accum[-1]))
         offset[:-1] = offset_mat_zero_start[:, :-1].flatten()
         return MultiNestedTensor(
             num_rows=self.num_rows,
@@ -244,6 +245,7 @@ class MultiNestedTensor(_MultiTensor):
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
+        start_idx: int | Tensor
         if dim == 0:
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
@@ -282,10 +284,12 @@ class MultiNestedTensor(_MultiTensor):
                 :obj:`(num_rows, num_cols, max_length)`
         """
         count = self.offset[1:] - self.offset[:-1]
-        max_length = count.max()
+        max_length = cast(int, count.max())
         batch, arange = _batched_arange(count)
         dense = self.values.new_full(
-            (self.num_rows, self.num_cols, max_length), fill_value=fill_value)
+            (self.num_rows, self.num_cols, max_length),
+            fill_value=fill_value,
+        )
         row = batch // self.num_cols
         col = batch % self.num_cols
         dense[row, col, arange] = self.values
@@ -337,7 +341,7 @@ class MultiNestedTensor(_MultiTensor):
             for x in xs[:-1]:
                 offset[idx:idx + len(x.offset[:-1])] = x.offset[:-1]
                 offset[idx:idx + len(x.offset[:-1])].add_(accum)
-                accum += x.offset[-1]
+                accum += cast(int, x.offset[-1])
                 idx += len(x.offset[:-1])
             offset[idx:] = xs[-1].offset
             offset[idx:].add_(accum)
