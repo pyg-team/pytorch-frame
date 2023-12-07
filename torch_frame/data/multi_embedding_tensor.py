@@ -201,7 +201,6 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         assert False, "Should not reach here."
 
-
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
 
