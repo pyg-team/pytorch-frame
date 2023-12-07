@@ -1,4 +1,4 @@
-from typing import List, Optional
+from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
@@ -23,14 +23,14 @@ class WhiteSpaceHashTokenizer:
     def __init__(
         self,
         num_hash_bins: int = 64,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
         batched: bool = False,
     ):
         self.device = device
         self.num_hash_bins = num_hash_bins
         self.batched = batched
 
-    def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
+    def __call__(self, sentences: list[str]) -> TextTokenizationOutputs:
         input_ids = []
         attention_mask = []
         for s in sentences:

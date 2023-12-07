@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os
-from typing import List
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -388,7 +389,7 @@ class TabularBenchmark(torch_frame.data.Dataset):
 
     @classmethod
     @property
-    def name_list(cls) -> List[str]:
+    def name_list(cls) -> list[str]:
         r"""List of dataset names available."""
         return sorted(list(cls.name_to_task_category.keys()))
 

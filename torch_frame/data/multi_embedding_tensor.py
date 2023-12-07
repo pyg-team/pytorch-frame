@@ -1,4 +1,6 @@
-from typing import List, Sequence
+from __future__ import annotations
+
+from typing import Sequence
 
 import torch
 from torch import Tensor
@@ -45,8 +47,8 @@ class MultiEmbeddingTensor(_MultiTensor):
     @classmethod
     def from_tensor_list(
         cls,
-        tensor_list: List[Tensor],
-    ) -> "MultiEmbeddingTensor":
+        tensor_list: list[Tensor],
+    ) -> MultiEmbeddingTensor:
         r"""Creates a :class:`MultiEmbeddingTensor` from a list of
         :class:`torch.Tensor`.
 
@@ -107,7 +109,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         j = self._normalize_index(j, dim=1)
         return self.values[i, self.offset[j]:self.offset[j + 1]]
 
-    def _row_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+    def _row_narrow(self, start: int, length: int) -> MultiEmbeddingTensor:
         r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
         return MultiEmbeddingTensor(
             num_rows=length,
@@ -116,7 +118,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset=self.offset,
         )
 
-    def _col_narrow(self, start: int, length: int) -> "MultiEmbeddingTensor":
+    def _col_narrow(self, start: int, length: int) -> MultiEmbeddingTensor:
         r"""Helper function called by :meth:`MultiEmbeddingTensor.narrow`."""
         offset = self.offset[start:start + length + 1] - self.offset[start]
         col_offset_start = self.offset[start]
@@ -128,7 +130,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _row_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+    def _row_index_select(self, index: Tensor) -> MultiEmbeddingTensor:
         r"""Helper function called by
         :meth:`MultiEmbeddingTensor.index_select`.
         """
@@ -139,7 +141,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset=self.offset,
         )
 
-    def _col_index_select(self, index: Tensor) -> 'MultiEmbeddingTensor':
+    def _col_index_select(self, index: Tensor) -> MultiEmbeddingTensor:
         r"""Helper function called by
         :meth:`MultiEmbeddingTensor.index_select`.
         """
@@ -171,7 +173,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         self,
         index: int,
         dim: int,
-    ) -> "MultiEmbeddingTensor":
+    ) -> MultiEmbeddingTensor:
         r"""Helper function called by
         :meth:`MultiEmbeddingTensor.index_select`.
         """
@@ -194,7 +196,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=offset,
             )
 
-    def _empty(self, dim: int) -> "MultiEmbeddingTensor":
+    def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
 
         Args:
@@ -215,9 +217,9 @@ class MultiEmbeddingTensor(_MultiTensor):
 
     @staticmethod
     def cat(
-        xs: Sequence["MultiEmbeddingTensor"],
+        xs: Sequence[MultiEmbeddingTensor],
         dim: int = 0,
-    ) -> "MultiEmbeddingTensor":
+    ) -> MultiEmbeddingTensor:
         """Concatenates a sequence of :class:`MultiEmbeddingTensor` along the
         specified dimension.
 

@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -52,15 +53,14 @@ class FakeDataset(torch_frame.data.Dataset):
         self,
         num_rows: int,
         with_nan: bool = False,
-        stypes: List[stype] = [stype.categorical, stype.numerical],
+        stypes: list[stype] = [stype.categorical, stype.numerical],
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
-        col_to_text_embedder_cfg: Optional[Union[Dict[str, TextEmbedderConfig],
-                                                 TextEmbedderConfig]] = None,
-        col_to_text_tokenizer_cfg: Optional[Union[Dict[str,
-                                                       TextTokenizerConfig],
-                                                  TextTokenizerConfig]] = None,
-    ):
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | TextEmbedderConfig | None = None,
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
+        | TextTokenizerConfig | None = None,
+    ) -> None:
         assert len(stypes) > 0
         if task_type == TaskType.REGRESSION:
             arr = np.random.randn(num_rows)

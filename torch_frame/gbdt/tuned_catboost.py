@@ -1,4 +1,6 @@
-from typing import Any, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -19,7 +21,7 @@ class CatBoost(GBDT):
     def _to_catboost_input(
         self,
         tf,
-    ) -> Tuple[DataFrame, np.ndarray, np.ndarray]:
+    ) -> tuple[DataFrame, np.ndarray, np.ndarray]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -38,8 +40,8 @@ class CatBoost(GBDT):
         y = tf.y
         assert y is not None
 
-        dfs: List[DataFrame] = []
-        cat_features: List[np.ndarray] = []
+        dfs: list[DataFrame] = []
+        cat_features: list[np.ndarray] = []
         offset: int = 0
 
         if stype.categorical in tf.feat_dict:

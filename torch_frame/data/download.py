@@ -1,15 +1,16 @@
+from __future__ import annotations
+
 import os
 import os.path as osp
 import ssl
 import sys
 import urllib.request
-from typing import Optional
 
 
 def download_url(
     url: str,
     root: str,
-    filename: Optional[str] = None,
+    filename: str | None = None,
     *,
     log: bool = True,
 ) -> str:

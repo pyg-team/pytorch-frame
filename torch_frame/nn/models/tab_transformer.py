@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import math
-from typing import Any, Dict, List
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -64,8 +66,8 @@ class TabTransformer(Module):
         encoder_pad_size: int,
         attn_dropout: float,
         ffn_dropout: float,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
     ):
         super().__init__()
         if num_layers <= 0:

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Optional
 
 import torch
 from torch import Tensor
@@ -31,8 +32,8 @@ class GBDT:
     def __init__(
         self,
         task_type: TaskType,
-        num_classes: Optional[int] = None,
-        metric: Optional[Metric] = None,
+        num_classes: int | None = None,
+        metric: Metric | None = None,
     ):
         self.task_type = task_type
         self._is_fitted: bool = False

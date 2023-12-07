@@ -1,4 +1,6 @@
-from typing import List, Sequence, Union
+from __future__ import annotations
+
+from typing import Sequence
 
 import torch
 from torch import Tensor
@@ -47,8 +49,8 @@ class MultiNestedTensor(_MultiTensor):
     @classmethod
     def from_tensor_mat(
         cls,
-        tensor_mat: List[List[Tensor]],
-    ) -> "MultiNestedTensor":
+        tensor_mat: list[list[Tensor]],
+    ) -> MultiNestedTensor:
         r"""Construct :class:`MultiNestedTensor` object from
         :obj:`tensor_mat`.
 
@@ -124,7 +126,7 @@ class MultiNestedTensor(_MultiTensor):
         out = self.values[start_idx:end_idx]
         return out
 
-    def _row_narrow(self, start: int, length: int) -> "MultiNestedTensor":
+    def _row_narrow(self, start: int, length: int) -> MultiNestedTensor:
         r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
@@ -140,7 +142,7 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _col_narrow(self, start: int, length: int) -> "MultiNestedTensor":
+    def _col_narrow(self, start: int, length: int) -> MultiNestedTensor:
         r"""Helper function called by :meth:`MultiNestedTensor.narrow`."""
         assert start >= 0
         assert length > 0
@@ -171,7 +173,7 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _row_index_select(self, index: Tensor) -> "MultiNestedTensor":
+    def _row_index_select(self, index: Tensor) -> MultiNestedTensor:
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values
         if index.numel() == 0:
@@ -210,7 +212,7 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _col_index_select(self, index: Tensor) -> "MultiNestedTensor":
+    def _col_index_select(self, index: Tensor) -> MultiNestedTensor:
         r"""Helper function called by :obj:`index_select`."""
         if index.numel() == 0:
             return MultiNestedTensor(
@@ -238,8 +240,7 @@ class MultiNestedTensor(_MultiTensor):
             offset=offset,
         )
 
-    def _single_index_select(self, index: int,
-                             dim: int) -> "MultiNestedTensor":
+    def _single_index_select(self, index: int, dim: int) -> MultiNestedTensor:
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
@@ -270,7 +271,7 @@ class MultiNestedTensor(_MultiTensor):
         else:
             raise RuntimeError(f"Unsupported dim={dim} for index_select.")
 
-    def to_dense(self, fill_value: Union[int, float]) -> Tensor:
+    def to_dense(self, fill_value: int | float) -> Tensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.
 
         Args:
@@ -290,7 +291,7 @@ class MultiNestedTensor(_MultiTensor):
         dense[row, col, arange] = self.values
         return dense
 
-    def _empty(self, dim: int) -> "MultiNestedTensor":
+    def _empty(self, dim: int) -> MultiNestedTensor:
         r"""Creates an empty :class:`MultiEmbeddingTensor`.
 
         Args:
@@ -311,9 +312,9 @@ class MultiNestedTensor(_MultiTensor):
     # Static methods ##########################################################
     @staticmethod
     def cat(
-        xs: Sequence["MultiNestedTensor"],
+        xs: Sequence[MultiNestedTensor],
         dim: int = 0,
-    ) -> "MultiNestedTensor":
+    ) -> MultiNestedTensor:
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)

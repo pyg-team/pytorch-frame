@@ -1,4 +1,6 @@
-from typing import Any, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -18,7 +20,7 @@ class LightGBM(GBDT):
     def _to_lightgbm_input(
         self,
         tf: TensorFrame,
-    ) -> Tuple[np.ndarray, np.ndarray, List[int]]:
+    ) -> tuple[np.ndarray, np.ndarray, list[int]]:
         r"""Convert :class:`TensorFrame` into LightGBM-compatible input format:
         :obj:`(feat, y, cat_features)`.
 
@@ -37,8 +39,8 @@ class LightGBM(GBDT):
         y = tf.y
         assert y is not None
 
-        dfs: List[DataFrame] = []
-        cat_features: List[np.ndarray] = []
+        dfs: list[DataFrame] = []
+        cat_features: list[np.ndarray] = []
         offset: int = 0
 
         if stype.categorical in tf.feat_dict:
