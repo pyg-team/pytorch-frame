@@ -39,6 +39,38 @@ def cat(tf_list: list[TensorFrame], along: str) -> TensorFrame:
             f"`along` must be either 'row' or 'col' (got {along}).")
 
 
+def cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
+    r"""Helper function that takes a list of :class:`TensorData` objects and
+    returns the concatenated :class:`TensorData` object.
+    """
+    if len(td_list) == 0:
+        raise ValueError("You have specified an empty list of TensorData "
+                         "to be concatenated.")
+    elif len(td_list) == 1:
+        return td_list[0]
+    else:
+        for td in td_list:
+            if isinstance(td, td_list[0].__class__):
+                raise RuntimeError(
+                    "The TensorData to be concatenated "
+                    f"must be of the same type, got {td.__class__} "
+                    f" and {td_list[0].__class__}.")
+        if isinstance(td, Tensor):
+            return torch.cat(td_list, dim=dim)
+        elif isinstance(td, MultiEmbeddingTensor):
+            return MultiEmbeddingTensor.cat(td_list, dim=dim)
+        elif isinstance(td, MultiNestedTensor):
+            return MultiNestedTensor.cat(td_list, dim=dim)
+        elif isinstance(td, dict[str, MultiNestedTensor]):
+            result = {}
+            for name in td.keys():
+                result[name] = MultiNestedTensor.cat(
+                    [td_dict[name] for td_dict in td_list], dim=dim)
+            return result
+        else:
+            raise RuntimeError(f"Concatenation not implemented for {type(td)}")
+
+
 def _cat_helper(
     tf_list: list[TensorFrame],
     dim: int,

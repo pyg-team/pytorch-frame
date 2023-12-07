@@ -115,13 +115,18 @@ def test_fake_dataset(with_nan, tokenize_with_batch, text_batch_size,
     assert feat_sequence_numerical.size(0) == num_rows
     assert feat_sequence_numerical.size(1) == 2
 
-    feat_text_embedded = tensor_frame.feat_dict[torch_frame.text_embedded]
-    assert feat_text_embedded.dtype == torch.float
-    text_embedded_cols = tensor_frame.col_names_dict[torch_frame.text_embedded]
-    assert feat_text_embedded.shape == (num_rows, len(text_embedded_cols), -1)
+    assert torch_frame.text_embedded not in tensor_frame.feat_dict
+    feat_emb = tensor_frame.feat_dict[torch_frame.embedding]
+    assert isinstance(feat_emb, MultiEmbeddingTensor)
+    assert feat_emb.dtype == torch.float
+    feat_embedded_cols = tensor_frame.col_names_dict[torch_frame.embedding]
+    assert feat_emb.shape == (num_rows, len(feat_embedded_cols), -1)
     if use_per_col_text_cfg:
-        assert feat_text_embedded.offset.max() == out_channels * sum(
-            i + 1 for i in range(len(text_embedded_cols)))
+        # Last two columns are the text_embedded.
+        # We want to make sure their embedding size is the same as the size
+        # we set initially.
+        assert feat_emb.offset[-1] - feat_emb.offset[-2] == out_channels * 2
+        assert feat_emb.offset[-2] - feat_emb.offset[-3] == out_channels * 1
 
     feat_text_tokenized = tensor_frame.feat_dict[torch_frame.text_tokenized]
     assert isinstance(feat_text_tokenized['input_ids'], MultiNestedTensor)

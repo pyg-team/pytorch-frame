@@ -47,6 +47,20 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
         self.col_names_dict = col_names_dict
         self.encoder_dict = ModuleDict()
         for stype, stype_encoder in stype_encoder_dict.items():
+            if stype != stype.parent:
+                if stype.parent in stype_encoder_dict:
+                    msg = (
+                        f"You can delete this {stype} directly since encoder "
+                        f"for parent stype {stype.parent} is already declared."
+                    )
+                else:
+                    msg = (f"To resolve the issue, you can change the key from"
+                           f" {stype} to {stype.parent}.")
+                raise ValueError(
+                    f"{stype} is a child stype to {stype.parent}, "
+                    "meaning that they are stored in the same data "
+                    "structure internally. Please use one encoder "
+                    f"for stypes that share the same parents. {msg}")
             if stype not in stype_encoder.supported_stypes:
                 raise ValueError(
                     f"{stype_encoder} does not support encoding {stype}.")
