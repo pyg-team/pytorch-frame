@@ -106,8 +106,10 @@ For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`st
     }
 
 Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
-Note that some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
-For example, :class:`~torch_frame.nn.models.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
+
+.. note::
+    Some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
+    For example, :class:`~torch_frame.nn.models.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
 .. code-block:: none
 
@@ -160,7 +162,9 @@ Currently, raw column data of type :class:`list` or :class:`str` are supported f
 You can also specify different delimiters for different columns through :obj:`col_to_sep` argument in :class:`torch_frame.data.Dataset`.
 If a string is specified, the same delimiter will be used throughout all the multicategorical columns.
 If a dictionary is given, we use a different delimiter specified for each column.
-Note that you need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
+
+.. note::
+    You need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
 
 Here is an example of handing a :class:`~pandas.DataFrame` with multiple multicategorical columns.
 
