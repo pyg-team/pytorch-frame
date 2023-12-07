@@ -65,4 +65,5 @@ repos:
     hooks:
       - id: mypy
         name: Check types
+        additional_dependencies: [torch==2.1.1]
         exclude: "^test/|^examples/|^benchmark/"

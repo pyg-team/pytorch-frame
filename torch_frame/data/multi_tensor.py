@@ -1,27 +1,31 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, TypeVar
 
 import torch
 from torch import Tensor
 
+T = TypeVar("T", int, Tensor)
+
 
 class _MultiTensor:
+    ndim = 3
+
     def __init__(
         self,
         num_rows: int,
         num_cols: int,
         values: Tensor,
         offset: Tensor,
-    ):
+    ) -> None:
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.values = values
         self.offset = offset
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         pass
 
     def to_dict(self) -> dict[str, Any]:
@@ -38,12 +42,6 @@ class _MultiTensor:
             f"{self.__class__.__name__} object does not support setting "
             "values. It should be used for read-only.")
 
-    def __getitem__(
-        self,
-        index: Any,
-    ) -> _MultiTensor | Tensor:
-        raise NotImplementedError
-
     def __repr__(self) -> str:
         return " ".join([
             f"{self.__class__.__name__}(num_rows={self.num_rows},",
@@ -55,21 +53,18 @@ class _MultiTensor:
     def shape(self) -> tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)
 
-    @property
-    def ndim(self) -> int:
-        return 3
-
     def size(self, dim: int) -> int:
         dim = self._normalize_dim(dim)
         if dim == 0:
             return self.num_rows
         elif dim == 1:
             return self.num_cols
+        assert False, "Should not reach here."
 
     def dim(self) -> int:
         return self.ndim
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num_rows
 
     @property
@@ -128,10 +123,10 @@ class _MultiTensor:
 
     def _normalize_index(
         self,
-        index: int | Tensor,
+        index: T,
         dim: int,
         is_slice_end: bool = False,
-    ) -> int | Tensor:
+    ) -> T:
         """Helper function to map negative indices to positive indices and
         raise :obj:`IndexError` when necessary.
 
@@ -231,11 +226,12 @@ class _MultiTensor:
             dim (int): The dimension to index in.
         """
         dim = self._normalize_dim(dim)
-        index = self._normalize_index(index, dim=dim)
+        idx = self._normalize_index(index, dim=dim)
         if dim == 0:
-            return self._row_index_select(index)
+            return self._row_index_select(idx)
         elif dim == 1:
-            return self._col_index_select(index)
+            return self._col_index_select(idx)
+        assert False, "Should not reach here."
 
     def _row_index_select(self, index: Tensor) -> _MultiTensor:
         raise NotImplementedError
@@ -285,6 +281,7 @@ class _MultiTensor:
             return self._row_narrow(start, length)
         elif dim == 1:
             return self._col_narrow(start, length)
+        assert False, "Should not reach here."
 
     def _row_narrow(self, start: int, length: int) -> _MultiTensor:
         raise NotImplementedError
@@ -323,7 +320,7 @@ class _MultiTensor:
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=dim,
             )
-        raise NotImplementedError
+        assert False, "Should not reach here."
 
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
@@ -358,7 +355,7 @@ def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
     torch.cumsum(count, dim=0, out=ptr[1:])
 
     batch = torch.arange(count.numel(), device=count.device).repeat_interleave(
-        count, output_size=ptr[-1])  # type: ignore
+        count, output_size=ptr[-1])  # type: ignore[call-overload]
 
     arange = torch.arange(batch.numel(), device=count.device)
     arange -= ptr[batch]
