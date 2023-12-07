@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `col_to_model` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
-- Fixed documentation with updated links & corrected typos ([#259](https://github.com/pyg-team/pytorch-frame/pull/259))
+- Added documentation on handling different stypes ([#271](https://github.com/pyg-team/pytorch-frame/pull/271))
 - Added `TimestampEncoder` ([#225](https://github.com/pyg-team/pytorch-frame/pull/225))
 - Added `LightGBM` ([#248](https://github.com/pyg-team/pytorch-frame/pull/248))
 - Added time columns to the `MultimodalTextBenchmark` ([#253](https://github.com/pyg-team/pytorch-frame/pull/253))

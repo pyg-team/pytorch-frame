@@ -62,10 +62,9 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(
-    col_to_pattern: Any | dict[str, Any] | None,
-    columns: list[str],
-) -> dict[str, Any]:
+def canonicalize_col_to_pattern(col_to_pattern: Any | dict[str, Any] | None,
+                                columns: list[str],
+                                all_inclusive: bool = True) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
@@ -78,6 +77,8 @@ def canonicalize_col_to_pattern(
             dictionary specified for each column.
         columns (List[str]): A list of multi-categorical, timestamp or text
             columns.
+        all_inclusive (bool): A boolean indicating whether all columns need
+            to be specified.(default: True)
 
     Returns:
         Dict[str, Any]: :obj:`col_to_pattern` in a dictionary format, mapping
@@ -90,12 +91,13 @@ def canonicalize_col_to_pattern(
         for col in columns:
             col_to_pattern[col] = pattern
     else:
-        missing_cols = set(columns) - set(col_to_pattern.keys())
-        if len(missing_cols) > 0:
+        if all_inclusive and len(set(columns) -
+                                 set(col_to_pattern.keys())) > 0:
             raise ValueError(
-                f"col_to_sep needs to specify separators for all "
-                f"multi-categorical columns, but the separators for the "
-                f"following columns are missing: {list(missing_cols)}.")
+                "col_to_sep needs to specify separators for all "
+                "multi-categorical columns, but the separators for the "
+                "following columns are missing: "
+                f"{list(set(columns) - set(col_to_pattern.keys()))}.")
     return col_to_pattern
 
 
@@ -170,14 +172,18 @@ class DataFrameToTensorFrameConverter:
             # in-place sorting of col_names for each stype
             self._col_names_dict[stype].sort()
 
+        # Some multicategorical columns can be lists and thus
+        # do not need a separator.
         self.col_to_sep = canonicalize_col_to_pattern(
             col_to_sep,
-            self.col_names_dict.get(torch_frame.multicategorical, []),
+            self.col_names_dict.get(torch_frame.multicategorical),
+            all_inclusive=False,
         )
 
         self.col_to_time_format = canonicalize_col_to_pattern(
             col_to_time_format,
             self.col_names_dict.get(torch_frame.timestamp, []),
+            all_inclusive=False,
         )
 
         self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
@@ -212,8 +218,8 @@ class DataFrameToTensorFrameConverter:
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
-            return MultiCategoricalTensorMapper(index,
-                                                sep=self.col_to_sep[col])
+            return MultiCategoricalTensorMapper(
+                index, sep=self.col_to_sep.get(col, None))
         elif stype == torch_frame.timestamp:
             return TimestampTensorMapper(
                 format=self.col_to_time_format.get(col, None))
@@ -361,20 +367,15 @@ class Dataset(ABC):
             raise ValueError(
                 "Multilabel classification task is not yet supported.")
 
-        self.col_to_sep = canonicalize_col_to_pattern(
-            col_to_sep,
-            [
-                col for col, stype in self.col_to_stype.items()
-                if stype == torch_frame.multicategorical
-            ],
-        )
+        self.col_to_sep = canonicalize_col_to_pattern(col_to_sep, [
+            col for col, stype in self.col_to_stype.items()
+            if stype == torch_frame.multicategorical
+        ], all_inclusive=False)
         self.col_to_time_format = canonicalize_col_to_pattern(
-            col_to_time_format,
-            [
+            col_to_time_format, [
                 col for col, stype in self.col_to_stype.items()
                 if stype == torch_frame.timestamp
-            ],
-        )
+            ], all_inclusive=False)
         self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
             col_to_text_embedder_cfg,
             [

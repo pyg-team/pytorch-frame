@@ -9,13 +9,13 @@ from torch_frame.data.multi_tensor import _batched_arange, _MultiTensor
 
 
 class MultiEmbeddingTensor(_MultiTensor):
-    r"""A PyTorch tensor-based data structure that stores
+    r"""A read-only PyTorch tensor-based data structure that stores
     :obj:`[num_rows, num_cols, *]`, where the size of last dimension can be
-    different for different column.
-
-    Note that the last dimension is the same within each column across rows
-    while in :class:`MultiNestedTensor`, the last dimension can be different
-    across both rows and columns.
+    different for different column. Note that the last dimension is the same
+    within each column across rows while in :class:`MultiNestedTensor`, the
+    last dimension can be different across both rows and columns.
+    It supports various advanced indexing, including slicing and list indexing
+    along both row and column.
 
     Args:
         num_rows (int): Number of rows.
@@ -26,19 +26,36 @@ class MultiEmbeddingTensor(_MultiTensor):
             :obj:`[num_cols+1,]`.
 
     Example:
-        >>> num_rows = 2
         >>> tensor_list = [
-        ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-        ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-        ...    torch.tensor([[10], [11]]),            # col2
+        ...    torch.tensor([[0.0, 0.1, 0.2], [0.3, 0.4, 0.5]]),  # emb col 0
+        ...    torch.tensor([[0.6, 0.7], [0.8, 0.9]]),            # emb col 1
+        ...    torch.tensor([[1.], [1.1]]),                       # emb col 2
         ... ]
-        >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-        >>> out
+        >>> met = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+        >>> met
         MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-        >>> out[0, 2]
-        tensor([10])
+        >>> met.values
+        tensor([[0.0000, 0.1000, 0.2000, 0.6000, 0.7000, 1.0000],
+                [0.3000, 0.4000, 0.5000, 0.8000, 0.9000, 1.1000]])
+        >>> met.offset
+        tensor([0, 3, 5, 6])
+        >>> met[0, 0]
+        tensor([0.0000, 0.1000, 0.2000])
+        >>> met[1, 1]
+        tensor([0.8000, 0.9000])
+        >>> met[0] # Row integer indexing
+        MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
+        >>> met[:, 0] # Column integer indexing
+        MultiEmbeddingTensor(num_rows=2, num_cols=1, device='cpu')
+        >>> met[:, 0].values # Embedding of column 0
+        tensor([[0.0000, 0.1000, 0.2000],
+                [0.3000, 0.4000, 0.5000]])
+        >>> met[:1] # Row slicing
+        MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
+        >>> met[[0, 1, 0, 0]] # Row list indexing
+        MultiEmbeddingTensor(num_rows=4, num_cols=3, device='cpu')
     """
-    def validate(self):
+    def validate(self) -> None:
         assert self.offset[0] == 0
         assert len(self.offset) == self.num_cols + 1
         assert self.offset.ndim == 1
@@ -59,19 +76,6 @@ class MultiEmbeddingTensor(_MultiTensor):
 
         Returns:
             MultiEmbeddingTensor: A :class:`MultiEmbeddingTensor` instance.
-
-        Example:
-            >>> num_rows = 2
-            >>> tensor_list = [
-            ...    torch.tensor([[0, 1, 2], [3, 4, 5]]),  # col0
-            ...    torch.tensor([[6, 7], [8, 9]]),        # col1
-            ...    torch.tensor([[10], [11]]),            # col2
-            ... ]
-            >>> out = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-            >>> out
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> out[0, 0]
-            tensor([0, 1, 2])
         """
         assert isinstance(tensor_list, list) and len(tensor_list) > 0
         num_rows = tensor_list[0].size(0)
@@ -195,6 +199,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
+        assert False, "Should not reach here."
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
@@ -229,34 +234,7 @@ class MultiEmbeddingTensor(_MultiTensor):
             dim (int): The dimension to concatenate along.
 
         Returns:
-            MultiEmbeddingTensor: Concatenated multi embedding tensor that
-                shares the same data as the input multi embedding tensors.
-
-        Example:
-            >>> from torch_frame.data import MultiEmbeddingTensor
-            >>> tensor_list1 = [
-            ...     torch.tensor([[0, 1, 2], [6, 7, 8]]),  # col1
-            ...     torch.tensor([[3, 4], [9, 10]]),       # col2
-            ...     torch.tensor([[5], [11]]),             # col3
-            ... ]
-            >>> tenosor_list2 = [
-            ...     torch.tensor([[12, 13, 14]]),          # col1
-            ...     torch.tensor([[15, 16]]),              # col2
-            ...     torch.tensor([[17]]),                  # col3
-            ... ]
-            >>> met1 = MultiEmbeddingTensor.from_tensor_list(tensor_list1)
-            >>> met2 = MultiEmbeddingTensor.from_tensor_list(tensor_list2)
-            >>> met1
-            MultiEmbeddingTensor(num_rows=2, num_cols=3, device='cpu')
-            >>> met2
-            MultiEmbeddingTensor(num_rows=1, num_cols=3, device='cpu')
-            >>> out = MultiEmbeddingTensor.cat([met1, met2], dim=0)
-            >>> out
-            MultiEmbeddingTensor(num_rows=3, num_cols=3, device='cpu')
-            >>> out.values
-            tensor([[ 0,  1,  2,  3,  4,  5],
-                    [ 6,  7,  8,  9, 10, 11],
-                    [12, 13, 14, 15, 16, 17]])
+            MultiEmbeddingTensor: Concatenated multi embedding tensor.
         """
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
@@ -303,3 +281,5 @@ class MultiEmbeddingTensor(_MultiTensor):
             # which is inconsistent with when dim=0
             offset = torch.tensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
+
+        assert False, "Should not reach here."

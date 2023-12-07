@@ -21,7 +21,7 @@ def _is_timestamp(ser: Series) -> bool:
         try:
             pd.to_datetime(ser, format=time_format)
             is_timestamp = True
-        except (ValueError, ParserError):
+        except (ValueError, ParserError, TypeError):
             pass
     return is_timestamp
 
@@ -115,14 +115,21 @@ def infer_series_stype(ser: Series) -> stype | None:
                     return stype.numerical
         else:
             # Candidates: timestamp, categorical, multicategorical,
-            # text_(embedded/tokenized)
+            # text_(embedded/tokenized), embedding
             if _is_timestamp(ser):
                 return stype.timestamp
 
             # Candates: categorical, multicategorical,
-            # text_(embedded/tokenized)
+            # text_(embedded/tokenized), embedding
             if _min_count(ser) > cat_min_count_thresh:
                 return stype.categorical
+
+            # Candates: multicategorical, text_(embedded/tokenized), embedding
+            if not ptypes.is_string_dtype(ser):
+                if _min_count(ser) > cat_min_count_thresh:
+                    return stype.multicategorical
+                else:
+                    return stype.embedding
 
             # Try different possible seps and mick the largest min_count.
             min_count_list = []

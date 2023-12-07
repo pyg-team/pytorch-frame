@@ -2,6 +2,9 @@ ci:
   autofix_prs: true
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit suggestions'
   autoupdate_schedule: quarterly
+  # mypy exceeds free tier 250MiB limit on pre-commit.ci
+  # https://github.com/pre-commit-ci/issues/issues/171
+  skip: [mypy]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -62,4 +65,5 @@ repos:
     hooks:
       - id: mypy
         name: Check types
+        additional_dependencies: [torch==2.1.1]
         exclude: "^test/|^examples/|^benchmark/"

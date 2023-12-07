@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Sequence, cast
 
 import torch
 from torch import Tensor
@@ -9,12 +9,14 @@ from torch_frame.data.multi_tensor import _batched_arange, _MultiTensor
 
 
 class MultiNestedTensor(_MultiTensor):
-    r"""A PyTorch tensor-based data structure that stores
+    r"""A read-only PyTorch tensor-based data structure that stores
     :obj:`[num_rows, num_cols, *]`, where the size of last dimension can be
     different for different row/column. Internally, we store the object in an
     efficient flattened format: :obj:`(values, offset)`, where the PyTorch
     Tensor at :obj:`(i, j)` is accessed by
     :obj:`values[offset[i*num_cols+j]:offset[i*num_cols+j+1]]`.
+    It supports various advanced indexing, including slicing and list indexing
+    along both row and column.
 
     Args:
         num_rows (int): Number of rows.
@@ -31,15 +33,32 @@ class MultiNestedTensor(_MultiTensor):
         ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
         ...    [torch.tensor([8, 9]), torch.tensor([10])],
         ... ]
-        >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
-        >>> out.size(0)
-        3
-        >>> out.size(1)
-        2
-        >>> out.size(2)
-        Traceback (most recent call last):
-        File "<stdin>", line 1, in <module>
-        ValueError: MultiNestedTensor does not have a fixed length on the third dimension.  # noqa
+        >>> mnt = MultiNestedTensor.from_tensor_mat(tensor_mat)
+        >>> mnt
+        MultiNestedTensor(num_rows=3, num_cols=2, device='cpu')
+        >>> mnt.values
+        tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+        >>> mnt.offset
+        tensor([ 0,  2,  3,  4,  7,  9, 10])
+        >>> mnt[0, 0]
+        torch.tensor([1, 2])
+        >>> mnt[1, 1]
+        tensor([5, 6, 7])
+        >>> mnt[0] # Row integer indexing
+        MultiNestedTensor(num_rows=1, num_cols=2, device='cpu')
+        >>> mnt[:, 0] # Column integer indexing
+        MultiNestedTensor(num_rows=3, num_cols=1, device='cpu')
+        >>> mnt[:2] # Row integer slicing
+        MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
+        >>> mnt[[2, 1, 2, 0]] # Row list indexing
+        MultiNestedTensor(num_rows=4, num_cols=2, device='cpu')
+        >>> mnt.to_dense(fill_value = -1) # Map to a dense matrix via padding
+        tensor([[[ 1,  2, -1],
+                [ 3, -1, -1]],
+                [[ 4, -1, -1],
+                [ 5,  6,  7]],
+                [[ 8,  9, -1],
+                [10, -1, -1]]])
     """
     def validate(self):
         assert self.offset[0] == 0
@@ -62,23 +81,6 @@ class MultiNestedTensor(_MultiTensor):
 
         Returns:
             MultiNestedTensor: A :class:`MultiNestedTensor` instance.
-
-        Example:
-            >>> tensor_mat = [
-            ...    [torch.tensor([1, 2, 3]), torch.tensor([4, 5])],
-            ...    [torch.tensor([6, 7]), torch.tensor([8, 9, 10])],
-            ... ]
-            >>> out = MultiNestedTensor.from_tensor_mat(tensor_mat)
-            >>> out
-            MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
-            >>> out.values
-            tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
-            >>> out.offset
-            tensor([ 0,  3,  5,  7, 10])
-            >>> tensor_mat[2][0]
-            tensor([8, 9])
-            >>> out[2, 0]
-            tensor([8, 9])
         """
         num_rows = len(tensor_mat)
         num_cols = len(tensor_mat[0])
@@ -164,7 +166,8 @@ class MultiNestedTensor(_MultiTensor):
         accum = torch.cumsum(offset_mat_zero_start[:, -1], dim=0)
         offset_mat_zero_start[1:] += accum[:-1].view(-1, 1)
         num_cols = end - start
-        offset = torch.full((self.num_rows * num_cols + 1, ), accum[-1])
+        offset = torch.full((self.num_rows * num_cols + 1, ),
+                            cast(int, accum[-1]))
         offset[:-1] = offset_mat_zero_start[:, :-1].flatten()
         return MultiNestedTensor(
             num_rows=self.num_rows,
@@ -244,6 +247,7 @@ class MultiNestedTensor(_MultiTensor):
         r"""Get :obj:`index`-th row (:obj:`dim=0`) or column (:obj:`dim=1`)."""
         dim = MultiNestedTensor._normalize_dim(dim)
         index = self._normalize_index(index, dim=dim)
+        start_idx: int | Tensor
         if dim == 0:
             start_idx = index * self.num_cols
             end_idx = (index + 1) * self.num_cols + 1
@@ -282,10 +286,12 @@ class MultiNestedTensor(_MultiTensor):
                 :obj:`(num_rows, num_cols, max_length)`
         """
         count = self.offset[1:] - self.offset[:-1]
-        max_length = count.max()
+        max_length = cast(int, count.max())
         batch, arange = _batched_arange(count)
         dense = self.values.new_full(
-            (self.num_rows, self.num_cols, max_length), fill_value=fill_value)
+            (self.num_rows, self.num_cols, max_length),
+            fill_value=fill_value,
+        )
         row = batch // self.num_cols
         col = batch % self.num_cols
         dense[row, col, arange] = self.values
@@ -315,6 +321,17 @@ class MultiNestedTensor(_MultiTensor):
         xs: Sequence[MultiNestedTensor],
         dim: int = 0,
     ) -> MultiNestedTensor:
+        """Concatenates a sequence of :class:`MultiNestedTensor` along the
+        specified dimension.
+
+        Args:
+            xs (Sequence[MultiNestedTensor]): A sequence of
+                :class:`MultiNestedTensor` to be concatenated.
+            dim (int): The dimension to concatenate along.
+
+        Returns:
+            MultiNestedTensor: Concatenated multi nested tensor.
+        """
         if len(xs) == 0:
             raise RuntimeError("Cannot concatenate a sequence of length 0.")
         assert isinstance(xs[0], MultiNestedTensor)
@@ -337,7 +354,7 @@ class MultiNestedTensor(_MultiTensor):
             for x in xs[:-1]:
                 offset[idx:idx + len(x.offset[:-1])] = x.offset[:-1]
                 offset[idx:idx + len(x.offset[:-1])].add_(accum)
-                accum += x.offset[-1]
+                accum += cast(int, x.offset[-1])
                 idx += len(x.offset[:-1])
             offset[idx:] = xs[-1].offset
             offset[idx:].add_(accum)
@@ -375,7 +392,7 @@ class MultiNestedTensor(_MultiTensor):
             # Compute values
             values = torch.empty(
                 sum([x.values.numel() for x in xs]),
-                dtype=x[0].values.dtype,
+                dtype=x[0].values.dtype,  # type: ignore[union-attr]
                 device=device,
             )
             col_start_idx = 0
