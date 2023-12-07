@@ -355,7 +355,7 @@ def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
     torch.cumsum(count, dim=0, out=ptr[1:])
 
     batch = torch.arange(count.numel(), device=count.device).repeat_interleave(
-        count, output_size=ptr[-1])  # type: ignore
+        count, output_size=ptr[-1])  # type: ignore[call-overload]
 
     arange = torch.arange(batch.numel(), device=count.device)
     arange -= ptr[batch]

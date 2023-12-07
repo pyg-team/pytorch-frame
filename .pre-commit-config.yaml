@@ -62,4 +62,5 @@ repos:
     hooks:
       - id: mypy
         name: Check types
+        args: [--config-file, pyproject.toml]
         exclude: "^test/|^examples/|^benchmark/"

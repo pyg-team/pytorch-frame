@@ -379,7 +379,7 @@ class MultiNestedTensor(_MultiTensor):
             # Compute values
             values = torch.empty(
                 sum([x.values.numel() for x in xs]),
-                dtype=x[0].values.dtype,
+                dtype=x[0].values.dtype,  # type: ignore[union-attr]
                 device=device,
             )
             col_start_idx = 0
