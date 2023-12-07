@@ -334,19 +334,19 @@ def test_text_embedded_encoder():
     tensor_frame = dataset.tensor_frame
     stats_list = [
         dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.text_embedded]
+        for col_name in tensor_frame.col_names_dict[stype.embedding]
     ]
     encoder = LinearEmbeddingEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
-        stype=stype.text_embedded,
+        stype=stype.embedding,
     )
-    feat_text = tensor_frame.feat_dict[stype.text_embedded]
-    col_names = tensor_frame.col_names_dict[stype.text_embedded]
+    feat_text = tensor_frame.feat_dict[stype.embedding]
+    col_names = tensor_frame.col_names_dict[stype.embedding]
     feat = encoder(feat_text, col_names)
     assert feat.shape == (
         num_rows,
-        len(tensor_frame.col_names_dict[stype.text_embedded]),
+        len(tensor_frame.col_names_dict[stype.embedding]),
         out_channels,
     )
 

@@ -50,7 +50,7 @@ def cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
         return td_list[0]
     else:
         for td in td_list:
-            if isinstance(td, td_list[0].__class__):
+            if not isinstance(td, td_list[0].__class__):
                 raise RuntimeError(
                     "The TensorData to be concatenated "
                     f"must be of the same type, got {td.__class__} "

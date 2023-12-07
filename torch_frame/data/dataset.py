@@ -581,16 +581,16 @@ class Dataset(ABC):
                     self._tensor_frame.feat_dict[
                         stype.parent] = cat_tensor_data(
                             [parent_feat, child_feat], dim=1)
-                    print(
-                        "result ", self._tensor_frame.feat_dict[
-                            stype.parent].values.shape)
                 else:
                     self._tensor_frame.feat_dict[stype.parent] = child_feat
-                self._tensor_frame.feat_dict.pop(stype)
 
                 # Unify col_names_dict
                 self._tensor_frame.col_names_dict[
-                    stype.parent] += self._tensor_frame.col_names_dict[stype]
+                    stype.parent] = self._tensor_frame.col_names_dict.get(
+                        stype.parent,
+                        []) + self._tensor_frame.col_names_dict[stype]
+
+                self._tensor_frame.feat_dict.pop(stype)
                 self._tensor_frame.col_names_dict.pop(stype)
 
     @property
