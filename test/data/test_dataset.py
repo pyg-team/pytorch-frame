@@ -181,4 +181,9 @@ def test_canonicalize_col_to_pattern():
     col_to_sep = {'col_1': '|'}
     columns = ['col_1', 'col_2']
     with pytest.raises(ValueError, match='col_to_sep needs to specify'):
-        canonicalize_col_to_pattern(col_to_sep, columns)
+        canonicalize_col_to_pattern(col_to_sep, columns, all_inclusive=True)
+
+    col_to_sep = {'col_1': '|'}
+    columns = ['col_1', 'col_2']
+    assert col_to_sep == canonicalize_col_to_pattern(col_to_sep, columns,
+                                                     all_inclusive=False)
