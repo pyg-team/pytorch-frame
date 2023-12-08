@@ -121,10 +121,8 @@ def canonicalize_col_to_pattern(
         if len(missing_cols) > 0:
             if requires_all_inclusive:
                 raise ValueError(
-                    "col_to_sep needs to specify separators for all "
-                    "multi-categorical columns, but the separators for the "
-                    "following columns are missing: "
-                    f"{list(missing_cols)}.")
+                    f"col_to_xxx requires all columns to be specified but the "
+                    f"following columns are missing: {list(missing_cols)}.")
             else:
                 for col in missing_cols:
                     col_to_pattern[col] = None
