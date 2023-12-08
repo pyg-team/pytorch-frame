@@ -38,24 +38,24 @@ from torch_frame.typing import (
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 COL_TO_PATTERN_STYPE_MAPPING = {
-    'col_to_sep': torch_frame.multicategorical,
-    'col_to_time_format': torch_frame.timestamp,
-    'col_to_text_embedder_cfg': torch_frame.text_embedded,
-    'col_to_text_tokenizer_cfg': torch_frame.text_tokenized,
+    "col_to_sep": torch_frame.multicategorical,
+    "col_to_time_format": torch_frame.timestamp,
+    "col_to_text_embedder_cfg": torch_frame.text_embedded,
+    "col_to_text_tokenizer_cfg": torch_frame.text_tokenized,
 }
 
 COL_TO_PATTERN_REQUIRED_TYPE_MAPPING = {
-    'col_to_sep': str,
-    'col_to_time_format': str,
-    'col_to_text_embedder_cfg': TextEmbedderConfig,
-    'col_to_text_tokenizer_cfg': TextTokenizerConfig,
+    "col_to_sep": str,
+    "col_to_time_format": str,
+    "col_to_text_embedder_cfg": TextEmbedderConfig,
+    "col_to_text_tokenizer_cfg": TextTokenizerConfig,
 }
 
 COL_TO_PATTERN_ALLOW_NONE_MAPPING = {
-    'col_to_sep': True,
-    'col_to_time_format': True,
-    'col_to_text_embedder_cfg': False,
-    'col_to_text_tokenizer_cfg': False,
+    "col_to_sep": True,
+    "col_to_time_format": True,
+    "col_to_text_embedder_cfg": False,
+    "col_to_text_tokenizer_cfg": False,
 }
 
 
@@ -370,16 +370,16 @@ class Dataset(ABC):
 
         # Canonicalize and validate
         self.col_to_sep = self.canonicalize_and_validate_col_to_pattern(
-            col_to_sep, 'col_to_sep')
+            col_to_sep, "col_to_sep")
         (self.col_to_time_format
          ) = self.canonicalize_and_validate_col_to_pattern(
-             col_to_time_format, 'col_to_time_format')
+             col_to_time_format, "col_to_time_format")
         (self.col_to_text_embedder_cfg
          ) = self.canonicalize_and_validate_col_to_pattern(
-             col_to_text_embedder_cfg, 'col_to_text_embedder_cfg')
+             col_to_text_embedder_cfg, "col_to_text_embedder_cfg")
         (self.col_to_text_tokenizer_cfg
          ) = self.canonicalize_and_validate_col_to_pattern(
-             col_to_text_tokenizer_cfg, 'col_to_text_tokenizer_cfg')
+             col_to_text_tokenizer_cfg, "col_to_text_tokenizer_cfg")
 
         self._is_materialized: bool = False
         self._col_stats: dict[str, dict[StatType, Any]] = {}
