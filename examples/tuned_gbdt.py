@@ -30,13 +30,15 @@ import numpy as np
 import torch
 
 from torch_frame.datasets import TabularBenchmark
-from torch_frame.gbdt import CatBoost, XGBoost
+from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.typing import Metric
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gbdt_type', type=str, default='xgboost',
-                    choices=['xgboost', 'catboost'])
+                    choices=['xgboost', 'catboost', 'lightgbm'])
 parser.add_argument('--dataset', type=str, default='eye_movements')
+parser.add_argument('--saved_model_path', type=str,
+                    default='storage/gbdts.txt')
 # Add this flag to match the reported number.
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
@@ -69,15 +71,24 @@ else:
     metric = Metric.RMSE
     num_classes = None
 
-gbdt_cls_dict = {'xgboost': XGBoost, 'catboost': CatBoost}
+gbdt_cls_dict = {
+    'xgboost': XGBoost,
+    'catboost': CatBoost,
+    'lightgbm': LightGBM,
+}
 gbdt = gbdt_cls_dict[args.gbdt_type](
     task_type=task_type,
     num_classes=num_classes,
     metric=metric,
 )
 
-gbdt.tune(tf_train=train_dataset.tensor_frame, tf_val=val_dataset.tensor_frame,
-          num_trials=20)
+if osp.exists(args.saved_model_path):
+    gbdt.load(args.saved_model_path)
+else:
+    gbdt.tune(tf_train=train_dataset.tensor_frame,
+              tf_val=val_dataset.tensor_frame, num_trials=20)
+    gbdt.save(args.saved_model_path)
+
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
 score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
 print(f"{gbdt.metric} : {score}")

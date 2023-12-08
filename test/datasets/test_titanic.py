@@ -1,3 +1,5 @@
+import tempfile
+
 import torch
 
 import torch_frame
@@ -5,8 +7,9 @@ from torch_frame.data.stats import StatType
 from torch_frame.datasets import Titanic
 
 
-def test_titanic(tmp_path):
-    dataset = Titanic(tmp_path)
+def test_titanic():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        dataset = Titanic(temp_dir)
     assert str(dataset) == 'Titanic()'
     assert len(dataset) == 891
     assert dataset.feat_cols == [
