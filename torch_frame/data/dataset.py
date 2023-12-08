@@ -92,8 +92,9 @@ def canonicalize_col_to_pattern(
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
-        col_to_pattern_name (str): The name of :obj:`col_to_xxx` to
-            canonicalize.
+        col_to_pattern_name (str): The name of :obj:`col_to_pattern` function
+            in the string format. For instance, :obj:`"col_to_sep"` and
+            :obj:`"col_to_time_format"`.
         col_to_pattern (Union[Any, Dict[str, Any]]): A dictionary or an object
             specifying the separator/pattern/configuration for the
             multi-categorical, timestamp or text columns. If an object is
