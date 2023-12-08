@@ -1,3 +1,4 @@
+import tempfile
 import os.path as osp
 
 import pytest
@@ -33,7 +34,6 @@ def test_gbdt_with_save_load(
     gbdt_cls,
     stypes,
     task_type_and_metric,
-    tmp_path,
 ):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
@@ -53,25 +53,26 @@ def test_gbdt_with_save_load(
         metric=metric,
     )
 
-    path = osp.join(tmp_path, 'model.json')
-    with pytest.raises(RuntimeError, match="is not yet fitted"):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = osp.join(temp_dir, 'model.json')
+        with pytest.raises(RuntimeError, match="is not yet fitted"):
+            gbdt.save(path)
+
+        gbdt.tune(
+            tf_train=dataset.tensor_frame,
+            tf_val=dataset.tensor_frame,
+            num_trials=2,
+            num_boost_round=2,
+        )
         gbdt.save(path)
 
-    gbdt.tune(
-        tf_train=dataset.tensor_frame,
-        tf_val=dataset.tensor_frame,
-        num_trials=2,
-        num_boost_round=2,
-    )
-    gbdt.save(path)
-
-    loaded_gbdt = gbdt_cls(
-        task_type=task_type,
-        num_classes=dataset.num_classes
-        if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
-        metric=metric,
-    )
-    loaded_gbdt.load(path)
+        loaded_gbdt = gbdt_cls(
+            task_type=task_type,
+            num_classes=dataset.num_classes
+            if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
+            metric=metric,
+        )
+        loaded_gbdt.load(path)
 
     pred = gbdt.predict(tf_test=dataset.tensor_frame)
     score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
