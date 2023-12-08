@@ -191,7 +191,7 @@ class DataFrameToTensorFrameConverter:
             # in-place sorting of col_names for each stype
             self._col_names_dict[stype].sort()
 
-        # Assumed to be canonicalized already by dataset
+        # Assumed to be already canonicalized by Dataset
         self.col_to_sep = col_to_sep
         self.col_to_time_format = col_to_time_format
         self.col_to_text_embedder_cfg = col_to_text_embedder_cfg
