@@ -724,19 +724,19 @@ class LinearModelEncoder(StypeEncoder):
         stype: stype | None = None,
         post_module: Module | None = None,
         na_strategy: NAStrategy | None = None,
-        col_to_model_cfg: dict[str, TextModelConfig] | None = None,
+        col_to_text_model_cfg: dict[str, TextModelConfig] | None = None,
     ) -> None:
-        if col_to_model_cfg is None:
+        if col_to_text_model_cfg is None:
             raise ValueError("Please manually specify the "
-                             "`col_to_model_cfg`, which outputs "
-                             "embeddings that will be feed to the linear "
+                             "`col_to_text_model_cfg`, which outputs "
+                             "embeddings that will be fed into the linear "
                              "layer.")
         # TODO: Support non-dictionary col_to_model_cfg
-        assert isinstance(col_to_model_cfg, dict)
+        assert isinstance(col_to_text_model_cfg, dict)
 
         self.in_channels_dict = {
             col_name: model_cfg.out_channels
-            for col_name, model_cfg in col_to_model_cfg.items()
+            for col_name, model_cfg in col_to_text_model_cfg.items()
         }
 
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -744,7 +744,7 @@ class LinearModelEncoder(StypeEncoder):
 
         self.model_dict = torch.nn.ModuleDict({
             col_name: model_cfg.model
-            for col_name, model_cfg in col_to_model_cfg.items()
+            for col_name, model_cfg in col_to_text_model_cfg.items()
         })
 
     def init_modules(self) -> None:
@@ -766,17 +766,17 @@ class LinearModelEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: TensorData,
+        feat: dict[str, MultiNestedTensor],
         col_names: list[str] | None = None,
     ) -> Tensor:
         xs = []
         for i, col_name in enumerate(col_names):
-            # [batch_size, in_channels]
+            # [batch_size, 1, in_channels]
             x = self.model_dict[col_name]({
                 key: feat[key][:, i]
                 for key in feat
             })
-            # [batch_size, out_channels]
+            # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)
         # [batch_size, num_cols, out_channels]

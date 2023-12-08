@@ -3,7 +3,7 @@ from typing import Callable
 
 from torch import Tensor
 
-from torch_frame.typing import TensorData
+from torch_frame.data import MultiNestedTensor
 
 
 @dataclass
@@ -13,10 +13,13 @@ class TextModelConfig:
 
     Args:
         model (callable): A callable text model that takes a dictionary
-            of :class:`MultiNestedTensor` as input and outputs embeddings
-            for each row in the :class:`MultiNestedTensor`.
+            of :obj:`MultiNestedTensor` as input and outputs embeddings
+            for each row in the :class:`MultiNestedTensor`. Input
+            :obj:`MultiNestedTensor` has the shape `[batch_size, 1, *]`
+            and output embeddings should have shape
+            `[batch_size, 1, text_model_out_channels]`.
         out_channels (int): Text model output channels.
 
     """
-    model: Callable[[TensorData], Tensor]
+    model: Callable[[dict[str, MultiNestedTensor]], Tensor]
     out_channels: int

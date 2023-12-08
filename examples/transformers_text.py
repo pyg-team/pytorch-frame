@@ -16,7 +16,7 @@ from torch_frame import stype
 from torch_frame.config import TextModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
-from torch_frame.data import DataLoader
+from torch_frame.data import DataLoader, MultiNestedTensor
 from torch_frame.datasets import MultimodalTextBenchmark
 from torch_frame.nn import (
     EmbeddingEncoder,
@@ -26,7 +26,7 @@ from torch_frame.nn import (
     LinearModelEncoder,
     MultiCategoricalEmbeddingEncoder,
 )
-from torch_frame.typing import TensorData, TextTokenizationOutputs
+from torch_frame.typing import TextTokenizationOutputs
 
 # Text Embedded
 # all-distilroberta-v1
@@ -156,12 +156,17 @@ class TextToEmbeddingFinetune(torch.nn.Module):
             self.model = get_peft_model(self.model, peft_config)
         self.pooling = pooling
 
-    def forward(self, feat: TensorData) -> Tensor:
-        # [batch_size, num_cols, batch_max_seq_len]
+    def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
+        # [batch_size, batch_max_seq_len]
         input_ids = feat["input_ids"].to_dense(fill_value=0).squeeze(dim=1)
         mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
-        # Get text embeddings over each column
+
+        # Get text embeddings for each text tokenized column
+        # `out.last_hidden_state` has the shape:
+        # [batch_size, batch_max_seq_len, text_model_out_channels]
         out = self.model(input_ids=input_ids, attention_mask=mask)
+
+        # Return value has the shape [batch_size, 1, text_model_out_channels]
         if self.pooling == "mean":
             return mean_pooling(out.last_hidden_state, mask)
         elif self.pooling == "cls":
@@ -240,12 +245,13 @@ if not args.finetune:
     text_stype_encoder = LinearEmbeddingEncoder()
 else:
     model_cfg = TextModelConfig(model=text_encoder, out_channels=768)
-    col_to_model_cfg = {
+    col_to_text_model_cfg = {
         col_name: model_cfg
         for col_name in train_tensor_frame.col_names_dict[
             torch_frame.text_tokenized]
     }
-    text_stype_encoder = LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
+    text_stype_encoder = LinearModelEncoder(
+        col_to_text_model_cfg=col_to_text_model_cfg)
 
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
