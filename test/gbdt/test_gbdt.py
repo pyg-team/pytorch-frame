@@ -53,7 +53,7 @@ def test_gbdt_with_save_load(
         metric=metric,
     )
 
-    path = osp.join(tmp_path, f'{gbdt_cls.__name__}.json')
+    path = osp.join(tmp_path, 'model.json')
     with pytest.raises(RuntimeError, match="is not yet fitted"):
         gbdt.save(path)
 
