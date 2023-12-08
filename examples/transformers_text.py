@@ -130,11 +130,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, device: torch.device, pooling: str = "mean",
-                 lora: bool = False):
+    def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.model = AutoModel.from_pretrained(model).to(device)
+        self.model = AutoModel.from_pretrained(model)
 
         if lora:
             if model == "distilbert-base-uncased":
@@ -204,7 +203,7 @@ if not args.finetune:
         TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
-    text_encoder = TextToEmbeddingFinetune(model=args.model, device=device,
+    text_encoder = TextToEmbeddingFinetune(model=args.model,
                                            pooling=args.pooling,
                                            lora=args.lora)
     text_stype = torch_frame.text_tokenized

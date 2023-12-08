@@ -731,27 +731,38 @@ class LinearModelEncoder(StypeEncoder):
                              "`col_to_model_cfg`, which outputs "
                              "embeddings that will be feed to the linear "
                              "layer.")
+        # TODO: Support non-dictionary col_to_model_cfg
+        assert isinstance(col_to_model_cfg, dict)
 
-        self.col_to_model_cfg = col_to_model_cfg
+        self.in_channels_dict = {
+            col_name: model_cfg.out_channels
+            for col_name, model_cfg in col_to_model_cfg.items()
+        }
 
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
+        self.model_dict = torch.nn.ModuleDict({
+            col_name: model_cfg.model
+            for col_name, model_cfg in col_to_model_cfg.items()
+        })
+
     def init_modules(self) -> None:
         super().init_modules()
-        self.weight = torch.nn.ParameterDict()
-        self.bias = torch.nn.ParameterDict()
-        for col_name, model_cfg in self.col_to_model_cfg.items():
-            self.weight[col_name] = Parameter(
-                torch.empty(model_cfg.out_channels, self.out_channels))
-            self.bias[col_name] = Parameter(torch.empty(self.out_channels))
+        self.weight_dict = torch.nn.ParameterDict()
+        self.bias_dict = torch.nn.ParameterDict()
+        for col_name, in_channels in self.in_channels_dict.items():
+            self.weight_dict[col_name] = Parameter(
+                torch.empty(in_channels, self.out_channels))
+            self.bias_dict[col_name] = Parameter(torch.empty(
+                self.out_channels))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
         super().reset_parameters()
-        for col_name in self.weight:
-            torch.nn.init.normal_(self.weight[col_name], std=0.01)
-            torch.nn.init.zeros_(self.bias[col_name])
+        for col_name in self.weight_dict:
+            torch.nn.init.normal_(self.weight_dict[col_name], std=0.01)
+            torch.nn.init.zeros_(self.bias_dict[col_name])
 
     def encode_forward(
         self,
@@ -761,11 +772,12 @@ class LinearModelEncoder(StypeEncoder):
         xs = []
         for i, col_name in enumerate(col_names):
             # [batch_size, in_channels]
-            x = self.col_to_model_cfg[col_name].model(
-                {key: feat[key][:, i]
-                 for key in feat})
+            x = self.model_dict[col_name]({
+                key: feat[key][:, i]
+                for key in feat
+            })
             # [batch_size, out_channels]
-            x_lin = x @ self.weight[col_name] + self.bias[col_name]
+            x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)
         # [batch_size, num_cols, out_channels]
         x = torch.cat(xs, dim=1)
