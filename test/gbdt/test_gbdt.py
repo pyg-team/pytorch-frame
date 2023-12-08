@@ -1,5 +1,5 @@
-import tempfile
 import os.path as osp
+import tempfile
 
 import pytest
 import torch
@@ -30,11 +30,7 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_gbdt_with_save_load(
-    gbdt_cls,
-    stypes,
-    task_type_and_metric,
-):
+def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
         num_rows=30,
