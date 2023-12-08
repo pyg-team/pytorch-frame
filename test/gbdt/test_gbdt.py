@@ -29,11 +29,12 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_gbdt_with_save_load(gbdt_cls,
-                             stypes,
-                             task_type_and_metric,
-                             tmp_path,
-                             ):
+def test_gbdt_with_save_load(
+    gbdt_cls,
+    stypes,
+    task_type_and_metric,
+    tmp_path,
+):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
         num_rows=30,
