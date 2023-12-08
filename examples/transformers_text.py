@@ -246,7 +246,7 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    text_stype: text_stype_encoder,
+    text_stype.parent: text_stype_encoder,
     stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
 }
 
