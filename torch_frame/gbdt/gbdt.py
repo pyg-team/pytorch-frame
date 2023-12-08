@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from abc import abstractmethod
 
 import torch
@@ -58,6 +59,10 @@ class GBDT:
     def _predict(self, tf_train: TensorFrame) -> Tensor:
         raise NotImplementedError
 
+    @abstractmethod
+    def _load(self, path: str) -> None:
+        raise NotImplementedError
+
     @property
     def is_fitted(self) -> bool:
         r"""Whether the GBDT is already fitted."""
@@ -106,6 +111,29 @@ class GBDT:
             assert pred.ndim == 1
         assert len(pred) == len(tf_test)
         return pred
+
+    def save(self, path: str) -> None:
+        r"""Save the model.
+
+        Args:
+            path (str): The path to save tuned GBDTs model.
+        """
+        if not self.is_fitted:
+            raise RuntimeError(
+                f"{self.__class__.__name__} is not yet fitted. Please run "
+                f"`tune()` first before attempting to save.")
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        self.model.save_model(path)
+
+    def load(self, path: str) -> None:
+        r"""Load the model.
+
+        Args:
+            path (str): The path to load tuned GBDTs model.
+        """
+        self._load(path)
+        self._is_fitted = True
 
     @torch.no_grad()
     def compute_metric(
