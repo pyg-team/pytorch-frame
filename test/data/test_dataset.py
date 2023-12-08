@@ -127,8 +127,7 @@ def test_materalization_and_converter():
         assert col in tf.col_names_dict[stype.embedding]
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype, col_stats=dataset.col_stats,
-        target_col=dataset.target_col,
-        col_to_sep=dataset.col_to_sep,
+        target_col=dataset.target_col, col_to_sep=dataset.col_to_sep,
         col_to_time_format=dataset.col_to_time_format,
         col_to_text_embedder_cfg=text_embedder_cfg)
     tf = convert_to_tensor_frame(dataset.df)
