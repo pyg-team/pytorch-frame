@@ -128,6 +128,7 @@ def test_materalization_and_converter():
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype, col_stats=dataset.col_stats,
         target_col=dataset.target_col,
+        col_to_sep=dataset.col_to_sep,
         col_to_time_format=dataset.col_to_time_format,
         col_to_text_embedder_cfg=text_embedder_cfg)
     tf = convert_to_tensor_frame(dataset.df)
@@ -199,21 +200,45 @@ def test_canonicalize_col_to_pattern():
     assert {
         'col_1': '|',
         'col_2': '|'
-    } == canonicalize_col_to_pattern(col_to_sep, columns)
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
+                                     requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|', 'col_2': ','}
     columns = ['col_1', 'col_2']
     assert {
         'col_1': '|',
         'col_2': ','
-    } == canonicalize_col_to_pattern(col_to_sep, columns)
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
+                                     requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|'}
     columns = ['col_1', 'col_2']
-    with pytest.raises(ValueError, match='col_to_sep needs to specify'):
-        canonicalize_col_to_pattern(col_to_sep, columns, all_inclusive=True)
+    with pytest.raises(ValueError, match='col_to_sep requires all columns'):
+        canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
+                                    requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|'}
     columns = ['col_1', 'col_2']
-    assert col_to_sep == canonicalize_col_to_pattern(col_to_sep, columns,
-                                                     all_inclusive=False)
+    assert {
+        'col_1': '|',
+        'col_2': None
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
+                                     requires_all_inclusive=False)
+
+
+def test_col_to_pattern_raise_error():
+    with pytest.raises(TypeError, match="col_to_sep"):
+        dataset = FakeDataset(num_rows=10, stypes=[stype.multicategorical])
+        Dataset(dataset.df, dataset.col_to_stype, dataset.target_col,
+                col_to_sep=2)
+
+    with pytest.raises(TypeError, match="col_to_text_embedder_cfg"):
+        FakeDataset(num_rows=10, stypes=[stype.text_embedded])
+
+    with pytest.raises(TypeError, match="col_to_text_tokenizer_cfg"):
+        FakeDataset(num_rows=10, stypes=[stype.text_tokenized])
+
+    with pytest.raises(TypeError, match="col_to_time_format"):
+        dataset = FakeDataset(num_rows=10, stypes=[stype.timestamp])
+        Dataset(dataset.df, dataset.col_to_stype, dataset.target_col,
+                col_to_time_format=2)
