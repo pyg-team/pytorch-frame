@@ -197,6 +197,10 @@ class FakeDataset(torch_frame.data.Dataset):
             col_to_stype,
             target_col='target',
             split_col='split' if create_split else None,
+            col_to_sep={
+                'multicat_1': ',',
+                'multicat_2': ',',
+            },
             col_to_text_embedder_cfg=col_to_text_embedder_cfg,
             col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
             col_to_time_format={
