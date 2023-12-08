@@ -170,7 +170,7 @@ def test_canonicalize_col_to_pattern():
     assert {
         'col_1': '|',
         'col_2': '|'
-    } == canonicalize_col_to_pattern(col_to_sep, columns,
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
                                      requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|', 'col_2': ','}
@@ -178,13 +178,13 @@ def test_canonicalize_col_to_pattern():
     assert {
         'col_1': '|',
         'col_2': ','
-    } == canonicalize_col_to_pattern(col_to_sep, columns,
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
                                      requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|'}
     columns = ['col_1', 'col_2']
-    with pytest.raises(ValueError, match='col_to_xxx requires all columns'):
-        canonicalize_col_to_pattern(col_to_sep, columns,
+    with pytest.raises(ValueError, match='col_to_sep requires all columns'):
+        canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
                                     requires_all_inclusive=True)
 
     col_to_sep = {'col_1': '|'}
@@ -192,7 +192,7 @@ def test_canonicalize_col_to_pattern():
     assert {
         'col_1': '|',
         'col_2': None
-    } == canonicalize_col_to_pattern(col_to_sep, columns,
+    } == canonicalize_col_to_pattern("col_to_sep", col_to_sep, columns,
                                      requires_all_inclusive=False)
 
 

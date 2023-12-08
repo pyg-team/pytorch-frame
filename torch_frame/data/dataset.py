@@ -84,6 +84,7 @@ def requires_post_materialization(func):
 
 
 def canonicalize_col_to_pattern(
+    col_to_pattern_name: str,
     col_to_pattern: Any | dict[str, Any] | None,
     columns: list[str],
     requires_all_inclusive,
@@ -91,6 +92,8 @@ def canonicalize_col_to_pattern(
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
+        col_to_pattern_name (str): The name of :obj:`col_to_xxx` to
+            canonicalize.
         col_to_pattern (Union[Any, Dict[str, Any]]): A dictionary or an object
             specifying the separator/pattern/configuration for the
             multi-categorical, timestamp or text columns. If an object is
@@ -121,8 +124,9 @@ def canonicalize_col_to_pattern(
         if len(missing_cols) > 0:
             if requires_all_inclusive:
                 raise ValueError(
-                    f"col_to_xxx requires all columns to be specified but the "
-                    f"following columns are missing: {list(missing_cols)}.")
+                    f"{col_to_pattern_name} requires all columns to be "
+                    f"specified but the following columns are missing from "
+                    f"the dictionary: {list(missing_cols)}.")
             else:
                 for col in missing_cols:
                     col_to_pattern[col] = None
@@ -132,6 +136,9 @@ def canonicalize_col_to_pattern(
 class DataFrameToTensorFrameConverter:
     r"""A data frame to :class:`TensorFrame` converter.
 
+    Note that this object is supposed be constructed inside :class:`Dataset`
+    object via :obj:`dataset.convert_to_tensor_frame`.
+
     Args:
         col_to_stype (Dict[str, :class:`torch_frame.stype`]):
             A dictionary that maps each column in the data frame to a
@@ -140,40 +147,41 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        col_to_sep (Dict[str, Optional[str]]): A dictionary specifying the
-            separator/delimiter for the multi-categorical columns.
-            (default: :obj:`{}`)
-        col_to_text_embedder_cfg (Dict[str, TextEmbedderConfig]):
+        col_to_sep (Dict[str, Optional[str]], optional): A dictionary
+            specifying the separator/delimiter for the multi-categorical
+            columns. (default: :obj:`None`)
+        col_to_text_embedder_cfg (Dict[str, TextEmbedderConfig, optional]):
             A dictionary of configurations specifying :obj:`text_embedder` that
-            maps text columns into :class:`torch.nn.Embeddings` and
-            :obj:`batch_size` that specifies the mini-batch size for
-            :obj:`text_embedder`. (default: :obj:`{}`)
-        col_to_text_tokenizer_cfg (Dict[str, TextTokenizerConfig]):
+            embeds texts into vectors and :obj:`batch_size` that specifies the
+            mini-batch size for :obj:`text_embedder`. (default: :obj:`None`)
+        col_to_text_tokenizer_cfg (Dict[str, TextTokenizerConfig], optional):
             A dictionary of text tokenizer configurations, specifying
             :obj:`text_tokenizer` that maps sentences into a list of dictionary
             of tensors. Each element in the list corresponds to each sentence,
             keys are input arguments to the model such as :obj:`input_ids`, and
             values are tensors such as tokens. :obj:`batch_size` specifies the
-            mini-batch size for :obj:`text_tokenizer`. (default: :obj:`{}`)
-        col_to_time_format (Dict[str, Optional[str]]): A dictionary of the
-            time format for the timestamp columns. See `strfttime documentation
+            mini-batch size for :obj:`text_tokenizer`. (default: :obj:`None`)
+        col_to_time_format (Dict[str, Optional[str]], optional): A dictionary
+            of the time format for the timestamp columns. See `strfttime
             <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
             for more information on formats. If a string is specified,
             then the same format will be used throughout all the timestamp
             columns. If a dictionary is given, we use a different format
             specified for each column. If not specified, Pandas' internal
             to_datetime function will be used to auto parse time columns.
-            (default: :obj:`{}`)
+            (default: :obj:`None`)
     """
     def __init__(
         self,
         col_to_stype: dict[str, torch_frame.stype],
         col_stats: dict[str, dict[StatType, Any]],
         target_col: str | None = None,
-        col_to_sep: dict[str, str | None] = {},
-        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig] = {},
-        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig] = {},
-        col_to_time_format: dict[str, str | None] = {},
+        col_to_sep: dict[str, str | None] | None = None,
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
+        | None = None,
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
+        | None = None,
+        col_to_time_format: dict[str, str | None] = None,
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
@@ -294,10 +302,9 @@ class Dataset(ABC):
             for each column. (default: :obj:`None`)
         col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
             A text embedder configuration or a dictionary of configurations
-            specifying :obj:`text_embedder` that maps text columns into
-            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
-            specifies the mini-batch size for :obj:`text_embedder`.
-            (default: :obj:`None`)
+            specifying :obj:`text_embedder` that embeds texts into vectors and
+            :obj:`batch_size` that specifies the mini-batch size for
+            :obj:`text_embedder`. (default: :obj:`None`)
         col_to_text_tokenizer_cfg (TextTokenizerConfig or dict, optional):
             A text tokenizer configuration or dictionary of configurations
             specifying :obj:`text_tokenizer` that maps sentences into a
@@ -383,6 +390,7 @@ class Dataset(ABC):
         col_to_pattern_name: str,
     ) -> Dict[str, Any]:
         canonical_col_to_pattern = canonicalize_col_to_pattern(
+            col_to_pattern_name=col_to_pattern_name,
             col_to_pattern=col_to_pattern,
             columns=[
                 col for col, stype in self.col_to_stype.items()
