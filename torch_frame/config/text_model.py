@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Dict
 
 from torch import Tensor
 
@@ -21,5 +21,5 @@ class TextModelConfig:
         out_channels (int): Text model output channels.
 
     """
-    model: Callable[[dict[str, MultiNestedTensor]], Tensor]
+    model: Callable[[Dict[str, MultiNestedTensor]], Tensor]
     out_channels: int
