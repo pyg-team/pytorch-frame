@@ -34,7 +34,6 @@ from torch_frame.typing import (
     TaskType,
     TensorData,
 )
-from torch_frame.utils.concat import cat_tensor_data
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 COL_TO_PATTERN_STYPE_MAPPING = {
@@ -264,7 +263,7 @@ class DataFrameToTensorFrameConverter:
                 child_feat = tf.feat_dict[stype]
                 if stype.parent in tf.stypes:
                     parent_feat = tf.feat_dict[stype.parent]
-                    tf.feat_dict[stype.parent] = cat_tensor_data(
+                    tf.feat_dict[stype.parent] = torch_frame.cat(
                         [parent_feat, child_feat], dim=1)
                 else:
                     tf.feat_dict[stype.parent] = child_feat

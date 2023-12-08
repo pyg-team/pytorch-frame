@@ -95,10 +95,13 @@ def test_dataset_inductive_transform():
 
 
 def test_materalization_and_converter():
-    text_embedder_cfg = TextEmbedderConfig(text_embedder=HashTextEmbedder(1),
-                                           batch_size=8)
+    text_embedder_cfg = TextEmbedderConfig(
+        text_embedder=HashTextEmbedder(1),
+        batch_size=8,
+    )
     dataset = FakeDataset(
-        num_rows=10, stypes=[
+        num_rows=10,
+        stypes=[
             stype.categorical,
             stype.numerical,
             stype.multicategorical,
@@ -106,7 +109,9 @@ def test_materalization_and_converter():
             stype.timestamp,
             stype.text_embedded,
             stype.embedding,
-        ], col_to_text_embedder_cfg=text_embedder_cfg).materialize()
+        ],
+        col_to_text_embedder_cfg=text_embedder_cfg,
+    ).materialize()
     tf = dataset.tensor_frame
     text_embedded_col_names = ([
         col for col, stype in dataset.col_to_stype.items()
@@ -126,10 +131,13 @@ def test_materalization_and_converter():
     for col in text_embedded_col_names:
         assert col in tf.col_names_dict[stype.embedding]
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
-        col_to_stype=dataset.col_to_stype, col_stats=dataset.col_stats,
-        target_col=dataset.target_col, col_to_sep=dataset.col_to_sep,
+        col_to_stype=dataset.col_to_stype,
+        col_stats=dataset.col_stats,
+        target_col=dataset.target_col,
+        col_to_sep=dataset.col_to_sep,
         col_to_time_format=dataset.col_to_time_format,
-        col_to_text_embedder_cfg=text_embedder_cfg)
+        col_to_text_embedder_cfg=dataset.col_to_text_embedder_cfg,
+    )
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
     assert len(tf) == len(dataset)
