@@ -18,7 +18,6 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          pip install mypy
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e '.[full,test]' -f https://download.pytorch.org/whl/cpu
       - name: Check type hints
         run: mypy

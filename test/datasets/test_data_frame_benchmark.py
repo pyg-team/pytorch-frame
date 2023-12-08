@@ -1,3 +1,5 @@
+import tempfile
+
 import pytest
 
 from torch_frame.datasets import DataFrameBenchmark
@@ -121,9 +123,14 @@ def test_data_frame_benchmark_match(task_type, scale):
             assert datasets[5] == ('Yandex', {'name': 'year'})
 
 
-def test_data_frame_benchmark_object(tmp_path):
-    dataset = DataFrameBenchmark(tmp_path, TaskType.BINARY_CLASSIFICATION,
-                                 'small', 1)
+def test_data_frame_benchmark_object():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        dataset = DataFrameBenchmark(
+            root=temp_dir,
+            task_type=TaskType.BINARY_CLASSIFICATION,
+            scale='small',
+            idx=1,
+        )
     assert str(dataset) == ("DataFrameBenchmark(\n"
                             "  task_type=binary_classification,\n"
                             "  scale=small,\n"
