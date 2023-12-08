@@ -5,7 +5,7 @@ import functools
 import os.path as osp
 from abc import ABC
 from collections import defaultdict
-from typing import Any
+from typing import Any, Dict
 
 import pandas as pd
 import torch
@@ -37,6 +37,27 @@ from torch_frame.typing import (
 )
 from torch_frame.utils.split import SPLIT_TO_NUM
 
+COL_TO_PATTERN_STYPE_MAPPING = {
+    'col_to_sep': torch_frame.multicategorical,
+    'col_to_time_format': torch_frame.timestamp,
+    'col_to_text_embedder_cfg': torch_frame.text_embedded,
+    'col_to_text_tokenizer_cfg': torch_frame.text_tokenized,
+}
+
+COL_TO_PATTERN_REQUIRED_TYPE_MAPPING = {
+    'col_to_sep': str,
+    'col_to_time_format': str,
+    'col_to_text_embedder_cfg': TextEmbedderConfig,
+    'col_to_text_tokenizer_cfg': TextTokenizerConfig,
+}
+
+COL_TO_PATTERN_ALLOW_NONE_MAPPING = {
+    'col_to_sep': True,
+    'col_to_time_format': True,
+    'col_to_text_embedder_cfg': False,
+    'col_to_text_tokenizer_cfg': False,
+}
+
 
 def requires_pre_materialization(func):
     @functools.wraps(func)
@@ -62,9 +83,11 @@ def requires_post_materialization(func):
     return _requires_post_materialization
 
 
-def canonicalize_col_to_pattern(col_to_pattern: Any | dict[str, Any] | None,
-                                columns: list[str],
-                                all_inclusive: bool = True) -> dict[str, Any]:
+def canonicalize_col_to_pattern(
+    col_to_pattern: Any | dict[str, Any] | None,
+    columns: list[str],
+    requires_all_inclusive,
+) -> dict[str, Any]:
     r"""Canonicalize :obj:`col_to_pattern` into a dictionary format.
 
     Args:
@@ -77,8 +100,11 @@ def canonicalize_col_to_pattern(col_to_pattern: Any | dict[str, Any] | None,
             dictionary specified for each column.
         columns (List[str]): A list of multi-categorical, timestamp or text
             columns.
-        all_inclusive (bool): A boolean indicating whether all columns need
-            to be specified.(default: True)
+        requires_all_inclusive (bool): Whether all columns need to be specified
+            in :obj:`col_to_pattern` or not. If :obj:`True`, it will error out
+            when any of :obj:`columns` is not included in
+            :obj:`col_to_pattern`. If :obj:`False`, it automatically fill in
+            :obj:`None` to columns that are not in :obj:`col_to_pattern`.
 
     Returns:
         Dict[str, Any]: :obj:`col_to_pattern` in a dictionary format, mapping
@@ -91,13 +117,17 @@ def canonicalize_col_to_pattern(col_to_pattern: Any | dict[str, Any] | None,
         for col in columns:
             col_to_pattern[col] = pattern
     else:
-        if all_inclusive and len(set(columns) -
-                                 set(col_to_pattern.keys())) > 0:
-            raise ValueError(
-                "col_to_sep needs to specify separators for all "
-                "multi-categorical columns, but the separators for the "
-                "following columns are missing: "
-                f"{list(set(columns) - set(col_to_pattern.keys()))}.")
+        missing_cols = set(columns) - set(col_to_pattern.keys())
+        if len(missing_cols) > 0:
+            if requires_all_inclusive:
+                raise ValueError(
+                    "col_to_sep needs to specify separators for all "
+                    "multi-categorical columns, but the separators for the "
+                    "following columns are missing: "
+                    f"{list(missing_cols)}.")
+            else:
+                for col in missing_cols:
+                    col_to_pattern[col] = None
     return col_to_pattern
 
 
@@ -112,53 +142,44 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. (default: :obj:`,`)
-        col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
-            A text embedder configuration or a dictionary of configurations
-            specifying :obj:`text_embedder` that maps text columns into
-            :class:`torch.nn.Embeddings` and :obj:`batch_size` that
-            specifies the mini-batch size for :obj:`text_embedder`.
-            (default: :obj:`None`)
-        col_to_text_tokenizer_cfg (TextTokenizerConfig or dict, optional):
-            A text tokenizer configuration or dictionary of configurations
-            specifying :obj:`text_tokenizer` that maps sentences into a
-            list of dictionary of tensors. Each element in the list
-            corresponds to each sentence, keys are input arguments to
-            the model such as :obj:`input_ids`, and values are tensors
-            such as tokens. :obj:`batch_size` specifies the mini-batch
-            size for :obj:`text_tokenizer`. (default: :obj:`None`)
-        col_to_time_format (Union[str, Dict[str, str]], optional): A
-            dictionary or a string specifying the format for the timestamp
-            columns. See `strfttime documentation
+        col_to_sep (Dict[str, str]): A dictionary specifying the
+            separator/delimiter for the multi-categorical columns.
+            (default: :obj:`{}`)
+        col_to_text_embedder_cfg (Dict[str, TextEmbedderConfig]):
+            A dictionary of configurations specifying :obj:`text_embedder` that
+            maps text columns into :class:`torch.nn.Embeddings` and
+            :obj:`batch_size` that specifies the mini-batch size for
+            :obj:`text_embedder`. (default: :obj:`{}`)
+        col_to_text_tokenizer_cfg (Dict[str, TextTokenizerConfig]):
+            A dictionary of text tokenizer configurations, specifying
+            :obj:`text_tokenizer` that maps sentences into a list of dictionary
+            of tensors. Each element in the list corresponds to each sentence,
+            keys are input arguments to the model such as :obj:`input_ids`, and
+            values are tensors such as tokens. :obj:`batch_size` specifies the
+            mini-batch size for :obj:`text_tokenizer`. (default: :obj:`{}`)
+        col_to_time_format (Dict[str, str]): A dictionary of the
+            time format for the timestamp columns. See `strfttime documentation
             <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
             for more information on formats. If a string is specified,
             then the same format will be used throughout all the timestamp
             columns. If a dictionary is given, we use a different format
             specified for each column. If not specified, Pandas' internal
             to_datetime function will be used to auto parse time columns.
-            (default: None)
+            (default: :obj:`{}`)
     """
     def __init__(
         self,
         col_to_stype: dict[str, torch_frame.stype],
         col_stats: dict[str, dict[StatType, Any]],
         target_col: str | None = None,
-        col_to_sep: str | dict[str, str] = ",",
-        col_to_text_embedder_cfg: None |
-        (dict[str, TextEmbedderConfig] | TextEmbedderConfig) = None,
-        col_to_text_tokenizer_cfg: None |
-        (dict[str, TextTokenizerConfig] | TextTokenizerConfig) = None,
-        col_to_time_format: str | dict[str, str] | None = None,
+        col_to_sep: dict[str, str | None] = {},
+        col_to_text_embedder_cfg: dict[str, TextEmbedderConfig] = {},
+        col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig] = {},
+        col_to_time_format: dict[str, str | None] = {},
     ):
         self.col_to_stype = col_to_stype
         self.col_stats = col_stats
         self.target_col = target_col
-        self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
 
         # Pre-compute a canonical `col_names_dict` for tensor frame.
         self._col_names_dict: dict[torch_frame.stype, list[str]] = {}
@@ -172,37 +193,11 @@ class DataFrameToTensorFrameConverter:
             # in-place sorting of col_names for each stype
             self._col_names_dict[stype].sort()
 
-        # Some multicategorical columns can be lists and thus
-        # do not need a separator.
-        self.col_to_sep = canonicalize_col_to_pattern(
-            col_to_sep,
-            self.col_names_dict.get(torch_frame.multicategorical),
-            all_inclusive=False,
-        )
-
-        self.col_to_time_format = canonicalize_col_to_pattern(
-            col_to_time_format,
-            self.col_names_dict.get(torch_frame.timestamp, []),
-            all_inclusive=False,
-        )
-
-        self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
-            col_to_text_embedder_cfg,
-            self.col_names_dict.get(torch_frame.text_embedded, []),
-        )
-
-        if (torch_frame.text_embedded in self.col_names_dict) \
-                and (self.col_to_text_embedder_cfg is None):
-            raise ValueError("`col_to_text_embedder_cfg` needs to be"
-                             "specified when stype.text_embedded column "
-                             "exists.")
-
-        if (torch_frame.text_tokenized
-                in self.col_names_dict) and (self.col_to_text_tokenizer_cfg
-                                             is None):
-            raise ValueError("`col_to_text_tokenizer_cfg` needs to be "
-                             "specified when stype.text_tokenized column "
-                             "exists.")
+        # Assumed to be canonicalized already by dataset
+        self.col_to_sep = col_to_sep
+        self.col_to_time_format = col_to_time_format
+        self.col_to_text_embedder_cfg = col_to_text_embedder_cfg
+        self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
 
     @property
     def col_names_dict(self) -> dict[torch_frame.stype, list[str]]:
@@ -218,11 +213,10 @@ class DataFrameToTensorFrameConverter:
             return CategoricalTensorMapper(index)
         elif stype == torch_frame.multicategorical:
             index, _ = self.col_stats[col][StatType.MULTI_COUNT]
-            return MultiCategoricalTensorMapper(
-                index, sep=self.col_to_sep.get(col, None))
+            return MultiCategoricalTensorMapper(index,
+                                                sep=self.col_to_sep[col])
         elif stype == torch_frame.timestamp:
-            return TimestampTensorMapper(
-                format=self.col_to_time_format.get(col, None))
+            return TimestampTensorMapper(format=self.col_to_time_format[col])
         elif stype == torch_frame.text_embedded:
             text_embedder_cfg = self.col_to_text_embedder_cfg[col]
             return TextEmbeddingTensorMapper(
@@ -292,13 +286,12 @@ class Dataset(ABC):
         split_col (str, optional): The column that stores the pre-defined split
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
-        col_to_sep (Union[str, Dict[str, str]]): A dictionary or a string
-            specifying the separator/delimiter for the multi-categorical
+        col_to_sep (Union[str, Dict[str, Optional[str]]]): A dictionary or a
+            string specifying the separator/delimiter for the multi-categorical
             columns. If a string is specified, then the same separator will
             be used throughout all the multi-categorical columns. If a
             dictionary is given, we use a separator specified for each
-            column. (default: :obj:`,`)
-            (default: :obj:`,`)
+            column. (default: :obj:`None`)
         col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
             A text embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
@@ -313,7 +306,7 @@ class Dataset(ABC):
             the model such as :obj:`input_ids`, and values are tensors
             such as tokens. :obj:`batch_size` specifies the mini-batch
             size for :obj:`text_tokenizer`. (default: :obj:`None`)
-        col_to_time_format (Union[str, Dict[str, str]], optional): A
+        col_to_time_format (Union[str, Dict[str, Optional[str]]], optional): A
             dictionary or a string specifying the format for the timestamp
             columns. See `strfttime documentation
             <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
@@ -322,7 +315,7 @@ class Dataset(ABC):
             columns. If a dictionary is given, we use a different format
             specified for each column. If not specified, pandas's internal
             to_datetime function will be used to auto parse time columns.
-            (default: None)
+            (default: :obj:`None`)
     """
     def __init__(
         self,
@@ -330,7 +323,7 @@ class Dataset(ABC):
         col_to_stype: dict[str, torch_frame.stype],
         target_col: str | None = None,
         split_col: str | None = None,
-        col_to_sep: str | dict[str, str] = ",",
+        col_to_sep: str | dict[str, str] | None = None,
         col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
         | TextEmbedderConfig | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
@@ -367,32 +360,59 @@ class Dataset(ABC):
             raise ValueError(
                 "Multilabel classification task is not yet supported.")
 
-        self.col_to_sep = canonicalize_col_to_pattern(col_to_sep, [
-            col for col, stype in self.col_to_stype.items()
-            if stype == torch_frame.multicategorical
-        ], all_inclusive=False)
-        self.col_to_time_format = canonicalize_col_to_pattern(
-            col_to_time_format, [
-                col for col, stype in self.col_to_stype.items()
-                if stype == torch_frame.timestamp
-            ], all_inclusive=False)
-        self.col_to_text_embedder_cfg = canonicalize_col_to_pattern(
-            col_to_text_embedder_cfg,
-            [
-                col for col, stype in self.col_to_stype.items()
-                if stype == torch_frame.text_embedded
-            ],
-        )
-        self.col_to_text_tokenizer_cfg = canonicalize_col_to_pattern(
-            col_to_text_tokenizer_cfg,
-            [
-                col for col, stype in self.col_to_stype.items()
-                if stype == torch_frame.text_tokenized
-            ],
-        )
+        # Canonicalize and validate
+        self.col_to_sep = self.canonicalize_and_validate_col_to_pattern(
+            col_to_sep, 'col_to_sep')
+        (self.col_to_time_format
+         ) = self.canonicalize_and_validate_col_to_pattern(
+             col_to_time_format, 'col_to_time_format')
+        (self.col_to_text_embedder_cfg
+         ) = self.canonicalize_and_validate_col_to_pattern(
+             col_to_text_embedder_cfg, 'col_to_text_embedder_cfg')
+        (self.col_to_text_tokenizer_cfg
+         ) = self.canonicalize_and_validate_col_to_pattern(
+             col_to_text_tokenizer_cfg, 'col_to_text_tokenizer_cfg')
+
         self._is_materialized: bool = False
         self._col_stats: dict[str, dict[StatType, Any]] = {}
         self._tensor_frame: TensorFrame | None = None
+
+    def canonicalize_and_validate_col_to_pattern(
+        self,
+        col_to_pattern: Any,
+        col_to_pattern_name: str,
+    ) -> Dict[str, Any]:
+        canonical_col_to_pattern = canonicalize_col_to_pattern(
+            col_to_pattern=col_to_pattern,
+            columns=[
+                col for col, stype in self.col_to_stype.items()
+                if stype == COL_TO_PATTERN_STYPE_MAPPING[col_to_pattern_name]
+            ],
+            requires_all_inclusive=not COL_TO_PATTERN_ALLOW_NONE_MAPPING[
+                col_to_pattern_name],
+        )
+        assert isinstance(canonical_col_to_pattern, dict)
+
+        # Validate types of values.
+        for col, pattern in canonical_col_to_pattern.items():
+            pass_validation = False
+            required_type = COL_TO_PATTERN_REQUIRED_TYPE_MAPPING[
+                col_to_pattern_name]
+            allow_none = COL_TO_PATTERN_ALLOW_NONE_MAPPING[col_to_pattern_name]
+            if isinstance(pattern, required_type):
+                pass_validation = True
+            if allow_none and pattern is None:
+                pass_validation = True
+
+            if not pass_validation:
+                msg = f"{col_to_pattern_name}[{col}] must be of type "
+                msg += str(required_type)
+                if allow_none:
+                    msg += " or None"
+                msg += f", but {pattern} given."
+                raise TypeError(msg)
+
+        return canonical_col_to_pattern
 
     @staticmethod
     def download_url(

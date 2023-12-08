@@ -43,16 +43,17 @@ def test_compute_col_stats_categorical():
 
 
 def test_compute_col_stats_multi_categorical():
-    for ser in [
-            pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None, np.nan]),
+    for ser, sep in [
+        (pd.Series(['a|a|b', 'a|c', 'c|a', 'a|b|c', '', None, np.nan]), '|'),
             # # Testing with leading and traling whitespace
-            pd.Series(['a| a | b', 'a| c', 'c |a', '  a| b| c', '  ', None]),
+        (pd.Series(['a, a , b', 'a, c', 'c ,a', '  a, b, c', '  ',
+                    None]), ','),
             # Testing with list representation
-            pd.Series([['a', 'a', 'b'], ['a', 'c'], ['c', 'a'],
-                       ['a', 'b', 'c'], [], None]),
+        (pd.Series([['a', 'a', 'b'], ['a', 'c'], ['c', 'a'], ['a', 'b', 'c'],
+                    [], None]), None),
     ]:
         stype = multicategorical
-        assert compute_col_stats(ser, stype, sep='|') == {
+        assert compute_col_stats(ser, stype, sep=sep) == {
             StatType.MULTI_COUNT: (['a', 'c', 'b'], [4, 3, 2]),
         }
 
