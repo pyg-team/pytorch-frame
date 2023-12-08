@@ -39,6 +39,7 @@ dependencies=[
 test=[
     "pytest",
     "pytest-cov",
+    "mypy",
 ]
 dev=[
     "pytorch_frame[test]",
