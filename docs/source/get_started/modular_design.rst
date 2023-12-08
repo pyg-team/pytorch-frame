@@ -28,6 +28,12 @@ This class can contain learnable parameters and `NaN` (missing value) handling.
 It takes :class:`~torch_frame.data.TensorFrame` as input and applies stype-specific feature encoder (specified via :obj:`stype_encoder_dict`) to :obj:`~torch.Tensor` of each stype to get embeddings for each :obj:`~torch_frame.stype`.
 The embeddings of different :obj:`stypes<torch_frame.stype>` are then concatenated to give the final 3-dimensional :obj:`~torch.Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
+.. note::
+    Different :obj:`stypes<torch_frame.stype>` can have the same internal representation, e.g. both :class:`~torch_frame.embedding` and :class:`~torch_frame.text_embedded` are stored with :class:`~torch_frame.data.MultiEmbeddingTensor`.
+    In PyTorch Frame, all :obj:`stypes<torch_frame.stype>` sharing the same data structure have child-parent dependency.
+    The child :obj:`stype<torch_frame.stype>` will be unified to the parent :obj:`stype<torch_frame.stype>` after materialization.
+    We consider the :class:`~torch_frame.embedding` as the parent of :class:`~torch_frame.text_embedded` and only parent :obj:`stype<torch_frame.stype>` is supported in the :obj:`stype_encoder_dict`.
+
 Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of
 :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding :obj:`stype.categorical` columns
 :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding :obj:`stype.text_embedded` columns,
@@ -46,7 +52,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.nume
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder(),
+        stype.embedding: LinearEmbeddingEncoder(),
     }
 
     encoder = StypeWiseFeatureEncoder(
