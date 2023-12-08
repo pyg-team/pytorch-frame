@@ -109,15 +109,23 @@ def test_converter():
         target_col=dataset.target_col,
         col_to_time_format=dataset.col_to_time_format,
     )
-    text_embedded_col_names = ([col for col, stype in dataset.col_to_stype.items() if stype == stype.text_embedded])
-    embedding_col_names = ([col for col, stype in dataset.col_to_stype.items() if stype == stype.embedding])
+    text_embedded_col_names = ([
+        col for col, stype in dataset.col_to_stype.items()
+        if stype == stype.text_embedded
+    ])
+    embedding_col_names = ([
+        col for col, stype in dataset.col_to_stype.items()
+        if stype == stype.embedding
+    ])
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
     assert len(tf) == len(dataset)
     assert stype.text_embedded not in tf.feat_dict
     assert stype.text_embedded not in tf.col_names_dict
-    assert len(tf.feat_dict[stype.embedding]) == len(text_embedded_col_names) + len(embedding_col_names)
-    assert len(tf.col_names_dict[stype.embedding]) == len(text_embedded_col_names) + len(embedding_col_names)
+    assert len(tf.feat_dict[stype.embedding]
+               ) == len(text_embedded_col_names) + len(embedding_col_names)
+    assert len(tf.col_names_dict[stype.embedding]
+               ) == len(text_embedded_col_names) + len(embedding_col_names)
     for col in text_embedded_col_names:
         assert col in tf.col_names_dict[stype.embedding]
 
