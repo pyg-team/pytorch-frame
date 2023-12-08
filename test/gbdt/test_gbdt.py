@@ -1,5 +1,4 @@
 import os.path as osp
-import tempfile
 
 import pytest
 import torch
@@ -30,7 +29,11 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
+def test_gbdt_with_save_load(gbdt_cls,
+                             stypes,
+                             task_type_and_metric,
+                             tmp_path,
+                             ):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
         num_rows=30,
@@ -49,38 +52,37 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
         metric=metric,
     )
 
-    with tempfile.TemporaryDirectory() as TEST_DIR:
-        path = osp.join(TEST_DIR, f'{gbdt_cls.__name__}.txt')
-        with pytest.raises(RuntimeError, match="is not yet fitted"):
-            gbdt.save(path)
-
-        gbdt.tune(
-            tf_train=dataset.tensor_frame,
-            tf_val=dataset.tensor_frame,
-            num_trials=2,
-            num_boost_round=2,
-        )
+    path = osp.join(tmp_path, f'{gbdt_cls.__name__}.txt')
+    with pytest.raises(RuntimeError, match="is not yet fitted"):
         gbdt.save(path)
 
-        loaded_gbdt = gbdt_cls(
-            task_type=task_type,
-            num_classes=dataset.num_classes
-            if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
-            metric=metric,
-        )
-        loaded_gbdt.load(path)
+    gbdt.tune(
+        tf_train=dataset.tensor_frame,
+        tf_val=dataset.tensor_frame,
+        num_trials=2,
+        num_boost_round=2,
+    )
+    gbdt.save(path)
 
-        pred = gbdt.predict(tf_test=dataset.tensor_frame)
-        score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
-        loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
-        loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
+    loaded_gbdt = gbdt_cls(
+        task_type=task_type,
+        num_classes=dataset.num_classes
+        if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
+        metric=metric,
+    )
+    loaded_gbdt.load(path)
 
-        assert torch.allclose(pred, loaded_pred, atol=1e-2)
-        assert gbdt.metric == metric
-        assert score == loaded_score
-        if task_type == TaskType.REGRESSION:
-            assert (score >= 0)
-        elif task_type == TaskType.BINARY_CLASSIFICATION:
-            assert (0 <= score <= 1)
-        elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
-            assert (0 <= score <= 1)
+    pred = gbdt.predict(tf_test=dataset.tensor_frame)
+    score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
+    loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
+    loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
+
+    assert torch.allclose(pred, loaded_pred, atol=1e-2)
+    assert gbdt.metric == metric
+    assert score == loaded_score
+    if task_type == TaskType.REGRESSION:
+        assert (score >= 0)
+    elif task_type == TaskType.BINARY_CLASSIFICATION:
+        assert (0 <= score <= 1)
+    elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
+        assert (0 <= score <= 1)
