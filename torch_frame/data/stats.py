@@ -114,9 +114,8 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.MULTI_COUNT:
-            if sep is not None:
-                ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
-                                split_by_sep(row, sep))
+            ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
+                            split_by_sep(row, sep))
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
