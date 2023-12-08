@@ -140,7 +140,7 @@ class DataFrameToTensorFrameConverter:
             column name into stats. Available as :obj:`dataset.col_stats`.
         target_col (str, optional): The column used as target.
             (default: :obj:`None`)
-        col_to_sep (Dict[str, str]): A dictionary specifying the
+        col_to_sep (Dict[str, Optional[str]]): A dictionary specifying the
             separator/delimiter for the multi-categorical columns.
             (default: :obj:`{}`)
         col_to_text_embedder_cfg (Dict[str, TextEmbedderConfig]):
@@ -155,7 +155,7 @@ class DataFrameToTensorFrameConverter:
             keys are input arguments to the model such as :obj:`input_ids`, and
             values are tensors such as tokens. :obj:`batch_size` specifies the
             mini-batch size for :obj:`text_tokenizer`. (default: :obj:`{}`)
-        col_to_time_format (Dict[str, str]): A dictionary of the
+        col_to_time_format (Dict[str, Optional[str]]): A dictionary of the
             time format for the timestamp columns. See `strfttime documentation
             <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_
             for more information on formats. If a string is specified,
@@ -285,11 +285,13 @@ class Dataset(ABC):
             information. The column should only contain :obj:`0`, :obj:`1`, or
             :obj:`2`. (default: :obj:`None`).
         col_to_sep (Union[str, Dict[str, Optional[str]]]): A dictionary or a
-            string specifying the separator/delimiter for the multi-categorical
-            columns. If a string is specified, then the same separator will
-            be used throughout all the multi-categorical columns. If a
-            dictionary is given, we use a separator specified for each
-            column. (default: :obj:`None`)
+            string/:obj:`None` specifying the separator/delimiter for the
+            multi-categorical columns. If a string/:obj:`None` is specified,
+            then the same separator will be used throughout all the
+            multi-categorical columns. Note that if :obj:`None` is specified,
+            it assumes a multi-category is given as a :obj:`list` of
+            categories. If a dictionary is given, we use a separator specified
+            for each column. (default: :obj:`None`)
         col_to_text_embedder_cfg (TextEmbedderConfig or dict, optional):
             A text embedder configuration or a dictionary of configurations
             specifying :obj:`text_embedder` that maps text columns into
@@ -321,12 +323,12 @@ class Dataset(ABC):
         col_to_stype: dict[str, torch_frame.stype],
         target_col: str | None = None,
         split_col: str | None = None,
-        col_to_sep: str | dict[str, str] | None = None,
+        col_to_sep: str | None | dict[str, str | None] = None,
         col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
         | TextEmbedderConfig | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
         | TextTokenizerConfig | None = None,
-        col_to_time_format: str | dict[str, str] | None = None,
+        col_to_time_format: str | None | dict[str, str | None] = None,
     ):
         self.df = df
         self.target_col = target_col
