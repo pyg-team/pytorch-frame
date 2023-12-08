@@ -1,5 +1,5 @@
-import tempfile
 import os.path as osp
+import tempfile
 
 import pytest
 import torch
