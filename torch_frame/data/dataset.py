@@ -243,6 +243,38 @@ class DataFrameToTensorFrameConverter:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
 
+    def _update_col_stats(self, tf):
+        r"""Set :obj:`col_stats` based on :obj:`tensor_frame`."""
+        if torch_frame.text_embedded in tf.feat_dict:
+            # Text embedding dimensionality is only available after the tensor
+            # frame actually gets created, so we compute col_stats here.
+            offset = tf.feat_dict[torch_frame.text_embedded].offset
+            emb_dim_list = offset[1:] - offset[:-1]
+            for i, col_name in enumerate(
+                    tf.col_names_dict[torch_frame.text_embedded]):
+                self.col_stats[col_name][StatType.EMB_DIM] = int(
+                    emb_dim_list[i])
+
+    def _unify_tensor_frame(self, tf):
+        r"""Unify :obj:`TensorFrames` for child and parent stypes."""
+        for stype in tf.stypes:
+            if stype.parent != stype:
+                # Unify feat_dict
+                child_feat = tf.feat_dict[stype]
+                if stype.parent in tf.stypes:
+                    parent_feat = tf.feat_dict[stype.parent]
+                    tf.feat_dict[stype.parent] = cat_tensor_data(
+                        [parent_feat, child_feat], dim=1)
+                else:
+                    tf.feat_dict[stype.parent] = child_feat
+
+                # Unify col_names_dict
+                tf.col_names_dict[stype.parent] = tf.col_names_dict.get(
+                    stype.parent, []) + tf.col_names_dict[stype]
+
+                tf.feat_dict.pop(stype)
+                tf.col_names_dict.pop(stype)
+
     def __call__(
         self,
         df: DataFrame,
@@ -277,7 +309,10 @@ class DataFrameToTensorFrameConverter:
             y = self._get_mapper(self.target_col).forward(
                 df[self.target_col], device=device)
 
-        return TensorFrame(feat_dict, self.col_names_dict, y)
+        tf = TensorFrame(feat_dict, self.col_names_dict, y)
+        self._update_col_stats(tf)
+        self._unify_tensor_frame(tf)
+        return tf
 
 
 class Dataset(ABC):
@@ -533,11 +568,7 @@ class Dataset(ABC):
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
-        # 3. Update col stats based on `TensorFrame`:
-        self._update_col_stats()
-        self._unify_tensor_frame()
-
-        # 4. Mark the dataset as materialized:
+        # 3. Mark the dataset as materialized:
         self._is_materialized = True
 
         if path is not None:
@@ -556,42 +587,6 @@ class Dataset(ABC):
             col_to_text_tokenizer_cfg=self.col_to_text_tokenizer_cfg,
             col_to_time_format=self.col_to_time_format,
         )
-
-    def _update_col_stats(self):
-        r"""Set :obj:`col_stats` based on :obj:`tensor_frame`."""
-        if torch_frame.text_embedded in self._tensor_frame.feat_dict:
-            # Text embedding dimensionality is only available after the tensor
-            # frame actually gets created, so we compute col_stats here.
-            offset = self._tensor_frame.feat_dict[
-                torch_frame.text_embedded].offset
-            emb_dim_list = offset[1:] - offset[:-1]
-            for i, col_name in enumerate(self._tensor_frame.col_names_dict[
-                    torch_frame.text_embedded]):
-                self._col_stats[col_name][StatType.EMB_DIM] = int(
-                    emb_dim_list[i])
-
-    def _unify_tensor_frame(self):
-        r"""Unify :obj:`TensorFrames` for child and parent stypes."""
-        for stype in self._tensor_frame.stypes:
-            if stype.parent != stype:
-                # Unify feat_dict
-                child_feat = self._tensor_frame.feat_dict[stype]
-                if stype.parent in self._tensor_frame.stypes:
-                    parent_feat = self._tensor_frame.feat_dict[stype.parent]
-                    self._tensor_frame.feat_dict[
-                        stype.parent] = cat_tensor_data(
-                            [parent_feat, child_feat], dim=1)
-                else:
-                    self._tensor_frame.feat_dict[stype.parent] = child_feat
-
-                # Unify col_names_dict
-                self._tensor_frame.col_names_dict[
-                    stype.parent] = self._tensor_frame.col_names_dict.get(
-                        stype.parent,
-                        []) + self._tensor_frame.col_names_dict[stype]
-
-                self._tensor_frame.feat_dict.pop(stype)
-                self._tensor_frame.col_names_dict.pop(stype)
 
     @property
     def is_materialized(self) -> bool:

@@ -56,8 +56,8 @@ class LightGBM(GBDT):
             dfs.append(pd.DataFrame(feat, columns=arange))
             offset += feat.shape[1]
 
-        if stype.text_embedded in tf.feat_dict:
-            feat = tf.feat_dict[stype.text_embedded]
+        if stype.embedding in tf.feat_dict:
+            feat = tf.feat_dict[stype.embedding]
             feat = feat.values
             feat = feat.view(feat.size(0), -1).numpy()
             arange = np.arange(offset, offset + feat.shape[1])
