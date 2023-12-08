@@ -159,7 +159,7 @@ test_loader = DataLoader(test_dataset.tensor_frame, batch_size=args.batch_size)
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(),
+    stype.embedding: LinearEmbeddingEncoder(),
 }
 
 model = FTTransformer(
