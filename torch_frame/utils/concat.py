@@ -61,7 +61,7 @@ def cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
             return MultiEmbeddingTensor.cat(td_list, dim=dim)
         elif isinstance(td, MultiNestedTensor):
             return MultiNestedTensor.cat(td_list, dim=dim)
-        elif isinstance(td, dict[str, MultiNestedTensor]):
+        elif isinstance(td, dict):
             result = {}
             for name in td.keys():
                 result[name] = MultiNestedTensor.cat(
