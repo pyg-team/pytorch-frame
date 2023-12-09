@@ -32,7 +32,7 @@ class LightGBM(GBDT):
                 numerical and categorical features of the input
                 :class:`TensorFrame`.
             y (numpy.ndarray, optional): Prediction label.
-            cat_features (numpy.ndarray): Array containing indexes of
+            cat_features (list[int]): Array containing indexes of
                 categorical features.
         """
         tf = tf.cpu()
@@ -41,14 +41,14 @@ class LightGBM(GBDT):
             y: np.ndarray = y.numpy()
 
         dfs: list[DataFrame] = []
-        cat_features: list[np.ndarray] = []
+        cat_features_list: list[np.ndarray] = []
         offset: int = 0
 
         if stype.categorical in tf.feat_dict:
             feat = tf.feat_dict[stype.categorical].numpy()
             arange = np.arange(offset, offset + feat.shape[1])
             dfs.append(pd.DataFrame(feat, columns=arange))
-            cat_features.append(arange)
+            cat_features_list.append(arange)
             offset += feat.shape[1]
 
         if stype.numerical in tf.feat_dict:
@@ -71,8 +71,9 @@ class LightGBM(GBDT):
             raise ValueError("The input TensorFrame object is empty.")
 
         df = pd.concat(dfs, axis=1)
-        cat_features = np.concatenate(
-            cat_features, axis=0).tolist() if len(cat_features) else []
+        cat_features: list[int] = np.concatenate(
+            cat_features_list,
+            axis=0).tolist() if len(cat_features_list) else []
 
         return df, y, cat_features
 
@@ -102,7 +103,7 @@ class LightGBM(GBDT):
         trial: Any,  # optuna.trial.Trial
         train_data: Any,  # lightgbm.Dataset
         eval_data: Any,  # lightgbm.Dataset
-        cat_features: np.ndarray,
+        cat_features: list[int],
         num_boost_round: int,
     ) -> float:
         r"""Objective function to be optimized.
@@ -111,7 +112,7 @@ class LightGBM(GBDT):
             trial (optuna.trial.Trial): Optuna trial object.
             train_data (lightgbm.Dataset): Train data.
             eval_data (lightgbm.Dataset): Validation data.
-            cat_features (numpy.ndarray): Array containing indexes of
+            cat_features (list[int]): Array containing indexes of
                 categorical features.
             num_boost_round (int): Number of boosting round.
 
