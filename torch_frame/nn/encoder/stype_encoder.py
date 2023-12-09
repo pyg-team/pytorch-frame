@@ -767,7 +767,7 @@ class LinearModelEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: dict[str, MultiNestedTensor],
+        feat: TensorData,
         col_names: list[str] | None = None,
     ) -> Tensor:
         xs = []
