@@ -411,7 +411,7 @@ def test_text_tokenized_encoder():
         for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
     ]
     model = RandomTextModel(text_emb_channels=text_emb_channels)
-    col_to_text_model_cfg = {
+    col_to_model_cfg = {
         col_name: ModelConfig(model=model, out_channels=text_emb_channels)
         for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
     }
@@ -419,7 +419,7 @@ def test_text_tokenized_encoder():
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.text_tokenized,
-        col_to_model_cfg=col_to_text_model_cfg,
+        col_to_model_cfg=col_to_model_cfg,
     )
     feat_text = tensor_frame.feat_dict[stype.text_tokenized]
     col_names = tensor_frame.col_names_dict[stype.text_tokenized]
