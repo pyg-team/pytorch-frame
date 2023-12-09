@@ -705,11 +705,11 @@ class LinearModelEncoder(StypeEncoder):
     features in a batched manner.
 
     Args:
-        col_to_model_cfg (dict): A dictionary of :obj:`ModelConfig` where
-            keys are :obj:`text_tokenized` column names and values are text
-            models. Input to each model is a dictionary of
-            :obj:`MultiNestedTensor` and model outputs three-dimensional
-            embedding features that will be input into the linear layer.
+        col_to_model_cfg (dict): A dictionary mapping column names to
+            :class:`~torch_frame.config.ModelConfig`, which specifies a model
+            to map per-column :class:`TensorData` object of shape
+            :obj:`[batch_size, 1, *]` into row embeddings of shape
+            :obj:`[batch_size, 1, model_out_channels]`.
     """
 
     # NOTE: We currently support text embeddings but in principle, this encoder
@@ -729,10 +729,9 @@ class LinearModelEncoder(StypeEncoder):
         col_to_model_cfg: dict[str, ModelConfig] | None = None,
     ) -> None:
         if col_to_model_cfg is None:
-            raise ValueError("Please manually specify the "
-                             "`col_to_model_cfg`, which outputs "
-                             "embeddings that will be fed into the linear "
-                             "layer.")
+            raise ValueError("Please manually specify `col_to_model_cfg`, "
+                             "which outputs embeddings that will be fed into "
+                             "linear layer.")
         # TODO: Support non-dictionary col_to_model_cfg
         assert isinstance(col_to_model_cfg, dict)
 

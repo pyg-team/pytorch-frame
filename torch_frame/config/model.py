@@ -8,8 +8,8 @@ from torch_frame.typing import TensorData
 
 @dataclass
 class ModelConfig:
-    r"""Learnable model that maps :class:`TensorData` into embeddings of each
-        row.
+    r"""Learnable model that maps per-column :class:`TensorData` into
+    row embeddings.
 
     Args:
         model (callable): A callable model that takes TensorData of shape
