@@ -29,14 +29,20 @@ It takes :class:`~torch_frame.data.TensorFrame` as input and applies stype-speci
 The embeddings of different :obj:`stypes<torch_frame.stype>` are then concatenated to give the final 3-dimensional :obj:`~torch.Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
 .. note::
-    Different :obj:`stypes<torch_frame.stype>` can have the same internal representation, e.g. both :class:`~torch_frame.embedding` and :class:`~torch_frame.text_embedded` are stored with :class:`~torch_frame.data.MultiEmbeddingTensor`.
-    In PyTorch Frame, all :obj:`stypes<torch_frame.stype>` sharing the same data structure have child-parent dependency.
-    The child :obj:`stype<torch_frame.stype>` will be unified to the parent :obj:`stype<torch_frame.stype>` after materialization.
+    There are two types of :obj:`stypes<torch_frame.stype>`--user-facing and internal.
+    User facing :obj:`stypes<torch_frame.stype>` is declared on the :class:`~torch_frame.data.Dataset` level, where users can specify the :class:`~torch_frame.stype` for each column.
+    The raw data of the user-facing :obj:`stype<torch_frame.stype>` will be converted into data of internal :obj:`stype<torch_frame.stype>` during materialization.
+    We call the internal :obj:`stype<torch_frame.stype>` the parent of the user-facing :obj:`stype<torch_frame.stype>`.
+    An :obj:`stype<torch_frame.stype>` can be both user-facing and internal.
+    :class:`~torch_frame.text_embedded` is a user-facing :obj:`stype<torch_frame.stype>` because it declaries the semantic type of the raw data.
+    During materialization, we convert the raw data stored as text into :obj:`embeddings`, which makes it no difference from the data stored as :class:`~torch_frame.embedding`.
+    The corresponding semantic type of the column thus becomes :class:`~torch_frame.embedding` in :obj:`TensorFrame`.
     We consider the :class:`~torch_frame.embedding` as the parent of :class:`~torch_frame.text_embedded` and only parent :obj:`stype<torch_frame.stype>` is supported in the :obj:`stype_encoder_dict`.
+    The motivation for this design is that internally, the data of the same :class:`stype<torch_frame.stype>` should be grouped together for efficiency.
 
 Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of
 :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding :obj:`stype.categorical` columns
-:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding :obj:`stype.text_embedded` columns,
+:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding :obj:`stype.embedding` columns,
 and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.numerical` columns.
 
 .. code-block:: python
@@ -62,7 +68,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.nume
         stype_encoder_dict=stype_encoder_dict,
     )
 
-There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns.
+There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for :class:`~torch_frame.stype.numerical` columns.
 See :py:mod:`torch_frame.nn` for the full list of built-in encoders.
 
 You can also implement your custom encoder for a given :obj:`~torch_frame.stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.

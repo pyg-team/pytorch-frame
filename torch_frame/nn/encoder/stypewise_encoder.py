@@ -32,7 +32,9 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
             (dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`]):
             A dictionary that maps :class:`torch_frame.stype` into
-            :class:`torch_frame.nn.encoder.StypeEncoder` class.
+            :class:`torch_frame.nn.encoder.StypeEncoder` class. Only
+            parent :class:`stypes <torch_frame.stype>` are supported
+            as keys.
     """
     def __init__(
         self,
@@ -56,11 +58,8 @@ class StypeWiseFeatureEncoder(FeatureEncoder):
                 else:
                     msg = (f"To resolve the issue, you can change the key from"
                            f" {stype} to {stype.parent}.")
-                raise ValueError(
-                    f"{stype} is a child stype to {stype.parent}, "
-                    "meaning that they are stored in the same data "
-                    "structure internally. Please use one encoder "
-                    f"for stypes that share the same parents. {msg}")
+                raise ValueError(f"{stype} is an invalid stype to use in the "
+                                 f"stype_encoder_dcit. {msg}")
             if stype not in stype_encoder.supported_stypes:
                 raise ValueError(
                     f"{stype_encoder} does not support encoding {stype}.")
