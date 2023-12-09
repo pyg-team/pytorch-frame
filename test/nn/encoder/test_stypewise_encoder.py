@@ -104,7 +104,7 @@ def test_stypewise_feature_encoder(
     }
     # Test that StypeWiseFeatureEncoder initialization
     # fails when an encoder is declared for a child stype.
-    with pytest.raises(ValueError, match="is a child stype to"):
+    with pytest.raises(ValueError, match="is an invalid stype"):
         encoder = StypeWiseFeatureEncoder(
             out_channels=out_channels,
             col_stats=dataset.col_stats,
