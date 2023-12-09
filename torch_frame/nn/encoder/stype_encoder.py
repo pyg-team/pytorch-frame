@@ -707,7 +707,7 @@ class LinearModelEncoder(StypeEncoder):
     Args:
         col_to_model_cfg (dict): A dictionary mapping column names to
             :class:`~torch_frame.config.ModelConfig`, which specifies a model
-            to map per-column :class:`TensorData` object of shape
+            to map a single-column :class:`TensorData` object of shape
             :obj:`[batch_size, 1, *]` into row embeddings of shape
             :obj:`[batch_size, 1, model_out_channels]`.
     """
