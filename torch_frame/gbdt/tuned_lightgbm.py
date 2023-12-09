@@ -99,12 +99,12 @@ class LightGBM(GBDT):
 
     def objective(
         self,
-        trial: Any,
-        train_data: Any,
-        eval_data: Any,
+        trial: Any,  # optuna.trial.Trial
+        train_data: Any,  # lightgbm.Dataset
+        eval_data: Any,  # lightgbm.Dataset
         cat_features: np.ndarray,
         num_boost_round: int,
-    ):
+    ) -> float:
         r"""Objective function to be optimized.
 
         Args:

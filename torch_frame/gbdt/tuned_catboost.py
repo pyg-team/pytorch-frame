@@ -111,10 +111,10 @@ class CatBoost(GBDT):
 
     def objective(
         self,
-        trial: Any,
-        train_x: np.ndarray,
+        trial: Any,  # optuna.trial.Trial
+        train_x: DataFrame,
         train_y: np.ndarray,
-        val_x: np.ndarray,
+        val_x: DataFrame,
         val_y: np.ndarray,
         cat_features: np.ndarray,
         num_boost_round: int,
@@ -123,9 +123,9 @@ class CatBoost(GBDT):
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.
-            train_x (numpy.ndarray): Train data.
+            train_x (DataFrame): Train data.
             train_y (numpy.ndarray): Train label.
-            val_x (numpy.ndarray): Validation data.
+            val_x (DataFrame): Validation data.
             val_y (numpy.ndarray): Validation label.
             cat_features (numpy.ndarray): Array containing indexes of
                 categorical features.
@@ -204,15 +204,9 @@ class CatBoost(GBDT):
         assert train_y is not None
         assert val_y is not None
         study.optimize(
-            lambda trial: self.objective(
-                trial,
-                train_x,
-                train_y,
-                val_x,
-                val_y,
-                cat_features,
-                num_boost_round,
-            ), num_trials)
+            lambda trial: self.objective(trial, train_x, train_y, val_x, val_y,
+                                         cat_features, num_boost_round),
+            num_trials)
         self.params.update(study.best_params)
 
         self.model = catboost.CatBoost(self.params)
