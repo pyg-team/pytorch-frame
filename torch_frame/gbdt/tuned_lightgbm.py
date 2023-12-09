@@ -203,9 +203,11 @@ class LightGBM(GBDT):
         self.params.update(study.best_params)
 
         train_x, train_y, cat_features = self._to_lightgbm_input(tf_train)
-        eval_x, eval_y, _ = self._to_lightgbm_input(tf_val)
+        val_x, val_y, _ = self._to_lightgbm_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
         train_data = lightgbm.Dataset(train_x, label=train_y)
-        eval_data = lightgbm.Dataset(eval_x, label=eval_y)
+        eval_data = lightgbm.Dataset(val_x, label=val_y)
         self.model = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
             categorical_feature=cat_features, valid_sets=[eval_data],

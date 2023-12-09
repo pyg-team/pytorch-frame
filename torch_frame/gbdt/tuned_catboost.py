@@ -202,10 +202,12 @@ class CatBoost(GBDT):
                                          num_boost_round), num_trials)
         self.params.update(study.best_params)
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
-        eval_x, eval_y, _ = self._to_catboost_input(tf_val)
+        val_x, val_y, _ = self._to_catboost_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
         self.model = catboost.CatBoost(self.params)
         self.model.fit(train_x, train_y, cat_features=cat_features,
-                       eval_set=[(eval_x, eval_y)], early_stopping_rounds=50,
+                       eval_set=[(val_x, val_y)], early_stopping_rounds=50,
                        logging_level="Silent")
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:
