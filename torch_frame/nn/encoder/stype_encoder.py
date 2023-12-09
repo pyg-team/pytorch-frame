@@ -731,7 +731,7 @@ class LinearModelEncoder(StypeEncoder):
         if col_to_model_cfg is None:
             raise ValueError("Please manually specify the "
                              "`col_to_model_cfg`, which outputs "
-                             "embeddings that will be feed to the linear "
+                             "embeddings that will be fed into the linear "
                              "layer.")
         # TODO: Support non-dictionary col_to_model_cfg
         assert isinstance(col_to_model_cfg, dict)
@@ -768,12 +768,12 @@ class LinearModelEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: TensorData,
+        feat: dict[str, MultiNestedTensor],
         col_names: list[str] | None = None,
     ) -> Tensor:
         xs = []
         for i, col_name in enumerate(col_names):
-            # [batch_size, in_channels]
+            # [batch_size, 1, in_channels]
             if self.stype.use_dict_multi_nested_tensor:
                 x = self.model_dict[col_name]({
                     key: feat[key][:, i]
@@ -781,7 +781,7 @@ class LinearModelEncoder(StypeEncoder):
                 })
             else:
                 x = self.model_dict[col_name](feat[:, i])
-            # [batch_size, out_channels]
+            # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)
         # [batch_size, num_cols, out_channels]

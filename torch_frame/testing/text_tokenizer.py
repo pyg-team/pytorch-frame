@@ -3,7 +3,8 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from torch_frame.typing import TensorData, TextTokenizationOutputs
+from torch_frame.data import MultiNestedTensor
+from torch_frame.typing import TextTokenizationOutputs
 
 
 class WhiteSpaceHashTokenizer:
@@ -68,7 +69,7 @@ class RandomTextModel(torch.nn.Module):
         self.text_emb_channels = text_emb_channels
         super().__init__()
 
-    def forward(self, feat: TensorData):
+    def forward(self, feat: dict[str, MultiNestedTensor]):
         input_ids = feat['input_ids'].to_dense(fill_value=0)
         _ = feat['attention_mask'].to_dense(fill_value=0)
         return torch.rand(size=(input_ids.shape[0], 1, self.text_emb_channels))

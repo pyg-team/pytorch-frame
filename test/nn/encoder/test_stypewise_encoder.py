@@ -43,7 +43,7 @@ from torch_frame.testing.text_tokenizer import (
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
-        'col_to_model_cfg': {
+        'col_to_text_model_cfg': {
             'text_tokenized_1':
             TextModelConfig(model=RandomTextModel(12), out_channels=12),
             'text_tokenized_2':

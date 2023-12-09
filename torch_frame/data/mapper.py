@@ -123,13 +123,14 @@ class MultiCategoricalTensorMapper(TensorMapper):
     Args:
         categories (List[Any]): A list of possible categories in the
         multi-categorical column sorted by counts.
-        sep (str): The delimiter for the categories in each cell.
-        (default: :obj:`,`)
+        sep (str, optional): The delimiter for the categories in each cell.
+            If :obj:`None`, it assumes each cell is directly represented as a
+            list of categories. (default: :obj:`None`)
     """
     def __init__(
         self,
         categories: list[Any],
-        sep: str = ',',
+        sep: None | str = None,
     ):
         super().__init__()
         self.categories = categories
@@ -141,15 +142,17 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
     @staticmethod
-    def split_by_sep(row: str | list[Any] | None, sep: str) -> set[Any]:
+    def split_by_sep(row: str | list[Any] | None, sep: None | str) -> set[Any]:
         if row is None or row is np.nan:
             return {-1}
         elif isinstance(row, str):
+            assert sep is not None
             if row.strip() == '':
                 return set()
             else:
                 return {cat.strip() for cat in row.split(sep)}
         elif isinstance(row, list):
+            assert sep is None
             return set(row)
         else:
             raise ValueError(
