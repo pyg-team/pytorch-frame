@@ -39,7 +39,7 @@ class CatBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         if y is not None:
-            y = y.numpy()
+            y: np.ndarray = y.numpy()
 
         dfs: list[DataFrame] = []
         cat_features: list[np.ndarray] = []

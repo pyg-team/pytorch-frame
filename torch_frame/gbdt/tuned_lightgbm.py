@@ -31,14 +31,14 @@ class LightGBM(GBDT):
             df (DataFrame): :obj:`DataFrame` that concatenates tensors of
                 numerical and categorical features of the input
                 :class:`TensorFrame`.
-            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray, optional): Prediction label.
             cat_features (numpy.ndarray): Array containing indexes of
                 categorical features.
         """
         tf = tf.cpu()
         y = tf.y
         if y is not None:
-            y = y.numpy()
+            y: np.ndarray = y.numpy()
 
         dfs: list[DataFrame] = []
         cat_features: list[np.ndarray] = []

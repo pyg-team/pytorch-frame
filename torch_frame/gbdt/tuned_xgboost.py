@@ -58,7 +58,7 @@ class XGBoost(GBDT):
         tf = tf.cpu()
         y = tf.y
         if y is not None:
-            y = y.numpy()
+            y: np.ndarray = y.numpy()
 
         feats: list[Tensor] = []
         types: list[str] = []
