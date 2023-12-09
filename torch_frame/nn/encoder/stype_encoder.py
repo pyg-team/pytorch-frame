@@ -701,8 +701,7 @@ class LinearModelEncoder(StypeEncoder):
     out_channels)` on each embedding feature (:obj:`in_channels` is the
     dimensionality of the embedding) and concatenates the output embeddings.
     The :obj:`model` will also be trained together with the linear layer.
-    Note that the implementation does this for all :obj:`text_tokenized`
-    features in a batched manner.
+    Note that the implementation does this for all columns in a batched manner.
 
     Args:
         col_to_model_cfg (dict): A dictionary mapping column names to
