@@ -13,7 +13,7 @@ from transformers import AutoModel, AutoTokenizer
 
 import torch_frame
 from torch_frame import stype
-from torch_frame.config import TextModelConfig
+from torch_frame.config import ModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data import DataLoader, MultiNestedTensor
@@ -244,14 +244,13 @@ test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 if not args.finetune:
     text_stype_encoder = LinearEmbeddingEncoder()
 else:
-    model_cfg = TextModelConfig(model=text_encoder, out_channels=768)
-    col_to_text_model_cfg = {
+    model_cfg = ModelConfig(model=text_encoder, out_channels=768)
+    col_to_model_cfg = {
         col_name: model_cfg
         for col_name in train_tensor_frame.col_names_dict[
             torch_frame.text_tokenized]
     }
-    text_stype_encoder = LinearModelEncoder(
-        col_to_text_model_cfg=col_to_text_model_cfg)
+    text_stype_encoder = LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
 
 stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
