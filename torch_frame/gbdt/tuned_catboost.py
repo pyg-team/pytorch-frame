@@ -32,9 +32,9 @@ class CatBoost(GBDT):
             x (DataFrame): Output :obj:`Dataframe` by
                 concatenating tensors of categorical and numerical features of
                 the input :class:`TensorFrame`.
-            y (numpy.ndarray, optional): Prediction target.
-            cat_features (numpy.ndarray): Array containing indexes of
-                categorical features :obj:`numpy.ndarray`.
+            y (numpy.ndarray, optional): Prediction label.
+            cat_features (np.ndarray): Array containing indexes of categorical
+                features.
         """
         tf = tf.cpu()
         y = tf.y
@@ -111,17 +111,24 @@ class CatBoost(GBDT):
 
     def objective(
         self,
-        trial,
-        tf_train: TensorFrame,
-        tf_val: TensorFrame,
+        trial: Any,
+        train_x: np.ndarray,
+        train_y: np.ndarray,
+        val_x: np.ndarray,
+        val_y: np.ndarray,
+        cat_features: np.ndarray,
         num_boost_round: int,
-    ):
+    ) -> float:
         r"""Objective function to be optimized.
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.
-            tf_train (TensorFrame): Train data.
-            tf_val (TensorFrame): Validation data.
+            train_x (np.ndarray): Train data.
+            train_y (np.ndarray): Train label.
+            val_x (np.ndarray): Validation data.
+            val_y (np.ndarray): Validation label.
+            cat_features (np.ndarray): Array containing indexes of categorical
+                features.
             num_boost_round (int): Number of boosting round.
 
         Returns:
@@ -165,15 +172,10 @@ class CatBoost(GBDT):
             self.params["objective"] = "MultiClass"
             self.params["eval_metric"] = "Accuracy"
             self.params["classes_count"] = self._num_classes or len(
-                np.unique(tf_train.y.cpu().numpy()))
+                np.unique(train_y))
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
-
-        train_x, train_y, cat_features = self._to_catboost_input(tf_train)
-        val_x, val_y, _ = self._to_catboost_input(tf_val)
-        assert train_y is not None
-        assert val_y is not None
         boost = catboost.CatBoost(self.params)
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
                           eval_set=[(val_x, val_y)], early_stopping_rounds=50,
@@ -197,14 +199,22 @@ class CatBoost(GBDT):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        study.optimize(
-            lambda trial: self.objective(trial, tf_train, tf_val,
-                                         num_boost_round), num_trials)
-        self.params.update(study.best_params)
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
         val_x, val_y, _ = self._to_catboost_input(tf_val)
         assert train_y is not None
         assert val_y is not None
+        study.optimize(
+            lambda trial: self.objective(
+                trial,
+                train_x,
+                train_y,
+                val_x,
+                val_y,
+                cat_features,
+                num_boost_round,
+            ), num_trials)
+        self.params.update(study.best_params)
+
         self.model = catboost.CatBoost(self.params)
         self.model.fit(train_x, train_y, cat_features=cat_features,
                        eval_set=[(val_x, val_y)], early_stopping_rounds=50,

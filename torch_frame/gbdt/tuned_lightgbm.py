@@ -20,7 +20,7 @@ class LightGBM(GBDT):
     def _to_lightgbm_input(
         self,
         tf: TensorFrame,
-    ) -> tuple[np.ndarray, np.ndarray, list[int]]:
+    ) -> tuple[DataFrame, np.ndarray, list[int]]:
         r"""Convert :class:`TensorFrame` into LightGBM-compatible input format:
         :obj:`(feat, y, cat_features)`.
 
@@ -28,12 +28,12 @@ class LightGBM(GBDT):
             tf (Tensor Frame): Input :obj:TensorFrame object.
 
         Returns:
-            feat (numpy.ndarray): Output :obj:`numpy.ndarray` by
-                concatenating tensors of numerical and categorical features of
-                the input :class:`TensorFrame`.
+            df (DataFrame): :obj:`DataFrame` that concatenates tensors of
+                numerical and categorical features of the input
+                :class:`TensorFrame`.
             y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
-            cat_features (List[int]): Array containing indexes of
-                categorical features :obj:`List[int]`.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features.
         """
         tf = tf.cpu()
         y = tf.y
@@ -100,16 +100,19 @@ class LightGBM(GBDT):
     def objective(
         self,
         trial: Any,
-        tf_train: TensorFrame,
-        tf_val: TensorFrame,
+        train_data: Any,
+        eval_data: Any,
+        cat_features: np.ndarray,
         num_boost_round: int,
     ):
         r"""Objective function to be optimized.
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.
-            tf_train (TensorFrame): Train data.
-            tf_val (TensorFrame): Validation data.
+            train_data (lightgbm.Dataset): Train data.
+            eval_data (lightgbm.Dataset): Validation data.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features.
             num_boost_round (int): Number of boosting round.
 
         Returns:
@@ -157,18 +160,11 @@ class LightGBM(GBDT):
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "multiclass"
             self.params["metric"] = "multi_error"
-            self.params["num_class"] = self._num_classes or len(
-                np.unique(tf_train.y.cpu().numpy()))
+            self.params[
+                "num_class"] = self._num_classes or train_data.label.nunique()
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
-
-        train_x, train_y, cat_features = self._to_lightgbm_input(tf_train)
-        val_x, val_y, _ = self._to_lightgbm_input(tf_val)
-        assert train_y is not None
-        assert val_y is not None
-        train_data = lightgbm.Dataset(train_x, label=train_y)
-        eval_data = lightgbm.Dataset(val_x, label=val_y)
 
         boost = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
@@ -177,8 +173,8 @@ class LightGBM(GBDT):
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
-        pred = self._predict_helper(boost, val_x)
-        score = self.compute_metric(torch.from_numpy(val_y),
+        pred = self._predict_helper(boost, eval_data.data)
+        score = self.compute_metric(torch.from_numpy(eval_data.label),
                                     torch.from_numpy(pred))
         return score
 
@@ -197,17 +193,20 @@ class LightGBM(GBDT):
         else:
             study = optuna.create_study(direction="maximize")
 
-        study.optimize(
-            lambda trial: self.objective(trial, tf_train, tf_val,
-                                         num_boost_round), num_trials)
-        self.params.update(study.best_params)
-
         train_x, train_y, cat_features = self._to_lightgbm_input(tf_train)
         val_x, val_y, _ = self._to_lightgbm_input(tf_val)
         assert train_y is not None
         assert val_y is not None
-        train_data = lightgbm.Dataset(train_x, label=train_y)
-        eval_data = lightgbm.Dataset(val_x, label=val_y)
+        train_data = lightgbm.Dataset(train_x, label=train_y,
+                                      free_raw_data=False)
+        eval_data = lightgbm.Dataset(val_x, label=val_y, free_raw_data=False)
+
+        study.optimize(
+            lambda trial: self.objective(trial, train_data, eval_data,
+                                         cat_features, num_boost_round),
+            num_trials)
+        self.params.update(study.best_params)
+
         self.model = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
             categorical_feature=cat_features, valid_sets=[eval_data],
