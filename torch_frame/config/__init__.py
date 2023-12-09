@@ -1,10 +1,10 @@
 r"""Config package."""
 from .text_embedder import TextEmbedderConfig
 from .text_tokenizer import TextTokenizerConfig
-from .text_model import TextModelConfig
+from .model import ModelConfig
 
 __all__ = classes = [
     'TextEmbedderConfig',
     'TextTokenizerConfig',
-    'TextModelConfig',
+    'ModelConfig',
 ]

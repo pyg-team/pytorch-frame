@@ -17,7 +17,7 @@ from torch.nn import (
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
-from torch_frame.config import TextModelConfig
+from torch_frame.config import ModelConfig
 from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
@@ -705,7 +705,7 @@ class LinearModelEncoder(StypeEncoder):
     features in a batched manner.
 
     Args:
-        col_to_model_cfg (dict): A dictionary of :obj:`TextModelConfig` where
+        col_to_model_cfg (dict): A dictionary of :obj:`ModelConfig` where
             keys are :obj:`text_tokenized` column names and values are text
             models. Input to each model is a dictionary of
             :obj:`MultiNestedTensor` and model outputs three-dimensional
@@ -715,6 +715,8 @@ class LinearModelEncoder(StypeEncoder):
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
+    # TODO: Support more, stype.numerical, stype.multinested. We can support
+    # MLP model as well.
     supported_stypes = {stype.text_tokenized}
 
     def __init__(
@@ -724,7 +726,7 @@ class LinearModelEncoder(StypeEncoder):
         stype: stype | None = None,
         post_module: Module | None = None,
         na_strategy: NAStrategy | None = None,
-        col_to_model_cfg: dict[str, TextModelConfig] | None = None,
+        col_to_model_cfg: dict[str, ModelConfig] | None = None,
     ) -> None:
         if col_to_model_cfg is None:
             raise ValueError("Please manually specify the "
@@ -772,10 +774,13 @@ class LinearModelEncoder(StypeEncoder):
         xs = []
         for i, col_name in enumerate(col_names):
             # [batch_size, in_channels]
-            x = self.model_dict[col_name]({
-                key: feat[key][:, i]
-                for key in feat
-            })
+            if self.stype.use_dict_multi_nested_tensor:
+                x = self.model_dict[col_name]({
+                    key: feat[key][:, i]
+                    for key in feat
+                })
+            else:
+                x = self.model_dict[col_name](feat[:, i])
             # [batch_size, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)
