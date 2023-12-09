@@ -8,13 +8,13 @@ from torch_frame.typing import TensorData
 
 @dataclass
 class ModelConfig:
-    r"""Learnable model that maps per-column :class:`TensorData` into
-    row embeddings.
+    r"""Learnable model that maps a single-column :class:`TensorData` object
+    into row embeddings.
 
     Args:
-        model (callable): A callable model that takes TensorData of shape
-            :obj:`[batch_size, 1, *]` as input and outputs embeddings of shape
-            :obj:`[batch_size, 1, out_channels]`.
+        model (callable): A callable model that takes a :class:`TensorData`
+            object of shape :obj:`[batch_size, 1, *]` as input and outputs
+            embeddings of shape :obj:`[batch_size, 1, out_channels]`.
         out_channels (int): Model output channels.
 
     """
