@@ -37,7 +37,7 @@ class XGBoost(GBDT):
     def _to_xgboost_input(
         self,
         tf: TensorFrame,
-    ) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    ) -> tuple[np.ndarray, np.ndarray | None, list[str]]:
         r"""Convert :class:`TensorFrame` into XGBoost-compatible input format:
         :obj:`(feat, y, feat_types)`.
 
@@ -48,7 +48,7 @@ class XGBoost(GBDT):
             feat (numpy.ndarray): Output :obj:`numpy.ndarray` by
                 concatenating tensors of numerical and categorical features of
                 the input :class:`TensorFrame`.
-            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray, optional): Prediction target.
             feature_types (List[str]): List of feature types: "q" for numerical
                 features and "c" for categorical features. The abbreviation
                 aligns with xgboost tutorial.
@@ -57,7 +57,8 @@ class XGBoost(GBDT):
         """
         tf = tf.cpu()
         y = tf.y
-        assert y is not None
+        if y is not None:
+            y: np.ndarray = y.numpy()
 
         feats: list[Tensor] = []
         types: list[str] = []
@@ -82,9 +83,9 @@ class XGBoost(GBDT):
         if len(feats) == 0:
             raise ValueError("The input TensorFrame object is empty.")
 
-        feat = torch.cat(feats, dim=-1)
+        feat = torch.cat(feats, dim=-1).numpy()
 
-        return feat.numpy(), y.numpy(), types
+        return feat, y, types
 
     def objective(
         self,
@@ -197,6 +198,8 @@ class XGBoost(GBDT):
             study = optuna.create_study(direction="maximize")
         train_feat, train_y, train_feat_type = self._to_xgboost_input(tf_train)
         val_feat, val_y, val_feat_type = self._to_xgboost_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
         dtrain = xgboost.DMatrix(train_feat, label=train_y,
                                  feature_types=train_feat_type,
                                  enable_categorical=True)
