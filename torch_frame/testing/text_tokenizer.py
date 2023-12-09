@@ -3,7 +3,8 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from torch_frame.typing import TensorData, TextTokenizationOutputs
+from torch_frame.data import MultiNestedTensor
+from torch_frame.typing import TextTokenizationOutputs
 
 
 class WhiteSpaceHashTokenizer:
@@ -64,13 +65,11 @@ class RandomTextModel(torch.nn.Module):
     :class:`WhiteSpaceHashTokenizer` and outputs random embeddings. Should be
     used only for testing purposes.
     """
-    def __init__(self, text_emb_channels: int, num_cols: int):
+    def __init__(self, text_emb_channels: int):
         self.text_emb_channels = text_emb_channels
-        self.num_cols = num_cols
         super().__init__()
 
-    def forward(self, feat: TensorData):
+    def forward(self, feat: dict[str, MultiNestedTensor]):
         input_ids = feat['input_ids'].to_dense(fill_value=0)
         _ = feat['attention_mask'].to_dense(fill_value=0)
-        return torch.rand(size=(input_ids.shape[0], self.num_cols,
-                                self.text_emb_channels))
+        return torch.rand(size=(input_ids.shape[0], 1, self.text_emb_channels))

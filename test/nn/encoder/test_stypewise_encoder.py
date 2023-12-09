@@ -1,6 +1,7 @@
 import pytest
 
 from torch_frame import stype
+from torch_frame.config import ModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
@@ -42,8 +43,12 @@ from torch_frame.testing.text_tokenizer import (
 ])
 @pytest.mark.parametrize('encoder_text_tokenized_cls_kwargs', [
     (LinearModelEncoder, {
-        'model': RandomTextModel(12, 2),
-        'in_channels': 12,
+        'col_to_model_cfg': {
+            'text_tokenized_1':
+            ModelConfig(model=RandomTextModel(12), out_channels=12),
+            'text_tokenized_2':
+            ModelConfig(model=RandomTextModel(6), out_channels=6)
+        },
     }),
 ])
 @pytest.mark.parametrize('encoder_embedding_cls_kwargs', [
