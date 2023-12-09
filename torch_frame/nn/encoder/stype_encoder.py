@@ -715,8 +715,8 @@ class LinearModelEncoder(StypeEncoder):
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
-    # TODO: Support more, stype.numerical, stype.multinested. We can support
-    # MLP model as well.
+    # NOTE: This can in principle support any stypes and allow MLP-based
+    # non-linear modeling for each column.
     supported_stypes = {stype.text_tokenized}
 
     def __init__(
