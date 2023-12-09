@@ -37,7 +37,8 @@ class LightGBM(GBDT):
         """
         tf = tf.cpu()
         y = tf.y
-        assert y is not None
+        if y is not None:
+            y = y.numpy()
 
         dfs: list[DataFrame] = []
         cat_features: list[np.ndarray] = []
@@ -73,7 +74,7 @@ class LightGBM(GBDT):
         cat_features = np.concatenate(
             cat_features, axis=0).tolist() if len(cat_features) else []
 
-        return df, y.numpy(), cat_features
+        return df, y, cat_features
 
     def _predict_helper(
         self,
@@ -163,9 +164,11 @@ class LightGBM(GBDT):
                              f"{self.task_type}.")
 
         train_x, train_y, cat_features = self._to_lightgbm_input(tf_train)
-        eval_x, eval_y, _ = self._to_lightgbm_input(tf_val)
+        val_x, val_y, _ = self._to_lightgbm_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
         train_data = lightgbm.Dataset(train_x, label=train_y)
-        eval_data = lightgbm.Dataset(eval_x, label=eval_y)
+        eval_data = lightgbm.Dataset(val_x, label=val_y)
 
         boost = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
@@ -174,8 +177,8 @@ class LightGBM(GBDT):
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
-        pred = self._predict_helper(boost, eval_x)
-        score = self.compute_metric(torch.from_numpy(eval_y),
+        pred = self._predict_helper(boost, val_x)
+        score = self.compute_metric(torch.from_numpy(val_y),
                                     torch.from_numpy(pred))
         return score
 

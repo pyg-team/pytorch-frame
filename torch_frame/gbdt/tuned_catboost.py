@@ -21,7 +21,7 @@ class CatBoost(GBDT):
     def _to_catboost_input(
         self,
         tf,
-    ) -> tuple[DataFrame, np.ndarray, np.ndarray]:
+    ) -> tuple[DataFrame, np.ndarray | None, np.ndarray]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -32,13 +32,14 @@ class CatBoost(GBDT):
             x (DataFrame): Output :obj:`Dataframe` by
                 concatenating tensors of categorical and numerical features of
                 the input :class:`TensorFrame`.
-            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray, optional): Prediction target.
             cat_features (numpy.ndarray): Array containing indexes of
                 categorical features :obj:`numpy.ndarray`.
         """
         tf = tf.cpu()
         y = tf.y
-        assert y is not None
+        if y is not None:
+            y = y.numpy()
 
         dfs: list[DataFrame] = []
         cat_features: list[np.ndarray] = []
@@ -73,7 +74,7 @@ class CatBoost(GBDT):
         df = pd.concat(dfs, axis=1)
         cat_features = np.concatenate(
             cat_features, axis=0) if len(cat_features) else np.array([])
-        return df, y.numpy(), cat_features
+        return df, y, cat_features
 
     def _predict_helper(
         self,
@@ -170,13 +171,15 @@ class CatBoost(GBDT):
                              f"{self.task_type}.")
 
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
-        eval_x, eval_y, _ = self._to_catboost_input(tf_val)
+        val_x, val_y, _ = self._to_catboost_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
         boost = catboost.CatBoost(self.params)
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
-                          eval_set=[(eval_x, eval_y)],
-                          early_stopping_rounds=50, logging_level="Silent")
-        pred = self._predict_helper(boost, eval_x)
-        score = self.compute_metric(torch.from_numpy(eval_y),
+                          eval_set=[(val_x, val_y)], early_stopping_rounds=50,
+                          logging_level="Silent")
+        pred = self._predict_helper(boost, val_x)
+        score = self.compute_metric(torch.from_numpy(val_y),
                                     torch.from_numpy(pred))
         return score
 
