@@ -161,8 +161,8 @@ class LightGBM(GBDT):
         elif self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             self.params["objective"] = "multiclass"
             self.params["metric"] = "multi_error"
-            self.params[
-                "num_class"] = self._num_classes or train_data.label.nunique()
+            self.params["num_class"] = self._num_classes or len(
+                np.unique(train_data.label))
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
