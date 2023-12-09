@@ -89,7 +89,7 @@ class LightGBM(GBDT):
             x (DataFrame): The input `DataFrame`.
 
         Returns:
-            pred (np.ndarray): The prediction output.
+            pred (numpy.ndarray): The prediction output.
         """
         pred = model.predict(x)
         if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:

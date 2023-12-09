@@ -33,8 +33,8 @@ class CatBoost(GBDT):
                 concatenating tensors of categorical and numerical features of
                 the input :class:`TensorFrame`.
             y (numpy.ndarray, optional): Prediction label.
-            cat_features (np.ndarray): Array containing indexes of categorical
-                features.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features.
         """
         tf = tf.cpu()
         y = tf.y
@@ -123,12 +123,12 @@ class CatBoost(GBDT):
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.
-            train_x (np.ndarray): Train data.
-            train_y (np.ndarray): Train label.
-            val_x (np.ndarray): Validation data.
-            val_y (np.ndarray): Validation label.
-            cat_features (np.ndarray): Array containing indexes of categorical
-                features.
+            train_x (numpy.ndarray): Train data.
+            train_y (numpy.ndarray): Train label.
+            val_x (numpy.ndarray): Validation data.
+            val_y (numpy.ndarray): Validation label.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features.
             num_boost_round (int): Number of boosting round.
 
         Returns:
