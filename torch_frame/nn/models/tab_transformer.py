@@ -84,8 +84,10 @@ class TabTransformer(Module):
             categorical_col_len = len(self.col_names_dict[stype.categorical])
             self.cat_encoder = EmbeddingEncoder(
                 out_channels=channels - encoder_pad_size,
-                stats_list=categorical_stats_list, stype=stype.categorical,
-                na_strategy=NAStrategy.MOST_FREQUENT)
+                stats_list=categorical_stats_list,
+                stype=stype.categorical,
+                na_strategy=NAStrategy.MOST_FREQUENT,
+            )
             # Use the categorical embedding with EmbeddingEncoder and
             # added contextual padding to the end of each feature.
             self.pad_embedding = Embedding(categorical_col_len,
@@ -104,9 +106,11 @@ class TabTransformer(Module):
             ]
             numerical_col_len = len(self.col_names_dict[stype.numerical])
             # Use stack encoder to normalize the numerical columns.
-            self.num_encoder = StackEncoder(out_channels=1,
-                                            stats_list=numerical_stats_list,
-                                            stype=stype.numerical)
+            self.num_encoder = StackEncoder(
+                out_channels=1,
+                stats_list=numerical_stats_list,
+                stype=stype.numerical,
+            )
             self.num_norm = LayerNorm(numerical_col_len)
         mlp_input_len = categorical_col_len * channels + numerical_col_len
         mlp_first_hidden_layer_size = 2 * mlp_input_len

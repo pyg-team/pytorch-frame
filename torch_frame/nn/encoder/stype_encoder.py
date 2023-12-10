@@ -17,6 +17,7 @@ from torch.nn import (
 from torch.nn.init import kaiming_uniform_
 
 from torch_frame import NAStrategy, stype
+from torch_frame.config import ModelConfig
 from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
@@ -700,20 +701,21 @@ class LinearModelEncoder(StypeEncoder):
     out_channels)` on each embedding feature (:obj:`in_channels` is the
     dimensionality of the embedding) and concatenates the output embeddings.
     The :obj:`model` will also be trained together with the linear layer.
-    Note that the implementation does this for all :obj:`text_tokenized`
-    features in a batched manner.
+    Note that the implementation does this for all columns in a batched manner.
 
     Args:
-        in_channels (int): The dimensionality of the embedding feature.
-            Needs to be specified manually.
-        model (torch.nn.Module): Input to the model is a dictionary of
-            :obj:`MultiNestedTensor` and model outputs three-dimensional
-            embedding features that will be input into the linear layer.
+        col_to_model_cfg (dict): A dictionary mapping column names to
+            :class:`~torch_frame.config.ModelConfig`, which specifies a model
+            to map a single-column :class:`TensorData` object of shape
+            :obj:`[batch_size, 1, *]` into row embeddings of shape
+            :obj:`[batch_size, 1, model_out_channels]`.
     """
 
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
+    # NOTE: This can in principle support any stypes and allow MLP-based
+    # non-linear modeling for each column.
     supported_stypes = {stype.text_tokenized}
 
     def __init__(
@@ -723,49 +725,65 @@ class LinearModelEncoder(StypeEncoder):
         stype: stype | None = None,
         post_module: Module | None = None,
         na_strategy: NAStrategy | None = None,
-        in_channels: int | None = None,
-        model: torch.nn.Module | None = None,
+        col_to_model_cfg: dict[str, ModelConfig] | None = None,
     ) -> None:
-        if in_channels is None:
-            raise ValueError("Please manually specify the `in_channels`, "
-                             "which is the text embedding dimensionality.")
-        if model is None:
-            raise ValueError("Please manually specify the `model`, "
-                             "which outputs embeddings that will be feed "
-                             "to the linear layer.")
+        if col_to_model_cfg is None:
+            raise ValueError("Please manually specify `col_to_model_cfg`, "
+                             "which outputs embeddings that will be fed into "
+                             "linear layer.")
+        # TODO: Support non-dictionary col_to_model_cfg
+        assert isinstance(col_to_model_cfg, dict)
 
-        self.in_channels = in_channels
+        self.in_channels_dict = {
+            col_name: model_cfg.out_channels
+            for col_name, model_cfg in col_to_model_cfg.items()
+        }
 
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
-        self.model = model
+
+        self.model_dict = torch.nn.ModuleDict({
+            col_name: model_cfg.model
+            for col_name, model_cfg in col_to_model_cfg.items()
+        })
 
     def init_modules(self) -> None:
         super().init_modules()
-        num_cols = len(self.stats_list)
-        self.weight = Parameter(
-            torch.empty(num_cols, self.in_channels, self.out_channels))
-        self.bias = Parameter(torch.empty(num_cols, self.out_channels))
+        self.weight_dict = torch.nn.ParameterDict()
+        self.bias_dict = torch.nn.ParameterDict()
+        for col_name, in_channels in self.in_channels_dict.items():
+            self.weight_dict[col_name] = Parameter(
+                torch.empty(in_channels, self.out_channels))
+            self.bias_dict[col_name] = Parameter(torch.empty(
+                self.out_channels))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
         super().reset_parameters()
-        torch.nn.init.normal_(self.weight, std=0.01)
-        torch.nn.init.zeros_(self.bias)
+        for col_name in self.weight_dict:
+            torch.nn.init.normal_(self.weight_dict[col_name], std=0.01)
+            torch.nn.init.zeros_(self.bias_dict[col_name])
 
     def encode_forward(
         self,
         feat: TensorData,
         col_names: list[str] | None = None,
     ) -> Tensor:
-        x = self.model(feat)
-        # [batch_size, num_cols, in_channels] *
-        # [num_cols, in_channels, out_channels]
-        # -> [batch_size, num_cols, out_channels]
-        x_lin = torch.einsum("ijk,jkl->ijl", x, self.weight)
-        # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
-        # -> [batch_size, num_cols, out_channels]
-        x = x_lin + self.bias
+        xs = []
+        for i, col_name in enumerate(col_names):
+            # [batch_size, 1, in_channels]
+            if self.stype.use_dict_multi_nested_tensor:
+                x = self.model_dict[col_name]({
+                    key: feat[key][:, i]
+                    for key in feat
+                })
+            else:
+                x = self.model_dict[col_name](feat[:, i])
+            # [batch_size, 1, out_channels]
+            x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
+            xs.append(x_lin)
+        # [batch_size, num_cols, out_channels]
+        x = torch.cat(xs, dim=1)
         return x
 
 

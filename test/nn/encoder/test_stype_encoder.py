@@ -4,6 +4,7 @@ from torch.nn import ReLU
 
 import torch_frame
 from torch_frame import NAStrategy, stype
+from torch_frame.config import ModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
@@ -89,9 +90,12 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.numerical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.numerical,
+        **encoder_cls_kwargs[1],
+    )
     feat_num = tensor_frame.feat_dict[stype.numerical]
     col_names = tensor_frame.col_names_dict[stype.numerical]
     x = encoder(feat_num, col_names)
@@ -227,9 +231,12 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.numerical]
     ]
-    encoder = encoder_cls_kwargs[0](8, stats_list=stats_list,
-                                    stype=stype.numerical,
-                                    **encoder_cls_kwargs[1])
+    encoder = encoder_cls_kwargs[0](
+        8,
+        stats_list=stats_list,
+        stype=stype.numerical,
+        **encoder_cls_kwargs[1],
+    )
     feat_num = tensor_frame.feat_dict[stype.numerical]
     col_names = tensor_frame.col_names_dict[stype.numerical]
     isnan_mask = feat_num.isnan()
@@ -385,7 +392,7 @@ def test_text_tokenized_encoder():
     num_rows = 20
     num_hash_bins = 10
     out_channels = 5
-    text_emb_channels = 20
+    text_emb_channels = 15
     dataset = FakeDataset(
         num_rows=num_rows,
         stypes=[
@@ -403,16 +410,16 @@ def test_text_tokenized_encoder():
         dataset.col_stats[col_name]
         for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
     ]
-    model = RandomTextModel(
-        text_emb_channels=text_emb_channels,
-        num_cols=len(tensor_frame.col_names_dict[stype.text_tokenized]),
-    )
+    model = RandomTextModel(text_emb_channels=text_emb_channels)
+    col_to_model_cfg = {
+        col_name: ModelConfig(model=model, out_channels=text_emb_channels)
+        for col_name in tensor_frame.col_names_dict[stype.text_tokenized]
+    }
     encoder = LinearModelEncoder(
         out_channels=out_channels,
         stats_list=stats_list,
         stype=stype.text_tokenized,
-        in_channels=text_emb_channels,
-        model=model,
+        col_to_model_cfg=col_to_model_cfg,
     )
     feat_text = tensor_frame.feat_dict[stype.text_tokenized]
     col_names = tensor_frame.col_names_dict[stype.text_tokenized]

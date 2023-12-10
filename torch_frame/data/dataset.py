@@ -299,7 +299,7 @@ class DataFrameToTensorFrameConverter:
                 feat_dict[stype] = torch.stack(xs, dim=1)
 
         y: Tensor | None = None
-        if self.target_col is not None:
+        if self.target_col is not None and self.target_col in df:
             y = self._get_mapper(self.target_col).forward(
                 df[self.target_col], device=device)
 
