@@ -149,6 +149,13 @@ def test_materalization_and_converter():
                ) == len(text_embedded_col_names) + len(embedding_col_names)
     for col in text_embedded_col_names:
         assert col in tf.col_names_dict[stype.embedding]
+    assert tf.y is not None
+
+    df_without_target = dataset.df.drop(dataset.target_col, axis=1)
+    tf_without_target = convert_to_tensor_frame(df_without_target)
+    assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
+    assert len(tf) == len(dataset)
+    assert tf_without_target.y is None
 
 
 def test_multicategorical_materialization():

@@ -72,10 +72,12 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
 
     pred = gbdt.predict(tf_test=dataset.tensor_frame)
     score = gbdt.compute_metric(dataset.tensor_frame.y, pred)
-    loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
-    loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
 
-    assert torch.allclose(pred, loaded_pred, atol=1e-2)
+    loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
+    dataset.tensor_frame.y = None
+    loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
+
+    assert torch.allclose(pred, loaded_pred, atol=1e-5)
     assert gbdt.metric == metric
     assert score == loaded_score
     if task_type == TaskType.REGRESSION:
