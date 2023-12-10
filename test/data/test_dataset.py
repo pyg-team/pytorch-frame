@@ -4,7 +4,6 @@ import pytest
 import torch
 
 import torch_frame
-from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
 from torch_frame.data.dataset import canonicalize_col_to_pattern
@@ -99,37 +98,45 @@ def test_materalization_and_converter():
         text_embedder=HashTextEmbedder(1),
         batch_size=8,
     )
+    dataset_stypes = [
+        torch_frame.categorical,
+        torch_frame.numerical,
+        torch_frame.multicategorical,
+        torch_frame.sequence_numerical,
+        torch_frame.timestamp,
+        torch_frame.text_embedded,
+        torch_frame.embedding,
+    ]
     dataset = FakeDataset(
         num_rows=10,
-        stypes=[
-            stype.categorical,
-            stype.numerical,
-            stype.multicategorical,
-            stype.sequence_numerical,
-            stype.timestamp,
-            stype.text_embedded,
-            stype.embedding,
-        ],
+        stypes=dataset_stypes,
         col_to_text_embedder_cfg=text_embedder_cfg,
     ).materialize()
+    expected_parent_feat_size = dict()
+    stype_num_cols = dict()
+    for col, stype in dataset.col_to_stype.items():
+        if col != dataset.target_col:
+            stype_num_cols[stype] = stype_num_cols.get(stype, 0) + 1
+    for stype in dataset_stypes:
+        expected_parent_feat_size[
+            stype.parent] = expected_parent_feat_size.get(
+                stype.parent, 0) + stype_num_cols[stype]
+
     tf = dataset.tensor_frame
-    text_embedded_col_names = ([
-        col for col, stype in dataset.col_to_stype.items()
-        if stype == stype.text_embedded
-    ])
-    embedding_col_names = ([
-        col for col, stype in dataset.col_to_stype.items()
-        if stype == stype.embedding
-    ])
     assert len(tf) == len(dataset)
-    assert stype.text_embedded not in tf.feat_dict
-    assert stype.text_embedded not in tf.col_names_dict
-    assert tf.feat_dict[stype.embedding].size(
-        1) == len(text_embedded_col_names) + len(embedding_col_names)
-    assert len(tf.col_names_dict[stype.embedding]
-               ) == len(text_embedded_col_names) + len(embedding_col_names)
-    for col in text_embedded_col_names:
-        assert col in tf.col_names_dict[stype.embedding]
+    for stype in dataset_stypes:
+        # Test child stypes are mapped to parent stypes
+        if stype.parent != stype:
+            assert stype not in tf.feat_dict
+            assert stype not in tf.col_names_dict
+            assert stype.parent in tf.feat_dict
+            assert stype.parent in tf.col_names_dict
+        # Test parent stypes contain columns from all child types
+        else:
+            assert tf.feat_dict[stype].size(
+                1) == expected_parent_feat_size[stype]
+            assert len(
+                tf.col_names_dict[stype]) == expected_parent_feat_size[stype]
     convert_to_tensor_frame = DataFrameToTensorFrameConverter(
         col_to_stype=dataset.col_to_stype,
         col_stats=dataset.col_stats,
@@ -141,14 +148,19 @@ def test_materalization_and_converter():
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict
     assert len(tf) == len(dataset)
-    assert stype.text_embedded not in tf.feat_dict
-    assert stype.text_embedded not in tf.col_names_dict
-    assert tf.feat_dict[stype.embedding].size(
-        1) == len(text_embedded_col_names) + len(embedding_col_names)
-    assert len(tf.col_names_dict[stype.embedding]
-               ) == len(text_embedded_col_names) + len(embedding_col_names)
-    for col in text_embedded_col_names:
-        assert col in tf.col_names_dict[stype.embedding]
+    for stype in dataset_stypes:
+        # Test child stypes are mapped to parent stypes
+        if stype.parent != stype:
+            assert stype not in tf.feat_dict
+            assert stype not in tf.col_names_dict
+            assert stype.parent in tf.feat_dict
+            assert stype.parent in tf.col_names_dict
+        # Test parent stypes contain columns from all child types
+        else:
+            assert tf.feat_dict[stype].size(
+                1) == expected_parent_feat_size[stype]
+            assert len(
+                tf.col_names_dict[stype]) == expected_parent_feat_size[stype]
     assert tf.y is not None
 
     df_without_target = dataset.df.drop(dataset.target_col, axis=1)
@@ -161,10 +173,10 @@ def test_materalization_and_converter():
 def test_multicategorical_materialization():
     data = {'multicat': ['A|B', 'B|C|A', '', 'B', 'B|A|A', None]}
     df = pd.DataFrame(data)
-    dataset = Dataset(df, {'multicat': stype.multicategorical},
+    dataset = Dataset(df, {'multicat': torch_frame.multicategorical},
                       col_to_sep={'multicat': '|'})
     dataset.materialize()
-    feat = dataset.tensor_frame.feat_dict[stype.multicategorical]
+    feat = dataset.tensor_frame.feat_dict[torch_frame.multicategorical]
     assert torch.equal(feat[0, 0].sort().values,
                        torch.tensor([1, 0]).sort().values)
     assert torch.equal(feat[1, 0].sort().values,
@@ -242,17 +254,18 @@ def test_canonicalize_col_to_pattern():
 
 def test_col_to_pattern_raise_error():
     with pytest.raises(TypeError, match="col_to_sep"):
-        dataset = FakeDataset(num_rows=10, stypes=[stype.multicategorical])
+        dataset = FakeDataset(num_rows=10,
+                              stypes=[torch_frame.multicategorical])
         Dataset(dataset.df, dataset.col_to_stype, dataset.target_col,
                 col_to_sep=2)
 
     with pytest.raises(TypeError, match="col_to_text_embedder_cfg"):
-        FakeDataset(num_rows=10, stypes=[stype.text_embedded])
+        FakeDataset(num_rows=10, stypes=[torch_frame.text_embedded])
 
     with pytest.raises(TypeError, match="col_to_text_tokenizer_cfg"):
-        FakeDataset(num_rows=10, stypes=[stype.text_tokenized])
+        FakeDataset(num_rows=10, stypes=[torch_frame.text_tokenized])
 
     with pytest.raises(TypeError, match="col_to_time_format"):
-        dataset = FakeDataset(num_rows=10, stypes=[stype.timestamp])
+        dataset = FakeDataset(num_rows=10, stypes=[torch_frame.timestamp])
         Dataset(dataset.df, dataset.col_to_stype, dataset.target_col,
                 col_to_time_format=2)
