@@ -71,8 +71,9 @@ class stype(Enum):
     @property
     def parent(self):
         r"""This property indicates if an :class:`~torch_frame.stype` is
-        user-facing or internal. Internal :class:`~torch_frame.stype` will
-        be mapped to its parent during materialization. For
+        user-facing column :obj:`stype` or internal :obj:`stype` for grouping
+        columns in :obj:`TensorFrame`. User-facing :class:`~torch_frame.stype`
+        will be mapped to its parent during materialization. For
         :class:`<stypes>~torch_frame.stype` that are both internal and
         user-facing, the parent maps to itself.
         """

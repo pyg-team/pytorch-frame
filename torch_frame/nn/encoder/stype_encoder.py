@@ -92,7 +92,7 @@ class StypeEncoder(Module, ABC):
                     " columns.")
             elif self.stype == stype.embedding:
                 raise ValueError(f"Only the default `na_strategy` (None) "
-                                 f"can be used on {stype} columns, but "
+                                 f"can be used on {self.stype} columns, but "
                                  f"{self.na_strategy} is given.")
 
     @abstractmethod

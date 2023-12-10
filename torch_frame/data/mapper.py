@@ -399,7 +399,7 @@ class EmbeddingTensorMapper(TensorMapper):
     """
     def __init__(
         self,
-        embedder: Callable[[list[str]], Tensor] | None = None,
+        embedder: Callable[[list[Any]], Tensor] | None = None,
         batch_size: int | None = None,
     ):
         super().__init__()

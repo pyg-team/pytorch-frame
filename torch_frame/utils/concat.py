@@ -27,12 +27,12 @@ def cat(
         TensorFrame | TensorData: Concatenated output.
     """
     if isinstance(lst[0], TensorFrame):
-        return cat_tensor_frame(lst, dim=dim)
+        return _cat_tensor_frame(lst, dim=dim)
     else:
-        return cat_tensor_data(lst, dim=dim)
+        return _cat_tensor_data(lst, dim=dim)
 
 
-def cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
+def _cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
     r"""Concatenates a list of :class:`TensorData` objects along a specified
     dimension (:obj:`0` or :obj:`1`).
 
@@ -72,7 +72,7 @@ def cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
                 f"Concatenation not implemented for {type(td)}")
 
 
-def cat_tensor_frame(tf_list: list[TensorFrame], dim: int) -> TensorFrame:
+def _cat_tensor_frame(tf_list: list[TensorFrame], dim: int) -> TensorFrame:
     r"""Concatenates a list of :class:`TensorFrame` objects along a specified
     dimension (:obj:`0` or :obj:`1`). If :obj:`dim` is set to :obj:`0`, this
     will concatenate the tensor frames along the rows, keeping columns
@@ -113,7 +113,7 @@ def _cat_helper(
 
     feat_dict: dict[torch_frame.stype, TensorData] = {}
     for stype, feat_list in feat_list_dict.items():
-        feat_dict[stype] = cat_tensor_data(feat_list, dim=dim)
+        feat_dict[stype] = _cat_tensor_data(feat_list, dim=dim)
     return feat_dict
 
 

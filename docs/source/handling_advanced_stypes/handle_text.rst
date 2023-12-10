@@ -110,7 +110,7 @@ Fusing Text Embeddings into Tabular Learning
 to encode pre-computed embeddings. This encoder applies linear function over the
 pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_embedded`.
 
-Internally, :class:`~torch_frame.stype.text_embedded` is stored using the same data structure as :class:`~torch_frame.stype.embedding`.
+Internally, :class:`~torch_frame.stype.text_embedded` is grouped in the parent stype :class:`~torch_frame.stype.embedding` withiin :obj:`TensorFrame`.
 So we only need to specify the encoder for parent :obj:`~torch_frame.stype`, i.e. :class:`~torch_frame.stype.embedding`, in the :obj:`stype_encoder_dict`.
 
 .. code-block:: python
