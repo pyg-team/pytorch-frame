@@ -49,6 +49,12 @@ class _MultiTensor:
             f"device='{self.device}')",
         ])
 
+    def __eq__(self, td: _MultiTensor) -> bool:
+        import pdb
+        pdb.set_trace()
+        return torch.eq(self.offset, td.offset) and torch.eq(
+            self.values, td.values)
+
     @property
     def shape(self) -> tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)

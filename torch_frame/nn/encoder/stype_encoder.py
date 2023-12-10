@@ -121,11 +121,6 @@ class StypeEncoder(Module, ABC):
                     f"The number of columns in feat and the length of "
                     f"col_names must match (got {num_cols} and "
                     f"{len(col_names)}, respectively.)")
-        # Clone the tensor to avoid in-place modification
-        if not isinstance(feat, dict):
-            feat = feat.clone()
-        else:
-            feat = {key: value.clone() for key, value in feat.items()}
         # NaN handling of the input Tensor
         feat = self.na_forward(feat)
         # Main encoding into column embeddings
