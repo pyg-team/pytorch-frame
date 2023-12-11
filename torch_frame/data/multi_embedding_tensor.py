@@ -61,6 +61,13 @@ class MultiEmbeddingTensor(_MultiTensor):
         assert self.offset.ndim == 1
         assert self.values.ndim == 2 or self.values.numel() == 0
 
+    def __eq__(self, td: object) -> bool:
+        if not isinstance(td, MultiEmbeddingTensor):
+            raise NotImplementedError
+        return bool(
+            torch.all(torch.eq(self.offset, td.offset))
+            and torch.all(torch.eq(self.values, td.values)))
+
     @classmethod
     def from_tensor_list(
         cls,

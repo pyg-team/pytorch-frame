@@ -65,6 +65,13 @@ class MultiNestedTensor(_MultiTensor):
         assert self.offset[-1] == len(self.values)
         assert len(self.offset) == self.num_rows * self.num_cols + 1
 
+    def __eq__(self, td: object) -> bool:
+        if not isinstance(td, MultiNestedTensor):
+            raise NotImplementedError
+        return bool(
+            torch.all(torch.eq(self.offset, td.offset))
+            and torch.all(torch.eq(self.values, td.values)))
+
     @classmethod
     def from_tensor_mat(
         cls,

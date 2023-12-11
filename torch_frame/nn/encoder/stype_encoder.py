@@ -169,21 +169,8 @@ class StypeEncoder(Module, ABC):
         """
         if self.na_strategy is None:
             return feat
-
+        feat = feat.clone()
         for col in range(feat.size(1)):
-            column_data = feat[:, col]
-            if isinstance(feat, _MultiTensor):
-                column_data = column_data.values
-            if column_data.is_floating_point():
-                nan_mask = torch.isnan(column_data)
-            else:
-                nan_mask = column_data == -1
-            if nan_mask.ndim == 2:
-                nan_mask = nan_mask.any(dim=-1)
-            assert nan_mask.ndim == 1
-            assert len(nan_mask) == len(column_data)
-            if not nan_mask.any():
-                continue
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
                 # so 0-th index is always the most frequent.
@@ -203,7 +190,31 @@ class StypeEncoder(Module, ABC):
                     feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
-            column_data[nan_mask] = fill_value
+            if isinstance(feat, _MultiTensor):
+                feat.fillna(col, fill_value)
+            else:
+                column_data = feat[:, col]
+                if column_data.is_floating_point():
+                    nan_mask = torch.isnan(column_data)
+                else:
+                    nan_mask = column_data == -1
+                if nan_mask.ndim == 2:
+                    nan_mask = nan_mask.any(dim=-1)
+                assert nan_mask.ndim == 1
+                assert len(nan_mask) == len(column_data)
+                if not nan_mask.any():
+                    continue
+                column_data[nan_mask] = fill_value
+        # Add better safeguard here to make sure nans are actually
+        # replaced, expecially when nans are represented as -1's. They are
+        # very hard to catch as they won't error out.
+        val = feat
+        if isinstance(feat, _MultiTensor):
+            val = feat.values
+        if val.is_floating_point():
+            assert not torch.isnan(val).any()
+        else:
+            assert not (val == -1).any()
         return feat
 
 
@@ -322,11 +333,10 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         # Increment the index by one so that NaN index (-1) becomes 0
         # (padding_idx)
         # feat: [batch_size, num_cols]
-        feat.values = feat.values + 1
         xs = []
         for i, emb in enumerate(self.embs):
             col_feat = feat[:, i]
-            xs.append(emb(col_feat.values, col_feat.offset[:-1]))
+            xs.append(emb(col_feat.values + 1, col_feat.offset[:-1]))
         # [batch_size, num_cols, hidden_channels]
         x = torch.stack(xs, dim=1)
         return x

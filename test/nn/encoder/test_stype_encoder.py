@@ -8,7 +8,6 @@ from torch.nn import ReLU
 import torch_frame
 from torch_frame import NAStrategy, TensorData, stype
 from torch_frame.config import ModelConfig
-from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
@@ -27,7 +26,6 @@ from torch_frame.nn import (
     StackEncoder,
     TimestampEncoder,
 )
-from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
     WhiteSpaceHashTokenizer,
@@ -36,7 +34,8 @@ from torch_frame.testing.text_tokenizer import (
 
 def eq(td1: TensorData, td2: TensorData):
     if isinstance(td1, Tensor):
-        return isinstance(td2, Tensor) and torch.eq(td1, td2)
+        return isinstance(td2, Tensor) and torch.all(
+            torch.eq(td1, td2) | torch.isnan(td1) & torch.isnan(td2))
     elif isinstance(td1, MultiNestedTensor):
         return isinstance(td2, MultiNestedTensor) and td1 == td2
     elif isinstance(td1, MultiEmbeddingTensor):
@@ -70,7 +69,7 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
     x = encoder(feat_cat, col_names)
     assert x.shape == (feat_cat.size(0), feat_cat.size(1), 8)
     # Make sure no in-place modification
-    assert torch.eq(feat_cat, tensor_frame.feat_dict[stype.categorical])
+    assert eq(feat_cat, tensor_frame.feat_dict[stype.categorical])
 
     # Perturb the first column
     num_categories = len(stats_list[0][StatType.COUNT])

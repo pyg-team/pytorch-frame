@@ -49,12 +49,6 @@ class _MultiTensor:
             f"device='{self.device}')",
         ])
 
-    def __eq__(self, td: _MultiTensor) -> bool:
-        import pdb
-        pdb.set_trace()
-        return torch.eq(self.offset, td.offset) and torch.eq(
-            self.values, td.values)
-
     @property
     def shape(self) -> tuple[int, int, int]:
         return (self.num_rows, self.num_cols, -1)
@@ -330,6 +324,34 @@ class _MultiTensor:
 
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
+
+    def fillna(
+        self,
+        index: int,
+        fill_value: Any,
+    ) -> None:
+        """Fill a column given `index` in :obj:`MultiTensor` with fill_val.
+
+        Args:
+            index (Union[int, Tensor, Sequence[int], slice, range]): A row or
+                column index of the tensor to select.
+            fill_value: Any
+        """
+        start_idx = torch.arange(
+            index,
+            self.num_rows * self.num_cols,
+            self.num_cols,
+            device=self.device,
+        )
+        diff = self.offset[start_idx + 1] - self.offset[start_idx]
+        batch, arange = _batched_arange(diff)
+        # Compute values
+        values = self.values[self.offset[start_idx][batch] + arange]
+        if self.values.is_floating_point():
+            values[torch.isnan(values)] = fill_value
+        else:
+            values[values == -1] = fill_value
+        self.values[self.offset[start_idx][batch] + arange] = values
 
 
 def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
