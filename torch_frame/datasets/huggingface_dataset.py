@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -12,8 +12,8 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         self,
         path: str,
         col_to_stype: Dict[str, stype],
-        name: str | None = None,
-        target_col: str | None = None,
+        name: Optional[str] = None,
+        target_col: Optional[str] = None,
         **kwargs,
     ):
         try:
