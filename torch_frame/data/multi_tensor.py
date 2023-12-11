@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -325,33 +325,36 @@ class _MultiTensor:
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def fillna(
+    def fillna(self, fill_value: Union[float, int]) -> None:
+        is_float = self.dtype.is_floating_point
+        if (is_float and isinstance(fill_value, int)
+                or not is_float and isinstance(fill_value, float)):
+            raise ValueError(
+                f"Fill value {fill_value}'s dtype does not match {self.dtype}")
+        if is_float:
+            self.values[torch.isnan(self.values)] = fill_value
+        else:
+            self.values[self.values == -1] = fill_value
+
+    def fill_col(
         self,
         index: int,
-        fill_value: Any,
+        fill_value: Union[float, int],
     ) -> None:
-        """Fill a column given `index` in :obj:`MultiTensor` with fill_val.
+        """Fill the :obj:`index`-th column in :obj:`MultiTensor` with fill_val.
 
         Args:
-            index (Union[int, Tensor, Sequence[int], slice, range]): A row or
-                column index of the tensor to select.
+            index (int): A column index of the tensor to select.
             fill_value: Any
         """
-        start_idx = torch.arange(
-            index,
-            self.num_rows * self.num_cols,
-            self.num_cols,
-            device=self.device,
-        )
-        diff = self.offset[start_idx + 1] - self.offset[start_idx]
-        batch, arange = _batched_arange(diff)
-        # Compute values
-        values = self.values[self.offset[start_idx][batch] + arange]
-        if self.values.is_floating_point():
-            values[torch.isnan(values)] = fill_value
-        else:
-            values[values == -1] = fill_value
-        self.values[self.offset[start_idx][batch] + arange] = values
+        self._fill_col(index, fill_value)
+
+    def _fill_col(
+        self,
+        index: int,
+        fill_value: Union[float, int],
+    ) -> None:
+        raise NotImplementedError
 
 
 def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:

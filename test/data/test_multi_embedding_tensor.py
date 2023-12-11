@@ -99,6 +99,23 @@ def test_from_tensor_list():
     assert torch.allclose(met.offset, expected_offset)
     assert_equal(tensor_list, met)
 
+    met_with_nan = met.clone()
+    met_with_nan.values[0::2] = -1
+
+    # Test fill_col
+    met_1 = met_with_nan.clone()
+    for col in range(met.num_cols):
+        met_1.fill_col(col, 100)
+    assert not torch.all(met_1.values == -1).any()
+
+    # Test fillna
+    met_2 = met_with_nan
+    met_2.fillna(100)
+    assert not torch.all(met_2.values == -1).any()
+
+    # Test eq
+    assert met_1 == met_2
+
     # case: empty list
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.from_tensor_list([])

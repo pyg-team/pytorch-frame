@@ -191,7 +191,7 @@ class StypeEncoder(Module, ABC):
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             if isinstance(feat, _MultiTensor):
-                feat.fillna(col, fill_value)
+                feat.fill_col(col, fill_value)
             else:
                 column_data = feat[:, col]
                 if column_data.is_floating_point():
