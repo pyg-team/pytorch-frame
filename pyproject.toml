@@ -51,6 +51,7 @@ full=[
     "optuna>=3.0.0",
     "catboost",
     "lightgbm",
+    "datasets",
 ]
 
 [project.urls]
