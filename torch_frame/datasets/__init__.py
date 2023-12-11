@@ -15,6 +15,7 @@ from .multimodal_text_benchmark import MultimodalTextBenchmark
 from .data_frame_benchmark import DataFrameBenchmark
 from .mercari import Mercari
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
+from .huggingface_dataset import HuggingFaceDatasetDict
 
 real_world_datasets = [
     'Titanic',
@@ -37,4 +38,8 @@ synthetic_datasets = [
     'FakeDataset',
 ]
 
-__all__ = real_world_datasets + synthetic_datasets
+other_datasets = [
+    'HuggingFaceDatasetDict',
+]
+
+__all__ = real_world_datasets + synthetic_datasets + other_datasets
