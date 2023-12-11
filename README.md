@@ -95,10 +95,12 @@ Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
-* `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
+* `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to PyTorch-based training and modeling.
 * `FeatureEncoder` encodes `TensorFrame` into hidden column embeddings of size `[batch_size, num_cols, channels]`.
 * `TableConv` models column-wise interactions over the hidden embeddings.
 * `Decoder` generates embedding/prediction per row.
+
+See [Modular Design of Deep Tabular Models](https://pytorch-frame.readthedocs.io/en/latest/get_started/modular_design.html) for more details.
 
 
 ## Quick Tour
