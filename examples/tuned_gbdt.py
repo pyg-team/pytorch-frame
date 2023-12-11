@@ -27,6 +27,7 @@ import os.path as osp
 import random
 
 import numpy as np
+import pandas as pd
 import torch
 
 from torch_frame.datasets import TabularBenchmark
@@ -88,6 +89,11 @@ else:
     gbdt.tune(tf_train=train_dataset.tensor_frame,
               tf_val=val_dataset.tensor_frame, num_trials=20)
     gbdt.save(args.saved_model_path)
+    scores = pd.DataFrame({
+        'feature': dataset.feat_cols,
+        'importance': gbdt.feature_importance()
+    }).sort_values(by='importance', ascending=False)
+    print(scores)
 
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
 score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)

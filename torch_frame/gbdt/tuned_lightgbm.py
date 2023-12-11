@@ -226,3 +226,7 @@ class LightGBM(GBDT):
         import lightgbm
 
         self.model = lightgbm.Booster(model_file=path)
+
+    def _feature_importance(self) -> list:
+        scores = self.model.feature_importance(importance_type='gain')
+        return scores.tolist()

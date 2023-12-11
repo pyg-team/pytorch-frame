@@ -63,6 +63,10 @@ class GBDT:
     def _load(self, path: str) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    def _feature_importance(self) -> list:
+        raise NotImplementedError
+
     @property
     def is_fitted(self) -> bool:
         r"""Whether the GBDT is already fitted."""
@@ -134,6 +138,19 @@ class GBDT:
         """
         self._load(path)
         self._is_fitted = True
+
+    def feature_importance(self) -> list:
+        r"""Get GBDT's feature importance.
+
+        Returns:
+            scores (list): Feature importance.
+        """
+        if not self.is_fitted:
+            raise RuntimeError(
+                f"{self.__class__.__name__} is not yet fitted. Please run "
+                f"`tune()` first before attempting to get feature importance.")
+        scores = self._feature_importance()
+        return scores
 
     @torch.no_grad()
     def compute_metric(

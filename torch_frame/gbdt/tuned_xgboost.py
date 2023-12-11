@@ -232,3 +232,7 @@ class XGBoost(GBDT):
         import xgboost
 
         self.model = xgboost.Booster(model_file=path)
+
+    def _feature_importance(self) -> list:
+        scores = self.model.get_score(importance_type='weight')
+        return list(scores.values())

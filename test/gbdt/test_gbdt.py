@@ -21,7 +21,7 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     [stype.numerical],
     [stype.categorical],
     [stype.text_embedded],
-    [stype.numerical, stype.numerical, stype.text_embedded],
+    [stype.numerical, stype.categorical, stype.text_embedded],
 ])
 @pytest.mark.parametrize('task_type_and_metric', [
     (TaskType.REGRESSION, Metric.RMSE),
@@ -76,7 +76,19 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
     loaded_score = loaded_gbdt.compute_metric(dataset.tensor_frame.y, pred)
     dataset.tensor_frame.y = None
     loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
+    # TODO: support more stypes
+    num_features = 0
+    for x in stypes:
+        if x == stype.numerical:
+            num_features += 3 * 1
+        elif x == stype.categorical:
+            num_features += 2 * 1
+        elif x == stype.text_embedded:
+            num_features += 2 * 8
 
+    assert (gbdt_cls == XGBoost
+            and len(gbdt.feature_importance()) <= num_features) or (len(
+                gbdt.feature_importance()) == num_features)
     assert torch.allclose(pred, loaded_pred, atol=1e-5)
     assert gbdt.metric == metric
     assert score == loaded_score
