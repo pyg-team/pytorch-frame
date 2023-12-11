@@ -1,6 +1,6 @@
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
-from torch_frame.datasets.huggingface_dataset import HuggingFaceDatasetDict
+from torch_frame.datasets import HuggingFaceDatasetDict
 from torch_frame.testing import withPackage
 from torch_frame.testing.text_embedder import HashTextEmbedder
 

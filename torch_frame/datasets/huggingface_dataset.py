@@ -8,11 +8,48 @@ from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class HuggingFaceDatasetDict(torch_frame.data.Dataset):
+    r"""Load a Hugging Face :obj:`datasets.DatasetDict` dataset
+    to a :obj:`torch_frame.data.Dataset` with pre-defined split information.
+
+    Args:
+        path (str): Path or name of the dataset.
+
+
+    Example:
+        Load the `emotion` dataset from the Hugging Face Hub to the
+        :obj:`torch_frame.data.Dataset`:
+
+    .. code-block:: python
+
+        >>> import torch_frame
+        >>> from torch_frame.datasets import HuggingFaceDatasetDict
+        >>> from torch_frame.config.text_embedder import TextEmbedderConfig
+        >>> from torch_frame.testing.text_embedder import HashTextEmbedder
+        >>> dataset = HuggingFaceDatasetDict(
+        ...     path="emotion",
+        ...     col_to_stype={
+        ...         "text": torch_frame.text_embedded,
+        ...         "label": torch_frame.categorical
+        ...     },
+        ...     target_col="label",
+        ...     col_to_text_embedder_cfg=TextEmbedderConfig(
+        ...         text_embedder=HashTextEmbedder(10)),
+        ... )
+        >>> dataset.materialize()
+        >>> dataset.tensor_frame
+        TensorFrame(
+            num_cols=1,
+            num_rows=20000,
+            text_embedded (1): ['text'],
+            has_target=True,
+            device='cpu',
+        )
+
+    """
     def __init__(
         self,
         path: str,
         col_to_stype: Dict[str, stype],
-        name: Optional[str] = None,
         target_col: Optional[str] = None,
         **kwargs,
     ):
@@ -20,7 +57,7 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
             from datasets import DatasetDict, load_dataset
         except ImportError:
             raise ImportError("Please run `pip install datasets` at first.")
-        dataset = load_dataset(path, name)
+        dataset = load_dataset(path)
         if not isinstance(dataset, DatasetDict):
             raise ValueError(f"{self.__class__} only supports `DatasetDict`")
         # Convert dataset to pandas format

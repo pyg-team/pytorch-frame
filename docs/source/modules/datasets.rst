@@ -29,3 +29,15 @@ Synthetic Datasets
    {% for name in torch_frame.datasets.synthetic_datasets %}
      {{ name }}
    {% endfor %}
+
+Other Datasets
+------------------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   {% for name in torch_frame.datasets.other_datasets %}
+     {{ name }}
+   {% endfor %}
