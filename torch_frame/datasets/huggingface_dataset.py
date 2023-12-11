@@ -1,5 +1,3 @@
-from typing import Dict, Optional
-
 import pandas as pd
 
 import torch_frame
@@ -13,7 +11,6 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
 
     Args:
         path (str): Path or name of the dataset.
-
 
     Example:
         Load the `emotion` dataset from the Hugging Face Hub to the
@@ -49,13 +46,13 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
     def __init__(
         self,
         path: str,
-        col_to_stype: Dict[str, stype],
-        target_col: Optional[str] = None,
+        col_to_stype: dict[str, stype],
+        target_col: str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         try:
             from datasets import DatasetDict, load_dataset
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError("Please run `pip install datasets` at first.")
         dataset = load_dataset(path)
         if not isinstance(dataset, DatasetDict):
