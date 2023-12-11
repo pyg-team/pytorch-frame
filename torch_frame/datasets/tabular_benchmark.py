@@ -386,14 +386,9 @@ class TabularBenchmark(torch_frame.data.Dataset):
     base_url = 'https://huggingface.co/datasets/inria-soda/tabular-benchmark/raw/main/'  # noqa
     # Dedicated URLs for large datasets
     base_url_large = 'https://huggingface.co/datasets/inria-soda/tabular-benchmark/resolve/main/'  # noqa
+    name_list = sorted(list(name_to_task_category.keys()))
 
-    @classmethod
-    @property
-    def name_list(cls) -> list[str]:
-        r"""List of dataset names available."""
-        return sorted(list(cls.name_to_task_category.keys()))
-
-    def __init__(self, root: str, name: str):
+    def __init__(self, root: str, name: str) -> None:
         self.root = root
         self.name = name
         if name not in self.name_to_task_category:
