@@ -539,7 +539,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
           - Yandex(name='year')
           - 0.0%
     """
-    dataset_categorization_dict = {
+    dataset_categorization_dict: dict[str, dict[str, list[tuple]]] = {
         'binary_classification': {
             'small': [
                 ('AdultCensusIncome', {}),
