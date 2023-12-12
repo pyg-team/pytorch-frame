@@ -436,6 +436,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
             df[df[target_col] < 0][target_col] = 0
         elif self.name == 'california_house_price':
             df[target_col] = np.exp(df[target_col])
+            df['Bedrooms'] = pd.to_numeric(df['Bedrooms'], errors='coerce')
         elif self.name == 'mercari_price_suggestion100K':
             df[target_col] = np.exp(df[target_col]) - 1
             df[df[target_col] < 0][target_col] = 0
