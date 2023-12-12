@@ -25,3 +25,5 @@ run_command python ${dir_path}/transformers_text.py --epochs 1
 run_command python ${dir_path}/trompt.py --epochs 1
 run_command python ${dir_path}/tuned_gbdt.py
 run_command python ${dir_path}/tutorial.py --epochs 1
+
+exit $exit_status
