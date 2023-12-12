@@ -4,7 +4,7 @@ on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - master
-      - aki/parent-noop-stype
+      - aki/test-examples
   pull_request:
 
 jobs:
