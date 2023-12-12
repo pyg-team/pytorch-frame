@@ -46,6 +46,5 @@ jobs:
           pytest
 
       - name: Test examples
-        if: steps.changed-files-specific.outputs.only_changed != 'true'
         run: |
           bash test/run_examples.sh
