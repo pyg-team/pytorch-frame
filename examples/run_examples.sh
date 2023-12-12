@@ -1,20 +1,20 @@
 #!/bin/bash
 set -ex
 
+pip install sentence-transformers peft openai cohere voyageai
+
 exit_status=0
 
 run_command() {
-    "$@"
-    status=$?
+    status=0
+    "$@" || status=$?
     if [ $status -ne 0 ]; then
         echo "Error with '$*': exited with $status"
         exit_status=1 # Update the exit status if the command failed
     fi
 }
-
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 dir_path=$(dirname "${BASH_SOURCE[0]}")
-
 run_command python ${dir_path}/excelformer.py --epochs 1
 # run_command python ${dir_path}/llm_embedding.py --epochs 1
 run_command python ${dir_path}/mercari.py --epochs 1
