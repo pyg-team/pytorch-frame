@@ -112,8 +112,8 @@ def test_materalization_and_converter():
         stypes=dataset_stypes,
         col_to_text_embedder_cfg=text_embedder_cfg,
     ).materialize()
-    expected_parent_feat_size = dict()
-    stype_num_cols = dict()
+    expected_parent_feat_size: dict[torch_frame.stype, int] = dict()
+    stype_num_cols: dict[torch_frame.stype, int] = dict()
     for col, stype in dataset.col_to_stype.items():
         if col != dataset.target_col:
             stype_num_cols[stype] = stype_num_cols.get(stype, 0) + 1

@@ -383,8 +383,8 @@ class TextTokenizationTensorMapper(TensorMapper):
 
 class EmbeddingTensorMapper(TensorMapper):
     r"""Maps embeddings columns into tensors. It can take either raw data,
-        e.g. text, images and convert them into embeddings with the specified
-        embedder, or embeddings as column values directly.
+    e.g. text, images and convert them into embeddings with the specified
+    embedder, or embeddings as column values directly.
 
     Args:
         embedder (callable, optional): A callable function that takes list of

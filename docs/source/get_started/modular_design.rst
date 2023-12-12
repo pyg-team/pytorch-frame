@@ -33,8 +33,7 @@ The embeddings of different :obj:`stypes<torch_frame.stype>` are then concatenat
     User facing :obj:`stypes<torch_frame.stype>` is declared on the :class:`~torch_frame.data.Dataset` level, where users can specify the :class:`~torch_frame.stype` for each column in the given :obj:`DataFrame`.
     The raw data of the user-facing :obj:`stype<torch_frame.stype>` will be converted into data of internal :obj:`stype<torch_frame.stype>` during materialization.
     We call the internal :obj:`stype<torch_frame.stype>` the parent of the user-facing :obj:`stype<torch_frame.stype>`.
-    An :obj:`stype<torch_frame.stype>` can be both user-facing and internal.
-    :class:`stype.text_embedded` is a user-facing :obj:`stype<torch_frame.stype>` because it declares the semantic type of the raw data .
+    For instance, :class:`stype.text_embedded` is a user-facing :obj:`stype<torch_frame.stype>` because it declares the semantic type of the raw data stored in :obj:`DataFrame`.
     During materialization, we convert the raw data stored as text into :obj:`embeddings`, which makes it no difference from the data stored as :class:`~stype.embedding`.
     The corresponding semantic type of the column thus becomes :class:`stype.embedding` in :obj:`TensorFrame`.
     We consider the :class:`stype.embedding` as the parent of :class:`stype.text_embedded` and only parent :obj:`stype<torch_frame.stype>` is supported in the :obj:`stype_encoder_dict`.

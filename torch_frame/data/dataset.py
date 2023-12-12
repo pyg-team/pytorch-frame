@@ -243,7 +243,7 @@ class DataFrameToTensorFrameConverter:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
 
-    def _merge_feat(self, tf: TensorFrame):
+    def _merge_feat(self, tf: TensorFrame) -> TensorFrame:
         r"""Merge child and parent :obj:`stypes<torch_frame.stype>` in the
         input :obj:`TensorFrames`. Each child :obj:`stype" should be appended
         to the parent :obj:`stype` and dropped after applying this function.
@@ -268,6 +268,7 @@ class DataFrameToTensorFrameConverter:
 
                 tf.feat_dict.pop(stype)
                 tf.col_names_dict.pop(stype)
+        return tf
 
     def __call__(
         self,
@@ -304,8 +305,7 @@ class DataFrameToTensorFrameConverter:
                 df[self.target_col], device=device)
 
         tf = TensorFrame(feat_dict, self.col_names_dict, y)
-        self._merge_feat(tf)
-        return tf
+        return self._merge_feat(tf)
 
 
 class Dataset(ABC):
