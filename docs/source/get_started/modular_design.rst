@@ -30,14 +30,14 @@ The embeddings of different :obj:`stypes<torch_frame.stype>` are then concatenat
 
 .. note::
     There are two types of :obj:`stypes<torch_frame.stype>` -- User-facing and internal.
-    User facing :obj:`stypes<torch_frame.stype>` is declared on the :class:`~torch_frame.data.Dataset` level, where users can specify the :class:`~torch_frame.stype` for each column in the given :obj:`DataFrame`.
+    User facing :obj:`stypes<torch_frame.stype>` are declared on the :class:`~torch_frame.data.Dataset` level, where users can specify the :class:`~torch_frame.stype` for each column in the given :obj:`DataFrame`.
     The raw data of the user-facing :obj:`stype<torch_frame.stype>` will be converted into data of internal :obj:`stype<torch_frame.stype>` during materialization.
     We call the internal :obj:`stype<torch_frame.stype>` the parent of the user-facing :obj:`stype<torch_frame.stype>`.
     For instance, :class:`stype.text_embedded` is a user-facing :obj:`stype<torch_frame.stype>` because it declares the semantic type of the raw data stored in :obj:`DataFrame`.
-    During materialization, we convert the raw data stored as text into :obj:`embeddings`, which makes it no difference from the data stored as :class:`~stype.embedding`.
+    During materialization, we convert the raw data stored as text into :obj:`embeddings`, which makes it no difference from the data stored as :class:`stype.embedding`.
     The corresponding semantic type of the column thus becomes :class:`stype.embedding` in :obj:`TensorFrame`.
     We consider the :class:`stype.embedding` as the parent of :class:`stype.text_embedded` and only parent :obj:`stype<torch_frame.stype>` is supported in the :obj:`stype_encoder_dict`.
-    The motivation for this design is that internally, the data of the same :class:`stype<torch_frame.stype>` should be grouped together for efficiency.
+    The motivation for this design is that internally, data of the same :class:`stype<torch_frame.stype>` should be grouped together for efficiency.
 
 Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of
 :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding :obj:`stype.categorical` columns
