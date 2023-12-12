@@ -8,7 +8,6 @@ import torch.nn.functional as F
 from peft import LoraConfig, TaskType, get_peft_model
 from torch import Tensor
 from tqdm import tqdm
-from torch_frame.nn.encoder.stype_encoder import TimestampEncoder
 # Please run `pip install transformers` to install the package
 from transformers import AutoModel, AutoTokenizer
 
@@ -27,6 +26,7 @@ from torch_frame.nn import (
     LinearModelEncoder,
     MultiCategoricalEmbeddingEncoder,
 )
+from torch_frame.nn.encoder.stype_encoder import TimestampEncoder
 from torch_frame.typing import TextTokenizationOutputs
 
 # Text Embedded
