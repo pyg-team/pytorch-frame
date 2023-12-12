@@ -59,7 +59,7 @@ from torch_frame.typing import TextTokenizationOutputs
 # Best Val Acc: 0.8125, Best Test Acc: 0.7150
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default="wine_reviews")
+parser.add_argument("--dataset", type=str, default="california_house_price")
 parser.add_argument("--channels", type=int, default=256)
 parser.add_argument("--num_layers", type=int, default=4)
 parser.add_argument("--batch_size", type=int, default=512)
