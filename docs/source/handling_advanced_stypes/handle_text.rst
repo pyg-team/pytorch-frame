@@ -121,6 +121,8 @@ Embedding Text Columns for a Dataset
     type(dataset.tensor_frame.feat_dict[torch_frame.text_embedded])
     >>> "<class 'torch_frame.data.multi_embedding_tensor.MultiEmbeddingTensor'>"
 
+.. note::
+    Internally, :class:`~torch_frame.stype.text_embedded` is grouped together in the parent stype :class:`~torch_frame.stype.embedding` within :obj:`TensorFrame`.
 
 It is strongly recommended to cache :class:`~torch_frame.TensorFrame`
 by specifying the :obj:`path` during :meth:`~torch_frame.data.Dataset.materialize`,
@@ -135,6 +137,8 @@ Fusing Text Embeddings into Tabular Learning
 to encode pre-computed embeddings. This encoder applies linear function over the
 pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_embedded`.
 
+As mentioned earlier, :class:`~torch_frame.stype.text_embedded` is stored together with other :obj:`embeddings` in :obj:`TensorFrame`, so we only need to specify the encoder for parent :obj:`~torch_frame.stype`, i.e. :class:`~torch_frame.stype.embedding`, in the :obj:`stype_encoder_dict`.
+
 .. code-block:: python
 
     from torch_frame.nn.encoder import (
@@ -146,7 +150,7 @@ pre-computed embeddings, which can easily handle :obj:`~torch_frame.stype.text_e
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder()
+        stype.embedding: LinearEmbeddingEncoder()
     }
 
 Then, :obj:`stype_encoder_dict` can be directly fed into
