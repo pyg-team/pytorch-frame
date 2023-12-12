@@ -37,7 +37,7 @@ jobs:
         run: |
           pip install -e .[full,test]
 
-      - name: Run tests
+      - name: Test pacakge
         if: steps.changed-files-specific.outputs.only_changed != 'true'
         run: |
           pytest --cov --cov-report=xml
@@ -47,3 +47,8 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           fail_ci_if_error: false
+
+      - name: Test examples
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: |
+          bash test/run_examples.sh
