@@ -37,6 +37,19 @@ def reset_parameters_soft(module: Module):
         module.reset_parameters()
 
 
+def get_nan_mask(tensor: Tensor):
+    r"""Obtains the NaN maks of the input :obj:`Tensor`.
+
+    Args:
+        tensor (Tensor): Input :obj:`Tensor`.
+    """
+    if tensor.is_floating_point():
+        nan_mask = torch.isnan(tensor)
+    else:
+        nan_mask = tensor == -1
+    return nan_mask
+
+
 class StypeEncoder(Module, ABC):
     r"""Base class for stype encoder. This module transforms tensor of a
     specific stype, i.e., `TensorFrame.feat_dict[stype.xxx]` into 3-dimensional
@@ -169,7 +182,10 @@ class StypeEncoder(Module, ABC):
         """
         if self.na_strategy is None:
             return feat
-        feat = feat.clone()
+        if (isinstance(feat, _MultiTensor) and get_nan_mask(feat.values).any()
+                or isinstance(feat, Tensor) and get_nan_mask(feat).any()):
+            # Only clone the feat if there are NaNs in the data
+            feat = feat.clone()
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
@@ -194,10 +210,7 @@ class StypeEncoder(Module, ABC):
                 feat.fill_col(col, fill_value)
             else:
                 column_data = feat[:, col]
-                if column_data.is_floating_point():
-                    nan_mask = torch.isnan(column_data)
-                else:
-                    nan_mask = column_data == -1
+                nan_mask = get_nan_mask(column_data)
                 if nan_mask.ndim == 2:
                     nan_mask = nan_mask.any(dim=-1)
                 assert nan_mask.ndim == 1
