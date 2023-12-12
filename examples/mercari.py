@@ -88,7 +88,7 @@ stype_encoder_dict = {
     stype.categorical: EmbeddingEncoder(),
     stype.numerical: LinearEncoder(),
     stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
-    stype.text_embedded: LinearEmbeddingEncoder(),
+    stype.embedding: LinearEmbeddingEncoder(),
 }
 
 if is_classification:

@@ -253,10 +253,16 @@ else:
     text_stype_encoder = LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
 
 stype_encoder_dict = {
-    stype.categorical: EmbeddingEncoder(),
-    stype.numerical: LinearEncoder(),
-    text_stype: text_stype_encoder,
-    stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
+    stype.categorical:
+    EmbeddingEncoder(),
+    stype.numerical:
+    LinearEncoder(),
+    # If text_stype is text_embeddeding,
+    # it becomes embedding after materialization
+    text_stype.parent:
+    text_stype_encoder,
+    stype.multicategorical:
+    MultiCategoricalEmbeddingEncoder(),
 }
 
 if is_classification:

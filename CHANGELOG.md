@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Set `stype.embedding` as the parent of `stype.text_embedded` and unified `stype.text_embedded` with its parent in :obj:`tensor_frame` ([#277](https://github.com/pyg-team/pytorch-frame/pull/277))
 - Renamed `torch_frame.stype` module to `torch_frame._stype` ([#275](https://github.com/pyg-team/pytorch-frame/pull/275))
 - Renamed `text_tokenized_cfg` into `col_to_text_tokenized_cfg` ([#257](https://github.com/pyg-team/pytorch-frame/pull/257))
 - Made `Trompt` output 2-dim embeddings in `forward`
