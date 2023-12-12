@@ -51,4 +51,4 @@ jobs:
 
       - name: Test examples
         run: |
-          bash test/run_examples.sh
+          bash examples/run_examples.sh
