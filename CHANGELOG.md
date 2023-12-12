@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added more text documentation ([#291](https://github.com/pyg-team/pytorch-frame/pull/291))
 - Added `col_to_model_cfg` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))
 - Added documentation on handling different stypes ([#271](https://github.com/pyg-team/pytorch-frame/pull/271))
