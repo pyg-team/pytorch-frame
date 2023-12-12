@@ -16,7 +16,7 @@ run_command() {
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 dir_path=$(dirname "${BASH_SOURCE[0]}")
 run_command python ${dir_path}/excelformer.py --epochs 1
-# run_command python ${dir_path}/llm_embedding.py --epochs 1
+run_command python ${dir_path}/llm_embedding.py --epochs 1
 run_command python ${dir_path}/mercari.py --epochs 1
 run_command python ${dir_path}/revisiting.py --epochs 1
 run_command python ${dir_path}/tab_transformer.py --epochs 1
