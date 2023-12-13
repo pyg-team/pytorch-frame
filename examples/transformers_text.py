@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import os.path as osp
 from typing import List
@@ -26,6 +28,7 @@ from torch_frame.nn import (
     LinearModelEncoder,
     MultiCategoricalEmbeddingEncoder,
 )
+from torch_frame.nn.encoder.stype_encoder import TimestampEncoder
 from torch_frame.typing import TextTokenizationOutputs
 
 # Text Embedded
@@ -263,6 +266,8 @@ stype_encoder_dict = {
     text_stype_encoder,
     stype.multicategorical:
     MultiCategoricalEmbeddingEncoder(),
+    stype.timestamp:
+    TimestampEncoder()
 }
 
 if is_classification:
