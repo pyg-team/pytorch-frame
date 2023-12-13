@@ -71,7 +71,13 @@ dataset.materialize(path=osp.join(path, "data.pt"))
 
 is_classification = dataset.task_type.is_classification
 
-train_dataset, val_dataset, test_dataset = dataset.split()
+# Use the pre-defined split if num_rows is not specified:
+if dataset.num_rows is None:
+    train_dataset, val_dataset, test_dataset = dataset.split()
+else:
+    train_dataset = dataset[:0.8]
+    val_dataset = dataset[0.8:0.9]
+    test_dataset = dataset[0.9:]
 if len(val_dataset) == 0:
     train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
 
