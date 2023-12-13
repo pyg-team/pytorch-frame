@@ -3,18 +3,23 @@
 # pip install -U setuptools wheel
 # pip install autogluon  # autogluon==1.0.0
 
-import os.path as osp
 import argparse
+import os.path as osp
+
 import pandas as pd
 from autogluon.tabular import TabularDataset, TabularPredictor
-from torch_frame.datasets.data_frame_benchmark import SPLIT_COL, DataFrameBenchmark
+
+from torch_frame.datasets.data_frame_benchmark import (
+    SPLIT_COL,
+    DataFrameBenchmark,
+)
 from torch_frame.typing import TaskType
+
 DEFAULT_METRIC = {
     'regression': "rmse",
     'binary_classification': "roc_auc",
     'multiclass_classification': "accuracy",
 }
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -29,6 +34,7 @@ parser.add_argument('--idx', type=int, default=0,
                     help='The index of the dataset within DataFrameBenchmark')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
+
 
 def compute_metric(pred, target):
     metric = DEFAULT_METRIC[args.task_type]
@@ -47,6 +53,7 @@ def compute_metric(pred, target):
         raise ValueError(f'{metric} is not supported.')
     return score
 
+
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data')
 dataset = DataFrameBenchmark(root=path, task_type=TaskType(args.task_type),
@@ -61,11 +68,10 @@ train_data = TabularDataset(data=train_dataset_df)
 val_data = TabularDataset(data=val_dataset_df)
 test_data = TabularDataset(data=test_dataset_df)
 predictor = TabularPredictor(label=dataset.target_col,
-                             eval_metric='roc_auc').fit(train_data=train_data,
-                                                        tuning_data=val_data,
-                                                        presets='high_quality',
-                                                        use_bag_holdout=True,
-                                                        num_gpus=1)
+                             eval_metric='roc_auc').fit(
+                                 train_data=train_data, tuning_data=val_data,
+                                 presets='high_quality', use_bag_holdout=True,
+                                 num_gpus=1)
 y_pred = predictor.predict(test_dataset_df.drop(columns=[dataset.target_col]))
 print(predictor.leaderboard(test_data))
 print(predictor.evaluate(test_data))
