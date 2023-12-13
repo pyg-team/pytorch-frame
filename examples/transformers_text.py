@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import os.path as osp
 from typing import List
