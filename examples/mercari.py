@@ -71,9 +71,13 @@ dataset.materialize(path=osp.join(path, "data.pt"))
 
 is_classification = dataset.task_type.is_classification
 
-train_dataset, val_dataset, test_dataset = dataset.split()
-if len(val_dataset) == 0:
-    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
+# Use the pre-defined split when using the entire dataset
+if dataset.num_rows == 4_943_260:
+    train_dataset, val_dataset, test_dataset = dataset.split()
+else:
+    train_dataset = dataset[:0.8]
+    val_dataset = dataset[0.8:0.9]
+    test_dataset = dataset[0.9:]
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame
