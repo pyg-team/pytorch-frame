@@ -8,8 +8,8 @@ for text columns.
 :class:`stype.text_embedded<torch_frame.stype>` uses text embedding model(s) to pre-encode text columns into embeddings
 (those models are frozen during model training).
 :class:`stype.text_tokenized<torch_frame.stype>` finetunes underlying text embedding models by using the
-gradients backpropagated from the tabular learning. Now :pyf:`PyTorch Frame` pipeline supports supervised finetuning
-on text models with other libraries such as the `PEFT <https://huggingface.co/docs/peft/>`_.
+gradients backpropagated from the tabular learning, with also supporting supervised finetuning
+on text models with libraries such as the `PEFT <https://huggingface.co/docs/peft/>`_.
 
 
 .. contents::
@@ -22,23 +22,24 @@ Handling Text Columns in a Benchmark Dataset
 with text columns, such as :obj:`~torch_frame.datasets.MultimodalTextBenchmark`.
 
 In :pyf:`PyTorch Frame`, you can specify text columns as
-:class:`stype.text_embedded<torch_frame.stype>`. This will
+
+1. :class:`stype.text_embedded<torch_frame.stype>`: This will
 encode text columns using a user-specified text embedding model(s) during the
 dataset materialization stage.
-You can also specify text columns as
-:class:`stype.text_tokenized<torch_frame.stype>`, which will finetune
-user-specified text model(s) during the training stage.
+
+2. :class:`stype.text_tokenized<torch_frame.stype>`:  This will encode text columns as
+text model inputs during materialization stage, and finetune user-specified text model(s)
+during the training stage.
 
 The processes of initializing and materializing datasets are similar
 to :doc:`/get_started/introduction`. Below we highlight the difference.
 
 
-Using Pre-trained Text Embeddings
----------------------------------
+text_embedded: Using Pre-trained Text Embeddings
+------------------------------------------------
 
-For text columns with :class:`stype.text_embedded<torch_frame.stype>` that
-utilizes pre-trained text embeddings,
-first you need to specify your text embedding model. Here, we use the
+For :class:`stype.text_embedded<torch_frame.stype>` first you
+need to specify the text embedding model(s). Here, we use the
 `SentenceTransformer <https://www.sbert.net/>`_ package.
 
 .. code-block:: bash
@@ -82,9 +83,11 @@ Then we instantiate :obj:`~torch_frame.config.TextEmbedderConfig` for our text e
 
 Here :obj:`text_embedder` maps a list of sentences into PyTorch Tensor embeddings
 in mini-batch, where :obj:`batch_size` represents the batch size.
-Also, notice that we allow user to specify a dictionary of :obj:`text_embedder`s for different
-text columns with :class:`stype.text_embedded<torch_frame.stype>`. This also allows using
+Also, notice that we allow to specify a dictionary of :obj:`text_embedder`
+for different text columns with :class:`stype.text_embedded<torch_frame.stype>`. This allows using
 :obj:`text_embedder`s with different embedding size for different text columns.
+
+Next we will apply specified :obj:`text_embedder` on a tabular dataset with text columns.
 
 Embedding Text Columns for a Dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,12 +160,15 @@ Then, :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` to handle text columns.
 
 
-Finetuning Underlying Text Models
----------------------------------
+text_tokenized: Finetuning Underlying Text Models
+-------------------------------------------------
 
-For text columns with :class:`stype.text_tokenized<torch_frame.stype>`
-that finetunes underlying text models during the tabular learning, you need to specify both
-of the tokenization and encoding.
+:class:`stype.text_tokenized<torch_frame.stype>` encodes text columns to text model inputs,
+such as tokens during materialization stage. During the training stage,
+:class:`stype.text_tokenized<torch_frame.stype>` attaches text model(s) to the
+tabular learning :obj:`~torch.nn.Module` with allowing tabular learning gradients backpropagated
+to text model(s).
+
 Here, we use the
 `Transformers <https://huggingface.co/docs/transformers>`_ package.
 
@@ -174,8 +180,8 @@ Here, we use the
 Specifying Text Tokenization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Different from text columns with :class:`stype.text_embedded<torch_frame.stype>`, text columns with
-:class:`stype.text_tokenized<torch_frame.stype>` will be tokenized at first during the materialization
+Different from text columns with :class:`stype.text_embedded<torch_frame.stype>`,
+:class:`stype.text_tokenized<torch_frame.stype>` columns will be tokenized at first during the materialization
 stage. Let's create a tokenization class that tokenizes a list of strings to a dictionary of PyTorch Tensors,
 where the keys include :obj:`input_ids` and :obj:`attention_mask`, and values are tokens and masks tensors.
 
@@ -206,8 +212,10 @@ Then we instantiate :obj:`~torch_frame.config.TextTokenizerConfig` for our text 
 
 
 Here :obj:`text_tokenizer` maps a list of sentences into a dictionary of PyTorch Tensors,
-in mini-batch, where :obj:`batch_size` represents the batch size.
-Also, notice that we allow user to specify a dictionary of :obj:`text_tokenizer`s for different
+which are text model inputs.
+This tokenization is processed in mini-batch, where :obj:`batch_size` represents the batch size.
+Because usually tokenizer runs fast and costs relatively low memory, you can specify some large batch size here.
+Also, notice that we allow to specify a dictionary of :obj:`text_tokenizer` for different
 text columns with :class:`stype.text_tokenized<torch_frame.stype>`.
 
 
@@ -243,13 +251,18 @@ Tokenizing Text Columns for a Dataset
     >>> {'input_ids': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu'), 'attention_mask': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')}
 
 
+Notice that we use a dictionary of :obj:`~torch_frame.data.MultiNestedTensor` to store the tokenized results.
+The reason we use dictionary is that tokenization returns multiple text model inputs such as
+:obj:`input_ids` and :obj:`attention_mask` as shown before.
+And the reason we use a :obj:`~torch_frame.data.MultiNestedTensor` for each text input is that for each row or sentence,
+model input (such as :obj:`input_ids`) has different length and our :obj:`~torch_frame.data.MultiNestedTensor` provides
+an efficient way to store and extract those tensors.
+
 Finetuning Text Models with Tabular Learning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To finetune the underlying text models together with tabular learning,
-we need at first specify how to embed tokenization results to text embeddings and how to finetune the text model.
-Here we use `PEFT <https://huggingface.co/docs/peft>`_ package to use
-`LoRA <https://arxiv.org/abs/2106.09685>`_ finetune the text model.
+Here we use `PEFT <https://huggingface.co/docs/peft>`_ package and the
+`LoRA <https://arxiv.org/abs/2106.09685>`_ strategy to finetune the underlying text model.
 
 .. code-block:: bash
 
@@ -297,13 +310,12 @@ Next we need to specify the text model embedding with `LoRA <https://arxiv.org/a
             return out.last_hidden_state[:, 0, :].unsqueeze(1)
 
 
-Notice that we use a dictionary of :obj:`~torch_frame.data.MultiNestedTensor` to store the tokenized results.
-The reason we use dictionary is that tokenization returns multiple text model inputs such as
-:obj:`input_ids` and :obj:`attention_mask` as shown before.
-And the reason we use a :obj:`~torch_frame.data.MultiNestedTensor` for each text input is that for each row or sentence,
-model input (such as :obj:`input_ids`) has different length. During the :meth:`forward`, you can
-transform each :obj:`~torch_frame.data.MultiNestedTensor` back to a two-dimensional PyTorch Tensor by using
-:meth:`~torch_frame.data.MultiNestedTensor.to_dense` with a specific padding value by specifying the :obj:`fill_value`.
+As mentioned above, we store text model inputs in the format of dictionary of
+:obj:`~torch_frame.data.MultiNestedTensor`s.
+Thus, during the :meth:`forward`, you can transform each
+:obj:`~torch_frame.data.MultiNestedTensor` back to a two-dimensional PyTorch Tensor by using
+:meth:`~torch_frame.data.MultiNestedTensor.to_dense` with a specific padding value by specifying
+the :obj:`fill_value`.
 
 Similar to the one for :obj:`~torch_frame.stype.text_embedded`, :pyf:`PyTorch Frame` offers
 :class:`~torch_frame.nn.encoder.LinearModelEncoder` designed
@@ -333,7 +345,7 @@ column embeddings, which can easily handle :obj:`~torch_frame.stype.text_tokeniz
         stype.text_tokenized: LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
     }
 
-We provides :class:`~torch_frame.config.ModelConfig` to specify the text model to finetune and its output size.
+We provide :class:`~torch_frame.config.ModelConfig` to specify the text model to finetune and its output size.
 Then you can specify the model config for each :obj:`~torch_frame.stype.text_tokenized` columns
 in a dictionary and pass it to the :class:`~torch_frame.nn.encoder.LinearModelEncoder`.
 
