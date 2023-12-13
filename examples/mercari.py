@@ -78,8 +78,6 @@ else:
     train_dataset = dataset[:0.8]
     val_dataset = dataset[0.8:0.9]
     test_dataset = dataset[0.9:]
-if len(val_dataset) == 0:
-    train_dataset, val_dataset = train_dataset[:0.9], train_dataset[0.9:]
 
 # Set up data loaders
 train_tensor_frame = train_dataset.tensor_frame
