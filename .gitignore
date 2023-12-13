@@ -18,3 +18,4 @@ venv/*
 *.out
 data/**
 catboost_info/
+AutogluonModels/
