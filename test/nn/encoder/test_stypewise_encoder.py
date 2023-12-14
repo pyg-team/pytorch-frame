@@ -32,14 +32,14 @@ from torch_frame.testing.text_tokenizer import (
                          })])
 @pytest.mark.parametrize("encoder_num_cls_kwargs", [
     (LinearEncoder, {
-        "na_strategy": NAStrategy.ZEROS,
+        "na_strategy": NAStrategy.MEAN,
     }),
     (LinearBucketEncoder, {
-        "na_strategy": NAStrategy.ZEROS,
+        "na_strategy": NAStrategy.MEAN,
     }),
     (LinearPeriodicEncoder, {
         "n_bins": 4,
-        "na_strategy": NAStrategy.ZEROS,
+        "na_strategy": NAStrategy.MEAN,
     }),
 ])
 @pytest.mark.parametrize("encoder_multicategorical_cls_kwargs", [
