@@ -103,7 +103,7 @@ def test_multi_nested_tensor_basics(device):
 
     # Test fillna with vector of shape (num_cols)
     multi_nested_tensor_4 = multi_nested_tensor_with_nan
-    multi_nested_tensor_4.fillna_(torch.arange(100, 110).reshape(10, 1))
+    multi_nested_tensor_4.fillna_(torch.arange(100, 110).reshape(1, 10))
     assert torch.all(
         torch.eq(multi_nested_tensor_4.offset, multi_nested_tensor.offset))
 
@@ -250,7 +250,7 @@ def test_multi_nested_tensor_basics(device):
         MultiNestedTensor.cat([], dim=1)
 
     # Testing set item
-    with pytest.raises(RuntimeError, match="read-only"):
+    with pytest.raises(RuntimeError, match="not currently supported"):
         multi_nested_tensor[0, 0] = torch.zeros(3)
 
     # Testing clone

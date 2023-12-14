@@ -127,7 +127,7 @@ def test_from_tensor_list():
 
     # Test fillna with vector of shape (num_cols, 1)
     met_4 = met_with_nan
-    met_4.fillna_(torch.tensor([[100], [101], [102]]))
+    met_4.fillna_(torch.tensor([[100, 101, 102]]))
     assert torch.all(
         torch.eq(
             met_4.values,

@@ -38,9 +38,8 @@ class _MultiTensor:
         }
 
     def __setitem__(self, index: Any, values: Any) -> None:
-        raise RuntimeError(
-            f"{self.__class__.__name__} object does not support setting "
-            "values. It should be used for read-only.")
+        raise RuntimeError("Setting values is not currently supported by "
+                           f"{self.__class__.__name__}.")
 
     def __repr__(self) -> str:
         return " ".join([
@@ -327,17 +326,18 @@ class _MultiTensor:
 
     def fillna_(self, fill_value: Union[int, float, Tensor]):
         if isinstance(fill_value, Tensor):
-            if fill_value.dim() != 0 and not (
-                    fill_value.size(0) == self.num_cols
-                    and fill_value.numel() == self.num_cols):
+            if fill_value.dim(
+            ) != 0 and not fill_value.numel() == self.num_cols:
                 raise ValueError(
                     "fillna_ with Tensor of shape "
                     f"{fill_value.shape} is not supported. "
-                    f"Please use a Tensor of shape ({self.num_cols})"
-                    f" or ({self.num_cols, 1}).")
+                    f"Please use a Tensor of shape ({self.num_cols},)"
+                    f" or (1, {self.num_cols}).")
             if fill_value.dim() != 0:
+                if fill_value.dim() == 1:
+                    fill_value = fill_value.unsqueeze(0)
                 for col in range(self.num_cols):
-                    self.fillna_col(col, fill_value[col])
+                    self.fillna_col(col, fill_value[0, col])
                 return
         if self.dtype.is_floating_point:
             self.values[torch.isnan(self.values)] = fill_value
