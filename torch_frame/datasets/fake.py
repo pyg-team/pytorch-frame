@@ -62,6 +62,8 @@ class FakeDataset(torch_frame.data.Dataset):
         | TextTokenizerConfig | None = None,
     ) -> None:
         assert len(stypes) > 0
+        df_dict: dict[str, list | np.ndarray]
+        arr: list | np.ndarray
         if task_type == TaskType.REGRESSION:
             arr = np.random.randn(num_rows)
             if with_nan:
@@ -161,8 +163,8 @@ class FakeDataset(torch_frame.data.Dataset):
             for col_name in ['emb_1', 'emb_2']:
                 emb_dim = random.randint(1, 5)
                 emb = [random.random() for _ in range(emb_dim)]
-                emb = [emb for _ in range(num_rows)]
-                df_dict[col_name] = emb
+                embs = [emb for _ in range(num_rows)]
+                df_dict[col_name] = embs
                 col_to_stype[col_name] = stype.embedding
         if stype.timestamp in stypes:
             start_date = datetime(2000, 1, 1)

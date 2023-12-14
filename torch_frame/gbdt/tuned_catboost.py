@@ -21,7 +21,7 @@ class CatBoost(GBDT):
     def _to_catboost_input(
         self,
         tf,
-    ) -> tuple[DataFrame, np.ndarray, np.ndarray]:
+    ) -> tuple[DataFrame, np.ndarray | None, np.ndarray]:
         r"""Convert :class:`TensorFrame` into CatBoost-compatible input format:
         :obj:`(x, y, cat_features)`.
 
@@ -32,13 +32,14 @@ class CatBoost(GBDT):
             x (DataFrame): Output :obj:`Dataframe` by
                 concatenating tensors of categorical and numerical features of
                 the input :class:`TensorFrame`.
-            y (numpy.ndarray): Prediction target :obj:`numpy.ndarray`.
+            y (numpy.ndarray, optional): Prediction label.
             cat_features (numpy.ndarray): Array containing indexes of
-                categorical features :obj:`numpy.ndarray`.
+                categorical features.
         """
         tf = tf.cpu()
         y = tf.y
-        assert y is not None
+        if y is not None:
+            y: np.ndarray = y.numpy()
 
         dfs: list[DataFrame] = []
         cat_features: list[np.ndarray] = []
@@ -57,8 +58,8 @@ class CatBoost(GBDT):
             dfs.append(pd.DataFrame(feat, columns=arange))
             offset += feat.shape[1]
 
-        if stype.text_embedded in tf.feat_dict:
-            feat = tf.feat_dict[stype.text_embedded]
+        if stype.embedding in tf.feat_dict:
+            feat = tf.feat_dict[stype.embedding]
             feat = feat.values
             feat = feat.view(feat.size(0), -1).numpy()
             arange = np.arange(offset, offset + feat.shape[1])
@@ -73,7 +74,7 @@ class CatBoost(GBDT):
         df = pd.concat(dfs, axis=1)
         cat_features = np.concatenate(
             cat_features, axis=0) if len(cat_features) else np.array([])
-        return df, y.numpy(), cat_features
+        return df, y, cat_features
 
     def _predict_helper(
         self,
@@ -110,17 +111,24 @@ class CatBoost(GBDT):
 
     def objective(
         self,
-        trial,
-        tf_train: TensorFrame,
-        tf_val: TensorFrame,
+        trial: Any,  # optuna.trial.Trial
+        train_x: DataFrame,
+        train_y: np.ndarray,
+        val_x: DataFrame,
+        val_y: np.ndarray,
+        cat_features: np.ndarray,
         num_boost_round: int,
-    ):
+    ) -> float:
         r"""Objective function to be optimized.
 
         Args:
             trial (optuna.trial.Trial): Optuna trial object.
-            tf_train (TensorFrame): Train data.
-            tf_val (TensorFrame): Validation data.
+            train_x (DataFrame): Train data.
+            train_y (numpy.ndarray): Train label.
+            val_x (DataFrame): Validation data.
+            val_y (numpy.ndarray): Validation label.
+            cat_features (numpy.ndarray): Array containing indexes of
+                categorical features.
             num_boost_round (int): Number of boosting round.
 
         Returns:
@@ -164,19 +172,16 @@ class CatBoost(GBDT):
             self.params["objective"] = "MultiClass"
             self.params["eval_metric"] = "Accuracy"
             self.params["classes_count"] = self._num_classes or len(
-                np.unique(tf_train.y.cpu().numpy()))
+                np.unique(train_y))
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
-
-        train_x, train_y, cat_features = self._to_catboost_input(tf_train)
-        eval_x, eval_y, _ = self._to_catboost_input(tf_val)
         boost = catboost.CatBoost(self.params)
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
-                          eval_set=[(eval_x, eval_y)],
-                          early_stopping_rounds=50, logging_level="Silent")
-        pred = self._predict_helper(boost, eval_x)
-        score = self.compute_metric(torch.from_numpy(eval_y),
+                          eval_set=[(val_x, val_y)], early_stopping_rounds=50,
+                          logging_level="Silent")
+        pred = self._predict_helper(boost, val_x)
+        score = self.compute_metric(torch.from_numpy(val_y),
                                     torch.from_numpy(pred))
         return score
 
@@ -194,15 +199,19 @@ class CatBoost(GBDT):
             study = optuna.create_study(direction="minimize")
         else:
             study = optuna.create_study(direction="maximize")
-        study.optimize(
-            lambda trial: self.objective(trial, tf_train, tf_val,
-                                         num_boost_round), num_trials)
-        self.params.update(study.best_params)
         train_x, train_y, cat_features = self._to_catboost_input(tf_train)
-        eval_x, eval_y, _ = self._to_catboost_input(tf_val)
+        val_x, val_y, _ = self._to_catboost_input(tf_val)
+        assert train_y is not None
+        assert val_y is not None
+        study.optimize(
+            lambda trial: self.objective(trial, train_x, train_y, val_x, val_y,
+                                         cat_features, num_boost_round),
+            num_trials)
+        self.params.update(study.best_params)
+
         self.model = catboost.CatBoost(self.params)
         self.model.fit(train_x, train_y, cat_features=cat_features,
-                       eval_set=[(eval_x, eval_y)], early_stopping_rounds=50,
+                       eval_set=[(val_x, val_y)], early_stopping_rounds=50,
                        logging_level="Silent")
 
     def _predict(self, tf_test: TensorFrame) -> Tensor:

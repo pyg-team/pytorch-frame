@@ -49,7 +49,6 @@ class Mercari(torch_frame.data.Dataset):
         col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
         | TextEmbedderConfig | None = None,
     ) -> None:
-        self.dfs = dict()
         col_to_stype = {
             'name': torch_frame.text_embedded,
             'item_condition_id': torch_frame.categorical,
