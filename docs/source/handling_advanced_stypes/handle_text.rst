@@ -4,7 +4,7 @@ Handling Text Columns
 :pyf:`PyTorch Frame` handles text columns by utilizing text embedding models, which can be pre-trained language models.
 We support two major options of utilizing text embedding models:
 
-(1) To pe-encode texts into embedding at the materialization stage (so that the model parameters are frozen during training stage)
+(1) To pe-encode texts into embeddings at the materialization stage (so that the model parameters are frozen during training stage)
 
 (2) To generate text embeddings during the training stage and finetune their model parameters.
 
@@ -183,7 +183,7 @@ Then, :obj:`stype_encoder_dict` can be directly fed into
 
 
 text_tokenized: Finetuning Text Models
-------------------------------------------
+--------------------------------------
 
 In contrast to :class:`stype.text_embedded<torch_frame.stype>`,
 :class:`stype.text_tokenized<torch_frame.stype>` does minimal processing at the dataset materialization stage
@@ -223,7 +223,7 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
 
 Here, the output :class:`TextTokenizationOutputs` is a dictionary,
 where the keys include :obj:`input_ids` and :obj:`attention_mask`, and the values
-are PyTorch tensors of tokens and masks.
+are PyTorch Tensors of tokens and attention masks.
 
 Then we instantiate :obj:`~torch_frame.config.TextTokenizerConfig` for our text embedding model as follows.
 
