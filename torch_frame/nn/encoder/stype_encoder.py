@@ -104,9 +104,9 @@ class StypeEncoder(Module, ABC):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on timestamp"
                     " columns.")
-            elif self.stype == stype.text_embedded:
+            elif self.stype == stype.embedding:
                 raise ValueError(f"Only the default `na_strategy` (None) "
-                                 f"can be used on embedded text columns, but "
+                                 f"can be used on {self.stype} columns, but "
                                  f"{self.na_strategy} is given.")
 
     @abstractmethod
@@ -676,7 +676,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
     It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
     on each embedding feature and concatenates the output embeddings.
     """
-    supported_stypes = {stype.text_embedded, stype.embedding}
+    supported_stypes = {stype.embedding}
 
     def __init__(
         self,

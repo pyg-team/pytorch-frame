@@ -8,7 +8,6 @@ from torch_frame.data.mapper import (
     MultiCategoricalTensorMapper,
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
-    TextEmbeddingTensorMapper,
     TimestampTensorMapper,
 )
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
@@ -112,13 +111,13 @@ def test_numerical_sequence_tensor_mapper():
         out, pd.Series([[0.1, 0.5], [0.3], None, [0.2, np.nan], None, None]))
 
 
-def test_text_embedding_tensor_mapper():
+def test_embedding_tensor_mapper_on_text_embedded():
     out_channels = 10
     num_sentences = 20
     ser = pd.Series(["Hello world!"] * (num_sentences // 2) +
                     ["I love torch-frame"] * (num_sentences // 2) + [0.1])
-    mapper = TextEmbeddingTensorMapper(HashTextEmbedder(out_channels),
-                                       batch_size=8)
+    mapper = EmbeddingTensorMapper(embedder=HashTextEmbedder(out_channels),
+                                   batch_size=8)
     emb = mapper.forward(ser)
     assert emb.shape == (num_sentences + 1, 1, -1)
     assert emb.values.shape == (num_sentences + 1, out_channels)
@@ -127,7 +126,7 @@ def test_text_embedding_tensor_mapper():
     assert MultiEmbeddingTensor.allclose(emb, emb2)
 
 
-def test_embedding_tensor_mapper():
+def test_embedding_tensor_mapper_on_embedding():
     emb_list = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
     ser = pd.Series(emb_list)
     mapper = EmbeddingTensorMapper()

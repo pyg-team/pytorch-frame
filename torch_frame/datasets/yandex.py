@@ -78,6 +78,7 @@ def get_df_and_col_to_stype(
             # if the numpy_dict contains only categorical or numerical features
             features = (categorical_features if categorical_features
                         is not None else numerical_features)
+            assert features is not None
             feature_type = 'C' if categorical_features is not None else 'N'
             col_names = [
                 f'{feature_type}_feature_{i}' for i in range(features.shape[1])
@@ -204,15 +205,10 @@ class Yandex(torch_frame.data.Dataset):
         'adult', 'aloi', 'covtype', 'helena', 'higgs_small', 'jannis'
     }
     regression_datasets = {'california_housing', 'microsoft', 'yahoo', 'year'}
+    name_list = sorted(
+        list(classification_datasets) + list(regression_datasets))
 
-    @classmethod
-    @property
-    def name_list(cls) -> list[str]:
-        r"""List of dataset names available."""
-        return sorted(
-            list(cls.classification_datasets) + list(cls.regression_datasets))
-
-    def __init__(self, root: str, name: str):
+    def __init__(self, root: str, name: str) -> None:
         assert name in self.classification_datasets | self.regression_datasets
         self.root = root
         self.name = name
