@@ -325,35 +325,51 @@ class _MultiTensor:
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def fillna(self, fill_value: Union[float, int]) -> None:
-        is_float = self.dtype.is_floating_point
-        if (is_float and isinstance(fill_value, int)
-                or not is_float and isinstance(fill_value, float)):
-            raise ValueError(
-                f"Fill value {fill_value}'s dtype does not match {self.dtype}")
-        if is_float:
+    def fillna_(self, fill_value: Union[int, float, Tensor]):
+        if isinstance(fill_value, Tensor):
+            if fill_value.dim() != 0 and not (
+                    fill_value.size(0) == self.num_cols
+                    and fill_value.numel() == self.num_cols):
+                raise ValueError(
+                    "fillna_ with Tensor of shape "
+                    f"{fill_value.shape} is not supported. "
+                    f"Please use a Tensor of shape ({self.num_cols})"
+                    f" or ({self.num_cols, 1}).")
+            if fill_value.dim() != 0:
+                for col in range(self.num_cols):
+                    self.fillna_col(col, fill_value[col])
+                return
+        if self.dtype.is_floating_point:
             self.values[torch.isnan(self.values)] = fill_value
         else:
             self.values[self.values == -1] = fill_value
 
-    def fill_col(
+    def fillna_col(
         self,
         index: int,
-        fill_value: Union[float, int],
-    ) -> None:
+        fill_value: Union[int, float, Tensor],
+    ):
         """Fill the :obj:`index`-th column in :obj:`MultiTensor` with fill_val.
 
         Args:
             index (int): A column index of the tensor to select.
             fill_value: Any
         """
-        self._fill_col(index, fill_value)
+        if isinstance(fill_value, Tensor):
+            if fill_value.numel() != 1:
+                raise ValueError(
+                    'fillna_col only supports scalars, but got Tensor '
+                    f'of shape {fill_value.shape}.')
+            else:
+                self._fillna_col(index, fill_value.item())
+        else:
+            self._fillna_col(index, fill_value)
 
-    def _fill_col(
+    def _fillna_col(
         self,
         index: int,
-        fill_value: Union[float, int],
-    ) -> None:
+        fill_value: Union[int, float],
+    ):
         raise NotImplementedError
 
 

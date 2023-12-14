@@ -208,10 +208,10 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         assert False, "Should not reach here."
 
-    def _fill_col(
+    def _fillna_col(
         self,
         index: int,
-        fill_value: Union[float, int],
+        fill_value: Union[int, float],
     ) -> None:
         value_index = slice(self.offset[index], self.offset[index + 1])
         values = self.values[:, value_index]
@@ -219,7 +219,6 @@ class MultiEmbeddingTensor(_MultiTensor):
             values[torch.isnan(values)] = fill_value
         else:
             values[values == -1] = fill_value
-        self.values[:, value_index] = values
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.

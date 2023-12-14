@@ -2,16 +2,13 @@ import copy
 
 import pytest
 import torch
-from torch import Tensor
 from torch.nn import ReLU
 
 import torch_frame
-from torch_frame import NAStrategy, TensorData, stype
+from torch_frame import NAStrategy, stype
 from torch_frame.config import ModelConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
-from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
-from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
@@ -30,23 +27,7 @@ from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
     WhiteSpaceHashTokenizer,
 )
-
-
-def eq(td1: TensorData, td2: TensorData):
-    if isinstance(td1, Tensor):
-        return isinstance(td2, Tensor) and torch.all(
-            torch.eq(td1, td2) | torch.isnan(td1) & torch.isnan(td2))
-    elif isinstance(td1, MultiNestedTensor):
-        return isinstance(td2, MultiNestedTensor) and td1 == td2
-    elif isinstance(td1, MultiEmbeddingTensor):
-        return isinstance(td2, MultiEmbeddingTensor) and td1 == td2
-    elif isinstance(td1, dict):
-        if not isinstance(td2, dict):
-            return False
-        for key in td1:
-            if not (key in td2 and td1[key] == td2[key]):
-                return False
-        return True
+from torch_frame.utils import eq
 
 
 @pytest.mark.parametrize("encoder_cls_kwargs", [(EmbeddingEncoder, {})])

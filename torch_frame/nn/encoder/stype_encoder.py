@@ -37,7 +37,7 @@ def reset_parameters_soft(module: Module):
         module.reset_parameters()
 
 
-def get_nan_mask(tensor: Tensor):
+def get_nan_mask(tensor: Tensor) -> Tensor:
     r"""Obtains the NaN maks of the input :obj:`Tensor`.
 
     Args:
@@ -182,10 +182,24 @@ class StypeEncoder(Module, ABC):
         """
         if self.na_strategy is None:
             return feat
-        if (isinstance(feat, _MultiTensor) and get_nan_mask(feat.values).any()
-                or isinstance(feat, Tensor) and get_nan_mask(feat).any()):
-            # Only clone the feat if there are NaNs in the data
+
+        # Since we are not changing the number of items in each column, it's
+        # faster to just clone the values, while reusing the same offset
+        # object.
+        if isinstance(feat, Tensor):
             feat = feat.clone()
+        elif isinstance(feat, MultiEmbeddingTensor):
+            feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
+                                        num_cols=feat.num_cols,
+                                        values=feat.values.clone(),
+                                        offset=feat.offset)
+        elif isinstance(feat, MultiNestedTensor):
+            feat = MultiNestedTensor(num_rows=feat.num_rows,
+                                     num_cols=feat.num_cols,
+                                     values=feat.values.clone(),
+                                     offset=feat.offset)
+        else:
+            raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
@@ -207,7 +221,7 @@ class StypeEncoder(Module, ABC):
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
             if isinstance(feat, _MultiTensor):
-                feat.fill_col(col, fill_value)
+                feat.fillna_col(col, fill_value)
             else:
                 column_data = feat[:, col]
                 nan_mask = get_nan_mask(column_data)

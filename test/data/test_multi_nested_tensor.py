@@ -83,19 +83,33 @@ def test_multi_nested_tensor_basics(device):
 
     multi_nested_tensor_with_nan = multi_nested_tensor.clone()
     multi_nested_tensor_with_nan.values[0::2] = -1
+
     # Test fill_col
     multi_nested_tensor_1 = multi_nested_tensor_with_nan.clone()
     for col in range(multi_nested_tensor_with_nan.num_cols):
-        multi_nested_tensor_1.fill_col(col, 100)
+        multi_nested_tensor_1.fillna_col(col, 100)
     assert not torch.all(multi_nested_tensor_1.values == -1).any()
 
     # Test fillna
-    multi_nested_tensor_2 = multi_nested_tensor_with_nan
-    multi_nested_tensor_2.fillna(100)
+    multi_nested_tensor_2 = multi_nested_tensor_with_nan.clone()
+    multi_nested_tensor_2.fillna_(100)
     assert not torch.all(multi_nested_tensor_2.values == -1).any()
+
+    # Test fillna with vector of shape (num_cols)
+    multi_nested_tensor_3 = multi_nested_tensor_with_nan.clone()
+    multi_nested_tensor_3.fillna_(torch.arange(100, 110))
+    assert torch.all(
+        torch.eq(multi_nested_tensor_3.offset, multi_nested_tensor.offset))
+
+    # Test fillna with vector of shape (num_cols)
+    multi_nested_tensor_4 = multi_nested_tensor_with_nan
+    multi_nested_tensor_4.fillna_(torch.arange(100, 110).reshape(10, 1))
+    assert torch.all(
+        torch.eq(multi_nested_tensor_4.offset, multi_nested_tensor.offset))
 
     # Test eq
     assert multi_nested_tensor_1 == multi_nested_tensor_2
+    assert multi_nested_tensor_3 == multi_nested_tensor_4
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):

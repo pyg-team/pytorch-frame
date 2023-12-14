@@ -11,7 +11,7 @@ from ._stype import (
     embedding,
 )
 from .data import TensorFrame
-from .typing import TaskType, Metric, DataFrame, NAStrategy, TensorData
+from .typing import TaskType, Metric, DataFrame, NAStrategy
 from torch_frame.utils import save, load, cat  # noqa
 import torch_frame.data  # noqa
 import torch_frame.datasets  # noqa
@@ -35,7 +35,6 @@ __all__ = [
     'Metric',
     'NAStrategy',
     'TensorFrame',
-    'TensorData',
     'save',
     'load',
     'cat',

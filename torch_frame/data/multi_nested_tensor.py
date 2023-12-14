@@ -282,10 +282,10 @@ class MultiNestedTensor(_MultiTensor):
         else:
             raise RuntimeError(f"Unsupported dim={dim} for index_select.")
 
-    def _fill_col(
+    def _fillna_col(
         self,
         index: int,
-        fill_value: Union[float, int],
+        fill_value: Union[int, float],
     ) -> None:
         start_idx = torch.arange(
             index,
