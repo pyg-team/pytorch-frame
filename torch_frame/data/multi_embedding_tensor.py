@@ -208,10 +208,10 @@ class MultiEmbeddingTensor(_MultiTensor):
             )
         assert False, "Should not reach here."
 
-    def _fillna_col(
+    def fillna_col(
         self,
         index: int,
-        fill_value: Union[int, float],
+        fill_value: Union[int, float, Tensor],
     ) -> None:
         value_index = slice(self.offset[index], self.offset[index + 1])
         values = self.values[:, value_index]

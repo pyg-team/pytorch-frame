@@ -325,6 +325,14 @@ class _MultiTensor:
         raise NotImplementedError
 
     def fillna_(self, fill_value: Union[int, float, Tensor]):
+        """Fill the :obj:`MultiTensor` with fill_value.
+
+        Args:
+            index (int): A column index of the tensor to select.
+            fill_value (Union[int, float, Tensor]): Scalars or vector
+                tensor of size (num_cols,) or (1, num_cols) to replace
+                NaNs.
+        """
         if isinstance(fill_value, Tensor):
             if fill_value.dim(
             ) != 0 and not fill_value.numel() == self.num_cols:
@@ -349,27 +357,14 @@ class _MultiTensor:
         index: int,
         fill_value: Union[int, float, Tensor],
     ):
-        """Fill the :obj:`index`-th column in :obj:`MultiTensor` with fill_val.
+        """Fill the :obj:`index`-th column in :obj:`MultiTensor` with
+        fill_value.
 
         Args:
             index (int): A column index of the tensor to select.
-            fill_value: Any
+            fill_value (Union[int, float, Tensor]): Scalar values to replace
+                NaNs.
         """
-        if isinstance(fill_value, Tensor):
-            if fill_value.numel() != 1:
-                raise ValueError(
-                    'fillna_col only supports scalars, but got Tensor '
-                    f'of shape {fill_value.shape}.')
-            else:
-                self._fillna_col(index, fill_value.item())
-        else:
-            self._fillna_col(index, fill_value)
-
-    def _fillna_col(
-        self,
-        index: int,
-        fill_value: Union[int, float],
-    ):
         raise NotImplementedError
 
 
