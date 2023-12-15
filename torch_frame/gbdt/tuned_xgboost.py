@@ -240,24 +240,33 @@ class XGBoost(GBDT):
         importance_type (str): How the importance is calculated.
             For tree model Importance type can be defined as:
 
-            * 'weight': the number of times a feature is used to split the data across all trees.
-            * 'gain': the average gain across all splits the feature is used in.
-            * 'cover': the average coverage across all splits the feature is used in.
-            * 'total_gain': the total gain across all splits the feature is used in.
-            * 'total_cover': the total coverage across all splits the feature is used in.
+            * 'weight': the number of times a feature is used to split
+                the data across all trees.
+            * 'gain': the average gain across all splits the feature
+                is used in.
+            * 'cover': the average coverage across all splits the
+                feature is used in.
+            * 'total_gain': the total gain across all splits the
+                feature is used in.
+            * 'total_cover': the total coverage across all splits the
+                feature is used in.
 
             .. note::
 
-                For linear model, only "weight" is defined and it's the normalized coefficients
-                without bias.
+                For linear model, only "weight" is defined and it's the
+                normalized coefficients without bias.
 
             .. note:: Zero-importance features will not be included
 
-                Keep in mind that this function does not include zero-importance feature, i.e.
-                those features that have not been used in any split conditions.
+                Keep in mind that this function does not include
+                zero-importance feature, i.e. those features that have not
+                been used in any split conditions.
 
         Returns:
             list: Array with feature importances.
         """
+        assert importance_type in [
+            'weight', 'gain', 'cover', 'total_gain', 'total_cover'
+        ], f'{importance_type} is not supported.'
         scores = self.model.get_score(importance_type=importance_type)
         return list(scores.values())

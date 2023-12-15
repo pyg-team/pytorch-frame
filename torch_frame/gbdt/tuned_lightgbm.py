@@ -233,15 +233,20 @@ class LightGBM(GBDT):
 
         Args:
         importance_type (str): How the importance is calculated.
-            If "split", result contains numbers of times the feature is used in a model.
-            If "gain", result contains total gains of splits which use the feature.
-        iteration (int, optional): Limit number of iterations in the feature importance calculation.
-            If None, if the best iteration exists, it is used; otherwise, all trees are used.
-            If <= 0, all trees are used (no limits).
+            If "split", result contains numbers of times the feature
+            is used in a model. If "gain", result contains total gains
+            of splits which use the feature.
+        iteration (int, optional): Limit number of iterations in the feature
+            importance calculation. If None, if the best iteration exists,
+            it is used; otherwise, all trees are used. If <= 0, all trees
+            are used (no limits).
 
         Returns:
             list: Array with feature importances.
         """
+        assert importance_type in [
+            'split', 'gain'
+        ], f'Expect split or gain, got {importance_type}.'
         scores = self.model.feature_importance(importance_type=importance_type,
                                                iteration=iteration)
         return scores.tolist()
