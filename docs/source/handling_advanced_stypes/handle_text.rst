@@ -10,11 +10,11 @@ We support two major options of utilizing text embedding models:
 
 These options have trade-off. The option (1) allows faster training, while option (2)
 allows more accurate prediction but with more costly training due to fine-tuning into the text models.
-In :pyf:`PyTorch Frame`, one can specify which option to use for each text column by simply
+In :pyf:`PyTorch Frame`, we can specify which option to use for each text column by simply
 specifying its :class:`~torch_frame.stype`:
-In :obj:`col_to_stype` passed to :obj:`Dataset<torch_frame.data.Dataset>`,
-we can specify :class:`stype.text_embedded<torch_frame.stype>` and :class:`stype.text_tokenized<torch_frame.stype>`
-for columns we want to use options (1) and (2), respectively.
+In :obj:`col_to_stype` argument passed to :obj:`Dataset<torch_frame.data.Dataset>`,
+we can specify :class:`stype.text_embedded<torch_frame.stype>` for columns we want to use option (1) and
+:class:`stype.text_tokenized<torch_frame.stype>` for columns we use option (2).
 Let's use a real-world dataset to learn how to achieve this.
 
 .. contents::
