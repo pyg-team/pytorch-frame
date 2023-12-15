@@ -110,7 +110,7 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
 * `self.encoder`: The encoder maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different column types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame.
-* `self.convs`: We create a two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
+* `self.convs`: We create two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
 * `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
 
 <details>
@@ -235,9 +235,9 @@ In addition, we implemented `XGBoost`, `CatBoost` and `LightGBM` [examples](http
 
 We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
 
-The following chart shows the performance of various deep learning models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
+The following chart shows the performance of various models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
 
-|                     | dataset_0               | dataset_1               | dataset_2               | dataset_3               | dataset_4               | dataset_5               | dataset_6               | dataset_7               | dataset_8               | dataset_9               | dataset_10              | dataset_11              | dataset_12              |
+| Model Name          | dataset_0       | dataset_1       | dataset_2       | dataset_3       | dataset_4       | dataset_5       | dataset_6       | dataset_7       | dataset_8       | dataset_9       | dataset_10      | dataset_11      | dataset_12      |
 |:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
 | XGBoost             | **0.247±0.000** | 0.077±0.000     | 0.167±0.000     | 1.119±0.000     | 0.328±0.000     | 1.024±0.000     | **0.292±0.000** | 0.606±0.000     | **0.876±0.000** | 0.023±0.000     | **0.697±0.000** | 0.865±0.000     | 0.435±0.000     |
 | CatBoost            | 0.265±0.000     | 0.062±0.000     | 0.128±0.000     | 0.336±0.000     | 0.346±0.000     | 0.443±0.000     | 0.375±0.000     | 0.273±0.000     | 0.881±0.000     | 0.040±0.000     | 0.756±0.000     | 0.876±0.000     | 0.439±0.000     |
@@ -253,17 +253,18 @@ The following chart shows the performance of various deep learning models on sma
 
 We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research.
 
-We also benchmark different text encoders on a public dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)). The following table shows the performance:
+We also benchmark different text encoders on a real-world tabular dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)) with one text column. The following table shows the performance:
 
-| Test Acc  | Method          | Model Name                                           | Source       |
-|-----------|-----------------|------------------------------------------------------|--------------|
-| 0.8102    | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)        | OpenAI       |
-| 0.7998    | Pre-trained     | embed-english-v3.0 (dimension size: 1024)            | Cohere       |
-| 0.8147    | Pre-trained     | voyage-01 (dimension size: 1024)                     | Voyage AI    |
-| 0.7926    | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M)    | Hugging Face |
-| **0.8230**| LoRA Finetune   | DistilBERT (66M # params)                            | Hugging Face |
+| Test Acc   | Method          | Model Name                                                  | Source        |
+|:-----------|:----------------|:------------------------------------------------------------|:--------------|
+| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)               | OpenAI        |
+| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                   | Cohere        |
+| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                            | Voyage AI     |
+| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params)  | Hugging Face  |
+| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                   | Hugging Face  |
 
 The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py).
+
 ## Installation
 
 PyTorch Frame is available for Python 3.8 to Python 3.11.

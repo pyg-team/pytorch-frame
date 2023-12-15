@@ -345,7 +345,7 @@ Next we need to specify the text model embedding with `LoRA <https://arxiv.org/a
 
 
 As mentioned above, we store text model inputs in the format of dictionary of
-:obj:`~torch_frame.data.MultiNestedTensor`s.
+:obj:`~torch_frame.data.MultiNestedTensor`.
 During the :meth:`forward`, we first transform each
 :obj:`~torch_frame.data.MultiNestedTensor` back to padded PyTorch Tensor by using
 :meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
