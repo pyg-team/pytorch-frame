@@ -187,7 +187,7 @@ text_tokenized: Finetuning Text Models
 
 In contrast to :class:`stype.text_embedded<torch_frame.stype>`,
 :class:`stype.text_tokenized<torch_frame.stype>` does minimal processing at the dataset materialization stage
-by only tokenizing raw texts, i.e., transoforming strings into sequences of integers.
+by only tokenizing raw texts, i.e., transforming strings into sequences of integers.
 Then, during the training stage, the fully-fledged text models take the tokenized sentences as input
 and output text embeddings, which allows the text models to be trained in an end-to-end manner.
 

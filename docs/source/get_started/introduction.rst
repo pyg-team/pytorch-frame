@@ -24,6 +24,9 @@ of all datasets are available in :doc:`/modules/datasets`
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
 An initialization of a dataset will automatically download its raw files and process the columns.
 
+In the below example, we will use one of the pre-loaded datasets, containing the Titanic passengers.
+If you would like to use your own dataset, refer to the example in :doc:`/handling_advanced_stypes/handle_heterogeneous_stypes`.
+
 .. code-block:: python
 
     from torch_frame.datasets import Titanic
