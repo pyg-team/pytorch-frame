@@ -11,7 +11,7 @@ Handling Heterogeneous Columns
 ------------------------------
 First, let us create a sample dataset with many different stypes.
 
-.. code-block:: none
+.. code-block:: python
 
     import random
 
@@ -60,7 +60,7 @@ First, let us create a sample dataset with many different stypes.
 
 Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Dataset` class so that we have :class:`~torch_frame.data.tensor_frame.TensorFrame` representation of the :class:`pandas.DataFrame`.
 
-.. code-block:: none
+.. code-block:: python
 
     dataset = Dataset(
         df, col_to_stype={
@@ -111,7 +111,7 @@ Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
     Some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
     For example, :class:`~torch_frame.nn.models.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
-.. code-block:: none
+.. code-block:: python
 
     from torch_frame.nn.models.ft_transformer import FTTransformer
     model = FTTransformer(
@@ -139,7 +139,7 @@ Auto Inference of Semantic Types
 --------------------------------
 We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` where you can automatically infer the :class:`~torch_frame.stype` of different columns in the provided :class:`~pandas.DataFrame`.
 
-.. code-block:: none
+.. code-block:: python
 
     infer_df_stype(df)
     >>> {'Numerical': <stype.numerical: 'numerical'>,
@@ -164,7 +164,7 @@ If a string is specified, the same delimiter will be used throughout all the mul
 If a dictionary is given, we use a different delimiter specified for each column.
 
 .. note::
-    You need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
+    You need to specify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
 
 Here is an example of handing a :class:`~pandas.DataFrame` with multiple multicategorical columns.
 
@@ -207,9 +207,9 @@ Here is an example of handing a :class:`~pandas.DataFrame` with multiple multica
 
 For :class:`~torch_frame.stype.timestamp`, you can similarly specify the time format in :obj:`col_to_time_format`.
 See `strfttime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ for more information on formats.
-If not specified, pandas's internal :class:`pandas.to_datetime` function will be used to auto parse time columns.
+If not specified, Pandas's internal :class:`pandas.to_datetime` function will be used to auto parse time columns.
 
-.. code-block:: none
+.. code-block:: python
 
     dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
 
@@ -236,10 +236,10 @@ If not specified, pandas's internal :class:`pandas.to_datetime` function will be
 
     dataset.col_stats
     >>> {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
-    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
-    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
-    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
-    'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
-    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
-    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
-    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}
+        <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+        <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+        <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
+        'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+        <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+        <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+        <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}

@@ -62,10 +62,25 @@ class stype(Enum):
 
     @property
     def use_multi_tensor(self) -> bool:
-        r"""This property indicates if the data of an stype is stored in
+        r"""This property indicates if the data of an
+        :class:`~torch_frame.stype` is stored in
         :class:`torch_frame.data._MultiTensor`.
         """
         return self.use_multi_nested_tensor or self.use_multi_embedding_tensor
+
+    @property
+    def parent(self):
+        r"""This property indicates if an :class:`~torch_frame.stype` is
+        user-facing column :obj:`stype` or internal :obj:`stype` for grouping
+        columns in :obj:`TensorFrame`. User-facing :class:`~torch_frame.stype`
+        will be mapped to its parent during materialization. For
+        :class:`<stypes>~torch_frame.stype` that are both internal and
+        user-facing, the parent maps to itself.
+        """
+        if self == stype.text_embedded:
+            return stype.embedding
+        else:
+            return self
 
 
 numerical = stype('numerical')

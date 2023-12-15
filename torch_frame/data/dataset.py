@@ -21,7 +21,6 @@ from torch_frame.data.mapper import (
     NumericalSequenceTensorMapper,
     NumericalTensorMapper,
     TensorMapper,
-    TextEmbeddingTensorMapper,
     TextTokenizationTensorMapper,
     TimestampTensorMapper,
 )
@@ -226,7 +225,7 @@ class DataFrameToTensorFrameConverter:
             return TimestampTensorMapper(format=self.col_to_time_format[col])
         elif stype == torch_frame.text_embedded:
             text_embedder_cfg = self.col_to_text_embedder_cfg[col]
-            return TextEmbeddingTensorMapper(
+            return EmbeddingTensorMapper(
                 text_embedder_cfg.text_embedder,
                 text_embedder_cfg.batch_size,
             )
@@ -243,6 +242,33 @@ class DataFrameToTensorFrameConverter:
         else:
             raise NotImplementedError(f"Unable to process the semantic "
                                       f"type '{stype.value}'")
+
+    def _merge_feat(self, tf: TensorFrame) -> TensorFrame:
+        r"""Merge child and parent :obj:`stypes<torch_frame.stype>` in the
+        input :obj:`TensorFrames`. Each child :obj:`stype" should be appended
+        to the parent :obj:`stype` and dropped after applying this function.
+
+        Args:
+            tf (TensorFrame): Input :obj:`TensorFrame` to be merged.
+        """
+        for stype in tf.stypes:
+            if stype.parent != stype:
+                # Unify feat_dict
+                child_feat = tf.feat_dict[stype]
+                if stype.parent in tf.stypes:
+                    parent_feat = tf.feat_dict[stype.parent]
+                    tf.feat_dict[stype.parent] = torch_frame.cat(
+                        [parent_feat, child_feat], dim=1)
+                else:
+                    tf.feat_dict[stype.parent] = child_feat
+
+                # Unify col_names_dict
+                tf.col_names_dict[stype.parent] = tf.col_names_dict.get(
+                    stype.parent, []) + tf.col_names_dict[stype]
+
+                tf.feat_dict.pop(stype)
+                tf.col_names_dict.pop(stype)
+        return tf
 
     def __call__(
         self,
@@ -278,7 +304,8 @@ class DataFrameToTensorFrameConverter:
             y = self._get_mapper(self.target_col).forward(
                 df[self.target_col], device=device)
 
-        return TensorFrame(feat_dict, self.col_names_dict, y)
+        tf = TensorFrame(feat_dict, self.col_names_dict, y)
+        return self._merge_feat(tf)
 
 
 class Dataset(ABC):
@@ -562,7 +589,7 @@ class Dataset(ABC):
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
         self._tensor_frame = self._to_tensor_frame_converter(self.df, device)
 
-        # 3. Update col stats based on `TensorFrame`:
+        # 3. Update col stats based on `TensorFrame`
         self._update_col_stats()
 
         # 4. Mark the dataset as materialized:
@@ -587,14 +614,13 @@ class Dataset(ABC):
 
     def _update_col_stats(self):
         r"""Set :obj:`col_stats` based on :obj:`tensor_frame`."""
-        if torch_frame.text_embedded in self._tensor_frame.feat_dict:
+        if torch_frame.embedding in self._tensor_frame.feat_dict:
             # Text embedding dimensionality is only available after the tensor
             # frame actually gets created, so we compute col_stats here.
-            offset = self._tensor_frame.feat_dict[
-                torch_frame.text_embedded].offset
+            offset = self._tensor_frame.feat_dict[torch_frame.embedding].offset
             emb_dim_list = offset[1:] - offset[:-1]
-            for i, col_name in enumerate(self._tensor_frame.col_names_dict[
-                    torch_frame.text_embedded]):
+            for i, col_name in enumerate(
+                    self._tensor_frame.col_names_dict[torch_frame.embedding]):
                 self._col_stats[col_name][StatType.EMB_DIM] = int(
                     emb_dim_list[i])
 
