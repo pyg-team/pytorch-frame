@@ -227,11 +227,8 @@ class LightGBM(GBDT):
 
         self.model = lightgbm.Booster(model_file=path)
 
-    def _feature_importance(
-        self,
-        importance_type: str = 'gain',
-        iteration: Optional[int] = None
-    ) -> list:
+    def _feature_importance(self, importance_type: str = 'gain',
+                            iteration: Optional[int] = None) -> list:
         r"""Get feature importances.
 
         Args:
@@ -245,5 +242,6 @@ class LightGBM(GBDT):
         Returns:
             list: Array with feature importances.
         """
-        scores = self.model.feature_importance(importance_type=importance_type, iteration=iteration)
+        scores = self.model.feature_importance(importance_type=importance_type,
+                                               iteration=iteration)
         return scores.tolist()
