@@ -18,6 +18,7 @@ At its core, :pyf:`PyTorch Frame` provides the following main features:
 
 Common Benchmark Datasets
 -------------------------
+
 :pyf:`PyTorch Frame` contains a large number of common benchmark datasets. The list
 of all datasets are available in :doc:`/modules/datasets`.
 
@@ -70,6 +71,7 @@ Creating :obj:`torch_frame.data.Dataset` object is very easy:
 
 Data Handling of Tables
 -----------------------
+
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
 Currently :pyf:`PyTorch Frame` supports the following :class:`stypes<torch_frame.stype>`:
 
@@ -200,6 +202,7 @@ You can achieve this as follows:
 
 Mini-batches
 ------------
+
 Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame` contains its own :class:`~torch_frame.data.DataLoader`, which can load :class:`~torch_frame.data.Dataset` or :class:`~torch_frame.data.TensorFrame` in mini batches.
 
 .. code-block:: python
