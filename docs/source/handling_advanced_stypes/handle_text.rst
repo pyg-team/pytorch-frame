@@ -15,7 +15,6 @@ specifying :class:`~torch_frame.stype`: :class:`stype.text_embedded<torch_frame.
 for option (1) and :class:`stype.text_tokenized<torch_frame.stype>` for option (2).
 Let's use a real-world dataset to learn how to achieve this.
 
-
 .. contents::
     :local:
 
@@ -26,7 +25,7 @@ Handling Text Columns in a Real-World Dataset
 with text columns, such as :obj:`~torch_frame.datasets.MultimodalTextBenchmark`.
 
 As we briefly discussed, :pyf:`PyTorch Frame` provides two semantic types for
-text columns.
+text columns:
 
 1. :class:`stype.text_embedded<torch_frame.stype>` will pre-encode texts using user-specified
 text embedding models at the dataset materialization stage.
@@ -36,27 +35,23 @@ text tokenizers at the dataset materialization stage. The tokenized texts (seque
 are fed into text models at training stage, and the parameters of the text models are fine-tuned.
 
 The processes of initializing and materializing datasets are similar
-to :doc:`/get_started/introduction`. Below we highlight the difference for each
-semantic type.
+to :doc:`/get_started/introduction`.
+Below we highlight the difference for each semantic type.
 
+Pre-encode texts into embeddings
+--------------------------------
 
-text_embedded: Pre-encode texts into embeddings
------------------------------------------------
-
-For :class:`stype.text_embedded<torch_frame.stype>`, first you
-need to specify the text embedding models. Here, we use the
-`SentenceTransformer <https://www.sbert.net/>`_ package.
+For :class:`stype.text_embedded<torch_frame.stype>`, first you need to specify the text embedding models.
+Here, we use the `SentenceTransformer <https://www.sbert.net/>`_ package.
 
 .. code-block:: bash
 
     pip install -U sentence-transformers
 
-
 Specifying Text Embedders
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Next, we create a text encoder class that encodes a list of strings into text embeddings
-in a mini-batch manner.
+Next, we create a text encoder class that encodes a list of strings into text embeddings in a mini-batch manner.
 
 .. code-block:: python
 
@@ -72,8 +67,11 @@ in a mini-batch manner.
         def __call__(self, sentences: List[str]) -> Tensor:
             # Encode a list of batch_size sentences into a PyTorch Tensor of
             # size [batch_size, emb_dim]
-            embeddings = self.model.encode(sentences, convert_to_numpy=False,
-                                            convert_to_tensor=True)
+            embeddings = self.model.encode(
+                sentences,
+                convert_to_numpy=False,
+                convert_to_tensor=True,
+            )
             return embeddings.cpu()
 
 Then we instantiate :obj:`~torch_frame.config.TextEmbedderConfig` that specifies
@@ -84,13 +82,15 @@ the texts using the :obj:`text_embedder`.
 
     from torch_frame.config.text_embedder import TextEmbedderConfig
 
-    device = (torch.device('cuda')
-          if torch.cuda.is_available() else torch.device('cpu'))
-    text_embedder = TextToEmbedding(device)
-    col_to_text_embedder_cfg = TextEmbedderConfig(text_embedder=text_embedder, batch_size=8)
+    device = (torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    col_to_text_embedder_cfg = TextEmbedderConfig(
+        text_embedder=TextToEmbedding(device),
+        batch_size=8,
+    )
 
 Note that Transformer-based text embedding models are often GPU memory intensive,
-so it is important to specify reasonable :obj:`batch_size` (e.g., :obj:`8`).
+so it is important to specify a reasonable :obj:`batch_size` (e.g., :obj:`8`).
 Also, note that we will use the same :obj:`~torch_frame.config.TextEmbedderConfig`
 across all text columns by default.
 If we want to use different :obj:`text_embedder` for different text columns
@@ -106,7 +106,6 @@ use a dictionary as follows:
         "text_col1":
         TextEmbedderConfig(text_embedder=text_embedder1, batch_size=8),
     }
-
 
 Embedding Text Columns for a Dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,7 +155,6 @@ subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
     Internally, :class:`~torch_frame.stype.text_embedded` is grouped together
     in the parent stype :class:`~torch_frame.stype.embedding` within :obj:`TensorFrame`.
 
-
 Fusing Text Embeddings into Tabular Learning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -181,9 +179,8 @@ This module applies linear function over the pre-computed embeddings.
 Then, :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
 
-
-text_tokenized: Finetuning Text Models
---------------------------------------
+Fine-tuning Text Models
+-----------------------
 
 In contrast to :class:`stype.text_embedded<torch_frame.stype>`,
 :class:`stype.text_tokenized<torch_frame.stype>` does minimal processing at the dataset materialization stage
@@ -198,13 +195,12 @@ Here, we use the
 
     pip install transformers
 
-
 Specifying Text Tokenization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In :class:`stype.text_tokenized<torch_frame.stype>`, text columns will be tokenized
 during the dataset materialization stage.
-Let's first create a tokenization class that tokenizes a list of strings to a dictionary of PyTorch Tensors.
+Let's first create a tokenization class that tokenizes a list of strings to a dictionary of :class:`torch.Tensor`.
 
 .. code-block:: python
 
@@ -218,24 +214,29 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
 
         def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
             # Tokenize batches of sentences
-            return self.tokenizer(sentences, truncation=True, padding=True,
-                                  return_tensors='pt')
+            return self.tokenizer(
+                sentences,
+                truncation=True,
+                padding=True,
+                return_tensors='pt',
+            )
 
 Here, the output :class:`TextTokenizationOutputs` is a dictionary,
 where the keys include :obj:`input_ids` and :obj:`attention_mask`, and the values
-are PyTorch Tensors of tokens and attention masks.
+contain :pytorch:`PyTorch` tensors of tokens and attention masks.
 
-Then we instantiate :obj:`~torch_frame.config.TextTokenizerConfig` for our text embedding model as follows.
+Then we instantiate :class:`~torch_frame.config.TextTokenizerConfig` for our text embedding model as follows.
 
 .. code-block:: python
 
     from torch_frame.config.text_tokenizer import TextTokenizerConfig
 
-    text_tokenizer = TextToEmbeddingTokenization()
-    col_to_text_tokenizer_cfg = TextTokenizerConfig(text_tokenizer=text_tokenizer, batch_size=10000)
+    col_to_text_tokenizer_cfg = TextTokenizerConfig(
+        text_tokenizer=TextToEmbeddingTokenization(),
+        batch_size=10_000,
+    )
 
-
-Here :obj:`text_tokenizer` maps a list of sentences into a dictionary of PyTorch Tensors,
+Here :obj:`text_tokenizer` maps a list of sentences into a dictionary of :class:`torch.Tensor`,
 which are input to text models at training time.
 Tokenization is processed in mini-batch, where :obj:`batch_size` represents the batch size.
 Because text tokenizer runs fast on CPU, we can specify relatively large :obj:`batch_size` here.
@@ -347,20 +348,20 @@ Next we need to specify the text model embedding with `LoRA <https://arxiv.org/a
 As mentioned above, we store text model inputs in the format of dictionary of
 :obj:`~torch_frame.data.MultiNestedTensor`.
 During the :meth:`forward`, we first transform each
-:obj:`~torch_frame.data.MultiNestedTensor` back to padded PyTorch Tensor by using
+:obj:`~torch_frame.data.MultiNestedTensor` back to padded :class:`torch.Tensor` by using
 :meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
 specified by :obj:`fill_value`.
 
 :pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearModelEncoder` designed
-to flexibly apply any PyTorch module in per-column manner. We first specify :class:`ModelConfig`
-object that declares PyTorch module to apply to each column.
+to flexibly apply any :pytorch:`PyTorch` module in per-column manner. We first specify :class:`ModelConfig`
+object that declares the module to apply to each column.
 
 .. note::
-    :class:`ModelConfig` has two arguments to specify.
-    First, :obj:`model` is a learnable PyTorch module that takes per-column
-    PyTorch Tensor in :class:`TensorFrame` as input
+    :class:`ModelConfig` has two arguments to specify:
+    First, :obj:`model` is a learnable :pytorch:`PyTorch` module that takes per-column
+    tensors in :class:`TensorFrame` as input
     and outputs per-column embeddings. Formally, :obj:`model` takes a :obj:`TensorData` object of
-    shape :obj:`[batch_size, 1, *]` as input and outputs embeddings of shape
+    shape :obj:`[batch_size, 1, \*]` as input and outputs embeddings of shape
     :obj:`[batch_size, 1, out_channels]`. Then, :obj:`out_channels` specifies the output
     embedding dimensionality of :obj:`model`.
 
@@ -371,14 +372,14 @@ object that declares PyTorch module to apply to each column.
     col_to_model_cfg = {"description": model_cfg}
 
 
-Once :obj:`col_to_model_cfg` is specified, we pass it to :obj:`LinearModelEncoder`
+Once :obj:`col_to_model_cfg` is specified, we pass it to :class:`LinearModelEncoder`
 so that it applies the specified :obj:`model` to the desired column.
-In this case, we apply the model :obj:`TextToEmbeddingFinetune()` to :obj:`text_tokenized`
+In this case, we apply the model :class:`TextToEmbeddingFinetune` to :obj:`text_tokenized`
 column of :class:`TensorFrame`.
 
 .. code-block:: python
 
-    from torch_frame.nn.encoder import (
+    from torch_frame.nn import (
         EmbeddingEncoder,
         LinearEncoder,
         LinearModelEncoder,
@@ -387,12 +388,11 @@ column of :class:`TensorFrame`.
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_tokenized: LinearModelEncoder(col_to_model_cfg=col_to_model_cfg)
+        stype.text_tokenized: LinearModelEncoder(col_to_model_cfg=col_to_model_cfg),
     }
 
 The resulting :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
-
 
 Please refer to the
 `pytorch-frame/examples/transformers_text.py <https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py>`_
