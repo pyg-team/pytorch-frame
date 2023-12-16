@@ -148,9 +148,9 @@ to pre-encode :obj:`text_embedded` columns based on the given :obj:`col_to_text_
     >>> MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')
 
 It is strongly recommended to specify the :obj:`path` during :meth:`~torch_frame.data.Dataset.materialize`.
-It will cache generated :class:`~torch_frame.TensorFrame`, therefore, avoiding embedding texts in
+It will cache generated :class:`~torch_frame.data.TensorFrame`, therefore, avoiding embedding texts in
 every materialization run, which can be quite time-consuming.
-Once cached, :class:`~torch_frame.TensorFrame` can be reused for
+Once cached, :class:`~torch_frame.data.TensorFrame` can be reused for
 subsequent :meth:`~torch_frame.data.Dataset.materialize` calls.
 
 .. note::
@@ -161,7 +161,7 @@ Fusing Text Embeddings into Tabular Learning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` designed
-for encoding :class:`~torch_frame.stype.embedding` within :class:`TensorFrame`.
+for encoding :class:`~torch_frame.stype.embedding` within :class:`~torch_frame.data.TensorFrame`.
 This module applies linear function over the pre-computed embeddings.
 
 .. code-block:: python
@@ -223,7 +223,9 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
                 return_tensors='pt',
             )
 
-Here, the output :class:`TextTokenizationOutputs` is a dictionary,
+
+
+Here, the output :class:`~torch_frame.typing.TextTokenizationOutputs` is a dictionary,
 where the keys include :obj:`input_ids` and :obj:`attention_mask`, and the values
 contain :pytorch:`PyTorch` tensors of tokens and attention masks.
 
@@ -298,6 +300,23 @@ The reason we use dictionary is that common text tokenizers usually return multi
 Finetuning Text Models with Tabular Learning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+:pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearModelEncoder` designed
+to flexibly apply any learnable :pytorch:`PyTorch` module in per-column manner. We first specify
+:class:`~torch_frame.config.ModelConfig` object that declares the module to apply to each column.
+
+.. note::
+    :class:`ModelConfig` has two arguments to specify:
+    First, :obj:`model` is a learnable :pytorch:`PyTorch` module that takes per-column
+    tensors in :class:`~torch_frame.data.TensorFrame` as input
+    and outputs per-column embeddings. Formally, :obj:`model` takes a :obj:`TensorData` object of
+    shape :obj:`[batch_size, 1, \*]` as input and then outputs embeddings of shape
+    :obj:`[batch_size, 1, out_channels]`. Then, :obj:`out_channels` specifies the output
+    embedding dimensionality of :obj:`model`.
+
+We can use the above :class:`~torch_frame.nn.encoder.LinearModelEncoder` functionality for embedding
+:class:`stype.text_tokenized<torch_frame.stype>` within :class:`~torch_frame.data.TensorFrame`.
+
+To use the functionality, let us first prepare :obj:`model` for  :class:`~torch_frame.config.ModelConfig`.
 Here we use `PEFT <https://huggingface.co/docs/peft>`_ package and the
 `LoRA <https://arxiv.org/abs/2106.09685>`_ strategy to finetune the underlying text model.
 
@@ -305,7 +324,15 @@ Here we use `PEFT <https://huggingface.co/docs/peft>`_ package and the
 
     pip install peft
 
-Next we need to specify the text model embedding with `LoRA <https://arxiv.org/abs/2106.09685>`_ finetuning.
+We then design :obj:`model` as a `DistilBERT <https://arxiv.org/abs/1910.01108>`_ with
+`LoRA <https://arxiv.org/abs/2106.09685>`_ finetuning.
+Note that :obj:`model` needs to take the per-column :obj:`feat` as input and outputs embeddings of
+size :obj:`[batch_size, 1, out_channels]`.
+As we mentioned, the per-column :obj:`feat` is in the format of dictionary of
+:obj:`~torch_frame.data.MultiNestedTensor` in the case of :class:`stype.text_tokenized<torch_frame.stype>`.
+During the :meth:`forward`, we first transform each :obj:`~torch_frame.data.MultiNestedTensor`
+into padded :class:`torch.Tensor` by using :meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
+specified by :obj:`fill_value`.
 
 .. code-block:: python
 
@@ -338,46 +365,33 @@ Next we need to specify the text model embedding with `LoRA <https://arxiv.org/a
             mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
 
             # Get text embeddings for each text tokenized column
-            # `out.last_hidden_state` has the shape:
-            # [batch_size, batch_max_seq_len, text_model_out_channels]
+            # out.last_hidden_state has the shape:
+            # [batch_size, batch_max_seq_len, out_channels]
             out = self.model(input_ids=input_ids, attention_mask=mask)
 
             # Use the CLS embedding to represent the sentence embedding
-            # Return value has the shape [batch_size, 1, text_model_out_channels]
+            # Return value has the shape [batch_size, 1, out_channels]
             return out.last_hidden_state[:, 0, :].unsqueeze(1)
 
 
-As mentioned above, we store text model inputs in the format of dictionary of
-:obj:`~torch_frame.data.MultiNestedTensor`.
-During the :meth:`forward`, we first transform each
-:obj:`~torch_frame.data.MultiNestedTensor` back to padded :class:`torch.Tensor` by using
-:meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
-specified by :obj:`fill_value`.
-
-:pyf:`PyTorch Frame` offers :class:`~torch_frame.nn.encoder.LinearModelEncoder` designed
-to flexibly apply any :pytorch:`PyTorch` module in per-column manner. We first specify :class:`ModelConfig`
-object that declares the module to apply to each column.
-
-.. note::
-    :class:`ModelConfig` has two arguments to specify:
-    First, :obj:`model` is a learnable :pytorch:`PyTorch` module that takes per-column
-    tensors in :class:`TensorFrame` as input
-    and outputs per-column embeddings. Formally, :obj:`model` takes a :obj:`TensorData` object of
-    shape :obj:`[batch_size, 1, \*]` as input and outputs embeddings of shape
-    :obj:`[batch_size, 1, out_channels]`. Then, :obj:`out_channels` specifies the output
-    embedding dimensionality of :obj:`model`.
+Now we have prepared :obj:`model`. We can instantiate the :class:`~torch_frame.config.ModelConfig`
+object by additionally supplying :obj:`out_channels` argument. In the case of `DistilBERT <https://arxiv.org/abs/1910.01108>`_,
+:obj:`out_channels` is :obj:`768`.
 
 .. code-block:: python
 
     from torch_frame.config import ModelConfig
     model_cfg = ModelConfig(model=TextToEmbeddingFinetune(), out_channels=768)
+
+We then specify :obj:`col_to_model_cfg`, mapping each column name into a desired :obj:`model_cfg`.
+
+.. code-block:: python
+
     col_to_model_cfg = {"description": model_cfg}
 
-
-Once :obj:`col_to_model_cfg` is specified, we pass it to :class:`LinearModelEncoder`
-so that it applies the specified :obj:`model` to the desired column.
-In this case, we apply the model :class:`TextToEmbeddingFinetune` to :obj:`text_tokenized`
-column of :class:`TensorFrame`.
+We can now pass :obj:`col_to_model_cfg` to :class:`~torch_frame.nn.encoder.LinearModelEncoder` so that it applies the specified
+:obj:`model` to the desired column. In this case, we apply the model :class:`TextToEmbeddingFinetune`
+to the :class:`stype.text_tokenized<torch_frame.stype>` column called :obj:`"description"` within :class:`~torch_frame.data.TensorFrame`.
 
 .. code-block:: python
 
