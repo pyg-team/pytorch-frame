@@ -390,7 +390,7 @@ We then specify :obj:`col_to_model_cfg`, mapping each column name into a desired
 
     col_to_model_cfg = {"description": model_cfg}
 
-We pass :obj:`col_to_model_cfg` to :class:`~torch_frame.nn.encoder.LinearModelEncoder` so that it applies the specified
+We can now pass :obj:`col_to_model_cfg` to :class:`~torch_frame.nn.encoder.LinearModelEncoder` so that it applies the specified
 :obj:`model` to the desired column. In this case, we apply the model :class:`TextToEmbeddingFinetune`
 to the :class:`stype.text_tokenized<torch_frame.stype>` column called :obj:`"description"` within :class:`~torch_frame.data.TensorFrame`.
 
