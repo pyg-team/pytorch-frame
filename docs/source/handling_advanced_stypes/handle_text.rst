@@ -365,7 +365,7 @@ specified by :obj:`fill_value`.
             mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
 
             # Get text embeddings for each text tokenized column
-            # `out.last_hidden_state` has the shape:
+            # out.last_hidden_state has the shape:
             # [batch_size, batch_max_seq_len, out_channels]
             out = self.model(input_ids=input_ids, attention_mask=mask)
 
