@@ -82,8 +82,9 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
                                  f"{list(SPLIT_TO_NUM.keys())}.")
 
             # Add the split column
-            df = df.assign(split=SPLIT_TO_NUM[split_name])
-            dfs.append(df)
-        df = pd.concat(dfs)
+            dfs.append(df.assign(split=SPLIT_TO_NUM[split_name]))
+
+        df = pd.concat(dfs).reset_index(drop=True)
+
         super().__init__(df, col_to_stype, target_col=target_col,
                          split_col='split', **kwargs)
