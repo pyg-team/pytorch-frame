@@ -4,7 +4,7 @@ build-backend="flit_core.buildapi"
 
 [project]
 name="pytorch_frame"
-version="0.1.0"
+version="0.2.0"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
 ]
@@ -122,11 +122,6 @@ module = [
     "torch_frame.data.mapper",
     "torch_frame.data.stats",
     "torch_frame.data.tensor_frame",
-    "torch_frame.datasets.data_frame_benchmark",
-    "torch_frame.datasets.fake",
-    "torch_frame.datasets.mercari",
-    "torch_frame.datasets.tabular_benchmark",
-    "torch_frame.datasets.yandex",
     "torch_frame.gbdt.gbdt",
     "torch_frame.gbdt.tuned_catboost",
     "torch_frame.gbdt.tuned_lightgbm",

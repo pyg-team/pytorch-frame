@@ -6,17 +6,17 @@ Our key observation is that many tabular deep learning models all follow a modul
 2. :class:`~torch_frame.nn.conv.TableConv`
 3. :class:`~torch_frame.nn.decoder.Decoder`
 
-as shown in the figure below.
+as shown in the figure below:
 
 .. figure:: ../_figures/modular.png
   :align: center
   :width: 100%
 
-- First, the input :obj:`DataFrame` with different columns is converted to :class:`~torch_frame.data.TensorFrame`, where the columns are organized according to their :obj:`~torch_frame.stype` (semantic types such as categorical, numerical and text).
+- First, the input :class:`DataFrame` with different columns is converted to :class:`~torch_frame.data.TensorFrame`, where the columns are organized according to their :obj:`~torch_frame.stype` (semantic types such as categorical, numerical and text).
 - Then, the :class:`~torch_frame.data.TensorFrame` is fed into :class:`~torch_frame.nn.encoder.FeatureEncoder` which converts each :obj:`~torch_frame.stype` feature into a 3-dimensional :obj:`~torch.Tensor`.
-- The :obj:`Tensors<torch.Tensor>` across different :obj:`stypes<torch_frame.stype>` are then concatenated into a single :obj:`~torch.Tensor` :obj:`x` of shape [`batch_size`, `num_cols`, `num_channels`].
+- The :obj:`Tensors<torch.Tensor>` across different :obj:`stypes<torch_frame.stype>` are then concatenated into a single :obj:`~torch.Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, num_channels]`.
 - The :obj:`~torch.Tensor` :obj:`x` is then updated iteratively via :class:`TableConvs<torch_frame.nn.conv.TableConv>`.
-- The updated :obj:`~torch.Tensor` :obj:`x` is given as input to :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`~torch.Tensor` of shape [`batch_size`, `out_channels`].
+- The updated :obj:`~torch.Tensor` :obj:`x` is given as input to :class:`~torch_frame.nn.decoder.Decoder` to produce the output :obj:`~torch.Tensor` of shape :obj:`[batch_size, out_channels]`.
 
 1. :class:`~torch_frame.nn.encoder.FeatureEncoder`
 --------------------------------------------------
@@ -28,9 +28,23 @@ This class can contain learnable parameters and `NaN` (missing value) handling.
 It takes :class:`~torch_frame.data.TensorFrame` as input and applies stype-specific feature encoder (specified via :obj:`stype_encoder_dict`) to :obj:`~torch.Tensor` of each stype to get embeddings for each :obj:`~torch_frame.stype`.
 The embeddings of different :obj:`stypes<torch_frame.stype>` are then concatenated to give the final 3-dimensional :obj:`~torch.Tensor` :obj:`x` of shape :obj:`[batch_size, num_cols, channels]`.
 
+.. note::
+    There exists user-facing and internal types of :obj:`stypes<torch_frame.stype>`.
+
+    User-facing :obj:`stypes<torch_frame.stype>` are declared on the :class:`~torch_frame.data.Dataset` level, where users can specify the :class:`~torch_frame.stype` for each column in the given :obj:`DataFrame`.
+    The raw data of the user-facing :obj:`stype<torch_frame.stype>` will be converted into data of internal :obj:`stype<torch_frame.stype>` during materialization.
+    We call the internal :obj:`stype<torch_frame.stype>` the parent of the user-facing :obj:`stype<torch_frame.stype>`.
+    For instance, :class:`stype.text_embedded` is a user-facing :obj:`stype<torch_frame.stype>` because it declares the semantic type of the raw data stored in :class:`DataFrame`.
+
+    During materialization, we convert the raw data stored as text into embeddings, which makes it no difference from the data stored as :class:`stype.embedding`.
+    The corresponding semantic type of the column thus becomes :class:`stype.embedding` in :obj:`TensorFrame`.
+    We consider the :class:`stype.embedding` as the parent of :class:`stype.text_embedded`.
+    Only parent semantic types are supported in the :obj:`stype_encoder_dict`.
+    The motivation for this design is that internally, data of the same :class:`stype<torch_frame.stype>` can be grouped together for efficiency.
+
 Below is an example usage of :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` consisting of
 :class:`~torch_frame.nn.encoder.EmbeddingEncoder` for encoding :obj:`stype.categorical` columns
-:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding :obj:`stype.text_embedded` columns,
+:class:`~torch_frame.nn.encoder.LinearEmbeddingEncoder` for encoding :obj:`stype.embedding` columns,
 and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.numerical` columns.
 
 .. code-block:: python
@@ -46,7 +60,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.nume
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
-        stype.text_embedded: LinearEmbeddingEncoder(),
+        stype.embedding: LinearEmbeddingEncoder(),
     }
 
     encoder = StypeWiseFeatureEncoder(
@@ -56,7 +70,7 @@ and :class:`~torch_frame.nn.encoder.LinearEncoder` for encoding :obj:`stype.nume
         stype_encoder_dict=stype_encoder_dict,
     )
 
-There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for `stype.numerical` columns.
+There are other encoders implemented as well such as :class:`~torch_frame.nn.encoder.LinearBucketEncoder` and :class:`~torch_frame.nn.encoder.ExcelFormerEncoder` for :class:`~torch_frame.stype.numerical` columns.
 See :py:mod:`torch_frame.nn` for the full list of built-in encoders.
 
 You can also implement your custom encoder for a given :obj:`~torch_frame.stype` by inheriting :class:`~torch_frame.nn.encoder.StypeEncoder`.

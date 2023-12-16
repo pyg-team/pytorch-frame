@@ -163,7 +163,7 @@ def compute_col_stats(
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
         if not ptypes.is_numeric_dtype(ser):
-            raise TypeError("Numerical series contains invalid entries."
+            raise TypeError("Numerical series contains invalid entries. "
                             "Please make sure your numerical series "
                             "contains only numerical values or nans.")
     if ser.isnull().all():
