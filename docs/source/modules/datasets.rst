@@ -31,7 +31,7 @@ Synthetic Datasets
    {% endfor %}
 
 Other Datasets
-------------------
+--------------
 
 .. autosummary::
    :nosignatures:

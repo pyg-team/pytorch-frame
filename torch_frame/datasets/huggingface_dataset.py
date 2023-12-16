@@ -65,9 +65,23 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         for split_name in dataset:
             # Load pandas dataframe for each split
             df: pd.DataFrame = dataset[split_name][:]
-            # Add the split column
-            if "val" in split_name:
+
+            # Transform HF dataset split to `SPLIT_TO_NUM` accepted one:
+            if "train" in split_name:
+                split_name = "train"
+            elif "val" in split_name:
+                # Some datasets have val split name as `"validation"`,
+                # here we transform it to `"val"`:
                 split_name = "val"
+            elif "test" in split_name:
+                split_name = "test"
+            else:
+                raise ValueError(f"Invalid split name: '{split_name}'. "
+                                 f"Expected one of the following PyTorch "
+                                 f"Frame Dataset split names: "
+                                 f"{list(SPLIT_TO_NUM.keys())}.")
+
+            # Add the split column
             df = df.assign(split=SPLIT_TO_NUM[split_name])
             dfs.append(df)
         df = pd.concat(dfs)

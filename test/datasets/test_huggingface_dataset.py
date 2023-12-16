@@ -27,4 +27,4 @@ def test_huggingface_dataset_dict():
     assert dataset.tensor_frame.num_rows == 20000
     assert dataset.tensor_frame.y is not None
     assert len(dataset.tensor_frame.feat_dict) == 1
-    assert torch_frame.text_embedded in dataset.tensor_frame.feat_dict
+    assert torch_frame.embedding in dataset.tensor_frame.feat_dict
