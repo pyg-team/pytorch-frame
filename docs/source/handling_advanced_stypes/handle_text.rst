@@ -330,9 +330,8 @@ Note that :obj:`model` needs to take the per-column :obj:`feat` as input and out
 size :obj:`[batch_size, 1, out_channels]`.
 As we mentioned, the per-column :obj:`feat` is in the format of dictionary of
 :obj:`~torch_frame.data.MultiNestedTensor` in the case of :class:`stype.text_tokenized<torch_frame.stype>`.
-During the :meth:`forward`, we first transform each
-:obj:`~torch_frame.data.MultiNestedTensor` back to padded :class:`torch.Tensor` by using
-:meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
+During the :meth:`forward`, we first transform each :obj:`~torch_frame.data.MultiNestedTensor`
+into padded :class:`torch.Tensor` by using :meth:`~torch_frame.data.MultiNestedTensor.to_dense` with the padding value
 specified by :obj:`fill_value`.
 
 .. code-block:: python
