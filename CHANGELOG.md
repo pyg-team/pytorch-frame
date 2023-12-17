@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+
+## [0.2.0] - 2023-12-15
+
+### Added
+
+- Added more text documentation ([#291](https://github.com/pyg-team/pytorch-frame/pull/291))
 - Added `col_to_model_cfg` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))
 - Added documentation on handling different stypes ([#271](https://github.com/pyg-team/pytorch-frame/pull/271))
@@ -50,15 +64,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Made `Trompt` output 2-dim embeddings in `forward`
 - Renamed `text_embedder_cfg` into `col_to_text_embedder_cfg`
 
-### Deprecated
-
 ### Removed
 
 - No manual passing of `in_channels` to `LinearEmbeddingEncoder` for `stype.text_embedded` ([#222](https://github.com/pyg-team/pytorch-frame/pull/222))
-
-### Removed
-
-### Fixed
 
 
 ## [0.1.0] - 2023-10-23

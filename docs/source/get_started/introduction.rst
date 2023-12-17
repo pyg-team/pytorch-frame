@@ -18,11 +18,15 @@ At its core, :pyf:`PyTorch Frame` provides the following main features:
 
 Common Benchmark Datasets
 -------------------------
+
 :pyf:`PyTorch Frame` contains a large number of common benchmark datasets. The list
-of all datasets are available in :doc:`/modules/datasets`
+of all datasets are available in :doc:`/modules/datasets`.
 
 Initializing datasets is straightforward in :pyf:`PyTorch Frame`.
 An initialization of a dataset will automatically download its raw files and process the columns.
+
+In the below example, we will use one of the pre-loaded datasets, containing the Titanic passengers.
+If you would like to use your own dataset, refer to the example in :doc:`/handling_advanced_stypes/handle_heterogeneous_stypes`.
 
 .. code-block:: python
 
@@ -68,9 +72,9 @@ Creating :obj:`torch_frame.data.Dataset` object is very easy:
     # Set "y" as the target column.
     dataset = Dataset(df, col_to_stype=col_to_stype, target_col="y")
 
-
 Data Handling of Tables
 -----------------------
+
 A table contains different columns with different data types. Each data type is described by a semantic type which we refer to as :class:`~torch_frame.stype`.
 Currently :pyf:`PyTorch Frame` supports the following :class:`stypes<torch_frame.stype>`:
 
@@ -199,9 +203,9 @@ You can achieve this as follows:
 
     new_tf = dataset.convert_to_tensor_frame(new_df)
 
-
 Mini-batches
 ------------
+
 Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame` contains its own :class:`~torch_frame.data.DataLoader`, which can load :class:`~torch_frame.data.Dataset` or :class:`~torch_frame.data.TensorFrame` in mini batches.
 
 .. code-block:: python
@@ -283,7 +287,6 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
             out = self.decoder(x.mean(dim=1))
             return out
 
-
 In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and
 :class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
 The embeddings are then passed into layers of :class:`~torch_frame.nn.conv.TabTransformerConv`.
@@ -302,9 +305,7 @@ Let's create train-test split and create data loaders.
     train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
     train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                             shuffle=True)
-    test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128,
-                            shuffle=False)
-
+    test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128)
 
 Let’s train this model for 50 epochs:
 
