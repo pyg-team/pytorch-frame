@@ -13,6 +13,7 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
 
     Args:
         path (str): Path or name of the dataset.
+        name (str, optional): Defining the name of the dataset configuration.
 
     Example:
         Load the `spotify-tracks-dataset` dataset from the Hugging Face Hub
@@ -86,6 +87,7 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         self,
         path: str,
         col_to_stype: dict[str, stype],
+        name: str | None,
         target_col: str | None = None,
         **kwargs,
     ) -> None:
@@ -93,7 +95,7 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
             from datasets import DatasetDict, load_dataset
         except ImportError:  # pragma: no cover
             raise ImportError("Please run `pip install datasets` at first.")
-        dataset = load_dataset(path)
+        dataset = load_dataset(path, name=name)
         if not isinstance(dataset, DatasetDict):
             raise ValueError(f"{self.__class__} only supports `DatasetDict`")
         # Convert dataset to pandas format
