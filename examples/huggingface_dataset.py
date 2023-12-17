@@ -37,6 +37,7 @@ from torch_frame.nn import (
 # ================= loudness ==================
 # Best Val RMSE: 2.1866, Best Test RMSE: 2.1577
 
+
 class TextToEmbedding:
     def __init__(self, model: str, pooling: str, device: torch.device):
         self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -220,6 +221,7 @@ def test(loader: DataLoader) -> float:
     else:
         rmse = (accum / total_count)**0.5
         return rmse
+
 
 if is_classification:
     metric = "Acc"
