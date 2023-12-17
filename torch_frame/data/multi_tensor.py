@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -38,9 +38,8 @@ class _MultiTensor:
         }
 
     def __setitem__(self, index: Any, values: Any) -> None:
-        raise RuntimeError(
-            f"{self.__class__.__name__} object does not support setting "
-            "values. It should be used for read-only.")
+        raise RuntimeError("Setting values is not currently supported by "
+                           f"{self.__class__.__name__}.")
 
     def __repr__(self) -> str:
         return " ".join([
@@ -323,6 +322,49 @@ class _MultiTensor:
         assert False, "Should not reach here."
 
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
+        raise NotImplementedError
+
+    def fillna_(self, fill_value: Union[int, float, Tensor]):
+        """Fill the :obj:`MultiTensor` with fill_value.
+
+        Args:
+            index (int): A column index of the tensor to select.
+            fill_value (Union[int, float, Tensor]): Scalars or vector
+                tensor of size (num_cols,) or (1, num_cols) to replace
+                NaNs.
+        """
+        if isinstance(fill_value, Tensor):
+            if fill_value.dim(
+            ) != 0 and not fill_value.numel() == self.num_cols:
+                raise ValueError(
+                    "fillna_ with Tensor of shape "
+                    f"{fill_value.shape} is not supported. "
+                    f"Please use a Tensor of shape ({self.num_cols},)"
+                    f" or (1, {self.num_cols}).")
+            if fill_value.dim() != 0:
+                if fill_value.dim() == 1:
+                    fill_value = fill_value.unsqueeze(0)
+                for col in range(self.num_cols):
+                    self.fillna_col(col, fill_value[0, col])
+                return
+        if self.dtype.is_floating_point:
+            self.values[torch.isnan(self.values)] = fill_value
+        else:
+            self.values[self.values == -1] = fill_value
+
+    def fillna_col(
+        self,
+        index: int,
+        fill_value: Union[int, float, Tensor],
+    ):
+        """Fill the :obj:`index`-th column in :obj:`MultiTensor` with
+        fill_value in-place.
+
+        Args:
+            index (int): A column index of the tensor to select.
+            fill_value (Union[int, float, Tensor]): Scalar values to replace
+                NaNs.
+        """
         raise NotImplementedError
 
 

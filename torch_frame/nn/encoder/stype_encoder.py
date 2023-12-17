@@ -174,7 +174,6 @@ class StypeEncoder(Module, ABC):
         """
         if self.na_strategy is None:
             return feat
-
         for col in range(feat.size(1)):
             column_data = feat[:, col]
             if isinstance(feat, _MultiTensor):
@@ -208,7 +207,10 @@ class StypeEncoder(Module, ABC):
                     feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
-            column_data[nan_mask] = fill_value
+            if isinstance(feat, _MultiTensor):
+                feat.fillna_col(col, fill_value)
+            else:
+                column_data[nan_mask] = fill_value
         return feat
 
 
