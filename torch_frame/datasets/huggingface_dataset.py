@@ -15,8 +15,8 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         path (str): Path or name of the dataset.
 
     Example:
-        Load the `emotion` dataset from the Hugging Face Hub to the
-        :obj:`torch_frame.data.Dataset`:
+        Load the `spotify-tracks-dataset` dataset from the Hugging Face Hub
+        to the :obj:`torch_frame.data.Dataset`:
 
     .. code-block:: python
 
@@ -25,21 +25,58 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         >>> from torch_frame.config.text_embedder import TextEmbedderConfig
         >>> from torch_frame.testing.text_embedder import HashTextEmbedder
         >>> dataset = HuggingFaceDatasetDict(
-        ...     path="emotion",
-        ...     col_to_stype={
-        ...         "text": torch_frame.text_embedded,
-        ...         "label": torch_frame.categorical
+        ...     path="maharshipandya/spotify-tracks-dataset",
+        ...     col_to_stype = {
+        ...         "artists": torch_frame.categorical,
+        ...         "album_name": torch_frame.text_embedded,
+        ...         "track_name": torch_frame.text_embedded,
+        ...         "popularity": torch_frame.numerical,
+        ...         "duration_ms": torch_frame.numerical,
+        ...         "explicit": torch_frame.categorical,
+        ...         "danceability": torch_frame.numerical,
+        ...         "energy": torch_frame.numerical,
+        ...         "key": torch_frame.categorical,
+        ...         "loudness": torch_frame.numerical,
+        ...         "mode": torch_frame.categorical,
+        ...         "speechiness": torch_frame.numerical,
+        ...         "acousticness": torch_frame.numerical,
+        ...         "instrumentalness": torch_frame.numerical,
+        ...         "liveness": torch_frame.numerical,
+        ...         "valence": torch_frame.numerical,
+        ...         "tempo": torch_frame.numerical,
+        ...         "time_signature": torch_frame.categorical,
+        ...         "track_genre": torch_frame.categorical,
         ...     },
-        ...     target_col="label",
+        ...     target_col="track_genre",
         ...     col_to_text_embedder_cfg=TextEmbedderConfig(
         ...         text_embedder=HashTextEmbedder(10)),
         ... )
         >>> dataset.materialize()
         >>> dataset.tensor_frame
         TensorFrame(
-            num_cols=1,
-            num_rows=20000,
-            text_embedded (1): ['text'],
+            num_cols=18,
+            num_rows=114000,
+            categorical (5): [
+                'artists',
+                'explicit',
+                'key',
+                'mode',
+                'time_signature',
+            ],
+            numerical (11): [
+                'acousticness',
+                'danceability',
+                'duration_ms',
+                'energy',
+                'instrumentalness',
+                'liveness',
+                'loudness',
+                'popularity',
+                'speechiness',
+                'tempo',
+                'valence',
+            ],
+            embedding (2): ['album_name', 'track_name'],
             has_target=True,
             device='cpu',
         )
