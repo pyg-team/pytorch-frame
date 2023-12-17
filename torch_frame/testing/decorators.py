@@ -1,5 +1,4 @@
 from importlib import import_module
-from importlib._bootstrap_external import _NamespacePath
 from importlib.util import find_spec
 from typing import Callable
 
@@ -13,15 +12,8 @@ def has_package(package: str) -> bool:
         return any(has_package(p) for p in package.split('|'))
 
     req = Requirement(package)
-    spec = find_spec(req.name)
-    if spec is None:
+    if find_spec(req.name) is None:
         return False
-
-    # Check if it's a standard package (not a namespace package)
-    if spec.loader is None and isinstance(spec.submodule_search_locations,
-                                          _NamespacePath):
-        return False
-
     module = import_module(req.name)
     if not hasattr(module, '__version__'):
         return True
