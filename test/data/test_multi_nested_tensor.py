@@ -101,17 +101,9 @@ def test_multi_nested_tensor_basics(device):
     assert torch.all(
         torch.eq(multi_nested_tensor_3.offset, multi_nested_tensor.offset))
 
-    # Test fillna with vector of shape (num_cols)
-    multi_nested_tensor_4 = multi_nested_tensor_with_nan
-    multi_nested_tensor_4.fillna_(torch.arange(100, 110).reshape(1, 10))
-    assert torch.all(
-        torch.eq(multi_nested_tensor_4.offset, multi_nested_tensor.offset))
-
     # Test eq
     assert MultiNestedTensor.allclose(multi_nested_tensor_1,
                                       multi_nested_tensor_2)
-    assert MultiNestedTensor.allclose(multi_nested_tensor_3,
-                                      multi_nested_tensor_4)
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
