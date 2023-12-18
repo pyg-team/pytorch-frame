@@ -110,7 +110,7 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
 * `self.encoder`: Maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`.
-* `self.convs`: Interatively transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
+* `self.convs`: Interatively transforms the embedding of size `[batch_size, num_cols, channels]` into an embedding of the same size.
 * `self.decoder`: Pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
 
 <details>
