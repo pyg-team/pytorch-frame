@@ -158,8 +158,8 @@ class ExampleTransformer(Module):
         return out
 ```
 
-To prepare the data, we can quickly get a pre-defined dataset and create a
-PyTorch-compatible data loader.
+To prepare the data, we can quickly instantiate a pre-defined dataset and create a
+PyTorch-compatible data loader as follows:
 
 ```python
 from torch_frame.datasets import Yandex
@@ -178,7 +178,6 @@ model parameters. That's it!
 ```python
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ExampleTransformer(
@@ -193,7 +192,7 @@ model = ExampleTransformer(
 optimizer = torch.optim.Adam(model.parameters())
 
 for epoch in range(50):
-    for tf in tqdm(train_loader):
+    for tf in train_loader:
         tf = tf.to(device)
         pred = model.forward(tf)
         loss = F.cross_entropy(pred, tf.y)
