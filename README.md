@@ -78,7 +78,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
-  Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-models) as well as strong GBDTs (XGBoost and CatBoost) with hyper-parameter tuning.
+  Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-models) as well as strong GBDTs (XGBoost, CatBoost, and LightGBM) with hyper-parameter tuning.
 * **Datasets**:
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
@@ -109,9 +109,9 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
 
-* `self.encoder`: The encoder maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`. To handle input of different column types, we use `StypeWiseFeatureEncoder` where users can specify different encoders using a dictionary. In this example, we use `EmbeddingEncoder` for categorical features and `LinearEncoder` for numerical features--they are both built-in encoders in Pytorch Frame.
-* `self.convs`: We create two layers of `TabTransformerConv`. Each `TabTransformerConv` module transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
-* `self.decoder`: We use a mean-based decoder that maps the dimension of the embedding back from `[batch_size, num_cols, channels]` to `[batch_size, out_channels]`.
+* `self.encoder`: Maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`.
+* `self.convs`: Interatively transforms an embedding of size `[batch_size, num_cols, channels]` and into an embedding of the same size.
+* `self.decoder`: Pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
 
 <details>
 <summary>Expand to see the Python implementation of <code>ExampleTransformer</code>.</summary>
