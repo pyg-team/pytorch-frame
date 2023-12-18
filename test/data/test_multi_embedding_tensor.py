@@ -109,12 +109,11 @@ def test_from_tensor_list():
     met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
 
     # Test fillna_col
-    met_1 = met_with_nan.clone()
-    for col in range(met_1.num_cols):
-        met_1.fillna_col(col, col)
-    assert not torch.all(met_1.values == -1).any()
-    for col in range(met_1.num_cols):
-        column = met_1[:, col]
+    for col in range(met_with_nan.num_cols):
+        met_with_nan.fillna_col(col, col)
+    assert not torch.all(met_with_nan.values == -1).any()
+    for col in range(met_with_nan.num_cols):
+        column = met_with_nan[:, col]
         assert torch.all(column.values == col)
 
     # case: empty list
