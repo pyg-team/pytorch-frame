@@ -74,7 +74,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding` See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
+  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
