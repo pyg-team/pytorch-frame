@@ -159,7 +159,8 @@ class ExampleTransformer(Module):
         return out
 ```
 
-Once we designed the model, we can get a pre-defined dataset and create a PyTorch dataloader.
+Once we designed the model, we can get a pre-defined dataset and create a
+PyTorch-compatible data loader.
 
 ```python
 from torch_frame.datasets import Yandex
@@ -172,7 +173,8 @@ train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                           shuffle=True)
 ```
 
-We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.
+We can then follow the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a> to optimize the
+model parameters.
 
 ```python
 import torch
