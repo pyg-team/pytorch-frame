@@ -74,7 +74,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  Supports learning across various column types like categorical, numberical, texts, multicategories and timestamps.
+  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding` See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -105,7 +105,7 @@ In essence, this modular setup empowers users to effortlessly experiment with my
 
 In this quick tour, we showcase the ease of creating and training a deep tabular model with only a few lines of code.
 
-### Build your own deep tabular model
+### Build and train your own deep tabular model
 
 As an example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame.
 In the example below:
@@ -125,7 +125,6 @@ from torch_frame.nn.encoder import (
     LinearEncoder,
     StypeWiseFeatureEncoder,
 )
-
 
 class ExampleTransformer(Module):
     def __init__(
@@ -159,7 +158,7 @@ class ExampleTransformer(Module):
         return out
 ```
 
-Once we designed the model, we can get a pre-defined dataset and create a
+To prepare the data, we can quickly get a pre-defined dataset and create a
 PyTorch-compatible data loader.
 
 ```python
@@ -173,8 +172,8 @@ train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                           shuffle=True)
 ```
 
-We can then follow the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a> to optimize the
-model parameters.
+Then, we just follow the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a> to optimize the
+model parameters. That's it!
 
 ```python
 import torch
@@ -202,9 +201,6 @@ for epoch in range(50):
         loss.backward()
 ```
 
-
-Currently, PyTorch Frame support the following semantic types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`. [Here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) is the documentation of handling different semantic types in PyTorch Frame.
-
 ## Implemented Deep Tabular Models
 
 We list currently supported deep tabular models:
@@ -216,7 +212,7 @@ We list currently supported deep tabular models:
 * **[ExcelFormer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)]
 * **[TabTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
 
-In addition, we implemented `XGBoost`, `CatBoost` and `LightGBM` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
+In addition, we implemented `XGBoost`, `CatBoost`, and `LightGBM` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
 
 
 ## Benchmark
@@ -239,7 +235,7 @@ The following chart shows the performance of various models on small regression 
 | TabTransformer      | 0.624±0.003     | 0.229±0.003     | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003     | 0.619±0.005     | 0.351±0.001     | 0.893±0.005     | 0.431±0.001     | 0.819±0.002     | 0.886±0.005     | 0.545±0.004     |
 
 
-We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction of future research.
+We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction for future research.
 
 We also benchmark different text encoders on a real-world tabular dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)) with one text column. The following table shows the performance:
 
