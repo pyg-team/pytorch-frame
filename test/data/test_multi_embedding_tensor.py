@@ -100,6 +100,7 @@ def test_from_tensor_list():
     assert_equal(tensor_list, met)
 
     met_with_nan = met.clone()
+    # Set some values to be na
     met_with_nan.values[0::2] = -1
 
     # Test fill_col
@@ -107,30 +108,11 @@ def test_from_tensor_list():
     for col in range(met.num_cols):
         met_1.fillna_col(col, 100)
     assert not torch.all(met_1.values == -1).any()
-
-    # Test fillna with scalar
-    met_2 = met_with_nan.clone()
-    met_2.fillna_(100)
-    assert not torch.all(met_2.values == -1).any()
-
-    # Test fillna with vector of shape (num_cols)
-    met_3 = met_with_nan.clone()
-    met_3.fillna_(torch.tensor([100, 101, 102]))
-    assert torch.all(
-        torch.eq(
-            met_3.values,
-            torch.tensor([
-                [100, 100, 100, 101, 101, 102],
-                [3, 4, 5, 8, 9, 11],
-            ])))
-    assert torch.all(torch.eq(met_3.offset, expected_offset))
-
-    # Test fillna with bad vector
-    with pytest.raises(ValueError):
-        met_3.fillna_(torch.tensor([100, 101, 102, 103]))
-
-    # Test eq
-    assert MultiEmbeddingTensor.allclose(met_1, met_2)
+    expected_values = torch.tensor([
+        [100, 100, 100, 100, 100, 100],
+        [3, 4, 5, 8, 9, 11],
+    ])
+    assert torch.allclose(met_1.values, expected_values)
 
     # case: empty list
     with pytest.raises(AssertionError):

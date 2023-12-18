@@ -324,28 +324,6 @@ class _MultiTensor:
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError
 
-    def fillna_(self, fill_value: Union[int, float, Tensor]):
-        """Fill the :obj:`MultiTensor` with fill_value.
-
-        Args:
-            index (int): A column index of the tensor to select.
-            fill_value (Union[int, float, Tensor]): Scalars or vector
-                tensor of size (num_cols,) to replace NaNs.
-        """
-        if isinstance(fill_value, Tensor):
-            if fill_value.dim() != 1 or fill_value.numel() != self.num_cols:
-                raise ValueError(
-                    "fillna_ with Tensor of shape "
-                    f"{fill_value.shape} is not supported. "
-                    f"Please use a Tensor of shape ({self.num_cols}.)")
-            for col in range(self.num_cols):
-                self.fillna_col(col, fill_value[col])
-            return
-        if self.dtype.is_floating_point:
-            self.values[torch.isnan(self.values)] = fill_value
-        else:
-            self.values[self.values == -1] = fill_value
-
     def fillna_col(
         self,
         index: int,
