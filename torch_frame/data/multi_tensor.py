@@ -326,14 +326,14 @@ class _MultiTensor:
 
     def fillna_col(
         self,
-        index: int,
+        col_index: int,
         fill_value: Union[int, float, Tensor],
     ):
         """Fill the :obj:`index`-th column in :obj:`MultiTensor` with
         fill_value in-place.
 
         Args:
-            index (int): A column index of the tensor to select.
+            col_index (int): A column index of the tensor to select.
             fill_value (Union[int, float, Tensor]): Scalar values to replace
                 NaNs.
         """
