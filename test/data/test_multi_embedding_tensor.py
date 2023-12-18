@@ -79,6 +79,25 @@ def test_size():
     assert met.shape[2] == -1
 
 
+def test_fillna_col():
+    # Creat a MultiEmbeddingTensor containing all -1's
+    # In MultiEmbeddingTensor with torch.long dtype,
+    # -1's are considered as NaNs.
+    tensor_list = [
+        torch.tensor([[-1, -1, -1], [-1, -1, -1]]),
+        torch.tensor([[-1, -1], [-1, -1]]),
+    ]
+    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+
+    # Test fillna_col
+    for col in range(met_with_nan.num_cols):
+        met_with_nan.fillna_col(col, col)
+    assert not torch.all(met_with_nan.values == -1).any()
+    for col in range(met_with_nan.num_cols):
+        column = met_with_nan[:, col]
+        assert torch.all(column.values == col)
+
+
 def test_from_tensor_list():
     num_rows = 2
     num_cols = 3
@@ -98,23 +117,6 @@ def test_from_tensor_list():
     expected_offset = torch.tensor([0, 3, 5, 6])
     assert torch.allclose(met.offset, expected_offset)
     assert_equal(tensor_list, met)
-
-    # Creat a MultiEmbeddingTensor containing all -1's
-    # In MultiEmbeddingTensor with torch.long dtype,
-    # -1's are considered as NaNs.
-    tensor_list = [
-        torch.tensor([[-1, -1, -1], [-1, -1, -1]]),
-        torch.tensor([[-1, -1], [-1, -1]]),
-    ]
-    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
-
-    # Test fillna_col
-    for col in range(met_with_nan.num_cols):
-        met_with_nan.fillna_col(col, col)
-    assert not torch.all(met_with_nan.values == -1).any()
-    for col in range(met_with_nan.num_cols):
-        column = met_with_nan[:, col]
-        assert torch.all(column.values == col)
 
     # case: empty list
     with pytest.raises(AssertionError):

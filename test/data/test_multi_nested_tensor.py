@@ -32,6 +32,27 @@ def column_select(
     return new_tensor_mat
 
 
+def test_fillna_col():
+    # Creat a MultiNestedTensor containing all -1's
+    # In MultiNestedTensor with torch.long dtype,
+    # -1's are considered as NaNs.
+    tensor_list = [
+        [torch.tensor([-1, -1]),
+         torch.tensor([-1, -1, -1])],
+        [torch.tensor([-1]), torch.tensor([-1, -1])],
+    ]
+    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
+        tensor_list)
+
+    # Test fillna_col
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        multi_nested_tensor_with_nan.fillna_col(col, col)
+    assert not torch.all(multi_nested_tensor_with_nan.values == -1).any()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        column = multi_nested_tensor_with_nan[:, col]
+        assert torch.all(column.values == col)
+
+
 @withCUDA
 def test_multi_nested_tensor_basics(device):
     num_rows = 8
@@ -80,25 +101,6 @@ def test_multi_nested_tensor_basics(device):
             assert (dense_multi_nested_tensor[i, j][len(tensor):] == -1).all()
     assert dense_multi_nested_tensor.shape == (multi_nested_tensor.shape[:-1] +
                                                (max_len, ))
-
-    # Creat a MultiNestedTensor containing all -1's
-    # In MultiNestedTensor with torch.long dtype,
-    # -1's are considered as NaNs.
-    tensor_list = [
-        [torch.tensor([-1, -1]),
-         torch.tensor([-1, -1, -1])],
-        [torch.tensor([-1]), torch.tensor([-1, -1])],
-    ]
-    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
-        tensor_list)
-
-    # Test fillna_col
-    for col in range(multi_nested_tensor_with_nan.num_cols):
-        multi_nested_tensor_with_nan.fillna_col(col, col)
-    assert not torch.all(multi_nested_tensor_with_nan.values == -1).any()
-    for col in range(multi_nested_tensor_with_nan.num_cols):
-        column = multi_nested_tensor_with_nan[:, col]
-        assert torch.all(column.values == col)
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
