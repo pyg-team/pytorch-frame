@@ -107,14 +107,11 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 
 ### Build your own deep tabular model
 
-In the first example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame. A model maps `TensorFrame` into embeddings. We decompose `ExampleTransformer`, and most other models in Pytorch Frame into three modular components.
-
-* `self.encoder`: Maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`.
-* `self.convs`: Interatively transforms the embedding of size `[batch_size, num_cols, channels]` into an embedding of the same size.
-* `self.decoder`: Pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
-
-<details>
-<summary>Expand to see the Python implementation of <code>ExampleTransformer</code>.</summary>
+As an example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame.
+In the example below:
+* `self.encoder` maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`.
+* `self.convs` interatively transforms the embedding of size `[batch_size, num_cols, channels]` into an embedding of the same size.
+* `self.decoder` pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
 
 ```python
 from typing import Any, Dict, List
@@ -153,7 +150,7 @@ class ExampleTransformer(Module):
                 stype.numerical: LinearEncoder()
             },
         )
-        self.tab_transformer_convs = ModuleList([
+        self.convs = ModuleList([
             TabTransformerConv(
                 channels=channels,
                 num_heads=num_heads,
@@ -163,15 +160,14 @@ class ExampleTransformer(Module):
 
     def forward(self, tf: TensorFrame) -> Tensor:
         x, _ = self.encoder(tf)
-        for tab_transformer_conv in self.tab_transformer_convs:
-            x = tab_transformer_conv(x)
+        for conv in self.convs:
+            x = conv(x)
         out = self.decoder(x.mean(dim=1))
         return out
 ```
-</details>
 
 <details>
-<summary>Once we decide the model, we can load the Adult Census Income dataset and create a train dataloader.</summary>
+<summary>Once we designed the model, we can load the Adult Census Income dataset and create a train dataloader.</summary>
 
 ```python
 from torch_frame.datasets import Yandex
