@@ -99,6 +99,9 @@ def test_from_tensor_list():
     assert torch.allclose(met.offset, expected_offset)
     assert_equal(tensor_list, met)
 
+    # Creat a MultiEmbeddingTensor containing all -1's
+    # In MultiEmbeddingTensor with torch.long dtype,
+    # -1's are considered as NaNs.
     tensor_list = [
         torch.tensor([[-1, -1, -1], [-1, -1, -1]]),
         torch.tensor([[-1, -1], [-1, -1]]),

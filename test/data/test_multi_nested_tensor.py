@@ -81,7 +81,9 @@ def test_multi_nested_tensor_basics(device):
     assert dense_multi_nested_tensor.shape == (multi_nested_tensor.shape[:-1] +
                                                (max_len, ))
 
-    # Set some values to be na
+    # Creat a MultiNestedTensor containing all -1's
+    # In MultiNestedTensor with torch.long dtype,
+    # -1's are considered as NaNs.
     tensor_list = [
         [torch.tensor([-1, -1]),
          torch.tensor([-1, -1, -1])],
