@@ -211,6 +211,16 @@ class StypeEncoder(Module, ABC):
                 feat.fillna_col(col, fill_value)
             else:
                 column_data[nan_mask] = fill_value
+        # Add better safeguard here to make sure nans are actually
+        # replaced, expecially when nans are represented as -1's. They are
+        # very hard to catch as they won't error out.
+        filled_values = feat
+        if isinstance(feat, _MultiTensor):
+            filled_values = feat.values
+        if filled_values.is_floating_point():
+            assert not torch.isnan(filled_values).any()
+        else:
+            assert not (filled_values == -1).any()
         return feat
 
 
