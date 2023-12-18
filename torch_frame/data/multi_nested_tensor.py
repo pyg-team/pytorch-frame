@@ -277,11 +277,11 @@ class MultiNestedTensor(_MultiTensor):
 
     def fillna_col(
         self,
-        index: int,
+        col_index: int,
         fill_value: Union[int, float, Tensor],
     ) -> None:
         start_idx = torch.arange(
-            index,
+            col_index,
             self.num_rows * self.num_cols,
             self.num_cols,
             device=self.device,
@@ -289,12 +289,12 @@ class MultiNestedTensor(_MultiTensor):
         diff = self.offset[start_idx + 1] - self.offset[start_idx]
         batch, arange = _batched_arange(diff)
         # Compute values
-        values = self.values[self.offset[start_idx][batch] + arange]
+        values_col = self.values[self.offset[start_idx][batch] + arange]
         if self.values.is_floating_point():
-            values[torch.isnan(values)] = fill_value
+            values_col[torch.isnan(values_col)] = fill_value
         else:
-            values[values == -1] = fill_value
-        self.values[self.offset[start_idx][batch] + arange] = values
+            values_col[values_col == -1] = fill_value
+        self.values[self.offset[start_idx][batch] + arange] = values_col
 
     def to_dense(self, fill_value: int | float) -> Tensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.

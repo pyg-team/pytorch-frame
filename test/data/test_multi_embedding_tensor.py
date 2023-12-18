@@ -99,20 +99,20 @@ def test_from_tensor_list():
     assert torch.allclose(met.offset, expected_offset)
     assert_equal(tensor_list, met)
 
-    met_with_nan = met.clone()
-    # Set some values to be na
-    met_with_nan.values[0::2] = -1
+    tensor_list = [
+        torch.tensor([[-1, -1, -1], [-1, -1, -1]]),
+        torch.tensor([[-1, -1], [-1, -1]]),
+    ]
+    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
 
-    # Test fill_col
+    # Test fillna_col
     met_1 = met_with_nan.clone()
-    for col in range(met.num_cols):
-        met_1.fillna_col(col, 100)
+    for col in range(met_1.num_cols):
+        met_1.fillna_col(col, col)
     assert not torch.all(met_1.values == -1).any()
-    expected_values = torch.tensor([
-        [100, 100, 100, 100, 100, 100],
-        [3, 4, 5, 8, 9, 11],
-    ])
-    assert torch.allclose(met_1.values, expected_values)
+    for col in range(met_1.num_cols):
+        column = met_1[:, col]
+        assert torch.all(column.values == col)
 
     # case: empty list
     with pytest.raises(AssertionError):

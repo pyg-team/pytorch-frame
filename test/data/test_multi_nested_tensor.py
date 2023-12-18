@@ -81,17 +81,22 @@ def test_multi_nested_tensor_basics(device):
     assert dense_multi_nested_tensor.shape == (multi_nested_tensor.shape[:-1] +
                                                (max_len, ))
 
-    multi_nested_tensor_with_nan = multi_nested_tensor.clone()
     # Set some values to be na
-    multi_nested_tensor_with_nan.values[0::2] = -1
+    tensor_list = [
+        [torch.tensor([-1, -1]),
+         torch.tensor([-1, -1, -1])],
+        [torch.tensor([-1]), torch.tensor([-1, -1])],
+    ]
+    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
+        tensor_list)
 
-    # Test fill_col
-    multi_nested_tensor_1 = multi_nested_tensor_with_nan.clone()
+    # Test fillna_col
     for col in range(multi_nested_tensor_with_nan.num_cols):
-        multi_nested_tensor_1.fillna_col(col, 100)
-    assert not torch.all(multi_nested_tensor_1.values == -1).any()
-    assert torch.all(multi_nested_tensor_1.values[
-        multi_nested_tensor_with_nan.values.isnan()] == 100)
+        multi_nested_tensor_with_nan.fillna_col(col, col)
+    assert not torch.all(multi_nested_tensor_with_nan.values == -1).any()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        column = multi_nested_tensor_with_nan[:, col]
+        assert torch.all(column.values == col)
 
     # Test multi_nested_tensor[i, j] indexing
     for i in range(-num_rows, num_rows):
