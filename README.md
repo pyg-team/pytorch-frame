@@ -114,14 +114,11 @@ In the example below:
 * `self.decoder` pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
 
 ```python
-from typing import Any, Dict, List
-
 from torch import Tensor
 from torch.nn import Linear, Module, ModuleList
 
 import torch_frame
 from torch_frame import TensorFrame, stype
-from torch_frame.data.stats import StatType
 from torch_frame.nn.conv import TabTransformerConv
 from torch_frame.nn.encoder import (
     EmbeddingEncoder,
@@ -133,12 +130,8 @@ from torch_frame.nn.encoder import (
 class ExampleTransformer(Module):
     def __init__(
         self,
-        channels: int,
-        out_channels: int,
-        num_layers: int,
-        num_heads: int,
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        channels, out_channels, num_layers, num_heads,
+        col_stats, col_names_dict,
     ):
         super().__init__()
         self.encoder = StypeWiseFeatureEncoder(
@@ -166,8 +159,7 @@ class ExampleTransformer(Module):
         return out
 ```
 
-<details>
-<summary>Once we designed the model, we can load the Adult Census Income dataset and create a train dataloader.</summary>
+Once we designed the model, we can get a pre-defined dataset and create a PyTorch dataloader.
 
 ```python
 from torch_frame.datasets import Yandex
@@ -179,10 +171,8 @@ train_dataset = dataset[:0.8]
 train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
                           shuffle=True)
 ```
-</details>
 
-<details>
-<summary>We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.</summary>
+We can now optimize the model in a training loop, similar to the <a href="https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html#full-implementation">standard PyTorch training procedure</a>.
 
 ```python
 import torch
@@ -209,7 +199,7 @@ for epoch in range(50):
         optimizer.zero_grad()
         loss.backward()
 ```
-</details>
+
 
 Currently, PyTorch Frame support the following semantic types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`. [Here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) is the documentation of handling different semantic types in PyTorch Frame.
 
