@@ -52,6 +52,27 @@ def test_fillna_col():
         column = multi_nested_tensor_with_nan[:, col]
         assert torch.all(column.values == col)
 
+    tensor_list = [
+        [
+            torch.tensor([torch.nan, torch.nan]),
+            torch.tensor([torch.nan, torch.nan, torch.nan])
+        ],
+        [torch.tensor([torch.nan]),
+         torch.tensor([torch.nan, torch.nan])],
+    ]
+    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
+        tensor_list)
+
+    # Test fillna_col
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        multi_nested_tensor_with_nan.fillna_col(col, float(col))
+    assert not torch.isnan(multi_nested_tensor_with_nan.values).any()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        column = multi_nested_tensor_with_nan[:, col]
+        assert torch.all(
+            torch.isclose(column.values,
+                          torch.tensor([col], dtype=torch.float32)))
+
 
 @withCUDA
 def test_multi_nested_tensor_basics(device):

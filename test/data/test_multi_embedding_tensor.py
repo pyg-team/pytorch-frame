@@ -97,6 +97,23 @@ def test_fillna_col():
         column = met_with_nan[:, col]
         assert torch.all(column.values == col)
 
+    tensor_list = [
+        torch.tensor([[torch.nan, torch.nan, torch.nan],
+                      [torch.nan, torch.nan, torch.nan]]),
+        torch.tensor([[torch.nan, torch.nan], [torch.nan, torch.nan]]),
+    ]
+    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+
+    # Test fillna_col
+    for col in range(met_with_nan.num_cols):
+        met_with_nan.fillna_col(col, col)
+    assert not torch.isnan(met_with_nan.values).any()
+    for col in range(met_with_nan.num_cols):
+        column = met_with_nan[:, col]
+        assert torch.all(
+            torch.isclose(column.values,
+                          torch.tensor([col], dtype=torch.float32)))
+
 
 def test_from_tensor_list():
     num_rows = 2
