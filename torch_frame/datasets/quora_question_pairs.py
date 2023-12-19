@@ -30,7 +30,7 @@ class QuoraQuestionPairs(torch_frame.data.Dataset):
         | None = None,
     ):
         # path = self.download_url(self.url, root)
-        path = "/Users/zecheng/code/pytorch-frame/train.csv.zip"
+        path = "/home/zecheng/code/pytorch-frame/train.csv.zip"
         cols = [
             'question1',
             'question2',

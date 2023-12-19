@@ -27,26 +27,47 @@ from torch_frame.nn import (
     LinearBucketEncoder,
     LinearEncoder,
 )
-from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TextTokenizationOutputs
 from torch_frame.utils import infer_df_stype
+
+# Text Embedded (No pre_transform)
+# all-distilroberta-v1
+# ================= ResNet ==================
+# Best Val Acc: 0.8771, Best Test Acc: 0.8774
+# ============= FTTransformer ===============
+# Best Val Acc: 0.8736, Best Test Acc: 0.8714
+
+# Text Embedded (thefuzz pre_transform)
+# all-distilroberta-v1 + LinearEncoder
+# ================= ResNet ==================
+# Best Val Acc: 0.8807, Best Test Acc: 0.8798
+# ============= FTTransformer ===============
+# Best Val Acc: 0.8736, Best Test Acc: 0.8731
+
+# Text Embedded (thefuzz pre_transform)
+# all-distilroberta-v1 + LinearBucketEncoder
+# ================= ResNet ==================
+# Best Val Acc: 0.8795, Best Test Acc: 0.8781
+# ============= FTTransformer ===============
+# Best Val Acc: 0.8742, Best Test Acc: 0.8760
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--channels", type=int, default=256)
 parser.add_argument("--num_layers", type=int, default=4)
 parser.add_argument("--batch_size", type=int, default=512)
 parser.add_argument("--lr", type=float, default=0.0001)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=30)
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--finetune", action="store_true")
 parser.add_argument("--lora", action="store_true")
 parser.add_argument("--learning", type=str, default="ResNet",
                     choices=["ResNet", "FTTransformer"])
 parser.add_argument("--pre_transform", action="store_true")
+parser.add_argument("--linear_bucket", action="store_true")
 parser.add_argument(
     "--model",
     type=str,
-    default="distilbert-base-uncased",
+    default="sentence-transformers/all-distilroberta-v1",
     choices=[
         "distilbert-base-uncased",
         "sentence-transformers/all-distilroberta-v1",
@@ -59,11 +80,10 @@ args = parser.parse_args()
 
 
 class TextToEmbedding:
-    def __init__(self, model: str, pooling: str, device: torch.device):
+    def __init__(self, model: str, device: torch.device):
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model).to(device)
         self.device = device
-        self.pooling = pooling
 
     def __call__(self, sentences: List[str]) -> Tensor:
         inputs = self.tokenizer(
@@ -77,13 +97,7 @@ class TextToEmbedding:
                 inputs[key] = inputs[key].to(self.device)
         out = self.model(**inputs)
         mask = inputs["attention_mask"]
-        if self.pooling == "mean":
-            return (mean_pooling(out.last_hidden_state.detach(),
-                                 mask).squeeze(1).cpu())
-        elif self.pooling == "cls":
-            return out.last_hidden_state[:, 0, :].detach().cpu()
-        else:
-            raise ValueError(f"{self.pooling} is not supported.")
+        return mean_pooling(out.last_hidden_state.detach(), mask).squeeze(1).cpu()
 
 
 class TextToEmbeddingFinetune(torch.nn.Module):
@@ -96,12 +110,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         model (str): Model name to load by using :obj:`transformers`,
             such as :obj:`distilbert-base-uncased` and
             :obj:`sentence-transformers/all-distilroberta-v1`.
-        pooling (str): Pooling strategy to pool context embeddings into
-            sentence level embedding. (default: :obj:`'mean'`)
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
+    def __init__(self, model: str, lora: bool = False):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model)
@@ -125,7 +137,6 @@ class TextToEmbeddingFinetune(torch.nn.Module):
                 target_modules=target_modules,
             )
             self.model = get_peft_model(self.model, peft_config)
-        self.pooling = pooling
 
     def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
         # [batch_size, batch_max_seq_len]
@@ -165,20 +176,16 @@ os.makedirs(path, exist_ok=True)
 
 # Prepare text columns
 if not args.finetune:
-    # text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
-    #                                device=device)
-    text_encoder = HashTextEmbedder(out_channels=100)
+    text_encoder = TextToEmbedding(model=args.model, device=device)
     text_stype = torch_frame.text_embedded
     kwargs = {
         "text_stype":
         text_stype,
         "col_to_text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=20),
     }
 else:
-    text_encoder = TextToEmbeddingFinetune(model=args.model,
-                                           pooling=args.pooling,
-                                           lora=args.lora)
+    text_encoder = TextToEmbeddingFinetune(model=args.model, lora=args.lora)
     text_stype = torch_frame.text_tokenized
     kwargs = {
         "text_stype":
@@ -222,7 +229,7 @@ model_name = args.model.replace('/', '')
 filename = f"{model_name}_{text_stype.value}_{args.pre_transform}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
-dataset.shuffle()
+dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[0:0.8], dataset[
     0.8:0.9], dataset[0.9:]
 
@@ -251,7 +258,10 @@ stype_encoder_dict = {
 }
 
 if args.pre_transform:
-    stype_encoder_dict[torch_frame.numerical] = LinearEncoder()
+    if args.linear_bucket:
+        stype_encoder_dict[torch_frame.numerical] = LinearBucketEncoder()
+    else:
+        stype_encoder_dict[torch_frame.numerical] = LinearEncoder()
 
 if args.learning == "FTTransformer":
     Model = FTTransformer
@@ -310,8 +320,9 @@ for epoch in range(1, args.epochs + 1):
     train_metric = test(train_loader)
     val_metric = test(val_loader)
     test_metric = test(test_loader)
-    best_val_metric = val_metric
-    best_test_metric = test_metric
+    if val_metric > best_val_metric:
+        best_val_metric = val_metric
+        best_test_metric = test_metric
     print(f"Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, "
           f"Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}")
 
