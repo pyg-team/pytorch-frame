@@ -1,3 +1,5 @@
+from typing import Callable, Tuple
+
 import pandas as pd
 
 import torch_frame
@@ -22,21 +24,30 @@ class QuoraQuestionPairs(torch_frame.data.Dataset):
         | TextEmbedderConfig | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
         | TextTokenizerConfig | None = None,
+        pre_transform: Callable[[pd.DataFrame], Tuple[pd.DataFrame,
+                                                      dict[str,
+                                                           torch_frame.stype]]]
+        | None = None,
     ):
         # path = self.download_url(self.url, root)
         path = "/Users/zecheng/code/pytorch-frame/train.csv.zip"
-        names = [
+        cols = [
             'question1',
             'question2',
             'is_duplicate',
         ]
-        df = pd.read_csv(path, names=names)
+        df = pd.read_csv(path, usecols=cols)
 
         col_to_stype = {
             'question1': text_stype,
             'question2': text_stype,
             'is_duplicate': torch_frame.categorical,
         }
+
+        if pre_transform is not None:
+            new_df, new_col_to_stype = pre_transform(df)
+            df = pd.concat([df, new_df], axis=1)
+            col_to_stype = col_to_stype | new_col_to_stype
 
         super().__init__(
             df,

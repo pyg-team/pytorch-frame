@@ -1,8 +1,9 @@
 import argparse
 import os
 import os.path as osp
-from typing import List
+from typing import List, Tuple
 
+import pandas as pd
 import torch
 import torch.nn.functional as F
 # Please run `pip install peft` to install the package
@@ -26,6 +27,7 @@ from torch_frame.nn import (
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TextTokenizationOutputs
+from torch_frame.utils import infer_df_stype
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--channels", type=int, default=256)
@@ -38,6 +40,7 @@ parser.add_argument("--finetune", action="store_true")
 parser.add_argument("--lora", action="store_true")
 parser.add_argument("--learning", type=str, default="ResNet",
                     choices=["ResNet", "FTTransformer"])
+parser.add_argument("--pre_transform", action="store_true")
 parser.add_argument(
     "--model",
     type=str,
@@ -133,12 +136,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         out = self.model(input_ids=input_ids, attention_mask=mask)
 
         # Return value has the shape [batch_size, 1, text_model_out_channels]
-        if self.pooling == "mean":
-            return mean_pooling(out.last_hidden_state, mask)
-        elif self.pooling == "cls":
-            return out.last_hidden_state[:, 0, :].unsqueeze(1)
-        else:
-            raise ValueError(f"{self.pooling} is not supported.")
+        return mean_pooling(out.last_hidden_state, mask)
 
     def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
         # Tokenize batches of sentences
@@ -188,10 +186,38 @@ else:
                             batch_size=10000),
     }
 
+if args.pre_transform:
+
+    def pre_transform(
+        df: pd.DataFrame,
+    ) -> Tuple[pd.DataFrame, dict[str, torch_frame.stype]]:
+        from thefuzz import fuzz
+        new_df = pd.DataFrame(
+            dict(
+                ratio=df.apply(
+                    lambda x: fuzz.ratio(x["question1"], x["question2"]),
+                    axis=1),
+                partial_ratio=df.apply(
+                    lambda x: fuzz.partial_ratio(x["question1"], x["question2"]
+                                                 ), axis=1),
+                token_sort_ratio=df.apply(
+                    lambda x: fuzz.token_sort_ratio(x["question1"], x[
+                        "question2"]), axis=1),
+                token_set_ratio=df.apply(
+                    lambda x: fuzz.token_set_ratio(x["question1"], x[
+                        "question2"]), axis=1),
+                partial_token_sort_ratio=df.apply(
+                    lambda x: fuzz.partial_token_sort_ratio(
+                        x["question1"], x["question2"]), axis=1),
+            ))
+        return new_df, infer_df_stype(new_df)
+
+    kwargs["pre_transform"] = pre_transform
+
 dataset = QuoraQuestionPairs(root=path, **kwargs)
 
 model_name = args.model.replace('/', '')
-filename = f"{model_name}_{text_stype.value}_data.pt"
+filename = f"{model_name}_{text_stype.value}_{args.pre_transform}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
 
 dataset.shuffle()
