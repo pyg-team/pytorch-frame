@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, Sequence, TypeVar, Union
 
 import torch
 from torch import Tensor
@@ -38,9 +38,8 @@ class _MultiTensor:
         }
 
     def __setitem__(self, index: Any, values: Any) -> None:
-        raise RuntimeError(
-            f"{self.__class__.__name__} object does not support setting "
-            "values. It should be used for read-only.")
+        raise RuntimeError("Setting values is not currently supported by "
+                           f"{self.__class__.__name__}.")
 
     def __repr__(self) -> str:
         return " ".join([
@@ -323,6 +322,21 @@ class _MultiTensor:
         assert False, "Should not reach here."
 
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
+        raise NotImplementedError
+
+    def fillna_col(
+        self,
+        col_index: int,
+        fill_value: Union[int, float, Tensor],
+    ):
+        """Fill the :obj:`index`-th column in :obj:`MultiTensor` with
+        fill_value in-place.
+
+        Args:
+            col_index (int): A column index of the tensor to select.
+            fill_value (Union[int, float, Tensor]): Scalar values to replace
+                NaNs.
+        """
         raise NotImplementedError
 
 

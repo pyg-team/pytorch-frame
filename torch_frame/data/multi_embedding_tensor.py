@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Sequence, Union
 
 import torch
 from torch import Tensor
@@ -200,6 +200,19 @@ class MultiEmbeddingTensor(_MultiTensor):
                 offset=offset,
             )
         assert False, "Should not reach here."
+
+    def fillna_col(
+        self,
+        col_index: int,
+        fill_value: Union[int, float, Tensor],
+    ) -> None:
+        values_index = slice(self.offset[col_index],
+                             self.offset[col_index + 1])
+        values_col = self.values[:, values_index]
+        if self.values.is_floating_point():
+            values_col[torch.isnan(values_col)] = fill_value
+        else:
+            values_col[values_col == -1] = fill_value
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.
