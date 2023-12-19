@@ -77,14 +77,15 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
     dataset.tensor_frame.y = None
     loaded_pred = loaded_gbdt.predict(tf_test=dataset.tensor_frame)
     # TODO: support more stypes
-    num_features = 0
-    for x in stypes:
-        if x == stype.numerical:
-            num_features += 3 * 1
-        elif x == stype.categorical:
-            num_features += 2 * 1
-        elif x == stype.text_embedded:
-            num_features += 2 * 8
+    feat_dim = {
+        stype.numerical: 1,
+        stype.categorical: 1,
+        stype.embedding: 8,
+    }
+    num_features = sum([
+        feat_dim[feat_stype] * len(feat_list) for feat_stype, feat_list in
+        dataset.tensor_frame.col_names_dict.items()
+    ])
 
     assert (gbdt_cls == XGBoost
             and len(gbdt.feature_importance()) <= num_features) or (len(

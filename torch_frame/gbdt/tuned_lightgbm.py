@@ -236,8 +236,8 @@ class LightGBM(GBDT):
             If "split", result contains numbers of times the feature
             is used in a model. If "gain", result contains total gains
             of splits which use the feature.
-        iteration (int, optional): Limit number of iterations in the feature
-            importance calculation. If None, if the best iteration exists,
+        iteration (int, optional): Limit number of `iterations` in the feature
+            importance calculation. If None, if the best `iteration` exists,
             it is used; otherwise, all trees are used. If <= 0, all trees
             are used (no limits).
 
