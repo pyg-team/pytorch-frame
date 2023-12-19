@@ -289,12 +289,13 @@ class MultiNestedTensor(_MultiTensor):
         diff = self.offset[start_idx + 1] - self.offset[start_idx]
         batch, arange = _batched_arange(diff)
         # Compute values
-        values_col = self.values[self.offset[start_idx][batch] + arange]
+        values_index = self.offset[start_idx][batch] + arange
+        values_col = self.values[values_index]
         if self.values.is_floating_point():
             values_col[torch.isnan(values_col)] = fill_value
         else:
             values_col[values_col == -1] = fill_value
-        self.values[self.offset[start_idx][batch] + arange] = values_col
+        self.values[values_index] = values_col
 
     def to_dense(self, fill_value: int | float) -> Tensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.

@@ -206,8 +206,9 @@ class MultiEmbeddingTensor(_MultiTensor):
         col_index: int,
         fill_value: Union[int, float, Tensor],
     ) -> None:
-        value_index = slice(self.offset[col_index], self.offset[col_index + 1])
-        values_col = self.values[:, value_index]
+        values_index = slice(self.offset[col_index],
+                             self.offset[col_index + 1])
+        values_col = self.values[:, values_index]
         if self.values.is_floating_point():
             values_col[torch.isnan(values_col)] = fill_value
         else:

@@ -84,8 +84,8 @@ def test_fillna_col():
     # In MultiEmbeddingTensor with torch.long dtype,
     # -1's are considered as NaNs.
     tensor_list = [
-        torch.tensor([[-1, -1, -1], [-1, -1, -1]]),
-        torch.tensor([[-1, -1], [-1, -1]]),
+        torch.tensor([[-1, 0, -1], [-1, 0, -1]]),
+        torch.tensor([[-1, 1], [1, -1]]),
     ]
     met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
 
@@ -98,9 +98,9 @@ def test_fillna_col():
         assert torch.all(column.values == col)
 
     tensor_list = [
-        torch.tensor([[torch.nan, torch.nan, torch.nan],
-                      [torch.nan, torch.nan, torch.nan]]),
-        torch.tensor([[torch.nan, torch.nan], [torch.nan, torch.nan]]),
+        torch.tensor([[0.0, torch.nan, torch.nan], [torch.nan, 0.0,
+                                                    torch.nan]]),
+        torch.tensor([[torch.nan, 1.0], [torch.nan, 1.0]]),
     ]
     met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
 

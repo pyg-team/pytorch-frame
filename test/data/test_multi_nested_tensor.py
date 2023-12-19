@@ -37,8 +37,8 @@ def test_fillna_col():
     # In MultiNestedTensor with torch.long dtype,
     # -1's are considered as NaNs.
     tensor_list = [
-        [torch.tensor([-1, -1]),
-         torch.tensor([-1, -1, -1])],
+        [torch.tensor([0, -1]),
+         torch.tensor([1, -1, -1])],
         [torch.tensor([-1]), torch.tensor([-1, -1])],
     ]
     multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
@@ -54,11 +54,11 @@ def test_fillna_col():
 
     tensor_list = [
         [
-            torch.tensor([torch.nan, torch.nan]),
-            torch.tensor([torch.nan, torch.nan, torch.nan])
+            torch.tensor([0., torch.nan]),
+            torch.tensor([torch.nan, 1., torch.nan])
         ],
         [torch.tensor([torch.nan]),
-         torch.tensor([torch.nan, torch.nan])],
+         torch.tensor([torch.nan, 1.])],
     ]
     multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
         tensor_list)
