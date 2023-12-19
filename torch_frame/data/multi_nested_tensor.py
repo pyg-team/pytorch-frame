@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence, cast
+from typing import Sequence, Union, cast
 
 import torch
 from torch import Tensor
@@ -274,6 +274,28 @@ class MultiNestedTensor(_MultiTensor):
                                      values=values, offset=offset)
         else:
             raise RuntimeError(f"Unsupported dim={dim} for index_select.")
+
+    def fillna_col(
+        self,
+        col_index: int,
+        fill_value: Union[int, float, Tensor],
+    ) -> None:
+        start_idx = torch.arange(
+            col_index,
+            self.num_rows * self.num_cols,
+            self.num_cols,
+            device=self.device,
+        )
+        diff = self.offset[start_idx + 1] - self.offset[start_idx]
+        batch, arange = _batched_arange(diff)
+        # Compute values
+        values_index = self.offset[start_idx][batch] + arange
+        values_col = self.values[values_index]
+        if self.values.is_floating_point():
+            values_col[torch.isnan(values_col)] = fill_value
+        else:
+            values_col[values_col == -1] = fill_value
+        self.values[values_index] = values_col
 
     def to_dense(self, fill_value: int | float) -> Tensor:
         """Map MultiNestedTensor into dense Tensor representation with padding.
