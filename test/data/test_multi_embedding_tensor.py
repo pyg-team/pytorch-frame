@@ -84,10 +84,13 @@ def test_fillna_col():
     # In MultiEmbeddingTensor with torch.long dtype,
     # -1's are considered as NaNs.
     tensor_list = [
-        torch.tensor([[-1, 0, -1], [-1, 0, -1]]),
-        torch.tensor([[-1, 1], [1, -1]]),
+        torch.tensor([[-1, 100, -1], [-1, 100, -1]]),
+        torch.tensor([[-1, 100], [100, -1]]),
     ]
     met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(met_with_nan.num_cols):
+        columnwise_nan_mask[col] = (met_with_nan[:, col].values == -1)
 
     # Test fillna_col
     for col in range(met_with_nan.num_cols):
@@ -95,14 +98,18 @@ def test_fillna_col():
     assert not torch.all(met_with_nan.values == -1).any()
     for col in range(met_with_nan.num_cols):
         column = met_with_nan[:, col]
-        assert torch.all(column.values == col)
+        assert torch.all(column.values[columnwise_nan_mask[col]] == col)
+        assert torch.all(column.values[~columnwise_nan_mask[col]] == 100)
 
     tensor_list = [
-        torch.tensor([[0.0, torch.nan, torch.nan], [torch.nan, 0.0,
-                                                    torch.nan]]),
-        torch.tensor([[torch.nan, 1.0], [torch.nan, 1.0]]),
+        torch.tensor([[100., torch.nan, torch.nan],
+                      [torch.nan, 100., torch.nan]]),
+        torch.tensor([[torch.nan, 100.], [torch.nan, 100.]]),
     ]
     met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(met_with_nan.num_cols):
+        columnwise_nan_mask[col] = torch.isnan(met_with_nan[:, col].values)
 
     # Test fillna_col
     for col in range(met_with_nan.num_cols):
@@ -111,8 +118,11 @@ def test_fillna_col():
     for col in range(met_with_nan.num_cols):
         column = met_with_nan[:, col]
         assert torch.all(
-            torch.isclose(column.values,
+            torch.isclose(column.values[columnwise_nan_mask[col]],
                           torch.tensor([col], dtype=torch.float32)))
+        assert torch.all(
+            torch.isclose(column.values[~columnwise_nan_mask[col]],
+                          torch.tensor([100], dtype=torch.float32)))
 
 
 def test_from_tensor_list():
