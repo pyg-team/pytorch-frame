@@ -21,11 +21,11 @@ from torch_frame.data import DataLoader, MultiNestedTensor
 from torch_frame.datasets import QuoraQuestionPairs
 from torch_frame.nn import (
     FTTransformer,
+    LinearBucketEncoder,
     LinearEmbeddingEncoder,
+    LinearEncoder,
     LinearModelEncoder,
     ResNet,
-    LinearBucketEncoder,
-    LinearEncoder,
 )
 from torch_frame.typing import TextTokenizationOutputs
 from torch_frame.utils import infer_df_stype
@@ -97,7 +97,8 @@ class TextToEmbedding:
                 inputs[key] = inputs[key].to(self.device)
         out = self.model(**inputs)
         mask = inputs["attention_mask"]
-        return mean_pooling(out.last_hidden_state.detach(), mask).squeeze(1).cpu()
+        return mean_pooling(out.last_hidden_state.detach(),
+                            mask).squeeze(1).cpu()
 
 
 class TextToEmbeddingFinetune(torch.nn.Module):
