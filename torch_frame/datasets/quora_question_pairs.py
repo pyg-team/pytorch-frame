@@ -40,7 +40,7 @@ class QuoraQuestionPairs(torch_frame.data.Dataset):
         ]
         df = pd.read_csv(path, usecols=cols)
 
-        col_to_stype = {
+        col_to_stype: dict[str, torch_frame.stype] = {
             'question1': text_stype,
             'question2': text_stype,
             'is_duplicate': torch_frame.categorical,
@@ -49,7 +49,7 @@ class QuoraQuestionPairs(torch_frame.data.Dataset):
         if pre_transform is not None:
             new_df, new_col_to_stype = pre_transform(df)
             df = pd.concat([df, new_df], axis=1)
-            col_to_stype = col_to_stype | new_col_to_stype
+            col_to_stype.update(new_col_to_stype)
 
         super().__init__(
             df,
