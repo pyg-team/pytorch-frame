@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Callable, Tuple
 
 import pandas as pd
