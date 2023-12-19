@@ -24,6 +24,8 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearModelEncoder,
     ResNet,
+    LinearBucketEncoder,
+    LinearEncoder,
 )
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TextTokenizationOutputs
@@ -247,6 +249,9 @@ else:
 stype_encoder_dict = {
     text_stype.parent: text_stype_encoder,
 }
+
+if args.pre_transform:
+    stype_encoder_dict[torch_frame.numerical] = LinearEncoder()
 
 if args.learning == "FTTransformer":
     Model = FTTransformer
