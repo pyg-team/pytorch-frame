@@ -37,17 +37,17 @@ def reset_parameters_soft(module: Module):
         module.reset_parameters()
 
 
-def get_nan_mask(tensor: Tensor) -> Tensor:
-    r"""Obtains the NaN maks of the input :obj:`Tensor`.
+def get_na_mask(tensor: Tensor) -> Tensor:
+    r"""Obtains the Na maks of the input :obj:`Tensor`.
 
     Args:
         tensor (Tensor): Input :obj:`Tensor`.
     """
     if tensor.is_floating_point():
-        nan_mask = torch.isnan(tensor)
+        na_mask = torch.isnan(tensor)
     else:
-        nan_mask = tensor == -1
-    return nan_mask
+        na_mask = tensor == -1
+    return na_mask
 
 
 class StypeEncoder(Module, ABC):
@@ -224,14 +224,12 @@ class StypeEncoder(Module, ABC):
                 feat.fillna_col(col, fill_value)
             else:
                 column_data = feat[:, col]
-                nan_mask = get_nan_mask(column_data)
-                if nan_mask.ndim == 2:
-                    nan_mask = nan_mask.any(dim=-1)
-                assert nan_mask.ndim == 1
-                assert len(nan_mask) == len(column_data)
-                if not nan_mask.any():
-                    continue
-                column_data[nan_mask] = fill_value
+                na_mask = get_na_mask(column_data)
+                if na_mask.ndim == 2:
+                    na_mask = na_mask.any(dim=-1)
+                assert na_mask.ndim == 1
+                assert len(na_mask) == len(column_data)
+                column_data[na_mask] = fill_value
         # Add better safeguard here to make sure nans are actually
         # replaced, expecially when nans are represented as -1's. They are
         # very hard to catch as they won't error out.
