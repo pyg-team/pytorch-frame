@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 ### Fixed
-
+- Fixed NaN masking in `multicateogrical` stype ([#307](https://github.com/pyg-team/pytorch-frame/pull/307))
 
 ## [0.2.0] - 2023-12-15
 
