@@ -1,5 +1,5 @@
-Handling Heterogeneous Stypes
-=============================
+Handling Heterogeneous Semantic Types
+=====================================
 
 :pyf:`PyTorch Frame` supports many heterogeneous :obj:`stypes<torch_frame.stype>`, including but not limited to :class:`~stype.multicategorical`, :class:`~stype.timestamp` and :class:`~stype.embedding`.
 In this tutorial, we will show you a simple example of handling heterogeneous data types with :pyf:`PyTorch Frame`.
@@ -11,7 +11,7 @@ Handling Heterogeneous Columns
 ------------------------------
 First, let us create a sample dataset with many different stypes.
 
-.. code-block:: none
+.. code-block:: python
 
     import random
 
@@ -58,9 +58,9 @@ First, let us create a sample dataset with many different stypes.
     4         67      Type 2 2023-01-05                                      [Category A]  [0.46924917399024213, 0.8411401297855995, 0.90...
 
 
-Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Dataset` class so that we have :class:`~torch_frame.data.tensor_frame.TensorFrame` representation of the :class:`pandas.DataFrame`.
+Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Dataset` class so that we can generate a :class:`~torch_frame.data.tensor_frame.TensorFrame` representation from it.
 
-.. code-block:: none
+.. code-block:: python
 
     dataset = Dataset(
         df, col_to_stype={
@@ -88,21 +88,20 @@ For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`st
 
 .. code-block:: python
 
-    from torch_frame.nn.encoder.stype_encoder import (
+    from torch_frame.nn import (
         EmbeddingEncoder,
         LinearEmbeddingEncoder,
         LinearEncoder,
         MultiCategoricalEmbeddingEncoder,
         TimestampEncoder,
     )
-    from torch_frame.typing import NAStrategy
 
     stype_encoder_dict = {
         stype.categorical: EmbeddingEncoder(),
         stype.numerical: LinearEncoder(),
         stype.embedding: LinearEmbeddingEncoder(),
         stype.multicategorical: MultiCategoricalEmbeddingEncoder(),
-        stype.timestamp: TimestampEncoder(na_strategy=NAStrategy.MEDIAN_TIMESTAMP)
+        stype.timestamp: TimestampEncoder()
     }
 
 Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
@@ -111,9 +110,10 @@ Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
     Some pre-implemented models do not support all :obj:`stypes<torch_frame.stype>`.
     For example, :class:`~torch_frame.nn.models.TabTransformer` only supports numerical and categorical :obj:`stypes<torch_frame.stype>`.
 
-.. code-block:: none
+.. code-block:: python
 
     from torch_frame.nn.models.ft_transformer import FTTransformer
+
     model = FTTransformer(
         channels=16,
         out_channels=1,
@@ -135,11 +135,12 @@ Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
         [ 0.4388],
         [-0.1665]], grad_fn=<AddmmBackward0>)
 
-Auto Inference of Semantic Types
+Auto-Inference of Semantic Types
 --------------------------------
-We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` where you can automatically infer the :class:`~torch_frame.stype` of different columns in the provided :class:`~pandas.DataFrame`.
 
-.. code-block:: none
+We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` to automatically infer the :class:`~torch_frame.stype` of different columns in the provided :class:`~pandas.DataFrame`.
+
+.. code-block:: python
 
     infer_df_stype(df)
     >>> {'Numerical': <stype.numerical: 'numerical'>,
@@ -149,8 +150,7 @@ We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` wh
         'Embedding': <stype.embedding: 'embedding'>}
 
 However, the inference may not be always correct/best for your data.
-We recommend you double-checking the correctness yourself before actually using it.
-
+We recommend you to double-check the correctness yourself before proceeding.
 
 Dealing with Complex Raw Data
 -----------------------------
@@ -159,12 +159,12 @@ Often times the raw data from a dataset can be complex.
 For example, different multicategorical columns can have different delimiters, and different time columns can have different time formats.
 
 Currently, raw column data of type :class:`list` or :class:`str` are supported for :class:`~torch_frame.stype.multicategorical`.
-You can also specify different delimiters for different columns through :obj:`col_to_sep` argument in :class:`torch_frame.data.Dataset`.
+You can also specify different delimiters for different columns through the :obj:`col_to_sep` argument in :class:`torch_frame.data.Dataset`.
 If a string is specified, the same delimiter will be used throughout all the multicategorical columns.
 If a dictionary is given, we use a different delimiter specified for each column.
 
 .. note::
-    You need to sepecify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
+    You need to specify delimiters for all multicategorical columns where the raw data is :class:`str`, otherwise the value of each cell would be considered as one categorical value.
 
 Here is an example of handing a :class:`~pandas.DataFrame` with multiple multicategorical columns.
 
@@ -206,10 +206,10 @@ Here is an example of handing a :class:`~pandas.DataFrame` with multiple multica
     (['Category D', 'Category B', 'Category C', 'Category A'], [52, 52, 51, 46])}}
 
 For :class:`~torch_frame.stype.timestamp`, you can similarly specify the time format in :obj:`col_to_time_format`.
-See `strfttime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ for more information on formats.
-If not specified, pandas's internal :class:`pandas.to_datetime` function will be used to auto parse time columns.
+See the `strfttime documentation <https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior>`_ for more information on supported formats.
+If not specified, :class:`pandas` internal :meth:`~pandas.to_datetime` function will be used to auto-parse time columns.
 
-.. code-block:: none
+.. code-block:: python
 
     dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
 
@@ -236,10 +236,10 @@ If not specified, pandas's internal :class:`pandas.to_datetime` function will be
 
     dataset.col_stats
     >>> {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
-    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
-    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
-    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
-    'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
-    <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
-    <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
-    <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}
+        <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+        <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+        <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
+        'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+        <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
+        <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
+        <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}

@@ -79,6 +79,52 @@ def test_size():
     assert met.shape[2] == -1
 
 
+def test_fillna_col():
+    # Creat a MultiEmbeddingTensor containing all -1's
+    # In MultiEmbeddingTensor with torch.long dtype,
+    # -1's are considered as NaNs.
+    tensor_list = [
+        torch.tensor([[-1, 100, -1], [-1, 100, -1]]),
+        torch.tensor([[-1, 100], [100, -1]]),
+    ]
+    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(met_with_nan.num_cols):
+        columnwise_nan_mask[col] = (met_with_nan[:, col].values == -1)
+
+    # Test fillna_col
+    for col in range(met_with_nan.num_cols):
+        met_with_nan.fillna_col(col, col)
+    assert not torch.all(met_with_nan.values == -1).any()
+    for col in range(met_with_nan.num_cols):
+        column = met_with_nan[:, col]
+        assert torch.all(column.values[columnwise_nan_mask[col]] == col)
+        assert torch.all(column.values[~columnwise_nan_mask[col]] == 100)
+
+    tensor_list = [
+        torch.tensor([[100., torch.nan, torch.nan],
+                      [torch.nan, 100., torch.nan]]),
+        torch.tensor([[torch.nan, 100.], [torch.nan, 100.]]),
+    ]
+    met_with_nan = MultiEmbeddingTensor.from_tensor_list(tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(met_with_nan.num_cols):
+        columnwise_nan_mask[col] = torch.isnan(met_with_nan[:, col].values)
+
+    # Test fillna_col
+    for col in range(met_with_nan.num_cols):
+        met_with_nan.fillna_col(col, col)
+    assert not torch.isnan(met_with_nan.values).any()
+    for col in range(met_with_nan.num_cols):
+        column = met_with_nan[:, col]
+        assert torch.all(
+            torch.isclose(column.values[columnwise_nan_mask[col]],
+                          torch.tensor([col], dtype=torch.float32)))
+        assert torch.all(
+            torch.isclose(column.values[~columnwise_nan_mask[col]],
+                          torch.tensor([100], dtype=torch.float32)))
+
+
 def test_from_tensor_list():
     num_rows = 2
     num_cols = 3

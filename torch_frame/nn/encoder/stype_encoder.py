@@ -235,13 +235,13 @@ class StypeEncoder(Module, ABC):
         # Add better safeguard here to make sure nans are actually
         # replaced, expecially when nans are represented as -1's. They are
         # very hard to catch as they won't error out.
-        val = feat
+        filled_values = feat
         if isinstance(feat, _MultiTensor):
-            val = feat.values
-        if val.is_floating_point():
-            assert not torch.isnan(val).any()
+            filled_values = feat.values
+        if filled_values.is_floating_point():
+            assert not torch.isnan(filled_values).any()
         else:
-            assert not (val == -1).any()
+            assert not (filled_values == -1).any()
         return feat
 
 

@@ -210,15 +210,16 @@ class MultiEmbeddingTensor(_MultiTensor):
 
     def fillna_col(
         self,
-        index: int,
+        col_index: int,
         fill_value: Union[int, float, Tensor],
     ) -> None:
-        value_index = slice(self.offset[index], self.offset[index + 1])
-        values = self.values[:, value_index]
+        values_index = slice(self.offset[col_index],
+                             self.offset[col_index + 1])
+        values_col = self.values[:, values_index]
         if self.values.is_floating_point():
-            values[torch.isnan(values)] = fill_value
+            values_col[torch.isnan(values_col)] = fill_value
         else:
-            values[values == -1] = fill_value
+            values_col[values_col == -1] = fill_value
 
     def _empty(self, dim: int) -> MultiEmbeddingTensor:
         """Creates an empty :class:`MultiEmbeddingTensor`.

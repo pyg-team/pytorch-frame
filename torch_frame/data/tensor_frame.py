@@ -223,7 +223,7 @@ class TensorFrame:
                     return False
                 if self_feat.shape != other_feat.shape:
                     return False
-                if not torch.allclose(self_feat, other_feat):
+                if not torch.allclose(self_feat, other_feat, equal_nan=True):
                     return False
             elif isinstance(self_feat, MultiNestedTensor):
                 if not isinstance(other_feat, MultiNestedTensor):
