@@ -210,6 +210,7 @@ class StypeEncoder(Module, ABC):
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
 
+        # TODO: Remove for-loop over columns
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
