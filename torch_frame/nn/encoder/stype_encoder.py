@@ -187,19 +187,29 @@ class StypeEncoder(Module, ABC):
         # faster to just clone the values, while reusing the same offset
         # object.
         if isinstance(feat, Tensor):
-            feat = feat.clone()
+            if get_na_mask(feat).any():
+                feat = feat.clone()
+            else:
+                return
         elif isinstance(feat, MultiEmbeddingTensor):
-            feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
-                                        num_cols=feat.num_cols,
-                                        values=feat.values.clone(),
-                                        offset=feat.offset)
+            if get_na_mask(feat.values).any():
+                feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
+                                            num_cols=feat.num_cols,
+                                            values=feat.values.clone(),
+                                            offset=feat.offset)
+            else:
+                return
         elif isinstance(feat, MultiNestedTensor):
-            feat = MultiNestedTensor(num_rows=feat.num_rows,
-                                     num_cols=feat.num_cols,
-                                     values=feat.values.clone(),
-                                     offset=feat.offset)
+            if get_na_mask(feat.values).any():
+                feat = MultiNestedTensor(num_rows=feat.num_rows,
+                                         num_cols=feat.num_cols,
+                                         values=feat.values.clone(),
+                                         offset=feat.offset)
+            else:
+                return
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
+
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
