@@ -190,7 +190,7 @@ class StypeEncoder(Module, ABC):
             if get_na_mask(feat).any():
                 feat = feat.clone()
             else:
-                return
+                return feat
         elif isinstance(feat, MultiEmbeddingTensor):
             if get_na_mask(feat.values).any():
                 feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
@@ -198,7 +198,7 @@ class StypeEncoder(Module, ABC):
                                             values=feat.values.clone(),
                                             offset=feat.offset)
             else:
-                return
+                return feat
         elif isinstance(feat, MultiNestedTensor):
             if get_na_mask(feat.values).any():
                 feat = MultiNestedTensor(num_rows=feat.num_rows,
@@ -206,7 +206,7 @@ class StypeEncoder(Module, ABC):
                                          values=feat.values.clone(),
                                          offset=feat.offset)
             else:
-                return
+                return feat
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
 
