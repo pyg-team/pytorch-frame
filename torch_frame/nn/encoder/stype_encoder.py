@@ -873,7 +873,7 @@ class TimestampEncoder(StypeEncoder):
         # [batch_size, num_cols, num_time_feats, out_size]
         x = torch.cat([
             self.positional_encoding(feat_year),
-            self.positional_encoding(feat_rest)
+            self.cyclic_encoding(feat_rest)
         ], dim=2)
         # [batch_size, num_cols, num_time_feats, out_size] *
         # [num_cols, num_time_feats, out_size, out_channels]
