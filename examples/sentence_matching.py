@@ -51,6 +51,11 @@ from torch_frame.utils import infer_df_stype
 # ============= FTTransformer ===============
 # Best Val Acc: 0.8742, Best Test Acc: 0.8760
 
+# Text Tokenized (thefuzz pre_transform)
+# all-distilroberta-v1 + LinearEncoder
+# ================= ResNet ==================
+# Best Val Acc: 0.8839, Best Test Acc: 0.8813
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--channels", type=int, default=256)
 parser.add_argument("--num_layers", type=int, default=4)
