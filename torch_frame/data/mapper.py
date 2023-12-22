@@ -414,7 +414,7 @@ class EmbeddingTensorMapper(TensorMapper):
     ) -> MultiEmbeddingTensor:
 
         if self.embedder is not None:
-            ser = ser.astype(str)
+            # ser = ser.astype(str)
             ser_list = ser.tolist()
             if self.batch_size is None:
                 values = self.embedder(ser_list)

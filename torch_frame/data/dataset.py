@@ -12,7 +12,11 @@ import torch
 from torch import Tensor
 
 import torch_frame
-from torch_frame.config import TextEmbedderConfig, TextTokenizerConfig
+from torch_frame.config import (
+    ImageEmbedderConfig,
+    TextEmbedderConfig,
+    TextTokenizerConfig,
+)
 from torch_frame.data import TensorFrame
 from torch_frame.data.mapper import (
     CategoricalTensorMapper,
@@ -41,6 +45,7 @@ COL_TO_PATTERN_STYPE_MAPPING = {
     "col_to_time_format": torch_frame.timestamp,
     "col_to_text_embedder_cfg": torch_frame.text_embedded,
     "col_to_text_tokenizer_cfg": torch_frame.text_tokenized,
+    "col_to_image_embedder_cfg": torch_frame.image_embedded,
 }
 
 COL_TO_PATTERN_REQUIRED_TYPE_MAPPING = {
@@ -48,6 +53,7 @@ COL_TO_PATTERN_REQUIRED_TYPE_MAPPING = {
     "col_to_time_format": str,
     "col_to_text_embedder_cfg": TextEmbedderConfig,
     "col_to_text_tokenizer_cfg": TextTokenizerConfig,
+    "col_to_image_embedder_cfg": ImageEmbedderConfig,
 }
 
 COL_TO_PATTERN_ALLOW_NONE_MAPPING = {
@@ -55,6 +61,7 @@ COL_TO_PATTERN_ALLOW_NONE_MAPPING = {
     "col_to_time_format": True,
     "col_to_text_embedder_cfg": False,
     "col_to_text_tokenizer_cfg": False,
+    "col_to_image_embedder_cfg": False,
 }
 
 
@@ -181,6 +188,8 @@ class DataFrameToTensorFrameConverter:
         | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
         | None = None,
+        col_to_image_embedder_cfg: dict[str, ImageEmbedderConfig]
+        | None = None,
         col_to_time_format: dict[str, str | None] = None,
     ):
         self.col_to_stype = col_to_stype
@@ -204,6 +213,7 @@ class DataFrameToTensorFrameConverter:
         self.col_to_time_format = col_to_time_format
         self.col_to_text_embedder_cfg = col_to_text_embedder_cfg
         self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
+        self.col_to_image_embedder_cfg = col_to_image_embedder_cfg
 
     @property
     def col_names_dict(self) -> dict[torch_frame.stype, list[str]]:
@@ -234,6 +244,12 @@ class DataFrameToTensorFrameConverter:
             return TextTokenizationTensorMapper(
                 text_tokenizer_cfg.text_tokenizer,
                 text_tokenizer_cfg.batch_size,
+            )
+        elif stype == torch_frame.image_embedded:
+            image_embedder_cfg = self.col_to_image_embedder_cfg[col]
+            return EmbeddingTensorMapper(
+                image_embedder_cfg.image_embedder,
+                image_embedder_cfg.batch_size,
             )
         elif stype == torch_frame.sequence_numerical:
             return NumericalSequenceTensorMapper()
@@ -363,6 +379,8 @@ class Dataset(ABC):
         | TextEmbedderConfig | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
         | TextTokenizerConfig | None = None,
+        col_to_image_embedder_cfg: dict[str, ImageEmbedderConfig]
+        | ImageEmbedderConfig | None = None,
         col_to_time_format: str | None | dict[str, str | None] = None,
     ):
         self.df = df
@@ -404,6 +422,9 @@ class Dataset(ABC):
         (self.col_to_text_embedder_cfg
          ) = self.canonicalize_and_validate_col_to_pattern(
              col_to_text_embedder_cfg, "col_to_text_embedder_cfg")
+        (self.col_to_image_embedder_cfg
+         ) = self.canonicalize_and_validate_col_to_pattern(
+             col_to_image_embedder_cfg, "col_to_image_embedder_cfg")
         (self.col_to_text_tokenizer_cfg
          ) = self.canonicalize_and_validate_col_to_pattern(
              col_to_text_tokenizer_cfg, "col_to_text_tokenizer_cfg")
@@ -609,6 +630,7 @@ class Dataset(ABC):
             col_to_sep=self.col_to_sep,
             col_to_text_embedder_cfg=self.col_to_text_embedder_cfg,
             col_to_text_tokenizer_cfg=self.col_to_text_tokenizer_cfg,
+            col_to_image_embedder_cfg=self.col_to_image_embedder_cfg,
             col_to_time_format=self.col_to_time_format,
         )
 

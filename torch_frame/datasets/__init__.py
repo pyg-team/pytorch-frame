@@ -15,6 +15,7 @@ from .multimodal_text_benchmark import MultimodalTextBenchmark
 from .data_frame_benchmark import DataFrameBenchmark
 from .mercari import Mercari
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
+from .house_price_and_images import HousePricesAndImages
 
 real_world_datasets = [
     'Titanic',
@@ -31,6 +32,7 @@ real_world_datasets = [
     'DataFrameBenchmark',
     'Mercari',
     'AmazonFineFoodReviews',
+    'HousePricesAndImages',
 ]
 
 synthetic_datasets = [

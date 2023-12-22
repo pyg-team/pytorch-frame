@@ -8,6 +8,7 @@ from ._stype import (
     multicategorical,
     sequence_numerical,
     timestamp,
+    image_embedded,
     embedding,
 )
 from .data import TensorFrame
@@ -30,6 +31,7 @@ __all__ = [
     'multicategorical',
     'sequence_numerical',
     'timestamp',
+    'image_embedded',
     'embedding',
     'TaskType',
     'Metric',
