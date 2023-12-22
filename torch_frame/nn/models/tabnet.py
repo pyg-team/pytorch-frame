@@ -15,6 +15,7 @@ from torch_frame.data.stats import StatType
 from torch_frame.nn import (
     EmbeddingEncoder,
     StackEncoder,
+    StypeEncoder,
     StypeWiseFeatureEncoder,
 )
 from torch_frame.typing import NAStrategy
@@ -46,6 +47,13 @@ class TabNet(Module):
             column names. The column names are sorted based on the ordering
             that appear in :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            Dictionary containing encoder type per column statistics
+            (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
+            for categorical feature and :obj:`StackEncoder()` for
+            numerical feature)
         num_shared_glu_layers (int): Number of GLU layers shared across the
             :obj:`num_layers` :class:`FeatureTransformer`s. (default: :obj:`2`)
         num_dependent_glu_layers (int, optional): Number of GLU layers to use
@@ -63,6 +71,8 @@ class TabNet(Module):
         gamma: float,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
         num_shared_glu_layers: int = 2,
         num_dependent_glu_layers: int = 2,
         cat_emb_channels: int = 2,
@@ -82,18 +92,22 @@ class TabNet(Module):
         cat_emb_channels = (cat_emb_channels if torch_frame.categorical
                             in col_names_dict else 1)
         in_channels = cat_emb_channels * num_cols
+
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
+                stype.categorical:
+                EmbeddingEncoder(na_strategy=NAStrategy.MOST_FREQUENT),
+                stype.numerical:
+                StackEncoder(na_strategy=NAStrategy.MEAN),
+            }
+
         # Map input tensor frame into (batch_size, num_cols, cat_emb_channels),
         # which is flattened into (batch_size, in_channels)
         self.feature_encoder = StypeWiseFeatureEncoder(
             out_channels=cat_emb_channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.categorical:
-                EmbeddingEncoder(na_strategy=NAStrategy.MOST_FREQUENT),
-                stype.numerical:
-                StackEncoder(na_strategy=NAStrategy.MEAN),
-            },
+            stype_encoder_dict=stype_encoder_dict,
         )
 
         # Batch norm applied to input feature.

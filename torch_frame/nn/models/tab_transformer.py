@@ -44,7 +44,7 @@ class TabTransformer(Module):
     Args:
         channels (int): Input channel dimensionality.
         out_channels (int): Output channels dimensionality.
-        num_layers (int): Numner of convolution layers.
+        num_layers (int): Number of convolution layers.
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of positional encoding padding to the
             categorical embeddings.
