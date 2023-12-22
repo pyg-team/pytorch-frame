@@ -100,7 +100,7 @@ class ExcelFormer(Module):
         stype_encoder_dict
             (dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
-            Dictionary containing encoder type per column statistics
+            Dictionary containing encoder type per column statistics.
             (default: :obj:`None`, will call :obj:`ExcelFormerEncoder()`
             for numerical feature)
         diam_dropout (float, optional): diam_dropout. (default: :obj:`0.0`)
