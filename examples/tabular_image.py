@@ -135,7 +135,7 @@ def test(loader: DataLoader) -> float:
         tf = tf.to(device)
         pred = model(tf)
         accum += float(
-                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
+            F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
         total_count += len(tf.y)
 
     rmse = (accum / total_count)**0.5
