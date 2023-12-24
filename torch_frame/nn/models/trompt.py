@@ -48,8 +48,8 @@ class Trompt(Module):
         stype_encoder_dicts
             (list[dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`]], optional):
-            A list of :obj:`num_layers` dictionaries containing encoder
-            type per column statistics.
+            A list of :obj:`num_layers` dictionaries that each dictionary maps
+            stypes into their stype encoders.
             (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
             for categorical feature and :obj:`LinearEncoder()` for
             numerical feature)

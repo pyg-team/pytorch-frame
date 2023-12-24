@@ -50,7 +50,7 @@ class TabNet(Module):
         stype_encoder_dict
             (dict[:class:`torch_frame.stype`,
             :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
-            Dictionary containing encoder type per column statistics.
+            A dictionary mapping stypes into their stype encoders.
             (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
             for categorical feature and :obj:`StackEncoder()` for
             numerical feature)
