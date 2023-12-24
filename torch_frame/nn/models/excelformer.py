@@ -14,7 +14,10 @@ from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.nn.conv import ExcelFormerConv
 from torch_frame.nn.decoder import ExcelFormerDecoder
 from torch_frame.nn.encoder.stype_encoder import ExcelFormerEncoder
-from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
+from torch_frame.nn.encoder.stypewise_encoder import (
+    StypeEncoder,
+    StypeWiseFeatureEncoder,
+)
 from torch_frame.typing import NAStrategy
 
 
@@ -24,7 +27,7 @@ def feature_mixup(
     num_classes: int,
     beta: float = 0.5,
 ) -> tuple[Tensor, Tensor]:
-    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
+    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
     linearly mixed up.
@@ -94,6 +97,12 @@ class ExcelFormer(Module):
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            A dictionary mapping stypes into their stype encoders.
+            (default: :obj:`None`, will call :obj:`ExcelFormerEncoder()`
+            for numerical feature)
         diam_dropout (float, optional): diam_dropout. (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout. (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout.
@@ -108,6 +117,8 @@ class ExcelFormer(Module):
         num_heads: int,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
@@ -122,14 +133,18 @@ class ExcelFormer(Module):
         if col_names_dict.keys() != {stype.numerical}:
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
+
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
+                stype.numerical:
+                ExcelFormerEncoder(out_channels, na_strategy=NAStrategy.MEAN)
+            }
+
         self.excelformer_encoder = StypeWiseFeatureEncoder(
             out_channels=self.in_channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.numerical:
-                ExcelFormerEncoder(out_channels, na_strategy=NAStrategy.MEAN)
-            },
+            stype_encoder_dict=stype_encoder_dict,
         )
         self.excelformer_convs = ModuleList([
             ExcelFormerConv(in_channels, num_cols, num_heads, diam_dropout,

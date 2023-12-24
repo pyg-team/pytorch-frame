@@ -12,6 +12,7 @@ from torch_frame.data.stats import StatType
 from torch_frame.nn import (
     EmbeddingEncoder,
     LinearEncoder,
+    StypeEncoder,
     StypeWiseFeatureEncoder,
 )
 from torch_frame.nn.conv import TromptConv
@@ -44,6 +45,14 @@ class Trompt(Module):
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dicts
+            (list[dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`]], optional):
+            A list of :obj:`num_layers` dictionaries that each dictionary maps
+            stypes into their stype encoders.
+            (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
+            for categorical feature and :obj:`LinearEncoder()` for
+            numerical feature)
     """
     def __init__(
         self,
@@ -54,6 +63,8 @@ class Trompt(Module):
         # kwargs for encoder
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dicts: list[dict[torch_frame.stype, StypeEncoder]]
+        | None = None,
     ):
         super().__init__()
         if num_layers <= 0:
@@ -69,27 +80,32 @@ class Trompt(Module):
         self.x_prompt = Parameter(torch.empty(num_prompts, channels))
         self.encoders = ModuleList()
         self.trompt_convs = ModuleList()
-        for _ in range(num_layers):
+        for i in range(num_layers):
+            if stype_encoder_dicts is None:
+                stype_encoder_dict_layer = {
+                    stype.categorical:
+                    EmbeddingEncoder(
+                        post_module=LayerNorm(channels),
+                        na_strategy=NAStrategy.MOST_FREQUENT,
+                    ),
+                    stype.numerical:
+                    LinearEncoder(
+                        post_module=Sequential(
+                            ReLU(),
+                            LayerNorm(channels),
+                        ),
+                        na_strategy=NAStrategy.MEAN,
+                    ),
+                }
+            else:
+                stype_encoder_dict_layer = stype_encoder_dicts[i]
+
             self.encoders.append(
                 StypeWiseFeatureEncoder(
                     out_channels=channels,
                     col_stats=col_stats,
                     col_names_dict=col_names_dict,
-                    stype_encoder_dict={
-                        stype.categorical:
-                        EmbeddingEncoder(
-                            post_module=LayerNorm(channels),
-                            na_strategy=NAStrategy.MOST_FREQUENT,
-                        ),
-                        stype.numerical:
-                        LinearEncoder(
-                            post_module=Sequential(
-                                ReLU(),
-                                LayerNorm(channels),
-                            ),
-                            na_strategy=NAStrategy.MEAN,
-                        ),
-                    },
+                    stype_encoder_dict=stype_encoder_dict_layer,
                 ))
             self.trompt_convs.append(
                 TromptConv(channels, num_cols, num_prompts))
