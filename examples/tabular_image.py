@@ -62,7 +62,7 @@ class ImageToEmbedding:
         self.device = device
 
     def __call__(self, images: List[Image]) -> Tensor:
-        inputs = [self.preprocess(image) for image in images]
+        inputs = [self.preprocess(image.convert('RGB')) for image in images]
         inputs = torch.stack(inputs, dim=0).to(self.device)
         return self.model(inputs).cpu().detach().view(len(images), -1)
 
@@ -77,10 +77,11 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
 col_to_image_embedder_cfg = ImageEmbedderConfig(
     image_embedder=ImageToEmbedding(args.model, device), batch_size=10)
 dataset = HousePricesAndImages(
-    "abc", col_to_image_embedder_cfg=col_to_image_embedder_cfg)
+    path, col_to_image_embedder_cfg=col_to_image_embedder_cfg)
 
 filename = f"{args.model}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
+dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset[:0.8], dataset[
     0.8:0.9], dataset[0.9:]
 
@@ -100,13 +101,12 @@ stype_encoder_dict = {
 
 model = FTTransformer(
     channels=args.channels,
-    out_channels=dataset.num_classes,
+    out_channels=1,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
-model = torch.compile(model, dynamic=True) if args.compile else model
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
@@ -117,7 +117,7 @@ def train(epoch: int) -> float:
     for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         pred = model(tf)
-        loss = F.cross_entropy(pred, tf.y)
+        loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss) * len(tf.y)
@@ -134,24 +134,24 @@ def test(loader: DataLoader) -> float:
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        pred_class = pred.argmax(dim=-1)
-        accum += float((tf.y == pred_class).sum())
+        accum += float(
+                F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
         total_count += len(tf.y)
 
-    accuracy = accum / total_count
-    return accuracy
+    rmse = (accum / total_count)**0.5
+    return rmse
 
 
-metric = "Acc"
-best_val_metric = 0
-best_test_metric = 0
+metric = "RMSE"
+best_val_metric = float("inf")
+best_test_metric = float("inf")
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
     train_metric = test(train_loader)
     val_metric = test(val_loader)
     test_metric = test(test_loader)
-    if val_metric > best_val_metric:
+    if val_metric < best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
 
