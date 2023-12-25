@@ -138,7 +138,6 @@ module = [
     "torch_frame.transforms.cat_to_num_transform",
     "torch_frame.transforms.fittable_base_transform",
     "torch_frame.transforms.mutual_information_sort",
-    "torch_frame.utils.concat",
     "torch_frame.utils.infer_stype",
 ]
 

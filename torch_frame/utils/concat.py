@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from typing import TypeVar
 
 import torch
 from torch import Tensor
@@ -11,11 +12,27 @@ from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.typing import TensorData
 
+T = TypeVar(
+    "T",
+    TensorFrame,
+    Tensor,
+    MultiEmbeddingTensor,
+    MultiNestedTensor,
+    dict[str, MultiNestedTensor],
+)
+TD = TypeVar(
+    "TD",
+    Tensor,
+    MultiEmbeddingTensor,
+    MultiNestedTensor,
+    dict[str, MultiNestedTensor],
+)
+
 
 def cat(
-    lst: list[TensorFrame] | list[TensorData],
+    lst: list[T],
     dim: int,
-) -> TensorFrame | TensorData:
+) -> T:
     r"""Concatenates a list of :class:`TensorFrame` or :class:`TensorData`.
 
     Args:
@@ -32,7 +49,7 @@ def cat(
         return _cat_tensor_data(lst, dim=dim)
 
 
-def _cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
+def _cat_tensor_data(td_list: list[TD], dim: int) -> TD:
     r"""Concatenates a list of :class:`TensorData` objects along a specified
     dimension (:obj:`0` or :obj:`1`).
 
@@ -46,7 +63,7 @@ def _cat_tensor_data(td_list: list[TensorData], dim: int) -> TensorData:
     if len(td_list) == 0:
         raise ValueError("Cannot concatenate an empty list.")
     elif len(td_list) == 1:
-        return td_list[0]
+        return td_list[0]  # TensorData
     else:
         for td in td_list:
             if not isinstance(td, td_list[0].__class__):
@@ -113,7 +130,10 @@ def _cat_helper(
 
     feat_dict: dict[torch_frame.stype, TensorData] = {}
     for stype, feat_list in feat_list_dict.items():
-        feat_dict[stype] = _cat_tensor_data(feat_list, dim=dim)
+        feat_dict[stype] = _cat_tensor_data(
+            feat_list,
+            dim=dim,
+        )  # type: ignore [type-var]
     return feat_dict
 
 
@@ -140,7 +160,11 @@ def _cat_row(tf_list: list[TensorFrame]) -> TensorFrame:
 
     y = None
     if tf_list[0].y is not None:
-        y = torch.cat([tf.y for tf in tf_list], dim=0)
+        ys: list[Tensor] = []
+        for tf in tf_list:
+            assert tf.y is not None
+            ys.append(tf.y)
+        y = torch.cat(ys, dim=0)
     return TensorFrame(feat_dict=_cat_helper(tf_list, dim=0),
                        col_names_dict=tf_list[0].col_names_dict, y=y)
 
