@@ -140,7 +140,6 @@ module = [
     "torch_frame.transforms.mutual_information_sort",
     "torch_frame.utils.concat",
     "torch_frame.utils.infer_stype",
-    "torch_frame.utils.io",
 ]
 
 [tool.pytest.ini_options]
