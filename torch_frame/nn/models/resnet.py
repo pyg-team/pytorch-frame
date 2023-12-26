@@ -17,12 +17,12 @@ from torch.nn import (
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import (
+from torch_frame.nn.encoder.stype_encoder import (
     EmbeddingEncoder,
     LinearEncoder,
     StypeEncoder,
-    StypeWiseFeatureEncoder,
 )
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 
 
 class FCResidualBlock(Module):
@@ -50,6 +50,8 @@ class FCResidualBlock(Module):
         self.relu = ReLU()
         self.dropout = Dropout(dropout_prob)
 
+        self.norm1: BatchNorm1d | LayerNorm | None
+        self.norm2: BatchNorm1d | LayerNorm | None
         if normalization == "batchnorm":
             self.norm1 = BatchNorm1d(out_channels)
             self.norm2 = BatchNorm1d(out_channels)
@@ -59,6 +61,7 @@ class FCResidualBlock(Module):
         else:
             self.norm1 = self.norm2 = None
 
+        self.shortcut: Linear | None
         if in_channels != out_channels:
             self.shortcut = Linear(in_channels, out_channels)
         else:
