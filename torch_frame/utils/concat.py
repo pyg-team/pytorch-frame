@@ -64,7 +64,7 @@ def _cat_tensor_data(td_list: list[TD], dim: int) -> TD:
     if len(td_list) == 0:
         raise ValueError("Cannot concatenate an empty list.")
     elif len(td_list) == 1:
-        return td_list[0]  # TensorData
+        return td_list[0]
     else:
         for td in td_list:
             if not isinstance(td, td_list[0].__class__):
