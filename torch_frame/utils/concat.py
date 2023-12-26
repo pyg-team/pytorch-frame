@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from typing import TypeVar
+# typing.Dict is necessary for TypeVar definition in Python 3.8
+from typing import Dict, TypeVar
 
 import torch
 from torch import Tensor
@@ -18,14 +19,14 @@ T = TypeVar(
     Tensor,
     MultiEmbeddingTensor,
     MultiNestedTensor,
-    dict[str, MultiNestedTensor],
+    Dict[str, MultiNestedTensor],
 )
 TD = TypeVar(
     "TD",
     Tensor,
     MultiEmbeddingTensor,
     MultiNestedTensor,
-    dict[str, MultiNestedTensor],
+    Dict[str, MultiNestedTensor],
 )
 
 
