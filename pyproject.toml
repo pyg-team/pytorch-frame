@@ -130,7 +130,6 @@ module = [
     "torch_frame.nn.models.resnet",
     "torch_frame.nn.models.tab_transformer",
     "torch_frame.nn.models.tabnet",
-    "torch_frame.nn.models.trompt",
     "torch_frame.testing.text_tokenizer",
     "torch_frame.transforms.base_transform",
     "torch_frame.transforms.cat_to_num_transform",

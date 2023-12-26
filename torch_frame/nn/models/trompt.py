@@ -9,14 +9,14 @@ from torch.nn import LayerNorm, Module, ModuleList, Parameter, ReLU, Sequential
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import (
+from torch_frame.nn.conv import TromptConv
+from torch_frame.nn.decoder import TromptDecoder
+from torch_frame.nn.encoder.stype_encoder import (
     EmbeddingEncoder,
     LinearEncoder,
     StypeEncoder,
-    StypeWiseFeatureEncoder,
 )
-from torch_frame.nn.conv import TromptConv
-from torch_frame.nn.decoder import TromptDecoder
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 from torch_frame.typing import NAStrategy
 
 
@@ -65,7 +65,7 @@ class Trompt(Module):
         col_names_dict: dict[torch_frame.stype, list[str]],
         stype_encoder_dicts: list[dict[torch_frame.stype, StypeEncoder]]
         | None = None,
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -114,7 +114,7 @@ class Trompt(Module):
                                             num_prompts)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         torch.nn.init.normal_(self.x_prompt, std=0.01)
         for encoder in self.encoders:
             encoder.reset_parameters()
