@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Literal
 
 import torch
 from torch import Tensor
@@ -16,7 +16,8 @@ from torch.nn import (
 )
 from torch.nn.init import kaiming_uniform_
 
-from torch_frame import NAStrategy, stype
+import torch_frame
+from torch_frame import NAStrategy
 from torch_frame.config import ModelConfig
 from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
@@ -30,7 +31,7 @@ from torch_frame.typing import TensorData
 from ..utils.init import attenuated_kaiming_uniform_
 
 
-def reset_parameters_soft(module: Module):
+def reset_parameters_soft(module: Module) -> None:
     r"""Call reset_parameters() only when it exists. Skip activation module."""
     if hasattr(module, "reset_parameters") and callable(
             module.reset_parameters):
@@ -68,49 +69,48 @@ class StypeEncoder(Module, ABC):
             values. If na_strategy is None, then it outputs non-learnable
             all-zero embedding for :obj:`NaN` category. (default: :obj:`None`)
     """
-
-    supported_stypes: set[stype] = {}
+    supported_stypes: set[torch_frame.stype] = set()
     LAZY_ATTRS = {"out_channels", "stats_list", "stype"}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
-    ):
+    ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
-    def init_modules(self):
+    def init_modules(self) -> None:
         if self.na_strategy is not None:
-            if (self.stype == stype.numerical
+            if (self.stype == torch_frame.numerical
                     and not self.na_strategy.is_numerical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on numerical columns.")
-            if (self.stype == stype.categorical
+            if (self.stype == torch_frame.categorical
                     and not self.na_strategy.is_categorical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on categorical"
                     " columns.")
-            if (self.stype == stype.multicategorical
+            if (self.stype == torch_frame.multicategorical
                     and not self.na_strategy.is_multicategorical_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on multicategorical"
                     " columns.")
-            if (self.stype == stype.timestamp
+            if (self.stype == torch_frame.timestamp
                     and not self.na_strategy.is_timestamp_strategy):
                 raise ValueError(
                     f"{self.na_strategy} cannot be used on timestamp"
                     " columns.")
-            elif self.stype == stype.embedding:
+            elif self.stype == torch_frame.embedding:
                 raise ValueError(f"Only the default `na_strategy` (None) "
                                  f"can be used on {self.stype} columns, but "
                                  f"{self.na_strategy} is given.")
 
     @abstractmethod
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         r"""Initialize the parameters of `post_module`."""
         if self.post_module is not None:
             if isinstance(self.post_module, Sequential):
@@ -242,11 +242,9 @@ class StypeEncoder(Module, ABC):
                 assert len(na_mask) == len(column_data)
                 column_data[na_mask] = fill_value
         # Add better safeguard here to make sure nans are actually
-        # replaced, expecially when nans are represented as -1's. They are
+        # replaced, especially when nans are represented as -1's. They are
         # very hard to catch as they won't error out.
-        filled_values = feat
-        if isinstance(feat, _MultiTensor):
-            filled_values = feat.values
+        filled_values = feat if isinstance(feat, Tensor) else feat.values
         if filled_values.is_floating_point():
             assert not torch.isnan(filled_values).any()
         else:
@@ -259,21 +257,20 @@ class EmbeddingEncoder(StypeEncoder):
     applies :class:`torch.nn.Embedding` for each categorical feature and
     concatenates the output embeddings.
     """
-
-    supported_stypes = {stype.categorical}
+    supported_stypes = {torch_frame.categorical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
-    def init_modules(self):
+    def init_modules(self) -> None:
         super().init_modules()
         self.embs = ModuleList([])
         for stats in self.stats_list:
@@ -287,14 +284,14 @@ class EmbeddingEncoder(StypeEncoder):
                 ))
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         super().reset_parameters()
         for emb in self.embs:
             emb.reset_parameters()
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         # TODO: Make this more efficient.
@@ -319,17 +316,16 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         mode (str): "sum", "mean" or "max".
             Specifies the way to reduce the bag. (default: :obj:`mean`)
     """
-
-    supported_stypes = {stype.multicategorical}
+    supported_stypes = {torch_frame.multicategorical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
-        mode: str = "mean",
+        mode: Literal["mean", "sum", "max"] = "mean",
     ) -> None:
         self.mode = mode
         if mode not in ["mean", "sum", "max"]:
@@ -362,7 +358,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: MultiNestedTensor,
+        feat: MultiNestedTensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         # TODO: Make this more efficient.
@@ -372,6 +368,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         xs = []
         for i, emb in enumerate(self.embs):
             col_feat = feat[:, i]
+            assert isinstance(col_feat, MultiNestedTensor)
             xs.append(emb(col_feat.values + 1, col_feat.offset[:-1]))
         # [batch_size, num_cols, hidden_channels]
         x = torch.stack(xs, dim=1)
@@ -384,14 +381,13 @@ class LinearEncoder(StypeEncoder):
     feature and concatenates the output embeddings. Note that the
     implementation does this for all numerical features in a batched manner.
     """
-
-    supported_stypes = {stype.numerical}
+    supported_stypes = {torch_frame.numerical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ):
@@ -418,7 +414,7 @@ class LinearEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         # feat: [batch_size, num_cols]
@@ -437,14 +433,13 @@ class StackEncoder(StypeEncoder):
     :obj:`[batch_size, num_cols]` into
     :obj:`[batch_size, num_cols, out_channels]`.
     """
-
-    supported_stypes = {stype.numerical}
+    supported_stypes = {torch_frame.numerical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
@@ -465,7 +460,7 @@ class StackEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         # feat: [batch_size, num_cols]
@@ -482,14 +477,13 @@ class LinearBucketEncoder(StypeEncoder):
     `"On Embeddings for Numerical Features in Tabular Deep Learning"
     <https://arxiv.org/abs/2203.05556>`_.
     """
-
-    supported_stypes = {stype.numerical}
+    supported_stypes = {torch_frame.numerical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
@@ -516,7 +510,7 @@ class LinearBucketEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         encoded_values = []
@@ -559,17 +553,16 @@ class LinearPeriodicEncoder(StypeEncoder):
     Args:
         n_bins (int): Number of bins for periodic encoding.
     """
-
-    supported_stypes = {stype.numerical}
+    supported_stypes = {torch_frame.numerical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
-        n_bins: int | None = 16,
+        n_bins: int = 16,
     ) -> None:
         self.n_bins = n_bins
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -596,7 +589,7 @@ class LinearPeriodicEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         feat = (feat - self.mean) / self.std
@@ -632,17 +625,16 @@ class ExcelFormerEncoder(StypeEncoder):
         stats_list (list[dict[StatType, Any]]): The list of stats for each
             column within the same stype.
     """
-
-    supported_stypes = {stype.numerical}
+    supported_stypes = {torch_frame.numerical}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
-    ):
+    ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
                          na_strategy)
 
@@ -663,7 +655,7 @@ class ExcelFormerEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         feat = (feat - self.mean) / self.std
@@ -685,13 +677,13 @@ class LinearEmbeddingEncoder(StypeEncoder):
     It applies a linear layer :obj:`torch.nn.Linear(emb_dim, out_channels)`
     on each embedding feature and concatenates the output embeddings.
     """
-    supported_stypes = {stype.embedding}
+    supported_stypes = {torch_frame.embedding}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
@@ -717,7 +709,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: MultiEmbeddingTensor,
+        feat: MultiEmbeddingTensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         x_lins: list[Tensor] = []
@@ -751,19 +743,18 @@ class LinearModelEncoder(StypeEncoder):
             :obj:`[batch_size, 1, *]` into row embeddings of shape
             :obj:`[batch_size, 1, model_out_channels]`.
     """
-
     # NOTE: We currently support text embeddings but in principle, this encoder
     # can support any model outputs embeddings, including image/audio/graph
     # embeddings.
     # NOTE: This can in principle support any stypes and allow MLP-based
     # non-linear modeling for each column.
-    supported_stypes = {stype.text_tokenized}
+    supported_stypes = {torch_frame.text_tokenized}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
         col_to_model_cfg: dict[str, ModelConfig] | None = None,
@@ -811,6 +802,7 @@ class LinearModelEncoder(StypeEncoder):
         col_names: list[str] | None = None,
     ) -> Tensor:
         xs = []
+        assert col_names is not None, "col_names is required."
         for i, col_name in enumerate(col_names):
             # [batch_size, 1, in_channels]
             if self.stype.use_dict_multi_nested_tensor:
@@ -843,13 +835,13 @@ class TimestampEncoder(StypeEncoder):
         out_size (int): Output dimension of the positional and cyclic
             encodings.
     """
-    supported_stypes = {stype.timestamp}
+    supported_stypes = {torch_frame.timestamp}
 
     def __init__(
         self,
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
-        stype: stype | None = None,
+        stype: torch_frame.stype | None = None,
         post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = NAStrategy.MEDIAN_TIMESTAMP,
         out_size: int = 8,
@@ -891,7 +883,7 @@ class TimestampEncoder(StypeEncoder):
 
     def encode_forward(
         self,
-        feat: Tensor,
+        feat: Tensor,  # type: ignore [override]
         col_names: list[str] | None = None,
     ) -> Tensor:
         feat = feat.to(torch.float32)

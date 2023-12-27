@@ -125,7 +125,6 @@ module = [
     "torch_frame.gbdt.tuned_catboost",
     "torch_frame.gbdt.tuned_lightgbm",
     "torch_frame.gbdt.tuned_xgboost",
-    "torch_frame.nn.encoder.stype_encoder",
     "torch_frame.testing.text_tokenizer",
     "torch_frame.transforms.base_transform",
     "torch_frame.transforms.cat_to_num_transform",
