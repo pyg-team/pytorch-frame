@@ -77,7 +77,7 @@ class StypeEncoder(Module, ABC):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -267,7 +267,7 @@ class EmbeddingEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -327,7 +327,7 @@ class MultiCategoricalEmbeddingEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
         mode: str = "mean",
     ) -> None:
@@ -392,7 +392,7 @@ class LinearEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -445,7 +445,7 @@ class StackEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -490,7 +490,7 @@ class LinearBucketEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -567,7 +567,7 @@ class LinearPeriodicEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
         n_bins: int | None = 16,
     ) -> None:
@@ -640,7 +640,7 @@ class ExcelFormerEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ):
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -692,7 +692,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
     ) -> None:
         super().__init__(out_channels, stats_list, stype, post_module,
@@ -764,7 +764,7 @@ class LinearModelEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = None,
         col_to_model_cfg: dict[str, ModelConfig] | None = None,
     ) -> None:
@@ -850,7 +850,7 @@ class TimestampEncoder(StypeEncoder):
         out_channels: int | None = None,
         stats_list: list[dict[StatType, Any]] | None = None,
         stype: stype | None = None,
-        post_module: Module | None = None,
+        post_module: torch.nn.Module | None = None,
         na_strategy: NAStrategy | None = NAStrategy.MEDIAN_TIMESTAMP,
         out_size: int = 8,
     ) -> None:

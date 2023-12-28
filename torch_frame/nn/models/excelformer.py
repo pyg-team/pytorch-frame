@@ -14,8 +14,11 @@ from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.nn.conv import ExcelFormerConv
 from torch_frame.nn.decoder import ExcelFormerDecoder
 from torch_frame.nn.encoder.stype_encoder import ExcelFormerEncoder
-from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
-from torch_frame.typing import NAStrategy
+from torch_frame.nn.encoder.stypewise_encoder import (
+    StypeEncoder,
+    StypeWiseFeatureEncoder,
+)
+from torch_frame.typing import NAStrategy, TensorData
 
 
 def feature_mixup(
@@ -24,7 +27,7 @@ def feature_mixup(
     num_classes: int,
     beta: float = 0.5,
 ) -> tuple[Tensor, Tensor]:
-    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swaping some
+    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
     linearly mixed up.
@@ -41,10 +44,8 @@ def feature_mixup(
             :obj:`[batch_size, num_classes]`
     """
     assert num_classes > 0
-
-    beta = torch.tensor(beta, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
-    shuffle_rates = beta_distribution.sample((len(x), 1))
+    shuffle_rates = beta_distribution.sample(torch.Size((len(x), 1)))
     feat_masks = torch.rand(x.shape, device=x.device) < shuffle_rates
     shuffled_idx = torch.randperm(len(x), device=x.device)
     x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
@@ -94,6 +95,12 @@ class ExcelFormer(Module):
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            A dictionary mapping stypes into their stype encoders.
+            (default: :obj:`None`, will call :obj:`ExcelFormerEncoder()`
+            for numerical feature)
         diam_dropout (float, optional): diam_dropout. (default: :obj:`0.0`)
         aium_dropout (float, optional): aium_dropout. (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout.
@@ -108,6 +115,8 @@ class ExcelFormer(Module):
         num_heads: int,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
@@ -122,14 +131,18 @@ class ExcelFormer(Module):
         if col_names_dict.keys() != {stype.numerical}:
             raise ValueError("ExcelFormer only accepts numerical"
                              " features.")
+
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
+                stype.numerical:
+                ExcelFormerEncoder(out_channels, na_strategy=NAStrategy.MEAN)
+            }
+
         self.excelformer_encoder = StypeWiseFeatureEncoder(
             out_channels=self.in_channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.numerical:
-                ExcelFormerEncoder(out_channels, na_strategy=NAStrategy.MEAN)
-            },
+            stype_encoder_dict=stype_encoder_dict,
         )
         self.excelformer_convs = ModuleList([
             ExcelFormerConv(in_channels, num_cols, num_heads, diam_dropout,
@@ -171,7 +184,7 @@ class ExcelFormer(Module):
         self,
         tf: TensorFrame,
         beta: float = 0.5,
-    ) -> Tensor | tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings. If
         `mixup` is :obj:`True`, it produces the output embeddings together with
         the mixed-up targets.
@@ -183,16 +196,19 @@ class ExcelFormer(Module):
                 true. (default: :obj:`0.5`)
 
         Returns:
-            (torch.Tensor, torch.Tensor): The first :class:`Tensor` is the
-            mixed up output embeddings of size
-            :obj:`[batch_size, out_channels]`. The second :class:`Tensor`
-            :obj:`y_mixedup` will be returned only when mixup is set to true.
-            The size is [batch_size, num_classes] for classification and
-            :obj:`[batch_size, 1]` for regression.
+            (torch.Tensor, torch.Tensor): The first :class:`~torch.Tensor` is
+                the mixed up output embeddings of size
+                :obj:`[batch_size, out_channels]`. The second
+                :class:`~torch.Tensor` is the mixed target whose size is either
+                :obj:`[batch_size, num_classes]` for classification or
+                :obj:`[batch_size, 1]` for regression.
         """
+        assert tf.y is not None
+        numerical_feat = tf.feat_dict[stype.numerical]
+        assert isinstance(numerical_feat, Tensor)
         # Mixup numerical features
         x_mixedup, y_mixedup = feature_mixup(
-            tf.feat_dict[stype.numerical],
+            numerical_feat,
             tf.y,
             num_classes=self.out_channels,
             beta=beta,
@@ -200,7 +216,7 @@ class ExcelFormer(Module):
 
         # Create a new `feat_dict`, where stype.numerical is swapped with
         # mixed up feature.
-        feat_dict: dict[stype, Tensor] = {}
+        feat_dict: dict[stype, TensorData] = {}
         for stype_name, x in tf.feat_dict.items():
             if stype_name == stype.numerical:
                 feat_dict[stype_name] = x_mixedup

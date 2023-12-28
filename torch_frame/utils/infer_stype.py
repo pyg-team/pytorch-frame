@@ -28,7 +28,7 @@ def _is_timestamp(ser: Series) -> bool:
 
 def _lst_is_all_type(
     lst: list[Any],
-    types: tuple[type] | type,
+    types: tuple[type, ...] | type,
 ) -> bool:
     assert isinstance(lst, list)
     return all(isinstance(x, types) for x in lst)

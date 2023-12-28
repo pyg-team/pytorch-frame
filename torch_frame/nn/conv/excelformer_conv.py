@@ -7,11 +7,10 @@ from torch.nn import Dropout, LayerNorm, Linear, Module
 from torch.nn.init import zeros_
 
 from torch_frame.nn.conv import TableConv
+from torch_frame.nn.utils.init import attenuated_kaiming_uniform_
 
-from ..utils.init import attenuated_kaiming_uniform_
 
-
-def init_attenuated(linear: Linear):
+def init_attenuated(linear: Linear) -> None:
     attenuated_kaiming_uniform_(linear.weight)
     zeros_(linear.bias)
 
@@ -23,18 +22,18 @@ class AiuM(Module):
         channels (int): Input channel dimensionality
         dropout (float): Percentage of random deactivation in the AiuM module
     """
-    def __init__(self, channels: int, dropout: float):
+    def __init__(self, channels: int, dropout: float) -> None:
         super().__init__()
         self.lin_1 = Linear(channels, channels)
         self.lin_2 = Linear(channels, channels)
         self.dropout = Dropout(dropout)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         init_attenuated(self.lin_1)
         init_attenuated(self.lin_2)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.dropout(torch.tanh(self.lin_1(x)) * (self.lin_2(x)))
         return x
 
@@ -49,7 +48,7 @@ class DiaM(Module):
         dropout (float): Percentage of random deactivation in the DiaM module
     """
     def __init__(self, channels: int, num_cols: int, num_heads: int,
-                 dropout: float):
+                 dropout: float) -> None:
         if num_heads > 1:
             assert channels % num_heads == 0
         super().__init__()
@@ -62,7 +61,7 @@ class DiaM(Module):
         self.register_buffer('seq_ids', torch.arange(num_cols))
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         for lin in [self.lin_q, self.lin_k, self.lin_v]:
             init_attenuated(lin)
         if self.lin_out is not None:
@@ -76,7 +75,7 @@ class DiaM(Module):
         x = x.reshape(B * self.num_heads, num_cols, d_head)
         return x
 
-    def get_attention_mask(self, input_shape: Tensor.size):
+    def get_attention_mask(self, input_shape: torch.Size):
         r"""Generate an attention mask for a given input shape.
 
         The function constructs an attention mask using the sequence ids
@@ -149,7 +148,7 @@ class ExcelFormerConv(TableConv):
         self.residual_dropout = residual_dropout
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.DiaM.reset_parameters()
         self.AiuM.reset_parameters()
 
