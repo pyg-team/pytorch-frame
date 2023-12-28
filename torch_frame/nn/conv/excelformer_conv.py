@@ -157,6 +157,6 @@ class ExcelFormerConv(TableConv):
         x_residual = self.DiaM(x)
         x = F.dropout(x_residual, self.residual_dropout, self.training) + x
         x_residual = self.norm_2(x)
-        x_residual = self.AiuM(x)
+        x_residual = self.AiuM(x_residual)
         x = F.dropout(x_residual, self.residual_dropout, self.training) + x
         return x
