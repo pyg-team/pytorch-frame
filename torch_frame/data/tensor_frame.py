@@ -39,7 +39,7 @@ class TensorFrame:
 
         import torch_frame
 
-        tf = torch_frame.TensorFrame(
+        tf = torch_frame.TensorFrame({
             feat_dict = {
                 # Two numerical columns:
                 torch_frame.numerical: torch.randn(10, 2),
@@ -51,7 +51,7 @@ class TensorFrame:
                 torch_frame.categorical: ['cat_1', 'cat_2', 'cat_3'],
 
             },
-        )
+        })
 
         print(len(tf))
         >>> 10
