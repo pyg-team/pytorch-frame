@@ -162,6 +162,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
     def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
         # [batch_size, batch_max_seq_len]
         input_ids = feat["input_ids"].to_dense(fill_value=0).squeeze(dim=1)
+        # Set attention_mask of padding idx to False
         mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
 
         # Get text embeddings for each text tokenized column
