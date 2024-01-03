@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import torch
 from torch.nn import ReLU
@@ -5,7 +7,6 @@ from torch.nn import ReLU
 import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.config import ModelConfig
-from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
@@ -22,7 +23,6 @@ from torch_frame.nn import (
     StackEncoder,
     TimestampEncoder,
 )
-from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
     WhiteSpaceHashTokenizer,
@@ -44,10 +44,12 @@ def test_categorical_feature_encoder(encoder_cls_kwargs):
         stype=stype.categorical,
         **encoder_cls_kwargs[1],
     )
-    feat_cat = tensor_frame.feat_dict[stype.categorical]
+    feat_cat = tensor_frame.feat_dict[stype.categorical].clone()
     col_names = tensor_frame.col_names_dict[stype.categorical]
     x = encoder(feat_cat, col_names)
     assert x.shape == (feat_cat.size(0), feat_cat.size(1), 8)
+    # Make sure no in-place modification
+    assert torch.allclose(feat_cat, tensor_frame.feat_dict[stype.categorical])
 
     # Perturb the first column
     num_categories = len(stats_list[0][StatType.COUNT])
@@ -96,10 +98,12 @@ def test_numerical_feature_encoder(encoder_cls_kwargs):
         stype=stype.numerical,
         **encoder_cls_kwargs[1],
     )
-    feat_num = tensor_frame.feat_dict[stype.numerical]
+    feat_num = tensor_frame.feat_dict[stype.numerical].clone()
     col_names = tensor_frame.col_names_dict[stype.numerical]
     x = encoder(feat_num, col_names)
     assert x.shape == (feat_num.size(0), feat_num.size(1), 8)
+    # Make sure no in-place modification
+    assert torch.allclose(feat_num, tensor_frame.feat_dict[stype.numerical])
     if "post_module" in encoder_cls_kwargs[1]:
         assert encoder.post_module is not None
     else:
@@ -142,9 +146,16 @@ def test_multicategorical_feature_encoder(encoder_cls_kwargs):
         stype=stype.multicategorical,
         **encoder_cls_kwargs[1],
     )
-    feat_multicat = tensor_frame.feat_dict[stype.multicategorical]
+    feat_multicat = tensor_frame.feat_dict[stype.multicategorical].clone()
     col_names = tensor_frame.col_names_dict[stype.multicategorical]
     x = encoder(feat_multicat, col_names)
+    # Make sure no in-place modification
+    assert torch.allclose(
+        feat_multicat.values,
+        tensor_frame.feat_dict[stype.multicategorical].values)
+    assert torch.allclose(
+        feat_multicat.offset,
+        tensor_frame.feat_dict[stype.multicategorical].offset)
     assert x.shape == (feat_multicat.size(0), feat_multicat.size(1), 8)
 
     # Perturb the first column
@@ -178,9 +189,12 @@ def test_timestamp_feature_encoder(encoder_cls_kwargs):
         stype=stype.timestamp,
         **encoder_cls_kwargs[1],
     )
-    feat_timestamp = tensor_frame.feat_dict[stype.timestamp]
+    feat_timestamp = tensor_frame.feat_dict[stype.timestamp].clone()
     col_names = tensor_frame.col_names_dict[stype.timestamp]
     x = encoder(feat_timestamp, col_names)
+    # Make sure no in-place modification
+    assert torch.allclose(feat_timestamp,
+                          tensor_frame.feat_dict[stype.timestamp])
     assert x.shape == (feat_timestamp.size(0), feat_timestamp.size(1), 8)
 
 
@@ -324,40 +338,6 @@ def test_timestamp_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (~torch.isnan(x)).all()
 
 
-def test_text_embedded_encoder():
-    num_rows = 20
-    text_emb_channels = 10
-    out_channels = 5
-    dataset = FakeDataset(
-        num_rows=num_rows,
-        stypes=[
-            torch_frame.text_embedded,
-        ],
-        col_to_text_embedder_cfg=TextEmbedderConfig(
-            text_embedder=HashTextEmbedder(text_emb_channels),
-            batch_size=None),
-    )
-    dataset.materialize()
-    tensor_frame = dataset.tensor_frame
-    stats_list = [
-        dataset.col_stats[col_name]
-        for col_name in tensor_frame.col_names_dict[stype.embedding]
-    ]
-    encoder = LinearEmbeddingEncoder(
-        out_channels=out_channels,
-        stats_list=stats_list,
-        stype=stype.embedding,
-    )
-    feat_text = tensor_frame.feat_dict[stype.embedding]
-    col_names = tensor_frame.col_names_dict[stype.embedding]
-    feat = encoder(feat_text, col_names)
-    assert feat.shape == (
-        num_rows,
-        len(tensor_frame.col_names_dict[stype.embedding]),
-        out_channels,
-    )
-
-
 def test_embedding_encoder():
     num_rows = 20
     out_channels = 5
@@ -378,9 +358,14 @@ def test_embedding_encoder():
         stats_list=stats_list,
         stype=stype.embedding,
     )
-    feat_text = tensor_frame.feat_dict[stype.embedding]
+    feat_emb = tensor_frame.feat_dict[stype.embedding].clone()
     col_names = tensor_frame.col_names_dict[stype.embedding]
-    x = encoder(feat_text, col_names)
+    x = encoder(feat_emb, col_names)
+    # Make sure no in-place modification
+    assert torch.allclose(feat_emb.values,
+                          tensor_frame.feat_dict[stype.embedding].values)
+    assert torch.allclose(feat_emb.offset,
+                          tensor_frame.feat_dict[stype.embedding].offset)
     assert x.shape == (
         num_rows,
         len(tensor_frame.col_names_dict[stype.embedding]),
@@ -421,7 +406,7 @@ def test_text_tokenized_encoder():
         stype=stype.text_tokenized,
         col_to_model_cfg=col_to_model_cfg,
     )
-    feat_text = tensor_frame.feat_dict[stype.text_tokenized]
+    feat_text = copy.deepcopy(tensor_frame.feat_dict[stype.text_tokenized])
     col_names = tensor_frame.col_names_dict[stype.text_tokenized]
     x = encoder(feat_text, col_names)
     assert x.shape == (
@@ -429,3 +414,15 @@ def test_text_tokenized_encoder():
         len(tensor_frame.col_names_dict[stype.text_tokenized]),
         out_channels,
     )
+    # Make sure no in-place modification
+    assert isinstance(feat_text, dict) and isinstance(
+        tensor_frame.feat_dict[stype.text_tokenized], dict)
+    assert feat_text.keys() == tensor_frame.feat_dict[
+        stype.text_tokenized].keys()
+    for key in feat_text.keys():
+        assert torch.allclose(
+            feat_text[key].values,
+            tensor_frame.feat_dict[stype.text_tokenized][key].values)
+        assert torch.allclose(
+            feat_text[key].offset,
+            tensor_frame.feat_dict[stype.text_tokenized][key].offset)

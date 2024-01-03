@@ -83,7 +83,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
 * **PyTorch integration**:
-  Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating end-to-end training of PyTorch Frame with downstream PyTorch models.
+  Integrates effortlessly with other PyTorch libraries, facilitating end-to-end training of PyTorch Frame with downstream PyTorch models. For example, by integrating with [PyG](https://pyg.org/), a PyTorch library for GNNs, we can perform deep learning over relational databases. Learn more in [RelBench](https://relbench.stanford.edu/) and [example code (WIP)](https://github.com/snap-stanford/relbench/blob/main/examples/gnn.py).
 
 ## Architecture Overview
 

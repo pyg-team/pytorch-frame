@@ -21,6 +21,7 @@ def serialize_feat_dict(
 ) -> dict[torch_frame.stype, Any]:
     feat_serialized_dict = {}
     for stype, feat in feat_dict.items():
+        feat_serialized: Any
         if stype.use_multi_tensor:
             assert isinstance(feat, _MultiTensor)
             feat_serialized = feat.to_dict()
@@ -42,6 +43,7 @@ def deserialize_feat_dict(
 ) -> dict[torch_frame.stype, TensorData]:
     feat_dict = {}
     for stype, feat_serialized in feat_serialized_dict.items():
+        feat: TensorData
         if stype.use_multi_nested_tensor:
             feat = MultiNestedTensor(**feat_serialized)
         elif stype.use_multi_embedding_tensor:
