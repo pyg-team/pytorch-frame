@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- Supported more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
 - Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
 
 ### Changed
