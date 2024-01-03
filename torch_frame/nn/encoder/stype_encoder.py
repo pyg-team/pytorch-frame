@@ -752,12 +752,12 @@ class LinearModelEncoder(StypeEncoder):
             :obj:`[batch_size, 1, model_out_channels]`.
     """
 
-    # NOTE: We currently support text embeddings but in principle, this encoder
-    # can support any model outputs embeddings, including image/audio/graph
-    # embeddings.
-    # NOTE: This can in principle support any stypes and allow MLP-based
-    # non-linear modeling for each column.
-    supported_stypes = {stype.text_tokenized}
+    supported_stypes = {
+        stype.text_embedded,
+        stype.text_tokenized,
+        stype.numerical,
+        stype.embedding,
+    }
 
     def __init__(
         self,
@@ -819,7 +819,18 @@ class LinearModelEncoder(StypeEncoder):
                     for key in feat
                 })
             else:
-                x = self.model_dict[col_name](feat[:, i])
+                input_feat = feat[:, i]
+                if isinstance(input_feat, MultiEmbeddingTensor):
+                    input_feat = input_feat.values
+
+                # Numerical case:
+                if input_feat.ndim == 1:
+                    input_feat = input_feat.view(-1, 1, 1)
+                # MultiNestedEmbedding case:
+                elif input_feat.ndim == 2:
+                    input_feat = input_feat.unsqueeze(1)
+
+                x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)

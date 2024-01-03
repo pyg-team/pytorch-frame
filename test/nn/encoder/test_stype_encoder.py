@@ -2,11 +2,12 @@ import copy
 
 import pytest
 import torch
-from torch.nn import ReLU
+from torch.nn import Linear, ReLU, Sequential
 
 import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.config import ModelConfig
+from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.stats import StatType
@@ -23,6 +24,7 @@ from torch_frame.nn import (
     StackEncoder,
     TimestampEncoder,
 )
+from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
     WhiteSpaceHashTokenizer,
@@ -426,3 +428,63 @@ def test_text_tokenized_encoder():
         assert torch.allclose(
             feat_text[key].offset,
             tensor_frame.feat_dict[stype.text_tokenized][key].offset)
+
+
+def test_linear_model_encoder():
+    num_rows = 20
+    out_channels = 5
+    data_stypes = [
+        torch_frame.numerical,
+        torch_frame.text_embedded,
+    ]
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=data_stypes,
+        col_to_text_embedder_cfg=TextEmbedderConfig(
+            text_embedder=HashTextEmbedder(out_channels=out_channels),
+            batch_size=None,
+        ),
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = []
+    col_to_model_cfg = {}
+    encoder_dict = {}
+    for data_stype in data_stypes:
+        if data_stype == torch_frame.text_embedded:
+            data_stype = data_stype.parent
+        stats_list.extend(
+            dataset.col_stats[col_name]
+            for col_name in tensor_frame.col_names_dict[data_stype])
+        for col_name in tensor_frame.col_names_dict[data_stype]:
+            if data_stype == torch_frame.embedding:
+                in_channels = out_channels
+                model = Sequential(Linear(in_channels, out_channels), ReLU(),
+                                   Linear(out_channels, out_channels))
+            elif data_stype == torch_frame.numerical:
+                in_channels = 1
+                model = Sequential(Linear(in_channels, out_channels), ReLU(),
+                                   Linear(out_channels, out_channels))
+            else:
+                raise ValueError(f"Stype {data_stype} not supported")
+            col_to_model_cfg[col_name] = ModelConfig(model=model,
+                                                     out_channels=out_channels)
+
+        encoder_dict[data_stype] = LinearModelEncoder(
+            out_channels=out_channels,
+            stats_list=stats_list,
+            stype=data_stype,
+            col_to_model_cfg=col_to_model_cfg,
+        )
+
+    for data_stype in data_stypes:
+        if data_stype == torch_frame.text_embedded:
+            data_stype = data_stype.parent
+        feat = copy.deepcopy(tensor_frame.feat_dict[data_stype])
+        col_names = tensor_frame.col_names_dict[data_stype]
+        x = encoder_dict[data_stype](feat, col_names)
+        assert x.shape == (
+            num_rows,
+            len(tensor_frame.col_names_dict[data_stype]),
+            out_channels,
+        )
