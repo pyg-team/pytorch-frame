@@ -225,3 +225,7 @@ class CatBoost(GBDT):
 
         self.model = catboost.CatBoost()
         self.model.load_model(path)
+
+    def _feature_importance(self) -> list:
+        scores = self.model.feature_importances_
+        return scores
