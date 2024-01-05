@@ -4,16 +4,22 @@ import pandas as pd
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.utils.infer_stype import infer_df_stype
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class HuggingFaceDatasetDict(torch_frame.data.Dataset):
     r"""Load a Hugging Face :obj:`datasets.DatasetDict` dataset
     to a :obj:`torch_frame.data.Dataset` with pre-defined split information.
+    Please refer to `Hugging Face datasets <https://huggingface.co/datasets>_`
+    for all available datasets.
 
     Args:
         path (str): Path or name of the dataset.
         name (str, optional): Defining the name of the dataset configuration.
+            (default: :obj:`None`)
+        columns (list, optional): List of columns to be included.
+            (default: :obj:`None`)
 
     Example:
         Load the `spotify-tracks-dataset` dataset from the Hugging Face Hub
@@ -21,33 +27,18 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
 
     .. code-block:: python
 
-        >>> import torch_frame
         >>> from torch_frame.datasets import HuggingFaceDatasetDict
         >>> from torch_frame.config.text_embedder import TextEmbedderConfig
         >>> from torch_frame.testing.text_embedder import HashTextEmbedder
         >>> dataset = HuggingFaceDatasetDict(
         ...     path="maharshipandya/spotify-tracks-dataset",
-        ...     col_to_stype = {
-        ...         "artists": torch_frame.categorical,
-        ...         "album_name": torch_frame.text_embedded,
-        ...         "track_name": torch_frame.text_embedded,
-        ...         "popularity": torch_frame.numerical,
-        ...         "duration_ms": torch_frame.numerical,
-        ...         "explicit": torch_frame.categorical,
-        ...         "danceability": torch_frame.numerical,
-        ...         "energy": torch_frame.numerical,
-        ...         "key": torch_frame.categorical,
-        ...         "loudness": torch_frame.numerical,
-        ...         "mode": torch_frame.categorical,
-        ...         "speechiness": torch_frame.numerical,
-        ...         "acousticness": torch_frame.numerical,
-        ...         "instrumentalness": torch_frame.numerical,
-        ...         "liveness": torch_frame.numerical,
-        ...         "valence": torch_frame.numerical,
-        ...         "tempo": torch_frame.numerical,
-        ...         "time_signature": torch_frame.categorical,
-        ...         "track_genre": torch_frame.categorical,
-        ...     },
+        ...     columns=["artists", "album_name", "track_name",
+        ...              "popularity", "duration_ms", "explicit",
+        ...              "danceability", "energy", "key", "loudness",
+        ...              "mode", "speechiness", "acousticness",
+        ...              "instrumentalness", "liveness", "valence",
+        ...              "tempo", "time_signature", "track_genre"
+        ...     ],
         ...     target_col="track_genre",
         ...     col_to_text_embedder_cfg=TextEmbedderConfig(
         ...         text_embedder=HashTextEmbedder(10)),
@@ -57,13 +48,6 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         TensorFrame(
             num_cols=18,
             num_rows=114000,
-            categorical (5): [
-                'artists',
-                'explicit',
-                'key',
-                'mode',
-                'time_signature',
-            ],
             numerical (11): [
                 'acousticness',
                 'danceability',
@@ -77,7 +61,13 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
                 'tempo',
                 'valence',
             ],
-            embedding (2): ['album_name', 'track_name'],
+            categorical (4): [
+                'explicit',
+                'key',
+                'mode',
+                'time_signature',
+            ],
+            embedding (3): ['artists', 'album_name', 'track_name'],
             has_target=True,
             device='cpu',
         )
@@ -86,8 +76,9 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
     def __init__(
         self,
         path: str,
-        col_to_stype: dict[str, stype],
-        name: str | None,
+        name: str | None = None,
+        columns: list[str] | None = None,
+        col_to_stype: dict[str, stype] | None = None,
         target_col: str | None = None,
         **kwargs,
     ) -> None:
@@ -106,6 +97,9 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         for split_name in dataset:
             # Load pandas dataframe for each split
             df: pd.DataFrame = dataset[split_name][:]
+
+            if columns is not None:
+                df = df[columns]
 
             # Transform HF dataset split to `SPLIT_TO_NUM` accepted one:
             if "train" in split_name:
@@ -131,6 +125,9 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
             ]
 
         df = pd.concat(dfs).reset_index(drop=True)
+
+        if col_to_stype is None:
+            col_to_stype = infer_df_stype(df)
 
         if len(split_names) > 1:
             super().__init__(df, col_to_stype, target_col=target_col,
