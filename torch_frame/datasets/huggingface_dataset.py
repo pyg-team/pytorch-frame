@@ -11,8 +11,8 @@ from torch_frame.utils.split import SPLIT_TO_NUM
 class HuggingFaceDatasetDict(torch_frame.data.Dataset):
     r"""Load a Hugging Face :obj:`datasets.DatasetDict` dataset
     to a :obj:`torch_frame.data.Dataset` with pre-defined split information.
-    Please refer to `Hugging Face datasets <https://huggingface.co/datasets>_`
-    for all available datasets.
+    Please refer to `Hugging Face Datasets <https://huggingface.co/datasets>`_
+    for all available dataset paths and names.
 
     Args:
         path (str): Path or name of the dataset.
