@@ -498,9 +498,9 @@ def test_linear_model_encoder():
 
     for data_stype in data_stypes:
         data_stype = data_stype.parent
-        feat = copy.deepcopy(tensor_frame.feat_dict[data_stype])
         col_names = tensor_frame.col_names_dict[data_stype]
-        x = encoder_dict[data_stype](feat, col_names)
+        x = encoder_dict[data_stype](tensor_frame.feat_dict[data_stype],
+                                     col_names)
         assert x.shape == (
             num_rows,
             len(tensor_frame.col_names_dict[data_stype]),
