@@ -1,17 +1,35 @@
 import pytest
 
+from torch_frame import stype
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
-from torch_frame.nn import Trompt
+from torch_frame.nn import EmbeddingEncoder, LinearEncoder, Trompt
 
 
 @pytest.mark.parametrize('batch_size', [0, 5])
-def test_trompt(batch_size):
+@pytest.mark.parametrize('stype_encoder_dicts', [
+    [
+        {
+            stype.numerical: LinearEncoder(),
+            stype.categorical: EmbeddingEncoder(),
+        },
+        {
+            stype.numerical: LinearEncoder(),
+            stype.categorical: EmbeddingEncoder(),
+        },
+        {
+            stype.numerical: LinearEncoder(),
+            stype.categorical: EmbeddingEncoder(),
+        },
+    ],
+    None,
+])
+def test_trompt(batch_size, stype_encoder_dicts):
     batch_size = 10
     channels = 8
     out_channels = 1
     num_prompts = 2
-    num_layers = 6
+    num_layers = 3
     dataset: Dataset = FakeDataset(num_rows=10, with_nan=False)
     dataset.materialize()
     tensor_frame = dataset.tensor_frame[:batch_size]
@@ -22,6 +40,7 @@ def test_trompt(batch_size):
         num_layers=num_layers,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
+        stype_encoder_dicts=stype_encoder_dicts,
     )
     model.reset_parameters()
     out = model.forward_stacked(tensor_frame)

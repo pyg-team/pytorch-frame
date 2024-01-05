@@ -32,6 +32,60 @@ def column_select(
     return new_tensor_mat
 
 
+def test_fillna_col():
+    # Creat a MultiNestedTensor containing all -1's
+    # In MultiNestedTensor with torch.long dtype,
+    # -1's are considered as NaNs.
+    tensor_list = [
+        [torch.tensor([100, -1]),
+         torch.tensor([100, -1, -1])],
+        [torch.tensor([-1]), torch.tensor([-1, -1])],
+    ]
+    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
+        tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        columnwise_nan_mask[col] = (
+            multi_nested_tensor_with_nan[:, col].values == -1)
+
+    # Test fillna_col
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        multi_nested_tensor_with_nan.fillna_col(col, col)
+    assert not torch.all(multi_nested_tensor_with_nan.values == -1).any()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        column = multi_nested_tensor_with_nan[:, col]
+        assert torch.all(column.values[columnwise_nan_mask[col]] == col)
+        assert torch.all(column.values[~columnwise_nan_mask[col]] == 100)
+
+    tensor_list = [
+        [
+            torch.tensor([100., torch.nan]),
+            torch.tensor([torch.nan, 100., torch.nan])
+        ],
+        [torch.tensor([torch.nan]),
+         torch.tensor([torch.nan, 100.])],
+    ]
+    multi_nested_tensor_with_nan = MultiNestedTensor.from_tensor_mat(
+        tensor_list)
+    columnwise_nan_mask = dict()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        columnwise_nan_mask[col] = torch.isnan(
+            multi_nested_tensor_with_nan[:, col].values)
+
+    # Test fillna_col
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        multi_nested_tensor_with_nan.fillna_col(col, float(col))
+    assert not torch.isnan(multi_nested_tensor_with_nan.values).any()
+    for col in range(multi_nested_tensor_with_nan.num_cols):
+        column = multi_nested_tensor_with_nan[:, col]
+        assert torch.all(
+            torch.isclose(column.values[columnwise_nan_mask[col]],
+                          torch.tensor([col], dtype=torch.float32)))
+        assert torch.all(
+            torch.isclose(column.values[~columnwise_nan_mask[col]],
+                          torch.tensor([100], dtype=torch.float32)))
+
+
 @withCUDA
 def test_multi_nested_tensor_basics(device):
     num_rows = 8
@@ -220,7 +274,7 @@ def test_multi_nested_tensor_basics(device):
         MultiNestedTensor.cat([], dim=1)
 
     # Testing set item
-    with pytest.raises(RuntimeError, match="read-only"):
+    with pytest.raises(RuntimeError, match="not currently supported"):
         multi_nested_tensor[0, 0] = torch.zeros(3)
 
     # Testing clone

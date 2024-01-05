@@ -17,12 +17,12 @@ from torch.nn import (
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import (
+from torch_frame.nn.encoder.stype_encoder import (
     EmbeddingEncoder,
     LinearEncoder,
     StypeEncoder,
-    StypeWiseFeatureEncoder,
 )
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 
 
 class FCResidualBlock(Module):
@@ -50,6 +50,8 @@ class FCResidualBlock(Module):
         self.relu = ReLU()
         self.dropout = Dropout(dropout_prob)
 
+        self.norm1: BatchNorm1d | LayerNorm | None
+        self.norm2: BatchNorm1d | LayerNorm | None
         if normalization == "batchnorm":
             self.norm1 = BatchNorm1d(out_channels)
             self.norm2 = BatchNorm1d(out_channels)
@@ -59,6 +61,7 @@ class FCResidualBlock(Module):
         else:
             self.norm1 = self.norm2 = None
 
+        self.shortcut: Linear | None
         if in_channels != out_channels:
             self.shortcut = Linear(in_channels, out_channels)
         else:
@@ -109,20 +112,21 @@ class ResNet(Module):
         channels (int): The number of channels in the backbone layers.
         out_channels (int): The number of output channels in the decoder.
         num_layers (int): The number of layers in the backbone.
-        col_stats(Dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
+        col_stats(dict[str,Dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
-        col_names_dict (Dict[:class:`torch_frame.stype`, List[str]]): A
+        col_names_dict (dict[:class:`torch_frame.stype`, List[str]]): A
             dictionary that maps stype to a list of column names. The column
             names are sorted based on the ordering that appear in
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict
-            (Optional[Dict[:class:`torch_frame.stype`,
-            :class:`torch_frame.nn.encoder.StypeEncoder`]):
-            Dictionary containing encoder type per column statistics
-            (default: :obj:`None`, :obj:`EmbeddingEncoder()` for categorial
-            feature and :obj:`LinearEncoder()` for numerical feature)
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            A dictionary mapping stypes into their stype encoders.
+            (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
+            for categorical feature and :obj:`LinearEncoder()` for
+            numerical feature)
         normalization (str, optional): The type of normalization to use.
             :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
             (default: :obj:`layernorm`)
