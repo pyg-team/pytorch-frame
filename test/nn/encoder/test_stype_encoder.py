@@ -2,6 +2,7 @@ import copy
 
 import pytest
 import torch
+from torch import Tensor
 from torch.nn import Linear, ReLU, Sequential
 
 import torch_frame
@@ -10,6 +11,8 @@ from torch_frame.config import ModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
+from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
+from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
 from torch_frame.nn import (
@@ -24,6 +27,7 @@ from torch_frame.nn import (
     StackEncoder,
     TimestampEncoder,
 )
+from torch_frame.nn.encoding import CyclicEncoding
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
@@ -432,10 +436,15 @@ def test_text_tokenized_encoder():
 
 def test_linear_model_encoder():
     num_rows = 20
-    out_channels = 5
+    out_channels = 8
     data_stypes = [
         torch_frame.numerical,
         torch_frame.text_embedded,
+        torch_frame.timestamp,
+        torch_frame.categorical,
+        torch_frame.multicategorical,
+        torch_frame.sequence_numerical,
+        torch_frame.embedding,
     ]
     dataset = FakeDataset(
         num_rows=num_rows,
@@ -451,20 +460,30 @@ def test_linear_model_encoder():
     col_to_model_cfg = {}
     encoder_dict = {}
     for data_stype in data_stypes:
-        if data_stype == torch_frame.text_embedded:
-            data_stype = data_stype.parent
+        data_stype = data_stype.parent
         stats_list.extend(
             dataset.col_stats[col_name]
             for col_name in tensor_frame.col_names_dict[data_stype])
         for col_name in tensor_frame.col_names_dict[data_stype]:
             if data_stype == torch_frame.embedding:
-                in_channels = out_channels
-                model = Sequential(Linear(in_channels, out_channels), ReLU(),
-                                   Linear(out_channels, out_channels))
+                in_channels = dataset.col_stats[col_name][StatType.EMB_DIM]
+                model = EmbeddingModel(in_channels, out_channels)
             elif data_stype == torch_frame.numerical:
                 in_channels = 1
-                model = Sequential(Linear(in_channels, out_channels), ReLU(),
-                                   Linear(out_channels, out_channels))
+                model = NumericalModel(in_channels, out_channels)
+            elif data_stype == torch_frame.timestamp:
+                in_channels = 7
+                model = TimestampModel(in_channels, out_channels)
+            elif data_stype == torch_frame.categorical:
+                count_index, _ = dataset.col_stats[col_name][StatType.COUNT]
+                model = CategoricalModel(len(count_index), out_channels)
+            elif data_stype == torch_frame.multicategorical:
+                count_index, _ = dataset.col_stats[col_name][
+                    StatType.MULTI_COUNT]
+                model = MultiCategoricalModel(len(count_index), out_channels)
+            elif data_stype == torch_frame.sequence_numerical:
+                in_channels = dataset.col_stats[col_name][StatType.MAX_LENGTH]
+                model = SequenceNumericalModel(in_channels, out_channels)
             else:
                 raise ValueError(f"Stype {data_stype} not supported")
             col_to_model_cfg[col_name] = ModelConfig(model=model,
@@ -478,8 +497,7 @@ def test_linear_model_encoder():
         )
 
     for data_stype in data_stypes:
-        if data_stype == torch_frame.text_embedded:
-            data_stype = data_stype.parent
+        data_stype = data_stype.parent
         feat = copy.deepcopy(tensor_frame.feat_dict[data_stype])
         col_names = tensor_frame.col_names_dict[data_stype]
         x = encoder_dict[data_stype](feat, col_names)
@@ -488,3 +506,71 @@ def test_linear_model_encoder():
             len(tensor_frame.col_names_dict[data_stype]),
             out_channels,
         )
+
+
+class EmbeddingModel(torch.nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.mlp = Sequential(Linear(in_channels, out_channels), ReLU(),
+                              Linear(out_channels, out_channels))
+
+    def forward(self, x: MultiEmbeddingTensor) -> Tensor:
+        # [batch_size, 1, embedding_size]
+        return self.mlp(x.values.unsqueeze(dim=1))
+
+
+class NumericalModel(torch.nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.mlp = Sequential(Linear(in_channels, out_channels), ReLU(),
+                              Linear(out_channels, out_channels))
+
+    def forward(self, x: Tensor) -> Tensor:
+        # [batch_size]
+        return self.mlp(x.view(-1, 1, 1))
+
+
+class TimestampModel(torch.nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.weight = torch.nn.Parameter(
+            torch.empty(in_channels, out_channels, out_channels))
+        self.cyclic_encoding = CyclicEncoding(out_size=out_channels)
+
+    def forward(self, x: Tensor) -> Tensor:
+        # [batch_size, num_time_feats]
+        x = x.to(torch.float32)
+        # [batch_size, num_time_feats, out_size]
+        x_cyclic = self.cyclic_encoding(x / x.max())
+        # [batch_size, 1, out_size]
+        return torch.einsum('ijk,jkl->il', x_cyclic,
+                            self.weight).unsqueeze(dim=1)
+
+
+class CategoricalModel(torch.nn.Module):
+    def __init__(self, num_categories: int, out_channels: int):
+        super().__init__()
+        self.emb = torch.nn.Embedding(num_categories, out_channels)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.emb(x).unsqueeze(dim=1)
+
+
+class MultiCategoricalModel(torch.nn.Module):
+    def __init__(self, num_categories: int, out_channels: int):
+        super().__init__()
+        self.emb = torch.nn.EmbeddingBag(num_categories, out_channels)
+
+    def forward(self, x: MultiNestedTensor) -> Tensor:
+        return self.emb(x.values, x.offset[:-1]).unsqueeze(dim=1)
+
+
+class SequenceNumericalModel(torch.nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.mlp = Sequential(Linear(in_channels, out_channels), ReLU(),
+                              Linear(out_channels, out_channels))
+
+    def forward(self, x: MultiNestedTensor) -> Tensor:
+        # [batch_size, 1, max_length]
+        return self.mlp(x.to_dense(fill_value=0.0))

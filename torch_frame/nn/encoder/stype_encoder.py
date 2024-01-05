@@ -757,6 +757,10 @@ class LinearModelEncoder(StypeEncoder):
         stype.text_tokenized,
         stype.numerical,
         stype.embedding,
+        stype.timestamp,
+        stype.categorical,
+        stype.multicategorical,
+        stype.sequence_numerical,
     }
 
     def __init__(
@@ -820,16 +824,6 @@ class LinearModelEncoder(StypeEncoder):
                 })
             else:
                 input_feat = feat[:, i]
-                if isinstance(input_feat, MultiEmbeddingTensor):
-                    input_feat = input_feat.values
-
-                # Numerical case:
-                if input_feat.ndim == 1:
-                    input_feat = input_feat.view(-1, 1, 1)
-                # MultiNestedEmbedding case:
-                elif input_feat.ndim == 2:
-                    input_feat = input_feat.unsqueeze(1)
-
                 x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
