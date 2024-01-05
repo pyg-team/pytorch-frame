@@ -816,14 +816,26 @@ class LinearModelEncoder(StypeEncoder):
     ) -> Tensor:
         xs = []
         for i, col_name in enumerate(col_names):
-            # [batch_size, 1, in_channels]
             if self.stype.use_dict_multi_nested_tensor:
+                # [batch_size, 1, in_channels]
                 x = self.model_dict[col_name]({
                     key: feat[key][:, i]
                     for key in feat
                 })
             else:
                 input_feat = feat[:, i]
+
+                # Numerical and categorical cases etc.:
+                if input_feat.ndim == 1:
+                    input_feat = input_feat.view(-1, 1, 1)
+                elif input_feat.ndim == 2:
+                    input_feat = input_feat.unsqueeze(dim=1)
+
+                if input_feat.ndim != 3:
+                    raise ValueError(f"Column {col_name} should have ndim "
+                                     f"3 input, but get {input_feat.ndim} "
+                                     f"instead.")
+
                 x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]

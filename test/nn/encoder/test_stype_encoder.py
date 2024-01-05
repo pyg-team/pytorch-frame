@@ -526,8 +526,8 @@ class NumericalModel(torch.nn.Module):
                               Linear(out_channels, out_channels))
 
     def forward(self, x: Tensor) -> Tensor:
-        # [batch_size]
-        return self.mlp(x.view(-1, 1, 1))
+        # [batch_size, 1, 1] -> [batch_size, 1, out_channels]
+        return self.mlp(x)
 
 
 class TimestampModel(torch.nn.Module):
@@ -538,12 +538,12 @@ class TimestampModel(torch.nn.Module):
         self.cyclic_encoding = CyclicEncoding(out_size=out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
-        # [batch_size, num_time_feats]
+        # [batch_size, 1, num_time_feats]
         x = x.to(torch.float32)
-        # [batch_size, num_time_feats, out_size]
+        # [batch_size, 1, num_time_feats, out_channels]
         x_cyclic = self.cyclic_encoding(x / x.max())
-        # [batch_size, 1, out_size]
-        return torch.einsum('ijk,jkl->il', x_cyclic,
+        # [batch_size, 1, out_channels]
+        return torch.einsum('ijk,jkl->il', x_cyclic.squeeze(1),
                             self.weight).unsqueeze(dim=1)
 
 
@@ -553,7 +553,10 @@ class CategoricalModel(torch.nn.Module):
         self.emb = torch.nn.Embedding(num_categories, out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.emb(x).unsqueeze(dim=1)
+        # [batch_size, 1, 1] -> [batch_size, 1]
+        x = x.squeeze(dim=1)
+        # [batch_size, 1] -> [batch_size, 1, out_channels]
+        return self.emb(x)
 
 
 class MultiCategoricalModel(torch.nn.Module):
