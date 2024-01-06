@@ -1,9 +1,7 @@
 """Reported (reproduced, xgboost) results of of TabTransformer model based on
 Table 1 of original paper https://arxiv.org/abs/2012.06678.
 
-adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
-bank-marketing: 93.4 (78.35, 81.00)
-dota2: 63.3 (58.28, 53.75)
+TODO: Update numbers.
 """
 
 import argparse
@@ -108,15 +106,14 @@ def test(loader: DataLoader) -> float:
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        pred_class = pred.argmax(dim=-1)
 
-        all_labels.append(tf.y)
-        all_preds.append(pred_class)
-    all_labels = torch.cat(all_labels).cpu()
-    all_preds = torch.cat(all_preds).cpu()
+        all_labels.append(tf.y.cpu())
+        all_preds.append(pred[:, 1].detach().cpu())
+    all_labels = torch.cat(all_labels).numpy()
+    all_preds = torch.cat(all_preds).numpy()
 
     # Compute the overall AUC
-    overall_auc = roc_auc_score(all_labels.numpy(), all_preds.numpy())
+    overall_auc = roc_auc_score(all_labels, all_preds)
     return overall_auc
 
 
