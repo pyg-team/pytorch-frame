@@ -52,13 +52,13 @@ from torch_frame.typing import TextTokenizationOutputs
 # ===== product_sentiment_machine_hack ======
 # Best Val Acc: 0.9273, Best Test Acc: 0.9159
 # ======== jigsaw_unintended_bias100K =======
-#
+# Best Val Acc: 0.9571, Best Test Acc: 0.9566
 # =============== news_channel ==============
-#
+# Best Val Acc: 0.4837, Best Test Acc: 0.4711
 # ============ fake_job_postings2 ===========
-#
+# Best Val Acc: 0.9851, Best Test Acc: 0.9818
 # ========== imdb_genre_prediction ==========
-#
+# Best Val Acc: 0.9500, Best Test Acc: 0.8300
 
 
 # Text Tokenized
@@ -113,8 +113,8 @@ class TextToEmbedding:
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         if model == "intfloat/e5-mistral-7b-instruct":
             self.pooling = "last"
-            self.model = AutoModel.from_pretrained(
-                model, torch_dtype=torch.bfloat16,).to(device)
+            # self.model = AutoModel.from_pretrained(
+            #     model, torch_dtype=torch.bfloat16,).to(device)
         else:
             self.model = AutoModel.from_pretrained(model).to(device)
             self.pooling = pooling
@@ -266,7 +266,7 @@ if not args.finetune:
         "text_stype":
         text_stype,
         "col_to_text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=1),
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model,
