@@ -211,7 +211,7 @@ def test_multi_nested_tensor_basics(device):
 
     # Test column-wise Boolean masking
     for index in [[4], [2, 3], [0, 1, 7], []]:
-        mask = torch.zeros((num_cols,), dtype=torch.bool, device=device)
+        mask = torch.zeros((num_cols, ), dtype=torch.bool, device=device)
         mask[index] = True
         assert_equal(column_select(tensor_mat, index),
                      multi_nested_tensor[:, mask])
