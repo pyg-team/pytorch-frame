@@ -214,7 +214,7 @@ def test_index(device):
     # test selection with Boolean mask
     # only ordered selection without duplicates is possible
     for index in [[4], [2, 3], [0, 1, 7], []]:
-        mask = torch.zeros((num_rows,), dtype=torch.bool, device=device)
+        mask = torch.zeros((num_rows, ), dtype=torch.bool, device=device)
         mask[index] = True
 
         met_indexed = met[mask]

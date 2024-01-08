@@ -187,7 +187,7 @@ def test_multi_nested_tensor_basics(device):
 
     # Test row-wise Boolean masking
     for index in [[4], [2, 3], [0, 1, 7], []]:
-        mask = torch.zeros((num_rows,), dtype=torch.bool, device=device)
+        mask = torch.zeros((num_rows, ), dtype=torch.bool, device=device)
         mask[index] = True
         multi_nested_tensor_indexed = multi_nested_tensor[mask]
         assert multi_nested_tensor_indexed.shape[0] == len(index)
