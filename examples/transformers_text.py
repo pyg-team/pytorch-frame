@@ -60,7 +60,6 @@ from torch_frame.typing import TextTokenizationOutputs
 # ========== imdb_genre_prediction ==========
 # Best Val Acc: 0.9500, Best Test Acc: 0.8300
 
-
 # Text Tokenized
 # distilbert-base-uncased + LoRA
 # ============== wine_reviews ===============
@@ -113,15 +112,21 @@ class TextToEmbedding:
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         if model == "intfloat/e5-mistral-7b-instruct":
             self.pooling = "last"
-            # self.model = AutoModel.from_pretrained(
-            #     model, torch_dtype=torch.bfloat16,).to(device)
+            self.model = AutoModel.from_pretrained(
+                model,
+                torch_dtype=torch.bfloat16,
+            ).to(device)
         else:
             self.model = AutoModel.from_pretrained(model).to(device)
             self.pooling = pooling
 
     def __call__(self, sentences: List[str]) -> Tensor:
         if self.model_name == "intfloat/e5-mistral-7b-instruct":
-            sentences = [get_detailed_instruct("Retrieve relevant knowledge and embeddings.", sentence) for sentence in sentences]
+            sentences = [
+                get_detailed_instruct(
+                    "Retrieve relevant knowledge and embeddings.", sentence)
+                for sentence in sentences
+            ]
             max_length = 4096
             inputs = self.tokenizer(
                 sentences,
@@ -130,7 +135,10 @@ class TextToEmbedding:
                 return_attention_mask=False,
                 padding=False,
             )
-            inputs["input_ids"] = [input_ids + [self.tokenizer.eos_token_id] for input_ids in inputs["input_ids"]]
+            inputs["input_ids"] = [
+                input_ids + [self.tokenizer.eos_token_id]
+                for input_ids in inputs["input_ids"]
+            ]
             inputs = self.tokenizer.pad(
                 inputs,
                 padding=True,
@@ -155,7 +163,8 @@ class TextToEmbedding:
         elif self.pooling == "cls":
             return out.last_hidden_state[:, 0, :].detach().cpu()
         elif self.pooling == "last":
-            return last_pooling(out.last_hidden_state, mask).detach().cpu().to(torch.float32)
+            return last_pooling(out.last_hidden_state,
+                                mask).detach().cpu().to(torch.float32)
         else:
             raise ValueError(f"{self.pooling} is not supported.")
 
@@ -244,7 +253,7 @@ def last_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
         return last_hidden_state[
             torch.arange(batch_size, device=last_hidden_state.device),
             sequence_lengths]
-    
+
 
 def get_detailed_instruct(task_description: str, query: str) -> str:
     return f'Instruct: {task_description}\nQuery: {query}'
