@@ -104,7 +104,6 @@ def test_compute_col_stats_sequence_numerical():
     ser = pd.Series([[1, 2, 3], [4, 5, 6]])
     stype = sequence_numerical
     assert compute_col_stats(ser, stype) == {
-        StatType.MAX_LENGTH: 3,
         StatType.MEAN: 3.5,
         StatType.STD: 1.707825127659933,
         StatType.QUANTILES: [1.0, 2.25, 3.5, 4.75, 6.0],
@@ -114,7 +113,6 @@ def test_compute_col_stats_sequence_numerical():
 def test_compute_col_stats_sequence_numerical_with_nan_inf():
     ser = pd.Series([[1, 2, 3, np.nan], [4, 5, 6]])
     expected_col_stats = {
-        StatType.MAX_LENGTH: 4,
         StatType.MEAN: 3.5,
         StatType.STD: 1.707825127659933,
         StatType.QUANTILES: [1.0, 2.25, 3.5, 4.75, 6.0],
@@ -130,7 +128,6 @@ def test_compute_col_stats_sequence_numerical_with_nan():
                      [np.nan, np.nan, np.nan]])
     stype = sequence_numerical
     assert compute_col_stats(ser, stype) == {
-        StatType.MAX_LENGTH: 4,
         StatType.MEAN: np.nan,
         StatType.STD: np.nan,
         StatType.QUANTILES: [np.nan, np.nan, np.nan, np.nan, np.nan],
