@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added support for Boolean masks in `index_select` of `_MultiTensor` [334](https://github.com/pyg-team/pytorch-frame/pull/334) 
+- Added support for Boolean masks in `index_select` of `_MultiTensor` [334](https://github.com/pyg-team/pytorch-frame/pull/334)
 - Added more text documentation ([#291](https://github.com/pyg-team/pytorch-frame/pull/291))
 - Added `col_to_model_cfg` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))
