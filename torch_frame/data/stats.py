@@ -52,8 +52,6 @@ class StatType(Enum):
     # dataset._update_col_stats, not here.
     EMB_DIM = "EMB_DIM"
 
-    MAX_LENGTH = "MAX_LENGTH"
-
     @staticmethod
     def stats_for_stype(stype: torch_frame.stype) -> list[StatType]:
         stats_type = {
@@ -68,7 +66,6 @@ class StatType(Enum):
                 StatType.MEAN,
                 StatType.STD,
                 StatType.QUANTILES,
-                StatType.MAX_LENGTH,
             ],
             torch_frame.timestamp: [
                 StatType.YEAR_RANGE,
@@ -142,9 +139,6 @@ class StatType(Enum):
         elif self == StatType.EMB_DIM:
             return len(ser[0])
 
-        elif self == StatType.MAX_LENGTH:
-            return ser.apply(len).max()
-
 
 _default_values = {
     StatType.MEAN: np.nan,
@@ -157,7 +151,6 @@ _default_values = {
     StatType.OLDEST_TIME: torch.tensor([-1, -1, -1, -1, -1, -1, -1]),
     StatType.MEDIAN_TIME: torch.tensor([-1, -1, -1, -1, -1, -1, -1]),
     StatType.EMB_DIM: -1,
-    StatType.MAX_LENGTH: -1,
 }
 
 

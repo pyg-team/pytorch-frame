@@ -11,6 +11,7 @@ from torch_frame.config import ModelConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
+from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.data.stats import StatType
@@ -443,7 +444,6 @@ def test_linear_model_encoder():
         torch_frame.timestamp,
         torch_frame.categorical,
         torch_frame.multicategorical,
-        torch_frame.sequence_numerical,
         torch_frame.embedding,
     ]
     dataset = FakeDataset(
@@ -469,11 +469,9 @@ def test_linear_model_encoder():
                 in_channels = dataset.col_stats[col_name][StatType.EMB_DIM]
                 model = EmbeddingModel(in_channels, out_channels)
             elif data_stype == torch_frame.numerical:
-                in_channels = 1
-                model = NumericalModel(in_channels, out_channels)
+                model = NumericalModel(out_channels)
             elif data_stype == torch_frame.timestamp:
-                in_channels = 7
-                model = TimestampModel(in_channels, out_channels)
+                model = TimestampModel(out_channels)
             elif data_stype == torch_frame.categorical:
                 count_index, _ = dataset.col_stats[col_name][StatType.COUNT]
                 model = CategoricalModel(len(count_index), out_channels)
@@ -481,9 +479,6 @@ def test_linear_model_encoder():
                 count_index, _ = dataset.col_stats[col_name][
                     StatType.MULTI_COUNT]
                 model = MultiCategoricalModel(len(count_index), out_channels)
-            elif data_stype == torch_frame.sequence_numerical:
-                in_channels = dataset.col_stats[col_name][StatType.MAX_LENGTH]
-                model = SequenceNumericalModel(in_channels, out_channels)
             else:
                 raise ValueError(f"Stype {data_stype} not supported")
             col_to_model_cfg[col_name] = ModelConfig(model=model,
@@ -520,9 +515,9 @@ class EmbeddingModel(torch.nn.Module):
 
 
 class NumericalModel(torch.nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
+    def __init__(self, out_channels: int):
         super().__init__()
-        self.mlp = Sequential(Linear(in_channels, out_channels), ReLU(),
+        self.mlp = Sequential(Linear(1, out_channels), ReLU(),
                               Linear(out_channels, out_channels))
 
     def forward(self, x: Tensor) -> Tensor:
@@ -531,10 +526,14 @@ class NumericalModel(torch.nn.Module):
 
 
 class TimestampModel(torch.nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
+    def __init__(self, out_channels: int):
         super().__init__()
         self.weight = torch.nn.Parameter(
-            torch.empty(in_channels, out_channels, out_channels))
+            torch.empty(
+                len(TimestampTensorMapper.TIME_TO_INDEX),
+                out_channels,
+                out_channels,
+            ))
         self.cyclic_encoding = CyclicEncoding(out_size=out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -566,14 +565,3 @@ class MultiCategoricalModel(torch.nn.Module):
 
     def forward(self, x: MultiNestedTensor) -> Tensor:
         return self.emb(x.values, x.offset[:-1]).unsqueeze(dim=1)
-
-
-class SequenceNumericalModel(torch.nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.mlp = Sequential(Linear(in_channels, out_channels), ReLU(),
-                              Linear(out_channels, out_channels))
-
-    def forward(self, x: MultiNestedTensor) -> Tensor:
-        # [batch_size, 1, max_length]
-        return self.mlp(x.to_dense(fill_value=0.0))

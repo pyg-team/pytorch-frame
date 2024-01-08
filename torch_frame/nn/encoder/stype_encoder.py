@@ -760,7 +760,6 @@ class LinearModelEncoder(StypeEncoder):
         stype.timestamp,
         stype.categorical,
         stype.multicategorical,
-        stype.sequence_numerical,
     }
 
     def __init__(
@@ -831,10 +830,12 @@ class LinearModelEncoder(StypeEncoder):
                 elif input_feat.ndim == 2:
                     input_feat = input_feat.unsqueeze(dim=1)
 
-                if input_feat.ndim != 3:
-                    raise ValueError(f"Column {col_name} should have ndim "
-                                     f"3 input, but get {input_feat.ndim} "
-                                     f"instead.")
+                assert input_feat.ndim == 3
+                if isinstance(input_feat, Tensor):
+                    batch_size = input_feat.size(0)
+                else:
+                    batch_size = input_feat.num_rows
+                assert input_feat.shape[:2] == (batch_size, 1)
 
                 x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
