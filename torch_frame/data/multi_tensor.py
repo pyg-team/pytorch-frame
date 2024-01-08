@@ -148,6 +148,10 @@ class _MultiTensor:
             elif (not is_slice_end) and (index < 0 or index >= max_entries):
                 raise IndexError(f"{idx_name} index out of bounds!")
         elif isinstance(index, Tensor):
+            # convert Boolean mask to index
+            if index.dtype == torch.bool:
+                assert index.numel() == max_entries
+                index = index.nonzero().flatten()
             assert not is_slice_end
             assert index.ndim == 1
             neg_idx = index < 0
