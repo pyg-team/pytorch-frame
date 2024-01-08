@@ -51,6 +51,7 @@ full=[
     "optuna>=3.0.0",
     "catboost",
     "lightgbm",
+    "datasets",
 ]
 
 [project.urls]
@@ -125,22 +126,12 @@ module = [
     "torch_frame.gbdt.tuned_catboost",
     "torch_frame.gbdt.tuned_lightgbm",
     "torch_frame.gbdt.tuned_xgboost",
-    "torch_frame.nn.conv.excelformer_conv",
     "torch_frame.nn.encoder.stype_encoder",
-    "torch_frame.nn.models.excelformer",
-    "torch_frame.nn.models.ft_transformer",
-    "torch_frame.nn.models.resnet",
-    "torch_frame.nn.models.tab_transformer",
-    "torch_frame.nn.models.tabnet",
-    "torch_frame.nn.models.trompt",
     "torch_frame.testing.text_tokenizer",
     "torch_frame.transforms.base_transform",
     "torch_frame.transforms.cat_to_num_transform",
     "torch_frame.transforms.fittable_base_transform",
     "torch_frame.transforms.mutual_information_sort",
-    "torch_frame.utils.concat",
-    "torch_frame.utils.infer_stype",
-    "torch_frame.utils.io",
 ]
 
 [tool.pytest.ini_options]

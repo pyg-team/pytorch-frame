@@ -211,8 +211,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         self.pooling = pooling
 
     def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
-        # [batch_size, batch_max_seq_len]
+        # Pad [batch_size, 1, *] into [batch_size, 1, batch_max_seq_len], then,
+        # squeeze to [batch_size, batch_max_seq_len].
         input_ids = feat["input_ids"].to_dense(fill_value=0).squeeze(dim=1)
+        # Set attention_mask of padding idx to be False
         mask = feat["attention_mask"].to_dense(fill_value=0).squeeze(dim=1)
 
         # Get text embeddings for each text tokenized column

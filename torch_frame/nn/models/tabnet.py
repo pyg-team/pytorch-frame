@@ -12,11 +12,12 @@ import torch_frame
 from torch_frame import stype
 from torch_frame.data import TensorFrame
 from torch_frame.data.stats import StatType
-from torch_frame.nn import (
+from torch_frame.nn.encoder.stype_encoder import (
     EmbeddingEncoder,
     StackEncoder,
-    StypeWiseFeatureEncoder,
+    StypeEncoder,
 )
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 from torch_frame.typing import NAStrategy
 
 
@@ -46,6 +47,13 @@ class TabNet(Module):
             column names. The column names are sorted based on the ordering
             that appear in :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
+        stype_encoder_dict
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            A dictionary mapping stypes into their stype encoders.
+            (default: :obj:`None`, will call :obj:`EmbeddingEncoder()`
+            for categorical feature and :obj:`StackEncoder()` for
+            numerical feature)
         num_shared_glu_layers (int): Number of GLU layers shared across the
             :obj:`num_layers` :class:`FeatureTransformer`s. (default: :obj:`2`)
         num_dependent_glu_layers (int, optional): Number of GLU layers to use
@@ -63,10 +71,12 @@ class TabNet(Module):
         gamma: float,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
+        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
+        | None = None,
         num_shared_glu_layers: int = 2,
         num_dependent_glu_layers: int = 2,
         cat_emb_channels: int = 2,
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -82,23 +92,28 @@ class TabNet(Module):
         cat_emb_channels = (cat_emb_channels if torch_frame.categorical
                             in col_names_dict else 1)
         in_channels = cat_emb_channels * num_cols
+
+        if stype_encoder_dict is None:
+            stype_encoder_dict = {
+                stype.categorical:
+                EmbeddingEncoder(na_strategy=NAStrategy.MOST_FREQUENT),
+                stype.numerical:
+                StackEncoder(na_strategy=NAStrategy.MEAN),
+            }
+
         # Map input tensor frame into (batch_size, num_cols, cat_emb_channels),
         # which is flattened into (batch_size, in_channels)
         self.feature_encoder = StypeWiseFeatureEncoder(
             out_channels=cat_emb_channels,
             col_stats=col_stats,
             col_names_dict=col_names_dict,
-            stype_encoder_dict={
-                stype.categorical:
-                EmbeddingEncoder(na_strategy=NAStrategy.MOST_FREQUENT),
-                stype.numerical:
-                StackEncoder(na_strategy=NAStrategy.MEAN),
-            },
+            stype_encoder_dict=stype_encoder_dict,
         )
 
         # Batch norm applied to input feature.
         self.bn = BatchNorm1d(in_channels)
 
+        shared_glu_block: Module
         if num_shared_glu_layers > 0:
             shared_glu_block = GLUBlock(
                 in_channels=in_channels,
@@ -129,7 +144,7 @@ class TabNet(Module):
         self.lin = Linear(self.split_feat_channels, out_channels)
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.feature_encoder.reset_parameters()
         self.bn.reset_parameters()
         for feat_transformer in self.feat_transformers:
@@ -214,11 +229,12 @@ class FeatureTransformer(Module):
         out_channels: int,
         num_dependent_glu_layers: int,
         shared_glu_block: Module,
-    ):
+    ) -> None:
         super().__init__()
 
         self.shared_glu_block = shared_glu_block
 
+        self.dependent: Module
         if num_dependent_glu_layers == 0:
             self.dependent = Identity()
         else:
@@ -240,7 +256,7 @@ class FeatureTransformer(Module):
         x = self.dependent(x)
         return x
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         if not isinstance(self.shared_glu_block, Identity):
             self.shared_glu_block.reset_parameters()
         if not isinstance(self.dependent, Identity):
@@ -254,7 +270,7 @@ class GLUBlock(Module):
         out_channels: int,
         num_glu_layers: int = 2,
         no_first_residual: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         self.no_first_residual = no_first_residual
         self.glu_layers = ModuleList()
@@ -275,7 +291,7 @@ class GLUBlock(Module):
                 x = x * math.sqrt(0.5) + glu_layer(x)
         return x
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         for glu_layer in self.glu_layers:
             glu_layer.reset_parameters()
 
@@ -285,7 +301,7 @@ class GLULayer(Module):
         self,
         in_channels: int,
         out_channels: int,
-    ):
+    ) -> None:
         super().__init__()
         self.lin = Linear(in_channels, out_channels * 2, bias=False)
         self.glu = GLU()
@@ -295,7 +311,7 @@ class GLULayer(Module):
         x = self.lin(x)
         return self.glu(x)
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin.reset_parameters()
 
 
@@ -304,7 +320,7 @@ class AttentiveTransformer(Module):
         self,
         in_channels: int,
         out_channels: int,
-    ):
+    ) -> None:
         super().__init__()
         self.lin = Linear(in_channels, out_channels, bias=False)
         self.bn = GhostBatchNorm1d(out_channels)
@@ -318,7 +334,7 @@ class AttentiveTransformer(Module):
         x = F.softmax(x, dim=-1)
         return x
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.lin.reset_parameters()
         self.bn.reset_parameters()
 
@@ -329,7 +345,7 @@ class GhostBatchNorm1d(torch.nn.Module):
         self,
         input_dim: int,
         virtual_batch_size: int = 512,
-    ):
+    ) -> None:
         super().__init__()
 
         self.input_dim = input_dim
@@ -345,5 +361,5 @@ class GhostBatchNorm1d(torch.nn.Module):
         else:
             return self.bn(x)
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.bn.reset_parameters()

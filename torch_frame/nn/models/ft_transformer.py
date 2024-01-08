@@ -8,13 +8,13 @@ from torch.nn import LayerNorm, Linear, Module, ReLU, Sequential
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import (
+from torch_frame.nn.conv import FTTransformerConvs
+from torch_frame.nn.encoder.stype_encoder import (
     EmbeddingEncoder,
     LinearEncoder,
     StypeEncoder,
-    StypeWiseFeatureEncoder,
 )
-from torch_frame.nn.conv import FTTransformerConvs
+from torch_frame.nn.encoder.stypewise_encoder import StypeWiseFeatureEncoder
 
 
 class FTTransformer(Module):
@@ -31,7 +31,7 @@ class FTTransformer(Module):
     Args:
         channels (int): Hidden channel dimensionality
         out_channels (int): Output channels dimensionality
-        num_layers (int): Numner of layers.  (default: :obj:`3`)
+        num_layers (int): Number of layers.  (default: :obj:`3`)
         col_stats(dict[str,dict[:class:`torch_frame.data.stats.StatType`,Any]]):
              A dictionary that maps column name into stats.
              Available as :obj:`dataset.col_stats`.
@@ -41,11 +41,11 @@ class FTTransformer(Module):
             :obj:`tensor_frame.feat_dict`. Available as
             :obj:`tensor_frame.col_names_dict`.
         stype_encoder_dict
-            (Optional[dict[:class:`torch_frame.stype`,
-            :class:`torch_frame.nn.encoder.StypeEncoder`]):
-            dictionary containing encoder type per column statistics (default:
-            :obj:`None`, will call
-            :class:`torch_frame.nn.encoder.EmbeddingEncoder()` for categorial
+            (dict[:class:`torch_frame.stype`,
+            :class:`torch_frame.nn.encoder.StypeEncoder`], optional):
+            A dictionary mapping stypes into their stype encoders.
+            (default: :obj:`None`, will call
+            :class:`torch_frame.nn.encoder.EmbeddingEncoder()` for categorical
             feature and :class:`torch_frame.nn.encoder.LinearEncoder()`
             for numerical feature)
     """
@@ -58,7 +58,7 @@ class FTTransformer(Module):
         col_names_dict: dict[torch_frame.stype, list[str]],
         stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
         | None = None,
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -85,7 +85,7 @@ class FTTransformer(Module):
         )
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         self.encoder.reset_parameters()
         self.backbone.reset_parameters()
         for m in self.decoder:

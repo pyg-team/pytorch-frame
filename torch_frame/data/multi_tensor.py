@@ -28,7 +28,7 @@ class _MultiTensor:
     def validate(self) -> None:
         pass
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, int | Tensor]:
         r"""Serialize the object into a dictionary."""
         return {
             "num_rows": self.num_rows,
