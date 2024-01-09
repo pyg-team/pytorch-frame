@@ -237,18 +237,12 @@ def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
 
 
 def last_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
-    left_padding = (attention_mask[:, -1].sum() == attention_mask.shape[0])
-    if left_padding:
-        # Whether all samples in the mini-batch has
-        # the last token attend to other tokens.
-        return last_hidden_state[:, -1]
-    else:
-        # Find the last token that attends to previous tokens.
-        sequence_lengths = attention_mask.sum(dim=1) - 1
-        batch_size = last_hidden_state.shape[0]
-        return last_hidden_state[
-            torch.arange(batch_size, device=last_hidden_state.device),
-            sequence_lengths]
+    # Find the last token that attends to previous tokens.
+    sequence_lengths = attention_mask.sum(dim=1) - 1
+    batch_size = last_hidden_state.shape[0]
+    return last_hidden_state[
+        torch.arange(batch_size, device=last_hidden_state.device),
+        sequence_lengths]
 
 
 def get_detailed_instruct(task_description: str, query: str) -> str:
