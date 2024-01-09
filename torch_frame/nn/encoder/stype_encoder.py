@@ -752,12 +752,15 @@ class LinearModelEncoder(StypeEncoder):
             :obj:`[batch_size, 1, model_out_channels]`.
     """
 
-    # NOTE: We currently support text embeddings but in principle, this encoder
-    # can support any model outputs embeddings, including image/audio/graph
-    # embeddings.
-    # NOTE: This can in principle support any stypes and allow MLP-based
-    # non-linear modeling for each column.
-    supported_stypes = {stype.text_tokenized}
+    supported_stypes = {
+        stype.text_embedded,
+        stype.text_tokenized,
+        stype.numerical,
+        stype.embedding,
+        stype.timestamp,
+        stype.categorical,
+        stype.multicategorical,
+    }
 
     def __init__(
         self,
@@ -812,14 +815,28 @@ class LinearModelEncoder(StypeEncoder):
     ) -> Tensor:
         xs = []
         for i, col_name in enumerate(col_names):
-            # [batch_size, 1, in_channels]
             if self.stype.use_dict_multi_nested_tensor:
+                # [batch_size, 1, in_channels]
                 x = self.model_dict[col_name]({
                     key: feat[key][:, i]
                     for key in feat
                 })
             else:
-                x = self.model_dict[col_name](feat[:, i])
+                input_feat = feat[:, i]
+
+                if input_feat.ndim == 1:
+                    # Numerical and categorical cases:
+                    # [batch_size] -> [batch_size, 1, 1]
+                    input_feat = input_feat.view(-1, 1, 1)
+                elif input_feat.ndim == 2:
+                    # Timestamp case:
+                    # [batch_size, time_size] -> [batch_size, 1, time_size]
+                    input_feat = input_feat.unsqueeze(dim=1)
+
+                assert input_feat.ndim == 3
+                assert input_feat.shape[:2] == (len(input_feat), 1)
+
+                x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
             x_lin = x @ self.weight_dict[col_name] + self.bias_dict[col_name]
             xs.append(x_lin)
