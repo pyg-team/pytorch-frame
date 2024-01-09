@@ -23,7 +23,7 @@ class stype(Enum):
         text_tokenized: Tokenized text columns for finetuning.
         multicategorical: Multicategorical columns.
         sequence_numerical: Sequence of numerical values.
-        embedding: Embedding column.
+        embedding: Embedding columns.
         timestamp: Timestamp columns.
     """
     numerical = 'numerical'

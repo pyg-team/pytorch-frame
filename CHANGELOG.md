@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `HuggingFaceDatasetDict` ([#287](https://github.com/pyg-team/pytorch-frame/pull/287))
 
 ### Changed
+- Supported decoder embedding model in `examples/transformers_text.py` ([#333](https://github.com/pyg-team/pytorch-frame/pull/333))
 - Removed implicit clones in `StypeEncoder` ([#286](https://github.com/pyg-team/pytorch-frame/pull/286))
 
 ### Deprecated
