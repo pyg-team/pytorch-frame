@@ -824,18 +824,17 @@ class LinearModelEncoder(StypeEncoder):
             else:
                 input_feat = feat[:, i]
 
-                # Numerical and categorical cases etc.:
                 if input_feat.ndim == 1:
+                    # Numerical and categorical cases:
+                    # [batch_size] -> [batch_size, 1, 1]
                     input_feat = input_feat.view(-1, 1, 1)
                 elif input_feat.ndim == 2:
+                    # Timestamp case:
+                    # [batch_size, time_size] -> [batch_size, 1, time_size]
                     input_feat = input_feat.unsqueeze(dim=1)
 
                 assert input_feat.ndim == 3
-                if isinstance(input_feat, Tensor):
-                    batch_size = input_feat.size(0)
-                else:
-                    batch_size = input_feat.num_rows
-                assert input_feat.shape[:2] == (batch_size, 1)
+                assert input_feat.shape[:2] == (len(input_feat), 1)
 
                 x = self.model_dict[col_name](input_feat)
             # [batch_size, 1, out_channels]
