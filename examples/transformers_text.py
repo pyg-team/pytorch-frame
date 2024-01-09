@@ -245,10 +245,6 @@ def last_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
         sequence_lengths]
 
 
-def get_detailed_instruct(task_description: str, query: str) -> str:
-    return f'Instruct: {task_description}\nQuery: {query}'
-
-
 torch.manual_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -264,7 +260,7 @@ if not args.finetune:
         "text_stype":
         text_stype,
         "col_to_text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=1),
     }
 else:
     text_encoder = TextToEmbeddingFinetune(model=args.model, lora=args.lora)
