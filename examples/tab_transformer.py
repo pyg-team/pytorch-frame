@@ -1,9 +1,9 @@
 """Reported (reproduced, xgboost) results of of TabTransformer model based on
 Table 1 of original paper https://arxiv.org/abs/2012.06678.
 
-adult: 73.8 (76.05) batch_size: 128, lr: 0.0001, num_heads: 32, num_layers: 6
-bank-marketing: 93.4 (78.35, 81.00)
-dota2: 63.3 (58.28, 53.75)
+adult: 73.8 (88.86)
+bank-marketing: 93.4 (90.83, 81.00)
+dota2: 63.3 (52.44, 53.75)
 """
 
 import argparse
@@ -20,7 +20,7 @@ from torch_frame.datasets import AdultCensusIncome, BankMarketing, Dota2
 from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='bank-marketing',
+parser.add_argument('--dataset', type=str, default='dota2',
                     choices=["adult", "dota2", "bank-marketing"])
 parser.add_argument('--channels', type=int, default=32)
 parser.add_argument('--num_heads', type=int, default=8)
@@ -30,7 +30,7 @@ parser.add_argument('--attention_dropout', type=float, default=0.3)
 parser.add_argument('--ffn_dropout', type=float, default=0.3)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
@@ -108,15 +108,14 @@ def test(loader: DataLoader) -> float:
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        pred_class = pred.argmax(dim=-1)
 
-        all_labels.append(tf.y)
-        all_preds.append(pred_class)
-    all_labels = torch.cat(all_labels).cpu()
-    all_preds = torch.cat(all_preds).cpu()
+        all_labels.append(tf.y.cpu())
+        all_preds.append(pred[:, 1].detach().cpu())
+    all_labels = torch.cat(all_labels).numpy()
+    all_preds = torch.cat(all_preds).numpy()
 
     # Compute the overall AUC
-    overall_auc = roc_auc_score(all_labels.numpy(), all_preds.numpy())
+    overall_auc = roc_auc_score(all_labels, all_preds)
     return overall_auc
 
 
