@@ -1,7 +1,9 @@
 """Reported (reproduced, xgboost) results of of TabTransformer model based on
 Table 1 of original paper https://arxiv.org/abs/2012.06678.
 
-TODO: Update numbers.
+adult: 73.8 (88.86)
+bank-marketing: 93.4 (90.83, 81.00)
+dota2: 63.3 (52.44, 53.75)
 """
 
 import argparse
@@ -18,7 +20,7 @@ from torch_frame.datasets import AdultCensusIncome, BankMarketing, Dota2
 from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='bank-marketing',
+parser.add_argument('--dataset', type=str, default='dota2',
                     choices=["adult", "dota2", "bank-marketing"])
 parser.add_argument('--channels', type=int, default=32)
 parser.add_argument('--num_heads', type=int, default=8)
@@ -28,7 +30,7 @@ parser.add_argument('--attention_dropout', type=float, default=0.3)
 parser.add_argument('--ffn_dropout', type=float, default=0.3)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--lr', type=float, default=0.0001)
-parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
