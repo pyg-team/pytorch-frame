@@ -238,13 +238,14 @@ We see that some recent deep tabular models were able to achieve competitive mod
 
 We also benchmark different text encoders on a real-world tabular dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)) with one text column. The following table shows the performance:
 
-| Test Acc   | Method          | Model Name                                                  | Source        |
-|:-----------|:----------------|:------------------------------------------------------------|:--------------|
-| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)               | OpenAI        |
-| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                   | Cohere        |
-| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                            | Voyage AI     |
-| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params)  | Hugging Face  |
-| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                   | Hugging Face  |
+| Test Acc   | Method          | Model Name                                                 | Source        |
+|:-----------|:----------------|:-----------------------------------------------------------|:--------------|
+| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params) | Hugging Face  |
+| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                  | Cohere        |
+| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)              | OpenAI        |
+| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                           | Voyage AI     |
+| 0.8203     | Pre-trained     | intfloat/e5-mistral-7b-instruct (7B # params)              | Hugging Face  |
+| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                  | Hugging Face  |
 
 The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py).
 

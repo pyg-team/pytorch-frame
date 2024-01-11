@@ -46,6 +46,20 @@ from torch_frame.typing import TextTokenizationOutputs
 # ========== imdb_genre_prediction ==========
 # Best Val Acc: 0.7875, Best Test Acc: 0.6900
 
+# e5-mistral-7b-instruct
+# ============== wine_reviews ===============
+# Best Val Acc: 0.8289, Best Test Acc: 0.8203
+# ===== product_sentiment_machine_hack ======
+# Best Val Acc: 0.9273, Best Test Acc: 0.9159
+# ======== jigsaw_unintended_bias100K =======
+# Best Val Acc: 0.9571, Best Test Acc: 0.9566
+# =============== news_channel ==============
+# Best Val Acc: 0.4837, Best Test Acc: 0.4711
+# ============ fake_job_postings2 ===========
+# Best Val Acc: 0.9851, Best Test Acc: 0.9818
+# ========== imdb_genre_prediction ==========
+# Best Val Acc: 0.9500, Best Test Acc: 0.8300
+
 # Text Tokenized
 # distilbert-base-uncased + LoRA
 # ============== wine_reviews ===============
@@ -78,10 +92,9 @@ parser.add_argument(
     choices=[
         "distilbert-base-uncased",
         "sentence-transformers/all-distilroberta-v1",
+        "intfloat/e5-mistral-7b-instruct",
     ],
 )
-parser.add_argument("--pooling", type=str, default="mean",
-                    choices=["mean", "cls"])
 parser.add_argument("--compile", action="store_true")
 args = parser.parse_args()
 
@@ -91,29 +104,69 @@ if args.lora and not args.finetune:
 
 
 class TextToEmbedding:
-    def __init__(self, model: str, pooling: str, device: torch.device):
-        self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.model = AutoModel.from_pretrained(model).to(device)
+    def __init__(self, model: str, device: torch.device):
+        self.model_name = model
         self.device = device
-        self.pooling = pooling
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
+        if model == "intfloat/e5-mistral-7b-instruct":
+            # Use last pooling here because this model is
+            # a decoder (causal) language model that only
+            # the last token attends to all previous tokens:
+            self.pooling = "last"
+            self.model = AutoModel.from_pretrained(
+                model,
+                torch_dtype=torch.bfloat16,
+            ).to(device)
+        else:
+            self.model = AutoModel.from_pretrained(model).to(device)
+            self.pooling = "mean"
 
     def __call__(self, sentences: List[str]) -> Tensor:
-        inputs = self.tokenizer(
-            sentences,
-            truncation=True,
-            padding="max_length",
-            return_tensors="pt",
-        )
+        if self.model_name == "intfloat/e5-mistral-7b-instruct":
+            sentences = [(f"Instruct: Retrieve relevant knowledge and "
+                          f"embeddings.\nQuery: {sentence}")
+                         for sentence in sentences]
+            max_length = 4096
+            inputs = self.tokenizer(
+                sentences,
+                max_length=max_length - 1,
+                truncation=True,
+                return_attention_mask=False,
+                padding=False,
+            )
+            inputs["input_ids"] = [
+                input_ids + [self.tokenizer.eos_token_id]
+                for input_ids in inputs["input_ids"]
+            ]
+            inputs = self.tokenizer.pad(
+                inputs,
+                padding=True,
+                return_attention_mask=True,
+                return_tensors='pt',
+            )
+        else:
+            inputs = self.tokenizer(
+                sentences,
+                truncation=True,
+                padding="max_length",
+                return_tensors="pt",
+            )
         for key in inputs:
             if isinstance(inputs[key], Tensor):
                 inputs[key] = inputs[key].to(self.device)
         out = self.model(**inputs)
+
+        # [batch_size, max_length or batch_max_length]
+        # Value is either one or zero, where zero means that
+        # the token is not attended to other tokens.
         mask = inputs["attention_mask"]
+
         if self.pooling == "mean":
             return (mean_pooling(out.last_hidden_state.detach(),
                                  mask).squeeze(1).cpu())
-        elif self.pooling == "cls":
-            return out.last_hidden_state[:, 0, :].detach().cpu()
+        elif self.pooling == "last":
+            return last_pooling(out.last_hidden_state,
+                                mask).detach().cpu().to(torch.float32)
         else:
             raise ValueError(f"{self.pooling} is not supported.")
 
@@ -122,18 +175,18 @@ class TextToEmbeddingFinetune(torch.nn.Module):
     r"""Include :obj:`tokenize` that converts text data to tokens, and
     :obj:`forward` function that converts tokens to embeddings with a
     text model, whose parameters will also be finetuned along with the
-    tabular learning.
+    tabular learning. The pooling strategy used here to derive sentence
+    embedding is the mean pooling which takes mean value of all tokens'
+    embeddings.
 
     Args:
         model (str): Model name to load by using :obj:`transformers`,
             such as :obj:`distilbert-base-uncased` and
             :obj:`sentence-transformers/all-distilroberta-v1`.
-        pooling (str): Pooling strategy to pool context embeddings into
-            sentence level embedding. (default: :obj:`'mean'`)
         lora (bool): Whether using LoRA to finetune the text model.
             (default: :obj:`False`)
     """
-    def __init__(self, model: str, pooling: str = "mean", lora: bool = False):
+    def __init__(self, model: str, lora: bool = False):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModel.from_pretrained(model)
@@ -157,7 +210,6 @@ class TextToEmbeddingFinetune(torch.nn.Module):
                 target_modules=target_modules,
             )
             self.model = get_peft_model(self.model, peft_config)
-        self.pooling = pooling
 
     def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
         # Pad [batch_size, 1, *] into [batch_size, 1, batch_max_seq_len], then,
@@ -172,12 +224,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         out = self.model(input_ids=input_ids, attention_mask=mask)
 
         # Return value has the shape [batch_size, 1, text_model_out_channels]
-        if self.pooling == "mean":
-            return mean_pooling(out.last_hidden_state, mask)
-        elif self.pooling == "cls":
-            return out.last_hidden_state[:, 0, :].unsqueeze(1)
-        else:
-            raise ValueError(f"{self.pooling} is not supported.")
+        return mean_pooling(out.last_hidden_state, mask)
 
     def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
         # Tokenize batches of sentences
@@ -185,13 +232,22 @@ class TextToEmbeddingFinetune(torch.nn.Module):
                               return_tensors='pt')
 
 
-def mean_pooling(last_hidden_state: Tensor, attention_mask) -> Tensor:
+def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
     input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
         last_hidden_state.size()).float())
     embedding = torch.sum(
         last_hidden_state * input_mask_expanded, dim=1) / torch.clamp(
             input_mask_expanded.sum(1), min=1e-9)
     return embedding.unsqueeze(1)
+
+
+def last_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
+    # Find the last token that attends to previous tokens.
+    sequence_lengths = attention_mask.sum(dim=1) - 1
+    batch_size = last_hidden_state.shape[0]
+    return last_hidden_state[
+        torch.arange(batch_size, device=last_hidden_state.device),
+        sequence_lengths]
 
 
 torch.manual_seed(args.seed)
@@ -203,19 +259,16 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
 
 # Prepare text columns
 if not args.finetune:
-    text_encoder = TextToEmbedding(model=args.model, pooling=args.pooling,
-                                   device=device)
+    text_encoder = TextToEmbedding(model=args.model, device=device)
     text_stype = torch_frame.text_embedded
     kwargs = {
         "text_stype":
         text_stype,
         "col_to_text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=10),
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=1),
     }
 else:
-    text_encoder = TextToEmbeddingFinetune(model=args.model,
-                                           pooling=args.pooling,
-                                           lora=args.lora)
+    text_encoder = TextToEmbeddingFinetune(model=args.model, lora=args.lora)
     text_stype = torch_frame.text_tokenized
     kwargs = {
         "text_stype":
