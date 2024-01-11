@@ -4,6 +4,10 @@
 [contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
+[pypi-image]: https://badge.fury.io/py/pytorch-frame.svg
+[pypi-url]: https://pypi.python.org/pypi/pytorch-frame
+[docs-image]: https://readthedocs.org/projects/pytorch-frame/badge/?version=latest
+[docs-url]: https://pytorch-frame.readthedocs.io/en/latest
 
 <div align="center">
 
@@ -16,7 +20,9 @@
 
 --------------------------------------------------------------------------------
 
+[![PyPI Version][pypi-image]][pypi-url]
 [![Testing Status][testing-image]][testing-url]
+[![Docs Status][docs-image]][docs-url]
 [![Contributing][contributing-image]][contributing-url]
 [![Slack][slack-image]][slack-url]
 
