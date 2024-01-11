@@ -109,6 +109,9 @@ class TextToEmbedding:
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         if model == "intfloat/e5-mistral-7b-instruct":
+            # Use last pooling here because this model is
+            # a decoder (causal) language model that only
+            # the last token attends to all previous tokens:
             self.pooling = "last"
             self.model = AutoModel.from_pretrained(
                 model,
@@ -172,7 +175,9 @@ class TextToEmbeddingFinetune(torch.nn.Module):
     r"""Include :obj:`tokenize` that converts text data to tokens, and
     :obj:`forward` function that converts tokens to embeddings with a
     text model, whose parameters will also be finetuned along with the
-    tabular learning.
+    tabular learning. The pooling strategy used here to derive sentence
+    embedding is the mean pooling which takes mean value of all tokens'
+    embeddings.
 
     Args:
         model (str): Model name to load by using :obj:`transformers`,
