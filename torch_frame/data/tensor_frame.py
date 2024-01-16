@@ -84,9 +84,6 @@ class TensorFrame:
 
     def validate(self) -> None:
         r"""Validates the :class:`TensorFrame` object."""
-        if len(self.feat_dict) == 0:
-            raise ValueError("feat_dict should not be empty.")
-
         if self.feat_dict.keys() != self.col_names_dict.keys():
             raise ValueError(
                 f"The keys of feat_dict and col_names_dict must be the same, "
@@ -179,6 +176,8 @@ class TensorFrame:
     @property
     def num_rows(self) -> int:
         r"""The number of rows in the :class:`TensorFrame`."""
+        if self.is_empty:
+            return 0
         feat = next(iter(self.feat_dict.values()))
         if isinstance(feat, dict):
             return len(next(iter(feat.values())))
@@ -186,10 +185,18 @@ class TensorFrame:
 
     @property
     def device(self) -> torch.device:
+        r"""The device of the :class:`TensorFrame`."""
+        if self.is_empty:
+            raise RuntimeError("Cannot get device of an empty TensorFrame.")
         feat = next(iter(self.feat_dict.values()))
         if isinstance(feat, dict):
             return next(iter(feat.values())).device
         return feat.device
+
+    @property
+    def is_empty(self) -> bool:
+        r"""Returns :obj:`True` if the :class:`TensorFrame` is empty."""
+        return len(self.feat_dict) == 0
 
     # Python Built-ins ########################################################
 
@@ -255,15 +262,19 @@ class TensorFrame:
         return not self.__eq__(other)
 
     def __repr__(self) -> str:
-        stype_repr = "\n".join([
-            f"  {stype.value} ({len(col_names)}): {col_names},"
-            for stype, col_names in self.col_names_dict.items()
-        ])
-
+        stype_repr: str
+        if self.is_empty:
+            stype_repr = "\n".join([
+                f"  {stype.value} ({len(col_names)}): {col_names},"
+                for stype, col_names in self.col_names_dict.items()
+            ])
+            stype_repr += "\n"
+        else:
+            stype_repr = ""
         return (f"{self.__class__.__name__}(\n"
                 f"  num_cols={self.num_cols},\n"
                 f"  num_rows={self.num_rows},\n"
-                f"{stype_repr}\n"
+                (f"{stype_repr}")
                 f"  has_target={self.y is not None},\n"
                 f"  device='{self.device}',\n"
                 f")")
