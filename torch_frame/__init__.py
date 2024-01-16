@@ -18,7 +18,7 @@ import torch_frame.datasets  # noqa
 import torch_frame.nn  # noqa
 import torch_frame.gbdt  # noqa
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 __all__ = [
     'DataFrame',
