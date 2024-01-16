@@ -274,7 +274,7 @@ class TensorFrame:
         return (f"{self.__class__.__name__}(\n"
                 f"  num_cols={self.num_cols},\n"
                 f"  num_rows={self.num_rows},\n"
-                (f"{stype_repr}")
+                f"{stype_repr}"
                 f"  has_target={self.y is not None},\n"
                 f"  device='{self.device}',\n"
                 f")")
