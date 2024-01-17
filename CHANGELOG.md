@@ -7,8 +7,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+
 - Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
-- Added support for more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+
+## [0.2.1] - 2024-01-16
+
+### Added
+- Support more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
 - Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
 - Added `HuggingFaceDatasetDict` ([#287](https://github.com/pyg-team/pytorch-frame/pull/287))
 
