@@ -184,10 +184,10 @@ class TensorFrame:
         return len(feat)
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         r"""The device of the :class:`TensorFrame`."""
         if self.is_empty:
-            raise RuntimeError("Cannot get device of an empty TensorFrame.")
+            raise None
         feat = next(iter(self.feat_dict.values()))
         if isinstance(feat, dict):
             return next(iter(feat.values())).device
@@ -264,19 +264,21 @@ class TensorFrame:
     def __repr__(self) -> str:
         stype_repr: str
         if self.is_empty:
+            stype_repr = ""
+            device_repr = "  device=None,\n"
+        else:
             stype_repr = "\n".join([
                 f"  {stype.value} ({len(col_names)}): {col_names},"
                 for stype, col_names in self.col_names_dict.items()
             ])
             stype_repr += "\n"
-        else:
-            stype_repr = ""
+            device_repr = f"  device='{self.device}',\n"
         return (f"{self.__class__.__name__}(\n"
                 f"  num_cols={self.num_cols},\n"
                 f"  num_rows={self.num_rows},\n"
                 f"{stype_repr}"
                 f"  has_target={self.y is not None},\n"
-                f"  device='{self.device}',\n"
+                f"{device_repr}"
                 f")")
 
     def __getitem__(self, index: IndexSelectType) -> TensorFrame:

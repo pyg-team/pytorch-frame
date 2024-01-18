@@ -28,6 +28,17 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
         "  device='cpu',\n"
         ")")
 
+    tf = TensorFrame({}, {})
+    assert tf.num_rows == len(tf) == 0
+    assert tf.num_cols == 0
+    assert str(tf) == (
+        "TensorFrame(\n"
+        "  num_cols=0,\n"
+        "  num_rows=0,\n"
+        "  has_target=False,\n"
+        "  device=None,\n"
+        ")")
+
 
 def test_tensor_frame_error():
     feat_dict = {
