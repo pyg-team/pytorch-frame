@@ -18,4 +18,3 @@ venv/*
 *.out
 data/**
 catboost_info/
-.mypy_cache
