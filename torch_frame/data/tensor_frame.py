@@ -187,7 +187,7 @@ class TensorFrame:
     def device(self) -> torch.device | None:
         r"""The device of the :class:`TensorFrame`."""
         if self.is_empty:
-            raise None
+            return None
         feat = next(iter(self.feat_dict.values()))
         if isinstance(feat, dict):
             return next(iter(feat.values())).device
