@@ -255,7 +255,7 @@ class _MultiTensor:
         else:
             start_idx: int = self._normalize_index(index.start or 0, dim=dim)
             end_idx: int = self._normalize_index(
-                index.stop or num_data,
+                index.stop if index.stop is not None else num_data,
                 dim=dim,
                 is_slice_end=True,
             )
