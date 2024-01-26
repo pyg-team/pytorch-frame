@@ -1,10 +1,11 @@
 import argparse
+import os
 import os.path as osp
 from typing import List
 
 import torch
 import torch.nn.functional as F
-from PIL.Image import Image
+from PIL import Image
 from torch import Tensor
 from torchvision import transforms
 from tqdm import tqdm
@@ -12,7 +13,7 @@ from tqdm import tqdm
 from torch_frame import stype
 from torch_frame.config import ImageEmbedderConfig
 from torch_frame.data import DataLoader
-from torch_frame.datasets import HousePricesAndImages
+from torch_frame.datasets import DiamondImages
 from torch_frame.nn import (
     EmbeddingEncoder,
     FTTransformer,
@@ -38,6 +39,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+# Best Val Acc: 0.9990, Best Test Acc: 0.9979
+
 
 class ImageToEmbedding:
     def __init__(self, model: str, device: torch.device):
@@ -61,7 +64,15 @@ class ImageToEmbedding:
             ])
         self.device = device
 
-    def __call__(self, images: List[Image]) -> Tensor:
+    def __call__(self, path_to_images: List[str]) -> Tensor:
+        images: list[Image] = []
+        for path_to_image in path_to_images:
+            try:
+                image = Image.open(path_to_image)
+            except Exception:
+                image = Image.new("RGB", (600, 471))
+            images.append(image.copy())
+            image.close()
         inputs = [self.preprocess(image.convert('RGB')) for image in images]
         inputs = torch.stack(inputs, dim=0).to(self.device)
         return self.model(inputs).cpu().detach().view(len(images), -1)
@@ -72,12 +83,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
-                "house_price_and_images")
+                "diamond_images")
+os.makedirs(path, exist_ok=True)
 
 col_to_image_embedder_cfg = ImageEmbedderConfig(
     image_embedder=ImageToEmbedding(args.model, device), batch_size=10)
-dataset = HousePricesAndImages(
-    path, col_to_image_embedder_cfg=col_to_image_embedder_cfg)
+dataset = DiamondImages(path,
+                        col_to_image_embedder_cfg=col_to_image_embedder_cfg)
 
 filename = f"{args.model}_data.pt"
 dataset.materialize(path=osp.join(path, filename))
@@ -101,7 +113,7 @@ stype_encoder_dict = {
 
 model = FTTransformer(
     channels=args.channels,
-    out_channels=1,
+    out_channels=dataset.num_classes,
     num_layers=args.num_layers,
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
@@ -117,7 +129,7 @@ def train(epoch: int) -> float:
     for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         pred = model(tf)
-        loss = F.mse_loss(pred.view(-1), tf.y.view(-1))
+        loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
         loss.backward()
         loss_accum += float(loss) * len(tf.y)
@@ -134,24 +146,24 @@ def test(loader: DataLoader) -> float:
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
-        accum += float(
-            F.mse_loss(pred.view(-1), tf.y.view(-1), reduction="sum"))
+        pred_class = pred.argmax(dim=-1)
+        accum += float((tf.y == pred_class).sum())
         total_count += len(tf.y)
 
-    rmse = (accum / total_count)**0.5
-    return rmse
+    accuracy = accum / total_count
+    return accuracy
 
 
-metric = "RMSE"
-best_val_metric = float("inf")
-best_test_metric = float("inf")
+metric = "Acc"
+best_val_metric = 0
+best_test_metric = 0
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
     train_metric = test(train_loader)
     val_metric = test(val_loader)
     test_metric = test(test_loader)
-    if val_metric < best_val_metric:
+    if val_metric > best_val_metric:
         best_val_metric = val_metric
         best_test_metric = test_metric
 
