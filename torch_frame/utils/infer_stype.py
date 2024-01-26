@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Any
 
-import warnings
 import pandas as pd
 import pandas.api.types as ptypes
 from dateutil.parser import ParserError
