@@ -19,8 +19,8 @@ from torch.nn import (
 import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.data.stats import StatType
-from torch_frame.nn import EmbeddingEncoder, StackEncoder
 from torch_frame.nn.conv import TabTransformerConv
+from torch_frame.nn.encoder.stype_encoder import EmbeddingEncoder, StackEncoder
 from torch_frame.typing import NAStrategy
 
 
@@ -44,7 +44,7 @@ class TabTransformer(Module):
     Args:
         channels (int): Input channel dimensionality.
         out_channels (int): Output channels dimensionality.
-        num_layers (int): Numner of convolution layers.
+        num_layers (int): Number of convolution layers.
         num_heads (int): Number of heads in the self-attention layer.
         encoder_pad_size (int): Size of positional encoding padding to the
             categorical embeddings.
@@ -68,7 +68,7 @@ class TabTransformer(Module):
         ffn_dropout: float,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
-    ):
+    ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
@@ -123,7 +123,7 @@ class TabTransformer(Module):
             Linear(mlp_second_hidden_layer_size, out_channels))
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         if stype.categorical in self.col_names_dict:
             self.cat_encoder.reset_parameters()
             torch.nn.init.normal_(self.pad_embedding.weight, std=0.01)

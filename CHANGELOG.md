@@ -8,7 +8,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
+
 ### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+
+## [0.2.1] - 2024-01-16
+
+### Added
+- Support more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
+- Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
+- Added `HuggingFaceDatasetDict` ([#287](https://github.com/pyg-team/pytorch-frame/pull/287))
+
+### Changed
+- Supported decoder embedding model in `examples/transformers_text.py` ([#333](https://github.com/pyg-team/pytorch-frame/pull/333))
 - Removed implicit clones in `StypeEncoder` ([#286](https://github.com/pyg-team/pytorch-frame/pull/286))
 
 ### Deprecated
@@ -23,6 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for Boolean masks in `index_select` of `_MultiTensor` [334](https://github.com/pyg-team/pytorch-frame/pull/334)
 - Added more text documentation ([#291](https://github.com/pyg-team/pytorch-frame/pull/291))
 - Added `col_to_model_cfg` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))

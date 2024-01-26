@@ -119,7 +119,7 @@ Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
         out_channels=1,
         num_layers=2,
         col_stats=dataset.col_stats,
-        col_names_dict=train_tensor_frame.col_names_dict,
+        col_names_dict=dataset.tensor_frame.col_names_dict,
         stype_encoder_dict=stype_encoder_dict,
     )
 

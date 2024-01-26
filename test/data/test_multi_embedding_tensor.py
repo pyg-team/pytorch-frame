@@ -211,6 +211,23 @@ def test_index(device):
                         met_indexed[i, j],
                     )
 
+    # test selection with Boolean mask
+    # only ordered selection without duplicates is possible
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_rows, ), dtype=torch.bool, device=device)
+        mask[index] = True
+
+        met_indexed = met[mask]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == len(index)
+        assert met_indexed.shape[1] == num_cols
+        for i, idx in enumerate(index):
+            for j in range(num_cols):
+                assert torch.allclose(
+                    tensor_list[j][idx],
+                    met_indexed[i, j],
+                )
+
 
 @withCUDA
 def test_index_range(device):
@@ -323,6 +340,22 @@ def test_index_slice_list(device):
                         tensor_list[idx][i],
                         met_indexed[i, j],
                     )
+
+    # test selection with Boolean mask
+    # only ordered selection without duplicates is possible
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_cols, ), dtype=torch.bool, device=device)
+        mask[index] = True
+        met_indexed = met[:, mask]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == num_rows
+        assert met_indexed.shape[1] == len(index)
+        for i in range(num_rows):
+            for j, idx in enumerate(index):
+                assert torch.allclose(
+                    tensor_list[idx][i],
+                    met_indexed[i, j],
+                )
 
 
 @withCUDA

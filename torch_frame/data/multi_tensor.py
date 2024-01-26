@@ -28,7 +28,7 @@ class _MultiTensor:
     def validate(self) -> None:
         pass
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, int | Tensor]:
         r"""Serialize the object into a dictionary."""
         return {
             "num_rows": self.num_rows,
@@ -148,6 +148,10 @@ class _MultiTensor:
             elif (not is_slice_end) and (index < 0 or index >= max_entries):
                 raise IndexError(f"{idx_name} index out of bounds!")
         elif isinstance(index, Tensor):
+            # convert Boolean mask to index
+            if index.dtype == torch.bool:
+                assert index.numel() == max_entries
+                index = index.nonzero().flatten()
             assert not is_slice_end
             assert index.ndim == 1
             neg_idx = index < 0
@@ -251,7 +255,7 @@ class _MultiTensor:
         else:
             start_idx: int = self._normalize_index(index.start or 0, dim=dim)
             end_idx: int = self._normalize_index(
-                index.stop or num_data,
+                index.stop if index.stop is not None else num_data,
                 dim=dim,
                 is_slice_end=True,
             )

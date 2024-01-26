@@ -400,7 +400,7 @@ class Dataset(ABC):
                     f"split_col must only contain {set(SPLIT_TO_NUM.values())}"
                 )
         self.split_col = split_col
-        self.col_to_stype = col_to_stype
+        self.col_to_stype = col_to_stype.copy()
 
         cols = self.feat_cols + ([] if target_col is None else [target_col])
         missing_cols = set(cols) - set(df.columns)

@@ -174,10 +174,23 @@ def test_multi_nested_tensor_basics(device):
     # Test row narrow
     assert_equal(tensor_mat[3:3 + 2],
                  multi_nested_tensor.narrow(dim=0, start=3, length=2))
+    assert len(tensor_mat[0:0]) == 0
 
     # Test multi_nested_tensor[List[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         multi_nested_tensor_indexed = multi_nested_tensor[index]
+        assert multi_nested_tensor_indexed.shape[0] == len(index)
+        assert multi_nested_tensor_indexed.shape[1] == num_cols
+        for i, idx in enumerate(index):
+            for j in range(num_cols):
+                tensor = multi_nested_tensor_indexed[i, j]
+                assert torch.allclose(tensor_mat[idx][j], tensor)
+
+    # Test row-wise Boolean masking
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_rows, ), dtype=torch.bool, device=device)
+        mask[index] = True
+        multi_nested_tensor_indexed = multi_nested_tensor[mask]
         assert multi_nested_tensor_indexed.shape[0] == len(index)
         assert multi_nested_tensor_indexed.shape[1] == num_cols
         for i, idx in enumerate(index):
@@ -196,6 +209,13 @@ def test_multi_nested_tensor_basics(device):
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
         assert_equal(column_select(tensor_mat, index),
                      multi_nested_tensor[:, index])
+
+    # Test column-wise Boolean masking
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_cols, ), dtype=torch.bool, device=device)
+        mask[index] = True
+        assert_equal(column_select(tensor_mat, index),
+                     multi_nested_tensor[:, mask])
 
     # Test row range
     multi_nested_tensor_range = multi_nested_tensor[:, range(2, 6)]

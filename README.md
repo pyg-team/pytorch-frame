@@ -4,6 +4,10 @@
 [contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
+[pypi-image]: https://badge.fury.io/py/pytorch-frame.svg
+[pypi-url]: https://pypi.python.org/pypi/pytorch-frame
+[docs-image]: https://readthedocs.org/projects/pytorch-frame/badge/?version=latest
+[docs-url]: https://pytorch-frame.readthedocs.io/en/latest
 
 <div align="center">
 
@@ -16,7 +20,9 @@
 
 --------------------------------------------------------------------------------
 
+[![PyPI Version][pypi-image]][pypi-url]
 [![Testing Status][testing-image]][testing-url]
+[![Docs Status][docs-image]][docs-url]
 [![Contributing][contributing-image]][contributing-url]
 [![Slack][slack-image]][slack-url]
 
@@ -83,7 +89,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
 * **PyTorch integration**:
-  Integrates effortlessly with other PyTorch libraries, like [PyG](https://pyg.org/), facilitating end-to-end training of PyTorch Frame with downstream PyTorch models.
+  Integrates effortlessly with other PyTorch libraries, facilitating end-to-end training of PyTorch Frame with downstream PyTorch models. For example, by integrating with [PyG](https://pyg.org/), a PyTorch library for GNNs, we can perform deep learning over relational databases. Learn more in [RelBench](https://relbench.stanford.edu/) and [example code (WIP)](https://github.com/snap-stanford/relbench/blob/main/examples/gnn.py).
 
 ## Architecture Overview
 
@@ -238,13 +244,14 @@ We see that some recent deep tabular models were able to achieve competitive mod
 
 We also benchmark different text encoders on a real-world tabular dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)) with one text column. The following table shows the performance:
 
-| Test Acc   | Method          | Model Name                                                  | Source        |
-|:-----------|:----------------|:------------------------------------------------------------|:--------------|
-| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)               | OpenAI        |
-| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                   | Cohere        |
-| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                            | Voyage AI     |
-| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params)  | Hugging Face  |
-| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                   | Hugging Face  |
+| Test Acc   | Method          | Model Name                                                 | Source        |
+|:-----------|:----------------|:-----------------------------------------------------------|:--------------|
+| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params) | Hugging Face  |
+| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                  | Cohere        |
+| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)              | OpenAI        |
+| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                           | Voyage AI     |
+| 0.8203     | Pre-trained     | intfloat/e5-mistral-7b-instruct (7B # params)              | Hugging Face  |
+| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                  | Hugging Face  |
 
 The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py).
 
