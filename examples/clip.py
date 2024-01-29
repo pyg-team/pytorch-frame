@@ -103,11 +103,19 @@ class Decoder:
 # image_url = "https://hips.hearstapps.com/hmg-prod/images/little-cute-maltipoo-puppy-royalty-free-image-1652926025.jpg"
 # sentences = ["a photo of a cat", "a photo of a dog"]
 
-image_url = "https://upload.wikimedia.org/wikipedia/commons/3/35/Hosico_cat_151788152_924821268345498_670082736362908526_n.jpg"
+# image_url = "https://upload.wikimedia.org/wikipedia/commons/3/35/Hosico_cat_151788152_924821268345498_670082736362908526_n.jpg"
+# sentences = [
+#     "a photo of a yellow cat",
+#     "a photo of a black cat",
+#     "a photo of a white cat",
+# ]
+
+image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/2020_Mercedes-Benz_GLC_300_4MATIC_in_Polar_White%2C_front_left.jpg/200px-2020_Mercedes-Benz_GLC_300_4MATIC_in_Polar_White%2C_front_left.jpg"
 sentences = [
-    "a photo of a yellow cat",
-    "a photo of a black cat",
-    "a photo of a white cat",
+    "a photo of a black sedan",
+    "a photo of a white sedan",
+    "a photo of a black suv",
+    "a photo of a white suv",
 ]
 
 url_to_images = [image_url for _ in range(len(sentences))]
