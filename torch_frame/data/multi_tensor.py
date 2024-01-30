@@ -143,9 +143,8 @@ class _MultiTensor:
         if isinstance(index, int):
             if index < 0:
                 index = index + max_entries
-            if is_slice_end and index < 0 or index > max_entries:
-                raise IndexError(f"{idx_name} index out of bounds!")
-            elif (not is_slice_end) and (index < 0 or index >= max_entries):
+            index = min(index, max_entries)
+            if index < 0:
                 raise IndexError(f"{idx_name} index out of bounds!")
         elif isinstance(index, Tensor):
             # convert Boolean mask to index
