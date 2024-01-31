@@ -138,7 +138,6 @@ class _MultiTensor:
         """
         dim = self._normalize_dim(dim)
         max_entries = self.num_rows if dim == 0 else self.num_cols
-        idx_name = "Row" if dim == 0 else "Col"
         if isinstance(index, int):
             if index < 0:
                 index = index + max_entries
@@ -146,19 +145,20 @@ class _MultiTensor:
                 raise IndexError(f"index {index} is out of bounds for "
                                  f"dimension {dim} with size {max_entries}")
         elif isinstance(index, Tensor):
-            # convert Boolean mask to index
-            if index.dtype == torch.bool:
+            assert index.dim() == 1
+            if index.dtype == torch.bool:  # Convert boolean mask to index.
                 assert index.numel() == max_entries
                 index = index.nonzero().flatten()
-            assert check_out_of_bounds
-            assert index.ndim == 1
-            neg_idx = index < 0
-            if neg_idx.any():
-                index = index.clone()
-                index[neg_idx] = max_entries + index[neg_idx]
-            if index.numel() != 0 and (index.min() < 0
-                                       or index.max() >= max_entries):
-                raise IndexError(f"{idx_name} index out of bounds!")
+            else:
+                neg_mask = index < 0
+                if neg_mask.any():
+                    index = index.clone()
+                    index[neg_mask] += max_entries
+                if (index.numel() > 0 and check_out_of_bounds
+                        and (index.min() < 0 or index.max() >= max_entries)):
+                    raise IndexError(f"index is out of bounds for dimension "
+                                     f"{dim} with size {max_entries}")
+
         return index
 
     @classmethod
