@@ -124,18 +124,17 @@ class _MultiTensor:
         self,
         index: T,
         dim: int,
-        is_slice_end: bool = False,
+        check_out_of_bounds: bool = True,
     ) -> T:
         """Helper function to map negative indices to positive indices and
         raise :obj:`IndexError` when necessary.
 
         Args:
-            index: Union[int, Tensor]: Input :obj:`index` with potentially
+            index: int or Tensor: Input :obj:`index` with potentially
                 negative elements.
             dim (int): Dimension to be indexed.
-            is_slice_end (bool): Whether a given index (int) is slice end or
-                not. If :obj:`True`, we have more lenient :obj:`IndexError`.
-                (default: :obj:`False`)
+            check_out_of_bounds (bool, optional): Whether to perform
+                out-of-bound checks. (default: :obj:`True`)
         """
         dim = self._normalize_dim(dim)
         max_entries = self.num_rows if dim == 0 else self.num_cols
@@ -143,15 +142,15 @@ class _MultiTensor:
         if isinstance(index, int):
             if index < 0:
                 index = index + max_entries
-            index = min(index, max_entries)
-            if index < 0:
-                raise IndexError(f"{idx_name} index out of bounds!")
+            if index < 0 or (check_out_of_bounds and index > max_entries):
+                raise IndexError(f"index {index} is out of bounds for "
+                                 f"dimension {dim} with size {max_entries}")
         elif isinstance(index, Tensor):
             # convert Boolean mask to index
             if index.dtype == torch.bool:
                 assert index.numel() == max_entries
                 index = index.nonzero().flatten()
-            assert not is_slice_end
+            assert check_out_of_bounds
             assert index.ndim == 1
             neg_idx = index < 0
             if neg_idx.any():
@@ -252,11 +251,18 @@ class _MultiTensor:
             )
             return self.index_select(idx, dim=dim)
         else:
-            start_idx: int = self._normalize_index(index.start or 0, dim=dim)
+            # For narrow, we don't need out-of-bound checks since something
+            # like mat[100:110] (with mat.size() < 100) is perfectly valid and
+            # should return an empty tensor.
+            start_idx: int = self._normalize_index(
+                index.start or 0,
+                dim=dim,
+                check_out_of_bounds=False,
+            )
             end_idx: int = self._normalize_index(
                 index.stop if index.stop is not None else num_data,
                 dim=dim,
-                is_slice_end=True,
+                check_out_of_bounds=False,
             )
             return self.narrow(
                 dim=dim,
