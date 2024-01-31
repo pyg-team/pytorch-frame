@@ -130,8 +130,8 @@ class _MultiTensor:
         raise :obj:`IndexError` when necessary.
 
         Args:
-            index: int or Tensor: Input :obj:`index` with potentially
-                negative elements.
+            index (int or Tensor): Input :obj:`index` with potentially negative
+                elements.
             dim (int): Dimension to be indexed.
             check_out_of_bounds (bool, optional): Whether to perform
                 out-of-bound checks. (default: :obj:`True`)
