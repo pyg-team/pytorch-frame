@@ -142,7 +142,7 @@ class _MultiTensor:
         if isinstance(index, int):
             if index < 0:
                 index = index + max_entries
-            if index < 0 or (check_out_of_bounds and index > max_entries):
+            if index < 0 or (check_out_of_bounds and index >= max_entries):
                 raise IndexError(f"index {index} is out of bounds for "
                                  f"dimension {dim} with size {max_entries}")
         elif isinstance(index, Tensor):
