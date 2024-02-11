@@ -19,7 +19,6 @@ from torch_frame.nn import (
     MultiCategoricalEmbeddingEncoder,
 )
 from torch_frame.nn.encoder.stype_encoder import TimestampEncoder
-from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TaskType
 
 parser = argparse.ArgumentParser()
