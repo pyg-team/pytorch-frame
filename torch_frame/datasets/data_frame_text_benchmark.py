@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from __future__ import annotations
 
 from typing import Any
@@ -288,7 +290,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
             ser = df[dataset.target_col]
             df[dataset.target_col] = (ser - ser.mean()) / ser.std()
 
-        # check the scale
+        # Check the scale
         if dataset.num_rows < 5000:
             assert False
         elif dataset.num_rows < 50000:
