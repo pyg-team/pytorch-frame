@@ -67,23 +67,18 @@ class Amphibians(torch_frame.data.Dataset):
             't7',
         ]
         df = pd.read_csv(data_path, names=names, sep=';')
-
-        # Drop the first row
+        # Drop the first 2 rows containing metadata
         df = df.iloc[2:].reset_index(drop=True)
-
         target_cols = ['t1', 't2', 't3', 't4', 't5', 't6', 't7']
         df['t'] = df.apply(
             lambda row: '|'.join(
                 [col for col in target_cols if row[col] == '1']), axis=1)
         df = df.drop(target_cols, axis=1)
 
-        import pdb
-        pdb.set_trace()
+        # Infer the pandas dataframe automatically
         path = osp.join(root, 'amphibians_posprocess.csv')
         df.to_csv(path, index=False)
         df = pd.read_csv(path)
-        import pdb
-        pdb.set_trace()
 
         col_to_stype = {
             'ID': torch_frame.numerical,
@@ -105,13 +100,3 @@ class Amphibians(torch_frame.data.Dataset):
             't': torch_frame.multicategorical,
         }
         super().__init__(df, col_to_stype, target_col='t', col_to_sep='|')
-
-
-if __name__ == '__main__':
-    path = '/home/xinwei/code/pytorch-frame/amphibians'
-    dataset = Amphibians(root=path)
-    import pdb
-    pdb.set_trace()
-    dataset.materialize(path=osp.join(path, "data.pt"))
-    import pdb
-    pdb.set_trace()
