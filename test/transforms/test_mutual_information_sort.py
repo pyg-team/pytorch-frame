@@ -5,6 +5,7 @@ from torch_frame import TaskType, TensorFrame, stype
 from torch_frame.data import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.transforms import MutualInformationSort
+from torch_frame.typing import TrainingStage
 
 
 @pytest.mark.parametrize('with_nan', [True, False])
@@ -19,7 +20,7 @@ def test_mutual_information_sort(with_nan):
     dataset.materialize()
 
     tensor_frame: TensorFrame = dataset.tensor_frame
-    train_dataset = dataset.get_split('train')
+    train_dataset = dataset.get_split(TrainingStage.TRAIN)
     transform = MutualInformationSort(task_type)
     transform.fit(train_dataset.tensor_frame, train_dataset.col_stats)
     out = transform(tensor_frame)

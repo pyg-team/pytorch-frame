@@ -33,8 +33,9 @@ from torch_frame.typing import (
     IndexSelectType,
     TaskType,
     TensorData,
+    TrainingStage,
 )
-from torch_frame.utils.split import SPLIT_TO_NUM
+from torch_frame.utils.split import SPLIT_TO_NUM, generate_random_split
 
 COL_TO_PATTERN_STYPE_MAPPING = {
     "col_to_sep": torch_frame.multicategorical,
@@ -695,7 +696,7 @@ class Dataset(ABC):
 
         return dataset
 
-    def get_split(self, split: str) -> Dataset:
+    def get_split(self, split: TrainingStage) -> Dataset:
         r"""Returns a subset of the dataset that belongs to a given training
         split (as defined in :obj:`split_col`).
 
@@ -707,20 +708,25 @@ class Dataset(ABC):
             raise ValueError(
                 f"'get_split' is not supported for '{self}' since 'split_col' "
                 f"is not specified.")
-        if split not in ["train", "val", "test"]:
-            raise ValueError(f"The split named '{split}' is not available. "
-                             f"Needs to be either 'train', 'val', or 'test'.")
         indices = self.df.index[self.df[self.split_col] ==
                                 SPLIT_TO_NUM[split]].tolist()
         return self[indices]
 
-    def split(self) -> tuple[Dataset, Dataset, Dataset]:
-        r"""Splits the dataset into training, validation and test splits."""
-        return (
-            self.get_split("train"),
-            self.get_split("val"),
-            self.get_split("test"),
-        )
+    def split(self) -> tuple[Dataset, Dataset, Dataset | None]:
+        r"""Splits the dataset into training, validation and optionally
+        test splits.
+        """
+        train_set = self.get_split(TrainingStage.TRAIN)
+        val_set = self.get_split(TrainingStage.VAL)
+        test_set = self.get_split(TrainingStage.TEST)
+        if test_set.num_rows == 0:
+            test_set = None
+        return train_set, val_set, test_set
+
+    def random_split(self, ratios: list[float] | None = None):
+        split = generate_random_split(self.num_rows, ratios)
+        self.split_col = 'split'
+        self.df[self.split_col] = split
 
     @property
     @requires_post_materialization

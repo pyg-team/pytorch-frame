@@ -28,6 +28,12 @@ class Metric(Enum):
         return self in task_type.supported_metrics
 
 
+class TrainingStage(Enum):
+    TRAIN = 'train'
+    VAL = 'val'
+    TEST = 'test'
+
+
 class TaskType(Enum):
     r"""The type of the task.
 

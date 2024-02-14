@@ -6,6 +6,7 @@ import pandas as pd
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
+from torch_frame.typing import TrainingStage
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 SPLIT_COL = 'split_col'
@@ -64,8 +65,8 @@ class Mercari(torch_frame.data.Dataset):
         test_path = osp.join(self.base_url, 'test_stg2.csv')
         self.download_url(test_path, root)
         df_test = pd.read_csv(test_path)
-        df_train[SPLIT_COL] = SPLIT_TO_NUM['train']
-        df_test[SPLIT_COL] = SPLIT_TO_NUM['test']
+        df_train[SPLIT_COL] = SPLIT_TO_NUM[TrainingStage.TRAIN]
+        df_test[SPLIT_COL] = SPLIT_TO_NUM[TrainingStage.TEST]
         df = pd.concat([df_train, df_test], axis=0, ignore_index=True)
         if num_rows is not None:
             df = df.head(num_rows)

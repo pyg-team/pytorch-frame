@@ -11,7 +11,7 @@ import torch_frame
 from torch_frame import stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
-from torch_frame.typing import TaskType
+from torch_frame.typing import TaskType, TrainingStage
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 TIME_FORMATS = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y/%m/%d']
@@ -189,9 +189,9 @@ class FakeDataset(torch_frame.data.Dataset):
             if num_rows < 3:
                 raise ValueError("Dataframe needs at least 3 rows to include"
                                  " each of train, val and test split.")
-            split = [SPLIT_TO_NUM['train']] * num_rows
-            split[1] = SPLIT_TO_NUM['val']
-            split[2] = SPLIT_TO_NUM['test']
+            split = [SPLIT_TO_NUM.get(TrainingStage.TRAIN)] * num_rows
+            split[1] = SPLIT_TO_NUM.get(TrainingStage.VAL)
+            split[2] = SPLIT_TO_NUM.get(TrainingStage.TEST)
             df['split'] = split
 
         super().__init__(
