@@ -30,7 +30,8 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
         scale (str): The scale of the dataset. :obj:`"small"` means 5K to 50K
             rows. :obj:`"medium"` means 50K to 500K rows. :obj:`"large"`
             means more than 500K rows.
-        text_type (aa): pass.
+        text_stype (torch_frame.stype): Text stype to use for text columns
+            in the dataset. (default: :obj:`torch_frame.text_embedded`).
         idx (int): The index of the dataset within a category specified via
             :obj:`task_type` and :obj:`scale`.
 
@@ -100,6 +101,26 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 30
           - MultimodalTextBenchmark(name='wine_reviews')
           - 1.0%
+        * - multiclass_classification
+          - medium
+          - 1
+          - 114,000
+          - 11
+          - 5
+          - 3
+          - 114
+          - HuggingFaceDatasetDict(path='maharshipandya/spotify-tracks-dataset', target_col='track_genre')
+          - 0.0%
+        * - multiclass_classification
+          - large
+          - 0
+          - 568,454
+          - 2
+          - 3
+          - 2
+          - 5
+          - AmazonFineFoodReviews()
+          - 0.0%
         * - regression
           - small
           - 0
@@ -160,6 +181,16 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - MultimodalTextBenchmark(name='news_popularity2')
           - 0.0%
+        * - regression
+          - large
+          - 0
+          - 1,482,535
+          - 1
+          - 4
+          - 2
+          - 1
+          - Mercari()
+          - 0.0%
     """
     dataset_categorization_dict: dict[str, dict[str, list[tuple]]] = {
         'binary_classification': {
@@ -188,8 +219,23 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 ('MultimodalTextBenchmark', {
                     'name': 'wine_reviews'
                 }),
+                ('HuggingFaceDatasetDict', {
+                    'path':
+                    'maharshipandya/spotify-tracks-dataset',
+                    'columns': [
+                        'artists', 'album_name', 'track_name', 'popularity',
+                        'duration_ms', 'explicit', 'danceability', 'energy',
+                        'key', 'loudness', 'mode', 'speechiness',
+                        'acousticness', 'instrumentalness', 'liveness',
+                        'valence', 'tempo', 'time_signature', 'track_genre'
+                    ],
+                    'target_col':
+                    'track_genre',
+                }),
             ],
-            'large': [],
+            'large': [
+                ('AmazonFineFoodReviews', {}),
+            ],
         },
         'regression': {
             'small': [
@@ -263,15 +309,23 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 f"{task_type.value} and scale: {scale} (got idx: {idx}).")
 
         class_name, kwargs = self.datasets_available(task_type, scale)[idx]
-        if class_name == 'MultimodalTextBenchmark':
+        if class_name in {'MultimodalTextBenchmark', 'AmazonFineFoodReviews'}:
             text_args = dict(
                 text_stype=text_stype,
                 col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                 col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg)
+        elif class_name == 'HuggingFaceDatasetDict':
+            # TODO (zecheng): support text tokenized
+            text_args = dict(col_to_text_embedder_cfg=col_to_text_embedder_cfg)
         else:
             text_args = dict(col_to_text_embedder_cfg=col_to_text_embedder_cfg)
-        dataset = getattr(torch_frame.datasets,
-                          class_name)(root=root, **text_args, **kwargs)
+        if class_name == 'HuggingFaceDatasetDict':
+            # HuggingFace will handle the data download so don't need the root
+            dataset = getattr(torch_frame.datasets, class_name)(**text_args,
+                                                                **kwargs)
+        else:
+            dataset = getattr(torch_frame.datasets,
+                              class_name)(root=root, **text_args, **kwargs)
         self.cls_str = str(dataset)
 
         # Add split col
