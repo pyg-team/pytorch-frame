@@ -28,6 +28,9 @@ def test_data_frame_text_benchmark_match(task_type, scale):
             assert datasets[0] == ('MultimodalTextBenchmark', {
                 'name': 'jigsaw_unintended_bias100K'
             })
+            assert datasets[1] == ('MultimodalTextBenchmark', {
+                'name': 'kick_starter_funding'
+            })
         elif scale == 'large':
             assert len(datasets) == 0
     elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
@@ -37,6 +40,12 @@ def test_data_frame_text_benchmark_match(task_type, scale):
             })
             assert datasets[1] == ('MultimodalTextBenchmark', {
                 'name': 'news_channel'
+            })
+            assert datasets[2] == ('MultimodalTextBenchmark', {
+                'name': 'data_scientist_salary'
+            })
+            assert datasets[3] == ('MultimodalTextBenchmark', {
+                'name': 'melbourne_airbnb'
             })
         elif scale == 'medium':
             assert datasets[0] == ('MultimodalTextBenchmark', {
@@ -79,8 +88,16 @@ def test_data_frame_text_benchmark_match(task_type, scale):
             assert datasets[5] == ('MultimodalTextBenchmark', {
                 'name': 'news_popularity2'
             })
+            assert datasets[6] == ('MultimodalTextBenchmark', {
+                'name': 'ae_price_prediction'
+            })
+            assert datasets[7] == ('MultimodalTextBenchmark', {
+                'name': 'california_house_price'
+            })
         elif scale == 'medium':
-            assert len(datasets) == 0
+            assert datasets[0] == ('MultimodalTextBenchmark', {
+                'name': 'mercari_price_suggestion100K'
+            })
         elif scale == 'large':
             assert datasets[0] == ('Mercari', {})
 
@@ -91,15 +108,15 @@ def test_data_frame_text_benchmark_object():
             root=temp_dir,
             task_type=TaskType.MULTICLASS_CLASSIFICATION,
             scale='small',
-            idx=1,
+            idx=0,
             col_to_text_embedder_cfg=TextEmbedderConfig(
                 text_embedder=HashTextEmbedder(10)),
         )
     assert str(dataset) == ("DataFrameTextBenchmark(\n"
                             "  task_type=multiclass_classification,\n"
                             "  scale=small,\n"
-                            "  idx=1,\n"
+                            "  idx=0,\n"
                             "  cls=MultimodalTextBenchmark()\n"
                             ")")
-    assert dataset.num_rows == 25355
+    assert dataset.num_rows == 6364
     dataset.materialize()

@@ -38,7 +38,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
     **STATS:**
 
     .. list-table::
-        :widths: 20 10 10 10 10 10 10 20 20 10
+        :widths: 20 10 10 10 10 10 10 10 20 20 10
         :header-rows: 1
 
         * - Task
@@ -48,6 +48,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - #cols (numerical)
           - #cols (categorical)
           - #cols (text)
+          - #cols (other)
           - #classes
           - Class object
           - Missing value ratio
@@ -58,6 +59,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 3
           - 2
+          - 0
           - 2
           - MultimodalTextBenchmark(name='fake_job_postings2')
           - 23.8%
@@ -68,9 +70,21 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 29
           - 0
           - 1
+          - 0
           - 2
           - MultimodalTextBenchmark(name='jigsaw_unintended_bias100K')
           - 41.4%
+        * - binary_classification
+          - medium
+          - 1
+          - 108,128
+          - 1
+          - 3
+          - 3
+          - 2
+          - 2
+          - MultimodalTextBenchmark(name='kick_starter_funding')
+          - 0.0%
         * - multiclass_classification
           - small
           - 0
@@ -78,6 +92,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 1
+          - 0
           - 4
           - MultimodalTextBenchmark(name='product_sentiment_machine_hack')
           - 0.0%
@@ -88,8 +103,31 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 14
           - 0
           - 1
+          - 0
           - 6
           - MultimodalTextBenchmark(name='news_channel')
+          - 0.0%
+        * - multiclass_classification
+          - small
+          - 2
+          - 19,802
+          - 0
+          - 3
+          - 2
+          - 1
+          - 6
+          - MultimodalTextBenchmark(name='data_scientist_salary')
+          - 0.0%
+        * - multiclass_classification
+          - small
+          - 3
+          - 22,895
+          - 26
+          - 47
+          - 13
+          - 3
+          - 10
+          - MultimodalTextBenchmark(name='melbourne_airbnb')
           - 0.0%
         * - multiclass_classification
           - medium
@@ -98,6 +136,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 2
           - 1
+          - 0
           - 30
           - MultimodalTextBenchmark(name='wine_reviews')
           - 1.0%
@@ -108,6 +147,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 11
           - 5
           - 3
+          - 0
           - 114
           - HuggingFaceDatasetDict(path='maharshipandya/spotify-tracks-dataset', target_col='track_genre')
           - 0.0%
@@ -118,6 +158,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 3
           - 2
+          - 0
           - 5
           - AmazonFineFoodReviews()
           - 0.0%
@@ -128,6 +169,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 3
+          - 0
           - 1
           - MultimodalTextBenchmark(name='google_qa_answer_type_reason_explanation')
           - 0.0%
@@ -138,6 +180,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 3
+          - 0
           - 1
           - MultimodalTextBenchmark(name='google_qa_question_type_reason_explanation')
           - 0.0%
@@ -148,6 +191,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 3
           - 3
+          - 0
           - 1
           - MultimodalTextBenchmark(name='bookprice_prediction')
           - 1.7%
@@ -158,6 +202,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 1
           - 2
+          - 0
           - 1
           - MultimodalTextBenchmark(name='jc_penney_products')
           - 13.7%
@@ -168,6 +213,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 3
           - 2
+          - 0
           - 1
           - MultimodalTextBenchmark(name='women_clothing_review')
           - 1.8%
@@ -178,8 +224,42 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 0
           - 1
+          - 0
           - 1
           - MultimodalTextBenchmark(name='news_popularity2')
+          - 0.0%
+        * - regression
+          - small
+          - 6
+          - 28,328
+          - 2
+          - 5
+          - 1
+          - 3
+          - 1
+          - MultimodalTextBenchmark(name='ae_price_prediction')
+          - 0.0%
+        * - regression
+          - small
+          - 7
+          - 47,439
+          - 18
+          - 8
+          - 2
+          - 11
+          - 1
+          - MultimodalTextBenchmark(name='california_house_price')
+          - 0.0%
+        * - regression
+          - medium
+          - 0
+          - 125,000
+          - 0
+          - 6
+          - 2
+          - 1
+          - 1
+          - MultimodalTextBenchmark(name='mercari_price_suggestion100K')
           - 0.0%
         * - regression
           - large
@@ -188,6 +268,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 4
           - 2
+          - 1
           - 1
           - Mercari()
           - 0.0%
@@ -203,6 +284,9 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 ('MultimodalTextBenchmark', {
                     'name': 'jigsaw_unintended_bias100K'
                 }),
+                ('MultimodalTextBenchmark', {
+                    'name': 'kick_starter_funding'
+                }),
             ],
             'large': [],
         },
@@ -213,6 +297,12 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 }),
                 ('MultimodalTextBenchmark', {
                     'name': 'news_channel'
+                }),
+                ('MultimodalTextBenchmark', {
+                    'name': 'data_scientist_salary'
+                }),
+                ('MultimodalTextBenchmark', {
+                    'name': 'melbourne_airbnb'
                 }),
             ],
             'medium': [
@@ -257,8 +347,18 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 ('MultimodalTextBenchmark', {
                     'name': 'news_popularity2'
                 }),
+                ('MultimodalTextBenchmark', {
+                    'name': 'ae_price_prediction'
+                }),
+                ('MultimodalTextBenchmark', {
+                    'name': 'california_house_price'
+                }),
             ],
-            'medium': [],
+            'medium': [
+                ('MultimodalTextBenchmark', {
+                    'name': 'mercari_price_suggestion100K'
+                }),
+            ],
             'large': [
                 ('Mercari', {}),
             ],
