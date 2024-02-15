@@ -42,7 +42,7 @@ args = parser.parse_args()
 # ResNet-18 - Image Embedded
 # Best Val Acc: 0.9990, Best Test Acc: 0.9979
 # ViT - Image Embedded
-# Best Val Acc: 0.9990, Best Test Acc: 0.9979
+# Best Val Acc: 0.9986, Best Test Acc: 0.9984
 
 
 class ImageToEmbedding:
