@@ -545,7 +545,7 @@ class Dataset(ABC):
                 :class:`TensorFrame` object and :obj:`col_stats`.
                 If :obj:`path` is specified but a cached file does not exist,
                 this will perform materialization and then save the
-                :class:`TensorFrame object and :obj:`col_stats` to :obj:`path`.
+                :class:`TensorFrame` object and :obj:`col_stats` to :obj:`path`.
                 If :obj:`path` is :obj:`None`, this will materialize the
                 dataset without caching. (default: :obj:`None`)
         """
