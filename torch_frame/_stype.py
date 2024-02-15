@@ -92,6 +92,9 @@ class stype(Enum):
         else:
             return self
 
+    def __str__(self) -> str:
+        return f'{self.name}'
+
 
 numerical = stype('numerical')
 categorical = stype('categorical')
