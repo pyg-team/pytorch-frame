@@ -36,8 +36,6 @@ class DiamondImages(torch_frame.data.Dataset):
         df = pd.concat([df, image_df], axis=1)
         df = df.drop(columns=["path_to_img"])
 
-        breakpoint()
-
         col_to_stype = {
             "shape": torch_frame.categorical,
             "carat": torch_frame.numerical,
