@@ -4,8 +4,11 @@ import argparse
 import math
 import os
 import os.path as osp
+import time
 from typing import Any
 
+import numpy as np
+import optuna
 import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from torch import Tensor
@@ -77,9 +80,17 @@ parser.add_argument(
         "sentence-transformers/average_word_embeddings_glove.6B.300d",
     ],
 )
+parser.add_argument('--epochs', type=int, default=30)
 parser.add_argument("--finetune", action="store_true")
 parser.add_argument('--result_path', type=str, default='')
+parser.add_argument('--num_trials', type=int, default=20,
+                    help='Number of Optuna-based hyper-parameter tuning.')
+parser.add_argument(
+    '--num_repeats', type=int, default=1,
+    help='Number of repeated training and eval on the best config.')
 args = parser.parse_args()
+
+TRAIN_CONFIG_KEYS = ["batch_size", "gamma_rate", "base_lr"]
 
 
 class TextToEmbedding:
@@ -209,29 +220,110 @@ def get_stype_encoder_dict(
     return stype_encoder_dict
 
 
-def main_gbdt(model: GBDT, train_cfg: dict[str, Any]):
-    import time
-    start_time = time.time()
-    model.tune(tf_train=train_dataset.tensor_frame,
-               tf_val=val_dataset.tensor_frame,
-               num_trials=train_cfg["num_trials"])
-    val_pred = model.predict(tf_test=val_dataset.tensor_frame)
-    val_metric = model.compute_metric(val_dataset.tensor_frame.y, val_pred)
-    test_pred = model.predict(tf_test=test_dataset.tensor_frame)
-    test_metric = model.compute_metric(test_dataset.tensor_frame.y, test_pred)
-    end_time = time.time()
-    result_dict = {
-        'args': args.__dict__,
-        'best_val_metric': val_metric,
-        'best_test_metric': test_metric,
-        'best_cfg': model.params,
-        'total_time': end_time - start_time,
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
+
+if not args.finetune:
+    # text_encoder = TextToEmbedding(model=args.text_model, device=device)
+    from torch_frame.testing.text_embedder import HashTextEmbedder
+    text_encoder = HashTextEmbedder(100)
+    text_stype = torch_frame.text_embedded
+    kwargs = {
+        "text_stype":
+        text_stype,
+        "col_to_text_embedder_cfg":
+        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
     }
-    print(result_dict)
-    # Save results
-    if args.result_path != '':
-        os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
-        torch.save(result_dict, args.result_path)
+else:
+    text_encoder = TextToEmbeddingFinetune(model=args.text_model)
+    text_stype = torch_frame.text_tokenized
+    kwargs = {
+        "text_stype":
+        text_stype,
+        "col_to_text_tokenizer_cfg":
+        TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
+                            batch_size=10000),
+    }
+
+dataset = DataFrameTextBenchmark(
+    root=path,
+    task_type=TaskType(args.task_type),
+    scale=args.scale,
+    idx=args.idx,
+    **kwargs,
+)
+
+text_model_name = args.text_model.replace('/', '')
+filename = (f"{args.task_type}_{args.scale}_{str(args.idx)}_"
+            f"{text_model_name}_{text_stype.value}_data.pt")
+# Notice that different tabular model will reuse materialized dataset:
+dataset.materialize(path=osp.join(path, filename))
+train_dataset, val_dataset, test_dataset = dataset.split()
+
+train_tensor_frame = train_dataset.tensor_frame
+val_tensor_frame = val_dataset.tensor_frame
+test_tensor_frame = test_dataset.tensor_frame
+
+if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
+    out_channels = 1
+    loss_fun = BCEWithLogitsLoss()
+    metric_computer = AUROC(task='binary').to(device)
+    higher_is_better = True
+elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+    out_channels = dataset.num_classes
+    loss_fun = CrossEntropyLoss()
+    metric_computer = Accuracy(task='multiclass',
+                               num_classes=dataset.num_classes).to(device)
+    higher_is_better = True
+elif dataset.task_type == TaskType.REGRESSION:
+    out_channels = 1
+    loss_fun = MSELoss()
+    metric_computer = MeanSquaredError(squared=False).to(device)
+    higher_is_better = False
+
+if args.model_type == "FTTransformer":
+    model_cls = FTTransformer
+    model_search_space = {
+        'channels': [64, 128, 256],
+        'num_layers': [4, 6, 8],
+    }
+    train_search_space = {
+        'batch_size': [256, 512],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.9, 0.95, 1.],
+    }
+elif args.model_type == "ResNet":
+    model_cls = ResNet
+    model_search_space = {
+        'channels': [64, 128, 256],
+        'num_layers': [4, 6, 8],
+    }
+    train_search_space = {
+        'batch_size': [256, 512],
+        'base_lr': [0.0001, 0.001],
+        'gamma_rate': [0.9, 0.95, 1.],
+    }
+else:
+    if args.finetune:
+        raise ValueError("Currently Trompt with finetuning is too expensive")
+    model_search_space = {
+        'channels': [64, 128, 192],
+        'num_layers': [4, 6, 8],
+        'num_prompts': [64, 128, 192],
+    }
+    train_search_space = {
+        'batch_size': [128, 256],
+        'base_lr': [0.01, 0.001],
+        'gamma_rate': [0.9, 0.95, 1.],
+    }
+    if train_tensor_frame.num_cols > 20:
+        # Reducing the model size to avoid GPU OOM
+        model_search_space['channels'] = [64, 128]
+        model_search_space['num_prompts'] = [64, 128]
+    elif train_tensor_frame.num_cols > 50:
+        model_search_space['channels'] = [64]
+        model_search_space['num_prompts'] = [64]
+    model_cls = Trompt
 
 
 def train(
@@ -286,22 +378,102 @@ def test(
     return metric_computer.compute().item()
 
 
-def main_torch(
-    higher_is_better: bool,
+def objective(trial: optuna.trial.Trial) -> float:
+    model_cfg = {}
+    for name, search_list in model_search_space.items():
+        model_cfg[name] = trial.suggest_categorical(name, search_list)
+    train_cfg = {}
+    for name, search_list in train_search_space.items():
+        train_cfg[name] = trial.suggest_categorical(name, search_list)
+
+    best_val_metric, _ = train_and_eval_with_cfg(
+        model_cfg=model_cfg, train_cfg=train_cfg, out_channels=out_channels,
+        col_stats=dataset.col_stats,
+        col_names_dict=train_tensor_frame.col_names_dict, device=device,
+        model_cls=model_cls, trial=trial)
+    return best_val_metric
+
+
+def main_gbdt(model: GBDT):
+    print("GBDT")
+    import time
+    start_time = time.time()
+    model.tune(tf_train=train_dataset.tensor_frame,
+               tf_val=val_dataset.tensor_frame, num_trials=args.num_trials)
+    val_pred = model.predict(tf_test=val_dataset.tensor_frame)
+    val_metric = model.compute_metric(val_dataset.tensor_frame.y, val_pred)
+    test_pred = model.predict(tf_test=test_dataset.tensor_frame)
+    test_metric = model.compute_metric(test_dataset.tensor_frame.y, test_pred)
+    end_time = time.time()
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metric': val_metric,
+        'best_test_metric': test_metric,
+        'best_cfg': model.params,
+        'total_time': end_time - start_time,
+    }
+    print(result_dict)
+    # Save results
+    if args.result_path != '':
+        os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
+        torch.save(result_dict, args.result_path)
+
+
+def train_and_eval_with_cfg(
+    model_cfg: dict[str, Any],
     train_cfg: dict[str, Any],
-    model: Module,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
-    test_loader: DataLoader,
-    lr_scheduler: Any,
-    optimizer: Any,
-):
+    out_channels: int,
+    col_stats: Any,
+    col_names_dict: dict[torch_frame.stype, Any],
+    device: torch.device,
+    model_cls: Any,
+    trial: optuna.trial.Trial | None = None,
+) -> tuple[float, float]:
+    if args.model_type == "Trompt":
+        stype_encoder_dicts = []
+        if args.finetune:
+            raise ValueError(
+                "Currently Trompt with finetuning is too expensive")
+        for i in range(train_cfg["num_layers"]):
+            stype_encoder_dicts.append(
+                get_stype_encoder_dict(text_stype, text_encoder,
+                                       train_tensor_frame))
+        model = model_cls(
+            **model_cfg,
+            out_channels=out_channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dicts=stype_encoder_dicts,
+        ).to(device)
+    else:
+        stype_encoder_dict = get_stype_encoder_dict(text_stype, text_encoder,
+                                                    train_tensor_frame)
+        model = model_cls(
+            **model_cfg,
+            out_channels=out_channels,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            stype_encoder_dict=stype_encoder_dict,
+        ).to(device)
+
+    train_loader = DataLoader(train_tensor_frame,
+                              batch_size=train_cfg["batch_size"], shuffle=True,
+                              drop_last=True)
+    val_loader = DataLoader(val_tensor_frame,
+                            batch_size=train_cfg["batch_size"])
+    test_loader = DataLoader(test_tensor_frame,
+                             batch_size=train_cfg["batch_size"])
+
+    model.reset_parameters()
+    # Use train_cfg to set up training procedure
+    optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg["base_lr"])
+    lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg["gamma_rate"])
     if higher_is_better:
         best_val_metric = 0
     else:
         best_val_metric = math.inf
 
-    for epoch in range(1, train_cfg["epochs"] + 1):
+    for epoch in range(1, args.epochs + 1):
         train_loss = train(model, train_loader, optimizer, epoch)
         val_metric = test(model, val_loader)
 
@@ -316,90 +488,70 @@ def main_torch(
         lr_scheduler.step()
         print(f'Train Loss: {train_loss:.4f}, Val: {val_metric:.4f}')
 
-    print(f"Best Val {metric_computer}: {best_val_metric:.4f}, "
-          f"Best Test {metric_computer}: {best_test_metric:.4f}")
+        if trial is not None:
+            trial.report(val_metric, epoch)
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+
+    print(f'Best val: {best_val_metric:.4f}, '
+          f'Best test: {best_test_metric:.4f}')
+    return best_val_metric, best_test_metric
+
+
+def main_torch():
+    print("Hyper-parameter search via Optuna")
+    start_time = time.time()
+    study = optuna.create_study(
+        pruner=optuna.pruners.MedianPruner(),
+        direction="maximize" if higher_is_better else "minimize",
+    )
+    study.optimize(objective, n_trials=args.num_trials)
+    end_time = time.time()
+    search_time = end_time - start_time
+    print("Hyper-parameter search done. Found the best config.")
+    params = study.best_params
+    best_train_cfg = {}
+    for train_cfg_key in TRAIN_CONFIG_KEYS:
+        best_train_cfg[train_cfg_key] = params.pop(train_cfg_key)
+    best_model_cfg = params
+
+    print(f"Repeat experiments {args.num_repeats} times with the best train "
+          f"config {best_train_cfg} and model config {best_model_cfg}.")
+
+    best_val_metrics = []
+    best_test_metrics = []
+    for _ in range(args.num_repeats):
+        best_val_metric, best_test_metric = train_and_eval_with_cfg(
+            best_model_cfg, best_train_cfg, out_channels, dataset.col_stats,
+            train_tensor_frame.col_names_dict, device, model_cls)
+        best_val_metrics.append(best_val_metric)
+        best_test_metrics.append(best_test_metric)
+    end_time = time.time()
+    final_model_time = (end_time - start_time) / args.num_repeats
+    best_val_metrics = np.array(best_val_metrics)
+    best_test_metrics = np.array(best_test_metrics)
+
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metrics': best_val_metrics,
+        'best_test_metrics': best_test_metrics,
+        'best_val_metric': best_val_metrics.mean(),
+        'best_test_metric': best_test_metrics.mean(),
+        'best_train_cfg': best_train_cfg,
+        'best_model_cfg': best_model_cfg,
+        'search_time': search_time,
+        'final_model_time': final_model_time,
+        'total_time': search_time + final_model_time,
+    }
+    print(result_dict)
+    # Save results
+    if args.result_path != '':
+        os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
+        torch.save(result_dict, args.result_path)
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
-
-    if not args.finetune:
-        text_encoder = TextToEmbedding(model=args.text_model, device=device)
-        text_stype = torch_frame.text_embedded
-        kwargs = {
-            "text_stype":
-            text_stype,
-            "col_to_text_embedder_cfg":
-            TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
-        }
-    else:
-        text_encoder = TextToEmbeddingFinetune(model=args.text_model)
-        text_stype = torch_frame.text_tokenized
-        kwargs = {
-            "text_stype":
-            text_stype,
-            "col_to_text_tokenizer_cfg":
-            TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
-                                batch_size=10000),
-        }
-
-    dataset = DataFrameTextBenchmark(
-        root=path,
-        task_type=TaskType(args.task_type),
-        scale=args.scale,
-        idx=args.idx,
-        **kwargs,
-    )
-
-    # TODO (zecheng): Change this to search space
-    train_cfg = dict(
-        channels=128,
-        num_layers=4,
-        base_lr=0.001,
-        epochs=10,
-        num_prompts=20,
-        batch_size=512,
-        gamma_rate=0.9,
-        num_trials=1,
-    )
-
-    text_model_name = args.text_model.replace('/', '')
-    filename = (f"{args.task_type}_{args.scale}_{str(args.idx)}_"
-                f"{text_model_name}_{text_stype.value}_data.pt")
-    # Notice that different tabular model will reuse materialized dataset:
-    dataset.materialize(path=osp.join(path, filename))
-    train_dataset, val_dataset, test_dataset = dataset.split()
-
-    train_tensor_frame = train_dataset.tensor_frame
-    val_tensor_frame = val_dataset.tensor_frame
-    test_tensor_frame = test_dataset.tensor_frame
-    train_loader = DataLoader(train_tensor_frame,
-                              batch_size=train_cfg["batch_size"], shuffle=True)
-    val_loader = DataLoader(val_tensor_frame,
-                            batch_size=train_cfg["batch_size"])
-    test_loader = DataLoader(test_tensor_frame,
-                             batch_size=train_cfg["batch_size"])
-
-    if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
-        out_channels = 1
-        loss_fun = BCEWithLogitsLoss()
-        metric_computer = AUROC(task='binary').to(device)
-        higher_is_better = True
-    elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-        out_channels = dataset.num_classes
-        loss_fun = CrossEntropyLoss()
-        metric_computer = Accuracy(task='multiclass',
-                                   num_classes=dataset.num_classes).to(device)
-        higher_is_better = True
-    elif dataset.task_type == TaskType.REGRESSION:
-        out_channels = 1
-        loss_fun = MSELoss()
-        metric_computer = MeanSquaredError(squared=False).to(device)
-        higher_is_better = False
-
     if args.model_type in GBDT_MODELS:
-        # TODO: support gbdt models
         gbdt_cls_dict = {
             "XGBoost": XGBoost,
             "CatBoost": CatBoost,
@@ -411,45 +563,6 @@ if __name__ == "__main__":
         else:
             num_classes = None
         model = model_cls(task_type=dataset.task_type, num_classes=num_classes)
-        main_gbdt(model, train_cfg)
+        main_gbdt(model)
     else:
-        if args.model_type == "FTTransformer":
-            model_cls = FTTransformer
-            model_kwargs = dict(
-                channels=train_cfg["channels"],
-                num_layers=train_cfg["num_layers"],
-                stype_encoder_dict=get_stype_encoder_dict(
-                    text_stype, text_encoder, train_tensor_frame))
-        elif args.model_type == "ResNet":
-            model_cls = ResNet
-            model_kwargs = dict(
-                channels=train_cfg["channels"],
-                num_layers=train_cfg["num_layers"],
-                stype_encoder_dict=get_stype_encoder_dict(
-                    text_stype, text_encoder, train_tensor_frame))
-        else:
-            if args.finetune:
-                raise ValueError(
-                    "Currently Trompt with finetuning is too expensive")
-            model_cls = Trompt
-            stype_encoder_dicts = []
-            for i in range(train_cfg["num_layers"]):
-                stype_encoder_dicts.append(
-                    get_stype_encoder_dict(text_stype, text_encoder,
-                                           train_tensor_frame))
-            model_kwargs = dict(channels=train_cfg["channels"],
-                                num_layers=train_cfg["num_layers"],
-                                num_prompts=train_cfg["num_prompts"],
-                                stype_encoder_dicts=stype_encoder_dicts)
-        model = model_cls(
-            **model_kwargs,
-            out_channels=out_channels,
-            col_stats=dataset.col_stats,
-            col_names_dict=train_tensor_frame.col_names_dict,
-        ).to(device)
-        model.reset_parameters()
-        optimizer = torch.optim.Adam(model.parameters(),
-                                     lr=train_cfg["base_lr"])
-        lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg["gamma_rate"])
-        main_torch(higher_is_better, train_cfg, model, train_loader,
-                   val_loader, test_loader, lr_scheduler, optimizer)
+        main_torch()
