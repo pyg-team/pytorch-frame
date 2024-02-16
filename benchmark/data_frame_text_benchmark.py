@@ -86,7 +86,7 @@ parser.add_argument('--result_path', type=str, default='')
 parser.add_argument('--num_trials', type=int, default=20,
                     help='Number of Optuna-based hyper-parameter tuning.')
 parser.add_argument(
-    '--num_repeats', type=int, default=1,
+    '--num_repeats', type=int, default=5,
     help='Number of repeated training and eval on the best config.')
 args = parser.parse_args()
 
