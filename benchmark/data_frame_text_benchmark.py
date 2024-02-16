@@ -176,7 +176,9 @@ def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
 
 
 def get_stype_encoder_dict(
-        text_stype: torch_frame.stype
+    text_stype: torch_frame.stype,
+    text_encoder: Any,
+    train_tensor_frame: torch_frame.TensorFrame,
 ) -> dict[torch_frame.stype, StypeEncoder]:
     if not args.finetune:
         text_stype_encoder = LinearEmbeddingEncoder()
@@ -411,12 +413,14 @@ else:
         model_cls = FTTransformer
         model_kwargs = dict(
             channels=train_cfg["channels"], num_layers=train_cfg["num_layers"],
-            stype_encoder_dict=get_stype_encoder_dict(text_stype))
+            stype_encoder_dict=get_stype_encoder_dict(text_stype, text_encoder,
+                                                      train_tensor_frame))
     elif args.model_type == "ResNet":
         model_cls = ResNet
         model_kwargs = dict(
             channels=train_cfg["channels"], num_layers=train_cfg["num_layers"],
-            stype_encoder_dict=get_stype_encoder_dict(text_stype))
+            stype_encoder_dict=get_stype_encoder_dict(text_stype, text_encoder,
+                                                      train_tensor_frame))
     else:
         if args.finetune:
             raise ValueError(
@@ -424,7 +428,9 @@ else:
         model_cls = Trompt
         stype_encoder_dicts = []
         for i in range(train_cfg["num_layers"]):
-            stype_encoder_dicts.append(get_stype_encoder_dict(text_stype))
+            stype_encoder_dicts.append(
+                get_stype_encoder_dict(text_stype, text_encoder,
+                                       train_tensor_frame))
         model_kwargs = dict(channels=train_cfg["channels"],
                             num_layers=train_cfg["num_layers"],
                             num_prompts=train_cfg["num_prompts"],
