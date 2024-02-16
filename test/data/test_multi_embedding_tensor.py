@@ -389,8 +389,8 @@ def test_col_index_empty(device):
         embedding_dim=3,
         device=device,
     )
-    assert met[:, 1].shape == (0, 1)
-    assert met[:, [1, 2]].shape == (0, 2)
+    assert met[:, 1].shape == (0, 1, -1)
+    assert met[:, [1, 2]].shape == (0, 2, -1)
 
 
 @withCUDA
