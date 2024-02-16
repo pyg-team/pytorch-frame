@@ -225,6 +225,9 @@ def test_multi_nested_tensor_basics(device):
             assert torch.allclose(tensor_mat[i][j],
                                   multi_nested_tensor_range[i, idx])
 
+    assert multi_nested_tensor[0:0, 1].shape[:2] == (0, 1)
+    assert multi_nested_tensor[0:0, [1, 2]].shape[:2] == (0, 2)
+
     # Test column slicing
     assert_equal(tensor_mat, multi_nested_tensor[:, :])
     assert_equal(column_select(tensor_mat, slice(None, 3)),
