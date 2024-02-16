@@ -4,6 +4,7 @@ import pandas as pd
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.typing import TrainingStage
 from torch_frame.utils.infer_stype import infer_df_stype
 from torch_frame.utils.split import SPLIT_TO_NUM
 
@@ -105,13 +106,13 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
 
             # Transform HF dataset split to `SPLIT_TO_NUM` accepted one:
             if "train" in split_name:
-                split_names.append("train")
+                split_names.append(TrainingStage.TRAIN)
             elif "val" in split_name:
                 # Some datasets have val split name as `"validation"`,
                 # here we transform it to `"val"`:
-                split_names.append("val")
+                split_names.append(TrainingStage.VAL)
             elif "test" in split_name:
-                split_names.append("test")
+                split_names.append(TrainingStage.TEST)
             else:
                 raise ValueError(f"Invalid split name: '{split_name}'. "
                                  f"Expected one of the following PyTorch "
