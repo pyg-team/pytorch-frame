@@ -34,7 +34,6 @@ from torch_frame.nn import (
     Trompt,
 )
 from torch_frame.nn.encoder.stype_encoder import TimestampEncoder
-from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TaskType, TextTokenizationOutputs
 
 GBDT_MODELS = ["XGBoost", "CatBoost", "LightGBM"]
@@ -322,8 +321,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
 
 if not args.finetune:
-    # text_encoder = TextToEmbedding(model=args.text_model, device=device)
-    text_encoder = HashTextEmbedder(100)
+    text_encoder = TextToEmbedding(model=args.text_model, device=device)
     text_stype = torch_frame.text_embedded
     kwargs = {
         "text_stype":
