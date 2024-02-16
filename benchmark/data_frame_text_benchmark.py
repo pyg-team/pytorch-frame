@@ -293,7 +293,8 @@ def main_torch(
     train_loader: DataLoader,
     val_loader: DataLoader,
     test_loader: DataLoader,
-    lr_scheduler,
+    lr_scheduler: Any,
+    optimizer: Any,
 ):
     if higher_is_better:
         best_val_metric = 0
@@ -319,130 +320,136 @@ def main_torch(
           f"Best Test {metric_computer}: {best_test_metric:.4f}")
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
+if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
 
-if not args.finetune:
-    text_encoder = TextToEmbedding(model=args.text_model, device=device)
-    text_stype = torch_frame.text_embedded
-    kwargs = {
-        "text_stype":
-        text_stype,
-        "col_to_text_embedder_cfg":
-        TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
-    }
-else:
-    text_encoder = TextToEmbeddingFinetune(model=args.text_model)
-    text_stype = torch_frame.text_tokenized
-    kwargs = {
-        "text_stype":
-        text_stype,
-        "col_to_text_tokenizer_cfg":
-        TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
-                            batch_size=10000),
-    }
-
-dataset = DataFrameTextBenchmark(
-    root=path,
-    task_type=TaskType(args.task_type),
-    scale=args.scale,
-    idx=args.idx,
-    **kwargs,
-)
-
-# TODO (zecheng): Change this to search space
-train_cfg = dict(
-    channels=128,
-    num_layers=4,
-    base_lr=0.001,
-    epochs=10,
-    num_prompts=20,
-    batch_size=512,
-    gamma_rate=0.9,
-    num_trials=1,
-)
-
-text_model_name = args.text_model.replace('/', '')
-filename = (f"{args.task_type}_{args.scale}_{str(args.idx)}_"
-            f"{text_model_name}_{text_stype.value}_data.pt")
-# Notice that different tabular model will reuse materialized dataset:
-dataset.materialize(path=osp.join(path, filename))
-train_dataset, val_dataset, test_dataset = dataset.split()
-
-train_tensor_frame = train_dataset.tensor_frame
-val_tensor_frame = val_dataset.tensor_frame
-test_tensor_frame = test_dataset.tensor_frame
-train_loader = DataLoader(train_tensor_frame,
-                          batch_size=train_cfg["batch_size"], shuffle=True)
-val_loader = DataLoader(val_tensor_frame, batch_size=train_cfg["batch_size"])
-test_loader = DataLoader(test_tensor_frame, batch_size=train_cfg["batch_size"])
-
-if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
-    out_channels = 1
-    loss_fun = BCEWithLogitsLoss()
-    metric_computer = AUROC(task='binary').to(device)
-    higher_is_better = True
-elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
-    out_channels = dataset.num_classes
-    loss_fun = CrossEntropyLoss()
-    metric_computer = Accuracy(task='multiclass',
-                               num_classes=dataset.num_classes).to(device)
-    higher_is_better = True
-elif dataset.task_type == TaskType.REGRESSION:
-    out_channels = 1
-    loss_fun = MSELoss()
-    metric_computer = MeanSquaredError(squared=False).to(device)
-    higher_is_better = False
-
-if args.model_type in GBDT_MODELS:
-    # TODO: support gbdt models
-    gbdt_cls_dict = {
-        "XGBoost": XGBoost,
-        "CatBoost": CatBoost,
-        "LightGBM": LightGBM
-    }
-    model_cls = gbdt_cls_dict[args.model_type]
-    if dataset.task_type.is_classification:
-        num_classes = dataset.num_classes
+    if not args.finetune:
+        text_encoder = TextToEmbedding(model=args.text_model, device=device)
+        text_stype = torch_frame.text_embedded
+        kwargs = {
+            "text_stype":
+            text_stype,
+            "col_to_text_embedder_cfg":
+            TextEmbedderConfig(text_embedder=text_encoder, batch_size=5),
+        }
     else:
-        num_classes = None
-    model = model_cls(task_type=dataset.task_type, num_classes=num_classes)
-    main_gbdt(model, train_cfg)
-else:
-    if args.model_type == "FTTransformer":
-        model_cls = FTTransformer
-        model_kwargs = dict(
-            channels=train_cfg["channels"], num_layers=train_cfg["num_layers"],
-            stype_encoder_dict=get_stype_encoder_dict(text_stype, text_encoder,
-                                                      train_tensor_frame))
-    elif args.model_type == "ResNet":
-        model_cls = ResNet
-        model_kwargs = dict(
-            channels=train_cfg["channels"], num_layers=train_cfg["num_layers"],
-            stype_encoder_dict=get_stype_encoder_dict(text_stype, text_encoder,
-                                                      train_tensor_frame))
+        text_encoder = TextToEmbeddingFinetune(model=args.text_model)
+        text_stype = torch_frame.text_tokenized
+        kwargs = {
+            "text_stype":
+            text_stype,
+            "col_to_text_tokenizer_cfg":
+            TextTokenizerConfig(text_tokenizer=text_encoder.tokenize,
+                                batch_size=10000),
+        }
+
+    dataset = DataFrameTextBenchmark(
+        root=path,
+        task_type=TaskType(args.task_type),
+        scale=args.scale,
+        idx=args.idx,
+        **kwargs,
+    )
+
+    # TODO (zecheng): Change this to search space
+    train_cfg = dict(
+        channels=128,
+        num_layers=4,
+        base_lr=0.001,
+        epochs=10,
+        num_prompts=20,
+        batch_size=512,
+        gamma_rate=0.9,
+        num_trials=1,
+    )
+
+    text_model_name = args.text_model.replace('/', '')
+    filename = (f"{args.task_type}_{args.scale}_{str(args.idx)}_"
+                f"{text_model_name}_{text_stype.value}_data.pt")
+    # Notice that different tabular model will reuse materialized dataset:
+    dataset.materialize(path=osp.join(path, filename))
+    train_dataset, val_dataset, test_dataset = dataset.split()
+
+    train_tensor_frame = train_dataset.tensor_frame
+    val_tensor_frame = val_dataset.tensor_frame
+    test_tensor_frame = test_dataset.tensor_frame
+    train_loader = DataLoader(train_tensor_frame,
+                              batch_size=train_cfg["batch_size"], shuffle=True)
+    val_loader = DataLoader(val_tensor_frame,
+                            batch_size=train_cfg["batch_size"])
+    test_loader = DataLoader(test_tensor_frame,
+                             batch_size=train_cfg["batch_size"])
+
+    if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
+        out_channels = 1
+        loss_fun = BCEWithLogitsLoss()
+        metric_computer = AUROC(task='binary').to(device)
+        higher_is_better = True
+    elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+        out_channels = dataset.num_classes
+        loss_fun = CrossEntropyLoss()
+        metric_computer = Accuracy(task='multiclass',
+                                   num_classes=dataset.num_classes).to(device)
+        higher_is_better = True
+    elif dataset.task_type == TaskType.REGRESSION:
+        out_channels = 1
+        loss_fun = MSELoss()
+        metric_computer = MeanSquaredError(squared=False).to(device)
+        higher_is_better = False
+
+    if args.model_type in GBDT_MODELS:
+        # TODO: support gbdt models
+        gbdt_cls_dict = {
+            "XGBoost": XGBoost,
+            "CatBoost": CatBoost,
+            "LightGBM": LightGBM
+        }
+        model_cls = gbdt_cls_dict[args.model_type]
+        if dataset.task_type.is_classification:
+            num_classes = dataset.num_classes
+        else:
+            num_classes = None
+        model = model_cls(task_type=dataset.task_type, num_classes=num_classes)
+        main_gbdt(model, train_cfg)
     else:
-        if args.finetune:
-            raise ValueError(
-                "Currently Trompt with finetuning is too expensive")
-        model_cls = Trompt
-        stype_encoder_dicts = []
-        for i in range(train_cfg["num_layers"]):
-            stype_encoder_dicts.append(
-                get_stype_encoder_dict(text_stype, text_encoder,
-                                       train_tensor_frame))
-        model_kwargs = dict(channels=train_cfg["channels"],
-                            num_layers=train_cfg["num_layers"],
-                            num_prompts=train_cfg["num_prompts"],
-                            stype_encoder_dicts=stype_encoder_dicts)
-    model = model_cls(
-        **model_kwargs,
-        out_channels=out_channels,
-        col_stats=dataset.col_stats,
-        col_names_dict=train_tensor_frame.col_names_dict,
-    ).to(device)
-    model.reset_parameters()
-    optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg["base_lr"])
-    lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg["gamma_rate"])
-    main_torch(higher_is_better, train_cfg, model, train_loader, val_loader,
-               test_loader, lr_scheduler)
+        if args.model_type == "FTTransformer":
+            model_cls = FTTransformer
+            model_kwargs = dict(
+                channels=train_cfg["channels"],
+                num_layers=train_cfg["num_layers"],
+                stype_encoder_dict=get_stype_encoder_dict(
+                    text_stype, text_encoder, train_tensor_frame))
+        elif args.model_type == "ResNet":
+            model_cls = ResNet
+            model_kwargs = dict(
+                channels=train_cfg["channels"],
+                num_layers=train_cfg["num_layers"],
+                stype_encoder_dict=get_stype_encoder_dict(
+                    text_stype, text_encoder, train_tensor_frame))
+        else:
+            if args.finetune:
+                raise ValueError(
+                    "Currently Trompt with finetuning is too expensive")
+            model_cls = Trompt
+            stype_encoder_dicts = []
+            for i in range(train_cfg["num_layers"]):
+                stype_encoder_dicts.append(
+                    get_stype_encoder_dict(text_stype, text_encoder,
+                                           train_tensor_frame))
+            model_kwargs = dict(channels=train_cfg["channels"],
+                                num_layers=train_cfg["num_layers"],
+                                num_prompts=train_cfg["num_prompts"],
+                                stype_encoder_dicts=stype_encoder_dicts)
+        model = model_cls(
+            **model_kwargs,
+            out_channels=out_channels,
+            col_stats=dataset.col_stats,
+            col_names_dict=train_tensor_frame.col_names_dict,
+        ).to(device)
+        model.reset_parameters()
+        optimizer = torch.optim.Adam(model.parameters(),
+                                     lr=train_cfg["base_lr"])
+        lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg["gamma_rate"])
+        main_torch(higher_is_better, train_cfg, model, train_loader,
+                   val_loader, test_loader, lr_scheduler, optimizer)
