@@ -258,11 +258,11 @@ class MultiNestedTensor(_MultiTensor):
                                      values=values, offset=offset)
         elif dim == 1:
             start_idx = torch.arange(
-                index,
+                0,
                 self.num_rows * self.num_cols,
                 self.num_cols,
                 device=self.device,
-            )
+            ) + index
             diff = self.offset[start_idx + 1] - self.offset[start_idx]
             batch, arange = _batched_arange(diff)
             # Compute values
