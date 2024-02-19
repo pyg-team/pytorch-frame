@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
 
@@ -134,10 +135,16 @@ def infer_series_stype(ser: Series) -> stype | None:
             # Try different possible seps and mick the largest min_count.
             min_count_list = []
             for sep in POSSIBLE_SEPS:
-                min_count_list.append(
-                    _min_count(
-                        ser.apply(lambda row: MultiCategoricalTensorMapper.
-                                  split_by_sep(row, sep)).explode()))
+                try:
+                    min_count_list.append(
+                        _min_count(
+                            ser.apply(lambda row: MultiCategoricalTensorMapper.
+                                      split_by_sep(row, sep)).explode()))
+                except Exception as e:
+                    logging.warn(
+                        "Mapping series into multicategorical stype "
+                        f"with separator {sep} raised an exception {e}")
+                    continue
             if max(min_count_list) > cat_min_count_thresh:
                 return stype.multicategorical
             else:
