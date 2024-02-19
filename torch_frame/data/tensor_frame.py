@@ -268,7 +268,7 @@ class TensorFrame:
             device_repr = "  device=None,\n"
         else:
             stype_repr = "\n".join([
-                f"  {stype.value} ({len(col_names)}): {col_names},"
+                f"  {stype} ({len(col_names)}): {col_names},"
                 for stype, col_names in self.col_names_dict.items()
             ])
             stype_repr += "\n"
