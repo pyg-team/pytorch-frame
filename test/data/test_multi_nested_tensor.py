@@ -174,6 +174,8 @@ def test_multi_nested_tensor_basics(device):
     # Test row narrow
     assert_equal(tensor_mat[3:3 + 2],
                  multi_nested_tensor.narrow(dim=0, start=3, length=2))
+    assert len(multi_nested_tensor[0:0]) == 0
+    assert len(multi_nested_tensor[8:8]) == 0
 
     # Test multi_nested_tensor[List[int]] indexing
     for index in [[4], [2, 2], [-4, 1, 7], [3, -7, 1, 0], []]:
@@ -222,6 +224,9 @@ def test_multi_nested_tensor_basics(device):
         for idx, j in enumerate(range(2, 6)):
             assert torch.allclose(tensor_mat[i][j],
                                   multi_nested_tensor_range[i, idx])
+
+    assert multi_nested_tensor[0:0, 1].shape == (0, 1, -1)
+    assert multi_nested_tensor[0:0, [1, 2]].shape == (0, 2, -1)
 
     # Test column slicing
     assert_equal(tensor_mat, multi_nested_tensor[:, :])

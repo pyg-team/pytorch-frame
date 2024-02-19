@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import warnings
 from typing import Any
 
 import pandas as pd
@@ -20,7 +21,9 @@ def _is_timestamp(ser: Series) -> bool:
     is_timestamp = False
     for time_format in POSSIBLE_TIME_FORMATS:
         try:
-            pd.to_datetime(ser, format=time_format)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pd.to_datetime(ser, format=time_format)
             is_timestamp = True
         except (ValueError, ParserError, TypeError):
             pass
