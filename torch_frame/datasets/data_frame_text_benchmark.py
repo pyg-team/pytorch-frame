@@ -432,22 +432,13 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
 
         # Add split col
         df = dataset.df
-        # Random split for datasets not from MultimodalTextBenchmark:
-        if class_name != 'MultimodalTextBenchmark':
-            if SPLIT_COL in df.columns:
-                df.drop(columns=[SPLIT_COL], inplace=True)
-            split_df = pd.DataFrame({
-                SPLIT_COL:
-                generate_random_split(length=len(df), seed=split_random_state,
-                                      train_ratio=0.8, val_ratio=0.1)
-            })
-            df = pd.concat([df, split_df], axis=1)
-        else:
+        # Follow default split for datasets of MultimodalTextBenchmark:
+        if class_name == 'MultimodalTextBenchmark':
             df = df.sort_values(by=[SPLIT_COL])
-            num_unique_split = len(df[SPLIT_COL].unique())
-            assert num_unique_split > 1
+            num_unique = df[SPLIT_COL].nunique()
+            assert num_unique > 1
             # Manually split validation set from the train one:
-            if num_unique_split == 2:
+            if num_unique == 2:
                 ser = df[SPLIT_COL]
                 train_ser = ser[ser == SPLIT_TO_NUM['train']]
                 split_ser = generate_random_split(length=len(train_ser),
@@ -460,6 +451,15 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                     np.full(len(df) - len(split_ser), SPLIT_TO_NUM['test'])
                 ])
                 df[SPLIT_COL] = split_ser
+        else:
+            if SPLIT_COL in df.columns:
+                df.drop(columns=[SPLIT_COL], inplace=True)
+            split_df = pd.DataFrame({
+                SPLIT_COL:
+                generate_random_split(length=len(df), seed=split_random_state,
+                                      train_ratio=0.8, val_ratio=0.1)
+            })
+            df = pd.concat([df, split_df], axis=1)
 
         # For regression task, we normalize the target.
         if task_type == TaskType.REGRESSION:
