@@ -10,7 +10,9 @@ from typing import Any
 import numpy as np
 import optuna
 import torch
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig
+from peft import TaskType as peftTaskType
+from peft import get_peft_model
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
@@ -146,7 +148,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
                              f"LoRA finetuning.")
 
         peft_config = LoraConfig(
-            task_type=TaskType.FEATURE_EXTRACTION,
+            task_type=peftTaskType.FEATURE_EXTRACTION,
             r=32,
             lora_alpha=32,
             inference_mode=False,
