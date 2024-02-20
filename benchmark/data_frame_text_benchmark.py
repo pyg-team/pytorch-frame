@@ -7,7 +7,7 @@ import os.path as osp
 from typing import Any
 
 import torch
-from peft import LoraConfig, TaskType as peft_TaskType, get_peft_model
+from peft import LoraConfig, TaskType as peftTaskType, get_peft_model
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
@@ -73,6 +73,9 @@ parser.add_argument(
     default="sentence-transformers/all-distilroberta-v1",
     choices=[
         "distilbert-base-uncased",
+        "roberta-large",
+        "microsoft/deberta-v3-large",
+        "google/electra-large-discriminator",
         "sentence-transformers/all-distilroberta-v1",
         "sentence-transformers/average_word_embeddings_glove.6B.300d",
     ],
@@ -80,6 +83,23 @@ parser.add_argument(
 parser.add_argument("--finetune", action="store_true")
 parser.add_argument('--result_path', type=str, default='')
 args = parser.parse_args()
+
+model_out_channels = {
+    "distilbert-base-uncased": 768,
+    "roberta-large": 1024,
+    "microsoft/deberta-v3-large": 1024,
+    "google/electra-large-discriminator": 1024,
+    "sentence-transformers/all-distilroberta-v1": 768,
+}
+
+# Set for a 16 GB GPU
+model_batch_size = {
+    "distilbert-base-uncased": 128,
+    "roberta-large": 16,
+    "microsoft/deberta-v3-large": 8,
+    "google/electra-large-discriminator": 16,
+    "sentence-transformers/all-distilroberta-v1": 128,
+}
 
 
 class TextToEmbedding:
@@ -131,11 +151,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         elif model == "sentence-transformers/all-distilroberta-v1":
             target_modules = ["intermediate.dense"]
         else:
-            raise ValueError(f"Model {model} is not specified for "
-                             f"LoRA finetuning.")
+            target_modules = "all-linear"
 
         peft_config = LoraConfig(
-            task_type=peft_TaskType.FEATURE_EXTRACTION,
+            task_type=peftTaskType.FEATURE_EXTRACTION,
             r=32,
             lora_alpha=32,
             inference_mode=False,
@@ -183,7 +202,9 @@ def get_stype_encoder_dict(
     if not args.finetune:
         text_stype_encoder = LinearEmbeddingEncoder()
     else:
-        model_cfg = ModelConfig(model=text_encoder, out_channels=768)
+        model_cfg = ModelConfig(
+            model=text_encoder,
+            out_channels=model_out_channels[args.text_model])
         col_to_model_cfg = {
             col_name: model_cfg
             for col_name in train_tensor_frame.col_names_dict[
@@ -353,13 +374,23 @@ if __name__ == "__main__":
     )
 
     # TODO (zecheng): Change this to search space
+    batch_size = 512
+    if args.finetune:
+        batch_size = model_batch_size[args.text_model]
+        col_stypes = list(dataset.col_to_stype.values())
+        n_tokenized = len([
+            col_stype for col_stype in col_stypes
+            if col_stype == torch_frame.stype.text_tokenized
+        ])
+        batch_size //= n_tokenized
+
     train_cfg = dict(
         channels=128,
         num_layers=4,
         base_lr=0.001,
         epochs=10,
         num_prompts=20,
-        batch_size=16, #512,
+        batch_size=batch_size,
         gamma_rate=0.9,
         num_trials=1,
     )
