@@ -7,7 +7,9 @@ import os.path as osp
 from typing import Any
 
 import torch
-from peft import LoraConfig, TaskType as peftTaskType, get_peft_model
+from peft import LoraConfig
+from peft import TaskType as peftTaskType
+from peft import get_peft_model
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
