@@ -72,7 +72,7 @@ class ImageToEmbedding:
         self.model.eval()
         self.device = device
 
-    def __call__(self, path_to_images: List[str]) -> Tensor:
+    def forward_retrieve(self, path_to_images: List[str]) -> List[Image]:
         images: list[Image] = []
         for path_to_image in path_to_images:
             try:
@@ -83,6 +83,9 @@ class ImageToEmbedding:
             images.append(image.copy())
             image.close()
         images = [image.convert('RGB') for image in images]
+        return images
+
+    def forward_embed(self, images: List[Image]) -> Tensor:
         if "ViT" in str(self.preprocess):
             inputs = self.preprocess(images, return_tensors="pt")
             inputs["pixel_values"] = inputs["pixel_values"].to(device)
@@ -95,6 +98,10 @@ class ImageToEmbedding:
             with torch.no_grad():
                 res = self.model(inputs).cpu().detach()
             return res.view(len(images), -1)
+
+    def __call__(self, path_to_images: List[str]) -> Tensor:
+        images = self.forward_retrieve(path_to_images)
+        return self.forward_embed(images)
 
 
 torch.manual_seed(args.seed)
