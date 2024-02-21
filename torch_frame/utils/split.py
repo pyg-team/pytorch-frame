@@ -13,7 +13,6 @@ def generate_random_split(length: int, seed: int, train_ratio: float = 0.8,
     that numpy's shuffle is consistent across versions, which has been
     historically the case.
     """
-
     assert train_ratio > 0
     assert val_ratio > 0
 
