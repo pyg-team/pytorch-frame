@@ -120,3 +120,6 @@ def test_data_frame_text_benchmark_object():
                             ")")
     assert dataset.num_rows == 6364
     dataset.materialize()
+    train_dataset, val_dataset, test_dataset = dataset.split()
+    assert train_dataset.num_rows + val_dataset.num_rows == 5091
+    assert test_dataset.num_rows == 1273

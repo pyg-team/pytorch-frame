@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `image_embedded` and one tabular image dataset ([#344](https://github.com/pyg-team/pytorch-frame/pull/344))
+- Added dataframe text benchmark script ([#354](https://github.com/pyg-team/pytorch-frame/pull/354))
 - Added `DataFrameTextBenchmark` dataset ([#349](https://github.com/pyg-team/pytorch-frame/pull/349))
 - Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
 
@@ -20,6 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed the split of `DataFrameTextBenchmark` ([#358](https://github.com/pyg-team/pytorch-frame/pull/358))
+- Fixed empty `MultiNestedTensor` col indexing ([#355](https://github.com/pyg-team/pytorch-frame/pull/355))
 
 ## [0.2.1] - 2024-01-16
 
