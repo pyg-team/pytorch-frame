@@ -345,7 +345,7 @@ def main_torch(
         'args': args.__dict__,
         'best_val_metric': best_val_metric,
         'best_test_metric': best_test_metric,
-        'best_cfg': model.params,
+        'train_cfg': train_cfg,
         'total_time': end_time - start_time,
     }
     print(result_dict)
@@ -402,7 +402,7 @@ if __name__ == "__main__":
         channels=128,
         num_layers=4,
         base_lr=0.001,
-        epochs=10,
+        epochs=30,
         num_prompts=20,
         batch_size=batch_size,
         gamma_rate=0.9,
