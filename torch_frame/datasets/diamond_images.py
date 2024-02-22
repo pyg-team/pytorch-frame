@@ -21,7 +21,7 @@ class DiamondImages(torch_frame.data.Dataset):
         root: str,
         col_to_image_embedder_cfg: ImageEmbedderConfig
         | dict[str, ImageEmbedderConfig],
-        target: str = "shape",
+        target: str = "colour",
     ):
         # path = self.download_url(self.url, root)
         path = "/Users/zecheng/code/pytorch-frame/web_scraped"

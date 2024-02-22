@@ -40,9 +40,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 # ResNet-18 - Image Embedded
-# Best Val Acc: 0.9990, Best Test Acc: 0.9979
+# Best Val Acc: 0.2861, Best Test Acc: 0.2799
 # ViT - Image Embedded
-# Best Val Acc: 0.9986, Best Test Acc: 0.9984
+# Best Val Acc: 0.4221, Best Test Acc: 0.4269
 
 
 class ImageToEmbedding:
@@ -72,7 +72,7 @@ class ImageToEmbedding:
         self.model.eval()
         self.device = device
 
-    def forward_retrieve(self, path_to_images: List[str]) -> List[Image]:
+    def forward_retrieve(self, path_to_images: list[str]) -> list[Image]:
         images: list[Image] = []
         for path_to_image in path_to_images:
             try:
@@ -85,7 +85,7 @@ class ImageToEmbedding:
         images = [image.convert('RGB') for image in images]
         return images
 
-    def forward_embed(self, images: List[Image]) -> Tensor:
+    def forward_embed(self, images: list[Image]) -> Tensor:
         if "ViT" in str(self.preprocess):
             inputs = self.preprocess(images, return_tensors="pt")
             inputs["pixel_values"] = inputs["pixel_values"].to(device)
