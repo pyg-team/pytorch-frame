@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
+import os.path as osp
 import random
 import string
 from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
+from PIL import Image
 
 import torch_frame
 from torch_frame import stype
+from torch_frame.config.image_embedder import ImageEmbedderConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
@@ -48,6 +52,7 @@ class FakeDataset(torch_frame.data.Dataset):
         create_split (bool): Whether to create a train, val and test
                 split for the fake dataset. (default: :obj:`False`)
         task_type (TaskType): Task type (default: :obj:`TaskType.REGRESSION`)
+        tmp_path (str, optional): Temporary path to save created images.
     """
     def __init__(
         self,
@@ -60,6 +65,9 @@ class FakeDataset(torch_frame.data.Dataset):
         | TextEmbedderConfig | None = None,
         col_to_text_tokenizer_cfg: dict[str, TextTokenizerConfig]
         | TextTokenizerConfig | None = None,
+        col_to_image_embedder_cfg: dict[str, ImageEmbedderConfig]
+        | ImageEmbedderConfig | None = None,
+        tmp_path: str | None = None,
     ) -> None:
         assert len(stypes) > 0
         df_dict: dict[str, list | np.ndarray]
@@ -180,6 +188,20 @@ class FakeDataset(torch_frame.data.Dataset):
                     arr[0::2] = len(arr[0::2]) * [np.nan]
                 df_dict[col_name] = arr
                 col_to_stype[col_name] = stype.timestamp
+        if stype.image_embedded in stypes:
+            assert tmp_path is not None
+            for col_name in ['image_embedded_1', 'image_embedded_2']:
+                arr = []
+                os.makedirs(osp.join(tmp_path, col_name), exist_ok=True)
+                for i in range(num_rows):
+                    img_path = osp.join(tmp_path, col_name, f'{i}.png')
+                    img = Image.new('RGB', (24, 24))
+                    img.save(img_path)
+                    img.close()
+                    arr.append(img_path)
+                df_dict[col_name] = arr
+                col_to_stype[col_name] = stype.image_embedded
+
         df = pd.DataFrame(df_dict)
         if create_split:
             # TODO: Instead of having a split column name with train, val and
@@ -209,4 +231,5 @@ class FakeDataset(torch_frame.data.Dataset):
                 f'timestamp_{i}': TIME_FORMATS[i]
                 for i in range(len(TIME_FORMATS))
             },
+            col_to_image_embedder_cfg=col_to_image_embedder_cfg,
         )

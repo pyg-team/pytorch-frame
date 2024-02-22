@@ -5,7 +5,7 @@ import os.path as osp
 import pandas as pd
 
 import torch_frame
-from torch_frame.config import ImageEmbedderConfig
+from torch_frame.config.image_embedder import ImageEmbedderConfig
 
 
 class DiamondImages(torch_frame.data.Dataset):
