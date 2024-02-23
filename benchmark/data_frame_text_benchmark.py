@@ -4,6 +4,7 @@ import argparse
 import math
 import os
 import os.path as osp
+import time
 from typing import Any
 
 import torch
@@ -241,7 +242,6 @@ def get_stype_encoder_dict(
 
 
 def main_gbdt(model: GBDT, train_cfg: dict[str, Any]):
-    import time
     start_time = time.time()
     model.tune(tf_train=train_dataset.tensor_frame,
                tf_val=val_dataset.tensor_frame,
@@ -327,6 +327,7 @@ def main_torch(
     lr_scheduler: Any,
     optimizer: Any,
 ):
+    start_time = time.time()
     if higher_is_better:
         best_val_metric = 0
     else:
@@ -347,8 +348,19 @@ def main_torch(
         lr_scheduler.step()
         print(f'Train Loss: {train_loss:.4f}, Val: {val_metric:.4f}')
 
-    print(f"Best Val {metric_computer}: {best_val_metric:.4f}, "
-          f"Best Test {metric_computer}: {best_test_metric:.4f}")
+    end_time = time.time()
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metric': best_val_metric,
+        'best_test_metric': best_test_metric,
+        'train_cfg': train_cfg,
+        'total_time': end_time - start_time,
+    }
+    print(result_dict)
+    # Save results
+    if args.result_path != '':
+        os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
+        torch.save(result_dict, args.result_path)
 
 
 if __name__ == "__main__":
