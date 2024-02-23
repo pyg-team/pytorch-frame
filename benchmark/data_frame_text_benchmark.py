@@ -152,6 +152,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
             target_modules = ["ffn.lin1"]
         elif model == "sentence-transformers/all-distilroberta-v1":
             target_modules = ["intermediate.dense"]
+        elif model == 'roberta-large':
+            target_modules = ['intermediate.dense']
+        elif model == 'google/electra-large-discriminator':
+            target_modules = ['intermediate.dense']
         else:
             target_modules = "all-linear"
 
@@ -165,6 +169,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
             target_modules=target_modules,
         )
         self.model = get_peft_model(self.model, peft_config)
+        if model == 'roberta-large':
+            for name, param in self.model.named_parameters():
+                if 'model.pooler.dense' in name:
+                    param.requires_grad = True
 
     def forward(self, feat: dict[str, MultiNestedTensor]) -> Tensor:
         # Pad [batch_size, 1, *] into [batch_size, 1, batch_max_seq_len], then,
@@ -390,8 +398,8 @@ if __name__ == "__main__":
         channels=128,
         num_layers=4,
         base_lr=0.001,
-        epochs=10,
-        num_prompts=20,
+        epochs=50,
+        num_prompts=32,
         batch_size=batch_size,
         gamma_rate=0.9,
         num_trials=1,
