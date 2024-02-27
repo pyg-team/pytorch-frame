@@ -10,12 +10,12 @@ from torch import Tensor
 
 class ImageEmbedder(ABC):
     r"""Parent class for the :obj:`image_embedder` of
-    :class:`ImageEmbedderConfig`. You should implement the
-    :meth:`forward_embed` which takes a list of images and returns
-    embeddings tensor. If you have your own retrieve function to
-    retrieve images from the paths, please override :meth:`forward_retrieve`
-    which takes the paths to images and return a list of
-    :obj:`PIL.Image.Image`.
+    :class:`ImageEmbedderConfig`. This class first retrieves images based
+    on given paths stored in the data frame and then embeds retrieved images
+    into tensor. Users are responsible for implementing :meth:`forward_embed`
+    which takes a list of images and returns embeddings tensor. User can also
+    override :meth:`forward_retrieve` which takes the paths to images and
+    return a list of :obj:`PIL.Image.Image`.
     """
     def __init__(self, *args, **kwargs):
         pass
@@ -34,12 +34,12 @@ class ImageEmbedder(ABC):
 
     @abstractmethod
     def forward_embed(self, images: list[Image.Image]) -> Tensor:
-        r"""Embedding function that takes list of images and generates
+        r"""Embedding function that takes a list of images and returns
         an embedding tensor.
         """
         raise NotImplementedError
 
-    def __call__(self, path_to_images: list[str]):
+    def __call__(self, path_to_images: list[str]) -> Tensor:
         images = self.forward_retrieve(path_to_images)
         return self.forward_embed(images)
 
