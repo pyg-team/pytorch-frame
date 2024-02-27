@@ -15,7 +15,7 @@ class ImageEmbedder(ABC):
     embeddings tensor. If you have your own retrieve function to
     retrieve images from the paths, please override :meth:`forward_retrieve`
     which takes the paths to images and return a list of
-    :obj:`PL.Image.Image`.
+    :obj:`PIL.Image.Image`.
     """
     def __init__(self, *args, **kwargs):
         pass
