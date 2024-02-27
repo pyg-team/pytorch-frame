@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Changed a workflow of Encoder's `na_forward` method resulting in performance boost ([#364](https://github.com/pyg-team/pytorch-frame/pull/364))
+
 ### Deprecated
 
 ### Removed
