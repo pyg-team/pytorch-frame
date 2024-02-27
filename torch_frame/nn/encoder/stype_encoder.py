@@ -171,13 +171,14 @@ class StypeEncoder(Module, ABC):
         return out
 
     def na_forward(self, feat: TensorData) -> TensorData:
-        r"""Replace NaN values in input :obj:`Tensor` given :obj:`na_strategy`.
+        r"""Replace NaN values in input :obj:`TensorData` given
+        :obj:`na_strategy`.
 
         Args:
-            feat (Tensor): Input :obj:`Tensor`.
+            feat (TensorData): Input :obj:`TensorData`.
 
         Returns:
-            torch.Tensor: Output :obj:`Tensor` with NaNs replaced given
+            TensorData: Output :obj:`TensorData` with NaNs replaced given
                 :obj:`na_strategy`.
         """
         if self.na_strategy is None:
@@ -187,7 +188,9 @@ class StypeEncoder(Module, ABC):
         # faster to just clone the values, while reusing the same offset
         # object.
         if isinstance(feat, Tensor):
-            if get_na_mask(feat).any():
+            # cache for future use
+            na_mask = get_na_mask(feat)
+            if na_mask.any():
                 feat = feat.clone()
             else:
                 return feat
@@ -210,7 +213,7 @@ class StypeEncoder(Module, ABC):
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
 
-        # TODO: Remove for-loop over columns
+        fill_values = []
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
@@ -231,16 +234,22 @@ class StypeEncoder(Module, ABC):
                     feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
-            if isinstance(feat, _MultiTensor):
+            fill_values.append(fill_value)
+
+        if isinstance(feat, _MultiTensor):
+            for col, fill_value in enumerate(fill_values):
                 feat.fillna_col(col, fill_value)
-            else:
-                column_data = feat[:, col]
-                na_mask = get_na_mask(column_data)
-                if na_mask.ndim == 2:
-                    na_mask = na_mask.any(dim=-1)
-                assert na_mask.ndim == 1
-                assert len(na_mask) == len(column_data)
-                column_data[na_mask] = fill_value
+        else:
+            if na_mask.ndim == 3:
+                # when feat is 3D, it is faster to iterate over columns
+                for col, fill_value in enumerate(fill_values):
+                    col_data = feat[:, col]
+                    col_na_mask = na_mask[:, col].any(dim=-1)
+                    col_data[col_na_mask] = fill_value
+            else:  # na_mask.ndim == 2
+                fill_values = torch.tensor(fill_values, device=feat.device)
+                assert feat.size(-1) == fill_values.size(-1)
+                feat = torch.where(na_mask, fill_values, feat)
         # Add better safeguard here to make sure nans are actually
         # replaced, expecially when nans are represented as -1's. They are
         # very hard to catch as they won't error out.
