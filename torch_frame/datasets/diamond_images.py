@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os.path as osp
+import zipfile
 
 import pandas as pd
 
@@ -24,14 +25,21 @@ class DiamondImages(torch_frame.data.Dataset):
         target: str = "colour",
     ):
         # path = self.download_url(self.url, root)
-        path = "/Users/zecheng/code/pytorch-frame/web_scraped"
-        csv_path = osp.join(path, "diamond_data.csv")
+        path = "/Users/zecheng/code/pytorch-frame/diamond.zip"
+
+        folder_path = osp.dirname(path)
+        with zipfile.ZipFile(path, "r") as zip_ref:
+            zip_ref.extractall(folder_path)
+
+        subfolder_path = osp.join(folder_path, "diamond")
+        csv_path = osp.join(subfolder_path, "diamond_data.csv")
         df = pd.read_csv(csv_path)
         df = df.drop(columns=["stock_number"])
-        path = "/Users/zecheng/code/pytorch-frame"
+
         image_paths = []
         for path_to_img in df["path_to_img"]:
-            image_paths.append(osp.join(path, path_to_img))
+            path_to_img = path_to_img.replace("web_scraped/", "")
+            image_paths.append(osp.join(subfolder_path, path_to_img))
         image_df = pd.DataFrame({"image_path": image_paths})
         df = pd.concat([df, image_df], axis=1)
         df = df.drop(columns=["path_to_img"])
