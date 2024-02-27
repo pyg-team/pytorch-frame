@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 
+from typing import List
 from torch_frame.typing import TrainingStage
 
 # Mapping split name to integer.
@@ -14,7 +15,7 @@ SPLIT_TO_NUM = {
 
 def generate_random_split(
     length: int,
-    ratios: list[float],
+    ratios: List[float],
     seed: int = 0,
 ) -> np.ndarray:
     r"""Generate a list of random split assignments of the specified length.
@@ -25,7 +26,7 @@ def generate_random_split(
 
     Args:
         length (int): The length of the dataset.
-        ratios (list[float]): Ratios for split assignment. When ratios
+        ratios (List[float]): Ratios for split assignment. When ratios
             contains 2 variables, we will generate train/val/test set
             respectively based on the split ratios (the 1st variable in
             the list will be the ratio for train set, the 2nd will be
@@ -70,7 +71,7 @@ def generate_random_split(
     return arr
 
 
-def validate_split_ratios(ratio: list[float]):
+def validate_split_ratios(ratio: List[float]):
     if len(ratio) > 2:
         raise ValueError("No more than three training splits is supported")
     if len(ratio) < 1:
