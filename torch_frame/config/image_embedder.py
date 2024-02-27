@@ -1,9 +1,47 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable
 
+from PIL import Image
 from torch import Tensor
+
+
+class ImageEmbedder(ABC):
+    r"""Parent class for the :obj:`image_embedder` of
+    :class:`ImageEmbedderConfig`. You should implement the
+    :meth:`forward_embed` which takes a list of images and returns
+    embeddings tensor. If you have your own retrieve function to
+    retrieve images from the paths, please override :meth:`forward_retrieve`
+    which takes the paths to images and return a list of
+    :obj:`PL.Image.Image`.
+    """
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def forward_retrieve(self, path_to_images: list[str]) -> list[Image.Image]:
+        r"""Retrieval function that reads a list of images from
+        a list of file paths with the :obj:`RGB` mode.
+        """
+        images: list[Image.Image] = []
+        for path_to_image in path_to_images:
+            image = Image.open(path_to_image)
+            images.append(image.copy())
+            image.close()
+        images = [image.convert('RGB') for image in images]
+        return images
+
+    @abstractmethod
+    def forward_embed(self, images: list[Image.Image]) -> Tensor:
+        r"""Embedding function that takes list of images and generates
+        an embedding tensor.
+        """
+        raise NotImplementedError
+
+    def __call__(self, path_to_images: list[str]):
+        images = self.forward_retrieve(path_to_images)
+        return self.forward_embed(images)
 
 
 @dataclass

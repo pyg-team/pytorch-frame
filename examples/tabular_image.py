@@ -1,7 +1,6 @@
 import argparse
 import os
 import os.path as osp
-from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -10,7 +9,7 @@ from torch import Tensor
 from tqdm import tqdm
 
 from torch_frame import stype
-from torch_frame.config import ImageEmbedderConfig
+from torch_frame.config import ImageEmbedder, ImageEmbedderConfig
 from torch_frame.data import DataLoader
 from torch_frame.datasets import DiamondImages
 from torch_frame.nn import (
@@ -45,13 +44,15 @@ args = parser.parse_args()
 # Best Val Acc: 0.4221, Best Test Acc: 0.4269
 
 
-class ImageToEmbedding:
-    def __init__(self, model: str, device: torch.device):
-        if "resnet" in model:
+class ImageToEmbedding(ImageEmbedder):
+    def __init__(self, model_name: str, device: torch.device):
+        super().__init__()
+        self.model_name = model_name
+        if "resnet" in model_name:
             from torchvision import transforms
             model = torch.hub.load(
                 'pytorch/vision:v0.10.0',
-                model,
+                model_name,
                 pretrained=True,
             )
             # Remove the last linear layer:
@@ -65,25 +66,12 @@ class ImageToEmbedding:
                 transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225]),
             ])
-        elif "vit" in model:
+        elif "vit" in model_name:
             from transformers import AutoImageProcessor, ViTModel
-            self.preprocess = AutoImageProcessor.from_pretrained(model)
-            self.model = ViTModel.from_pretrained(model).to(device)
+            self.preprocess = AutoImageProcessor.from_pretrained(model_name)
+            self.model = ViTModel.from_pretrained(model_name).to(device)
         self.model.eval()
         self.device = device
-
-    def forward_retrieve(self, path_to_images: list[str]) -> list[Image]:
-        images: list[Image] = []
-        for path_to_image in path_to_images:
-            try:
-                image = Image.open(path_to_image)
-            except Exception:
-                # There is one image does not exist, thus create a black one:
-                image = Image.new("RGB", (600, 471))
-            images.append(image.copy())
-            image.close()
-        images = [image.convert('RGB') for image in images]
-        return images
 
     def forward_embed(self, images: list[Image]) -> Tensor:
         if "ViT" in str(self.preprocess):
@@ -98,10 +86,6 @@ class ImageToEmbedding:
             with torch.no_grad():
                 res = self.model(inputs).cpu().detach()
             return res.view(len(images), -1)
-
-    def __call__(self, path_to_images: List[str]) -> Tensor:
-        images = self.forward_retrieve(path_to_images)
-        return self.forward_embed(images)
 
 
 torch.manual_seed(args.seed)
