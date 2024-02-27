@@ -9,7 +9,7 @@ import torch_frame
 class Amphibians(torch_frame.data.Dataset):
     r"""The Amphibians
     <https://archive.ics.uci.edu/dataset/528/amphibians>`_
-    dataset. It's a task to predict which of the 7 frogs types appeared
+    dataset. The task is to predict which of the 7 frogs types appeared
     in the habitat.
 
     **STATS:**
@@ -42,38 +42,20 @@ class Amphibians(torch_frame.data.Dataset):
 
         data_path = osp.join(folder_path, 'dataset.csv')
         names = [
-            'ID',
-            'MV',
-            'SR',
-            'NR',
-            'TR',
-            'VR',
-            'SUR1',
-            'SUR2',
-            'SUR3',
-            'UR',
-            'FR',
-            'OR',
-            'RR',
-            'BR',
-            'MR',
-            'CR',
-            't1',
-            't2',
-            't3',
-            't4',
-            't5',
-            't6',
-            't7',
+            'ID', 'MV', 'SR', 'NR', 'TR', 'VR', 'SUR1', 'SUR2', 'SUR3', 'UR',
+            'FR', 'OR', 'RR', 'BR', 'MR', 'CR', 't1', 't2', 't3', 't4', 't5',
+            't6', 't7'
         ]
         df = pd.read_csv(data_path, names=names, sep=';')
         # Drop the first 2 rows containing metadata
         df = df.iloc[2:].reset_index(drop=True)
         target_cols = ['t1', 't2', 't3', 't4', 't5', 't6', 't7']
         df['t'] = df.apply(
-            lambda row: '|'.join(
-                [col for col in target_cols if row[col] == '1']), axis=1)
+            lambda row: [col for col in target_cols if row[col] == '1'],
+            axis=1)
         df = df.drop(target_cols, axis=1)
+        import pdb
+        pdb.set_trace()
 
         # Infer the pandas dataframe automatically
         path = osp.join(root, 'amphibians_posprocess.csv')
@@ -99,4 +81,4 @@ class Amphibians(torch_frame.data.Dataset):
             'CR': torch_frame.categorical,
             't': torch_frame.multicategorical,
         }
-        super().__init__(df, col_to_stype, target_col='t', col_to_sep='|')
+        super().__init__(df, col_to_stype, target_col='t', col_to_sep=None)
