@@ -4,11 +4,13 @@ import pytest
 import torch
 
 import torch_frame
+from torch_frame.config.image_embedder import ImageEmbedderConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data import DataFrameToTensorFrameConverter, Dataset
 from torch_frame.data.dataset import canonicalize_col_to_pattern
 from torch_frame.data.stats import StatType
 from torch_frame.datasets import FakeDataset
+from torch_frame.testing.image_embedder import RandomImageEmbedder
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.typing import TaskType
 
@@ -93,9 +95,14 @@ def test_dataset_inductive_transform():
         -1).all()
 
 
-def test_materalization_and_converter():
+def test_materalization_and_converter(tmpdir):
+    tmp_path = str(tmpdir.mkdir("image"))
     text_embedder_cfg = TextEmbedderConfig(
         text_embedder=HashTextEmbedder(1),
+        batch_size=8,
+    )
+    image_embedder_cfg = ImageEmbedderConfig(
+        image_embedder=RandomImageEmbedder(1),
         batch_size=8,
     )
     dataset_stypes = [
@@ -106,11 +113,14 @@ def test_materalization_and_converter():
         torch_frame.timestamp,
         torch_frame.text_embedded,
         torch_frame.embedding,
+        torch_frame.image_embedded,
     ]
     dataset = FakeDataset(
         num_rows=10,
         stypes=dataset_stypes,
         col_to_text_embedder_cfg=text_embedder_cfg,
+        col_to_image_embedder_cfg=image_embedder_cfg,
+        tmp_path=tmp_path,
     ).materialize()
     expected_parent_feat_size: dict[torch_frame.stype, int] = dict()
     stype_num_cols: dict[torch_frame.stype, int] = dict()
@@ -144,6 +154,7 @@ def test_materalization_and_converter():
         col_to_sep=dataset.col_to_sep,
         col_to_time_format=dataset.col_to_time_format,
         col_to_text_embedder_cfg=dataset.col_to_text_embedder_cfg,
+        col_to_image_embedder_cfg=dataset.col_to_image_embedder_cfg,
     )
     tf = convert_to_tensor_frame(dataset.df)
     assert tf.col_names_dict == convert_to_tensor_frame.col_names_dict

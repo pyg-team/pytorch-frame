@@ -2,7 +2,7 @@ import torch_frame
 
 
 def test_stype():
-    assert len(torch_frame.stype) == 8
+    assert len(torch_frame.stype) == 9
     assert torch_frame.numerical == torch_frame.stype('numerical')
     assert not torch_frame.numerical.is_text_stype
     assert torch_frame.categorical == torch_frame.stype('categorical')
@@ -17,5 +17,7 @@ def test_stype():
     assert torch_frame.text_embedded.is_text_stype
     assert torch_frame.text_tokenized == torch_frame.stype('text_tokenized')
     assert torch_frame.text_tokenized.is_text_stype
+    assert torch_frame.image_embedded == torch_frame.stype('image_embedded')
+    assert torch_frame.image_embedded.is_image_stype
     assert torch_frame.embedding == torch_frame.stype('embedding')
     assert torch_frame.embedding.use_multi_embedding_tensor

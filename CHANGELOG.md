@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `image_embedded` and one tabular image dataset ([#344](https://github.com/pyg-team/pytorch-frame/pull/344))
 - Added benchmarking suite for encoders ([#360](https://github.com/pyg-team/pytorch-frame/pull/360))
 - Added dataframe text benchmark script ([#354](https://github.com/pyg-team/pytorch-frame/pull/354), [#367](https://github.com/pyg-team/pytorch-frame/pull/367))
 - Added `DataFrameTextBenchmark` dataset ([#349](https://github.com/pyg-team/pytorch-frame/pull/349))
