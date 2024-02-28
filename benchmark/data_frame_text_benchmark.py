@@ -81,10 +81,13 @@ parser.add_argument(
         "google/electra-large-discriminator",
         "sentence-transformers/all-distilroberta-v1",
         "sentence-transformers/average_word_embeddings_glove.6B.300d",
+        "sentence-transformers/all-roberta-large-v1",
+        "text-embedding-3-large",
     ],
 )
 parser.add_argument("--finetune", action="store_true")
 parser.add_argument('--result_path', type=str, default='')
+parser.add_argument("--api_key", type=str, default=None)
 args = parser.parse_args()
 
 model_out_channels = {
@@ -186,6 +189,26 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         # Tokenize batches of sentences
         return self.tokenizer(sentences, truncation=True, padding=True,
                               return_tensors="pt")
+
+
+class OpenAIEmbedding:
+    def __init__(self, model: str, api_key: str):
+        # Please run `pip install openai` to install the package
+        from openai import OpenAI
+
+        self.client = OpenAI(api_key=api_key)
+        self.model = model
+
+    def __call__(self, sentences: list[str]) -> Tensor:
+        from openai import Embedding
+
+        items: list[Embedding] = self.client.embeddings.create(
+            input=sentences, model=self.model).data
+        assert len(items) == len(sentences)
+        embeddings = [
+            torch.FloatTensor(item.embedding).view(1, -1) for item in items
+        ]
+        return torch.cat(embeddings, dim=0)
 
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
@@ -360,7 +383,13 @@ if __name__ == "__main__":
     path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
 
     if not args.finetune:
-        text_encoder = TextToEmbedding(model=args.text_model, device=device)
+        if args.text_model == "text-embedding-3-large":
+            assert isinstance(args.api_key, str)
+            text_encoder = OpenAIEmbedding(model=args.text_model,
+                                           api_key=args.api_key)
+        else:
+            text_encoder = TextToEmbedding(model=args.text_model,
+                                           device=device)
         text_stype = torch_frame.text_embedded
         kwargs = {
             "text_stype":
