@@ -12,20 +12,40 @@ from torch_frame.config.image_embedder import ImageEmbedderConfig
 class DiamondImages(torch_frame.data.Dataset):
     r"""The `Diamond Images
     <https://www.kaggle.com/datasets/aayushpurswani/diamond-images-dataset>`_
-    dataset from Kaggle.
+    dataset from Kaggle. The target is to predict :obj:`colour` of each
+    diamond.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 10 20 10
+        :header-rows: 1
+
+        * - #rows
+          - #cols (numerical)
+          - #cols (categorical)
+          - #cols (image)
+          - #classes
+          - Task
+          - Missing value ratio
+        * - 48,764
+          - 4
+          - 7
+          - 1
+          - 23
+          - multiclass_classification
+          - 0.167%
     """
 
-    url = ''  # noqa
+    url = 'https://data.pyg.org/datasets/tables/diamond.zip'
 
     def __init__(
         self,
         root: str,
         col_to_image_embedder_cfg: ImageEmbedderConfig
         | dict[str, ImageEmbedderConfig],
-        target: str = "colour",
     ):
-        # path = self.download_url(self.url, root)
-        path = "/Users/zecheng/code/pytorch-frame/diamond.zip"
+        path = self.download_url(self.url, root)
 
         folder_path = osp.dirname(path)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -60,5 +80,5 @@ class DiamondImages(torch_frame.data.Dataset):
             "image_path": torch_frame.image_embedded,
         }
 
-        super().__init__(df, col_to_stype, target_col=target,
+        super().__init__(df, col_to_stype, target_col="colour",
                          col_to_image_embedder_cfg=col_to_image_embedder_cfg)

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import Tensor
 from tqdm import tqdm
+from transformers import AutoImageProcessor, AutoModel
 
 from torch_frame import stype
 from torch_frame.config import ImageEmbedder, ImageEmbedderConfig
@@ -31,61 +32,40 @@ parser.add_argument(
     type=str,
     default="google/vit-base-patch16-224-in21k",
     choices=[
-        "resnet18",
+        "microsoft/resnet-18",
         "google/vit-base-patch16-224-in21k",
+        "microsoft/swin-base-patch4-window7-224-in22k",
     ],
 )
 
 args = parser.parse_args()
 
-# ResNet-18 - Image Embedded
-# Best Val Acc: 0.2861, Best Test Acc: 0.2799
-# ViT - Image Embedded
-# Best Val Acc: 0.4221, Best Test Acc: 0.4269
+# Image Embedded
+# ================ ResNet ===================
+# Best Val Acc: 0.2864, Best Test Acc: 0.2789
+# ================== ViT ====================
+# Best Val Acc: 0.4173, Best Test Acc: 0.4110
+# ================= Swin ====================
+# Best Val Acc: 0.4345, Best Test Acc: 0.4274
 
 
 class ImageToEmbedding(ImageEmbedder):
     def __init__(self, model_name: str, device: torch.device):
         super().__init__()
         self.model_name = model_name
-        if "resnet" in model_name:
-            from torchvision import transforms
-            model = torch.hub.load(
-                'pytorch/vision:v0.10.0',
-                model_name,
-                pretrained=True,
-            )
-            # Remove the last linear layer:
-            self.model = torch.nn.Sequential(
-                *(list(model.children())[:-1])).to(device)
-            # Preprocess transformations:
-            self.preprocess = transforms.Compose([
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225]),
-            ])
-        elif "vit" in model_name:
-            from transformers import AutoImageProcessor, ViTModel
-            self.preprocess = AutoImageProcessor.from_pretrained(model_name)
-            self.model = ViTModel.from_pretrained(model_name).to(device)
+        self.preprocess = AutoImageProcessor.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to(device)
         self.model.eval()
         self.device = device
 
     def forward_embed(self, images: list[Image]) -> Tensor:
-        if "ViT" in str(self.preprocess):
-            inputs = self.preprocess(images, return_tensors="pt")
-            inputs["pixel_values"] = inputs["pixel_values"].to(device)
-            with torch.no_grad():
-                res = self.model(**inputs).pooler_output.cpu().detach()
-            return res
-        else:
-            inputs = [self.preprocess(image) for image in images]
-            inputs = torch.stack(inputs, dim=0).to(self.device)
-            with torch.no_grad():
-                res = self.model(inputs).cpu().detach()
-            return res.view(len(images), -1)
+        inputs = self.preprocess(images, return_tensors="pt")
+        inputs["pixel_values"] = inputs["pixel_values"].to(self.device)
+        with torch.no_grad():
+            res = self.model(**inputs).pooler_output.cpu().detach()
+            if "resnet" in self.model_name:
+                res = res.squeeze(dim=(2, 3))
+        return res
 
 
 torch.manual_seed(args.seed)
