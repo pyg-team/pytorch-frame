@@ -8,6 +8,7 @@ from torch.nn import Linear, ReLU, Sequential
 import torch_frame
 from torch_frame import NAStrategy, stype
 from torch_frame.config import ModelConfig
+from torch_frame.config.image_embedder import ImageEmbedderConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.data.dataset import Dataset
@@ -29,6 +30,7 @@ from torch_frame.nn import (
     TimestampEncoder,
 )
 from torch_frame.nn.encoding import CyclicEncoding
+from torch_frame.testing.image_embedder import RandomImageEmbedder
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.testing.text_tokenizer import (
     RandomTextModel,
@@ -433,6 +435,47 @@ def test_text_tokenized_encoder():
         assert torch.allclose(
             feat_text[key].offset,
             tensor_frame.feat_dict[stype.text_tokenized][key].offset)
+
+
+def test_image_embedded_encoder(tmpdir):
+    tmp_path = str(tmpdir.mkdir("image"))
+    num_rows = 20
+    out_channels = 5
+    dataset = FakeDataset(
+        num_rows=num_rows,
+        stypes=[
+            torch_frame.image_embedded,
+        ],
+        tmp_path=tmp_path,
+        col_to_image_embedder_cfg=ImageEmbedderConfig(
+            image_embedder=RandomImageEmbedder(out_channels=out_channels),
+            batch_size=None,
+        ),
+    )
+    dataset.materialize()
+    tensor_frame = dataset.tensor_frame
+    stats_list = [
+        dataset.col_stats[col_name]
+        for col_name in tensor_frame.col_names_dict[stype.embedding]
+    ]
+    encoder = LinearEmbeddingEncoder(
+        out_channels=out_channels,
+        stats_list=stats_list,
+        stype=stype.embedding,
+    )
+    feat_emb = tensor_frame.feat_dict[stype.embedding].clone()
+    col_names = tensor_frame.col_names_dict[stype.embedding]
+    x = encoder(feat_emb, col_names)
+    # Make sure no in-place modification
+    assert torch.allclose(feat_emb.values,
+                          tensor_frame.feat_dict[stype.embedding].values)
+    assert torch.allclose(feat_emb.offset,
+                          tensor_frame.feat_dict[stype.embedding].offset)
+    assert x.shape == (
+        num_rows,
+        len(tensor_frame.col_names_dict[stype.embedding]),
+        out_channels,
+    )
 
 
 def test_linear_model_encoder():

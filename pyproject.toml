@@ -33,6 +33,7 @@ dependencies=[
     "torch",
     "tqdm",
     "pyarrow",
+    "Pillow",
 ]
 
 [project.optional-dependencies]
