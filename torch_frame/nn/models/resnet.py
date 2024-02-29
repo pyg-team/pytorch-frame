@@ -92,7 +92,6 @@ class FCResidualBlock(Module):
             x = self.shortcut(x)
 
         out = out + x
-        out = self.relu(out)
 
         return out
 
