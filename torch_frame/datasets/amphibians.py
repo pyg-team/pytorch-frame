@@ -54,8 +54,6 @@ class Amphibians(torch_frame.data.Dataset):
             lambda row: [col for col in target_cols if row[col] == '1'],
             axis=1)
         df = df.drop(target_cols, axis=1)
-        import pdb
-        pdb.set_trace()
 
         # Infer the pandas dataframe automatically
         path = osp.join(root, 'amphibians_posprocess.csv')
