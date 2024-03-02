@@ -150,12 +150,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         :meth:`MultiEmbeddingTensor.index_select`.
         """
         if index.numel() == 0:
-            return MultiEmbeddingTensor(
-                num_rows=self.num_rows,
-                num_cols=0,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device),
-            )
+            return self._empty(dim=1)
         offset = torch.zeros(
             index.size(0) + 1,
             dtype=torch.long,
@@ -228,8 +223,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         return MultiEmbeddingTensor(
             num_rows=0 if dim == 0 else self.num_rows,
             num_cols=0 if dim == 1 else self.num_cols,
-            values=torch.tensor([], device=self.device),
-            offset=torch.tensor([0], device=self.device)
+            values=torch.tensor([], device=self.device, dtype=self.dtype),
+            offset=torch.tensor([0], device=self.device, dtype=torch.long)
             if dim == 1 else self.offset,
         )
 
