@@ -13,6 +13,7 @@ from peft import TaskType as peftTaskType
 from peft import get_peft_model
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
+from torch.nn.utils import clip_grad_norm_
 from torch.optim.lr_scheduler import ExponentialLR
 from torchmetrics import AUROC, Accuracy, MeanSquaredError
 from tqdm import tqdm
@@ -88,6 +89,10 @@ parser.add_argument(
 parser.add_argument("--finetune", action="store_true")
 parser.add_argument('--result_path', type=str, default='')
 parser.add_argument("--api_key", type=str, default=None)
+parser.add_argument('--max_grad_norm', type=float, default=1.0)
+parser.add_argument('--update_freq', type=int, default=1)
+parser.add_argument('--clip_norm', action='store_false')
+
 args = parser.parse_args()
 
 model_out_channels = {
@@ -155,6 +160,8 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         if model == "distilbert-base-uncased":
             target_modules = ["ffn.lin1"]
         elif model == "sentence-transformers/all-distilroberta-v1":
+            target_modules = ["intermediate.dense"]
+        elif model == "roberta-large":
             target_modules = ["intermediate.dense"]
         else:
             target_modules = "all-linear"
@@ -285,11 +292,14 @@ def train(
     loader: DataLoader,
     optimizer: torch.optim.Optimizer,
     epoch: int,
+    lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
 ) -> float:
     model.train()
     loss_accum = total_count = 0
+    optimizer.zero_grad()
+    num_batches = len(loader)
 
-    for tf in tqdm(loader, desc=f"Epoch: {epoch}"):
+    for idx, tf in enumerate(tqdm(loader, desc=f"Epoch: {epoch}")):
         tf = tf.to(device)
         y = tf.y
         if isinstance(model, Trompt):
@@ -306,11 +316,22 @@ def train(
         if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
             y = y.to(torch.float)
         loss = loss_fun(pred, y)
-        optimizer.zero_grad()
-        loss.backward()
+
+        # Compute gradients proportional to update frequency:
+        (loss / args.update_freq).backward()
+
         loss_accum += float(loss) * len(tf.y)
         total_count += len(tf.y)
-        optimizer.step()
+
+        # Update on accumulated gradients or last gradients:
+        if (idx + 1) % args.update_freq == 0 or (idx + 1) == num_batches:
+            # Clip gradients if too large:
+            if args.clip_norm:
+                clip_grad_norm_(model.parameters(), args.max_grad_norm)
+            optimizer.step()
+            optimizer.zero_grad()
+            lr_scheduler.step()
+
     return loss_accum / total_count
 
 
@@ -349,7 +370,7 @@ def main_torch(
         best_val_metric = math.inf
 
     for epoch in range(1, train_cfg["epochs"] + 1):
-        train_loss = train(model, train_loader, optimizer, epoch)
+        train_loss = train(model, train_loader, optimizer, epoch, lr_scheduler)
         val_metric = test(model, val_loader)
 
         if higher_is_better:
@@ -360,7 +381,6 @@ def main_torch(
             if val_metric < best_val_metric:
                 best_val_metric = val_metric
                 best_test_metric = test(model, test_loader)
-        lr_scheduler.step()
         print(f'Train Loss: {train_loss:.4f}, Val: {val_metric:.4f}')
 
     end_time = time.time()
@@ -429,9 +449,9 @@ if __name__ == "__main__":
 
     train_cfg = dict(
         channels=128,
-        num_layers=4,
-        base_lr=0.001,
-        epochs=50,
+        num_layers=1,
+        base_lr=0.0001,
+        epochs=12,
         num_prompts=32,
         batch_size=batch_size,
         gamma_rate=0.9,
