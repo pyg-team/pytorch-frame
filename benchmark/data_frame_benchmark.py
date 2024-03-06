@@ -22,6 +22,7 @@ from torch_frame.nn.models import (
     ExcelFormer,
     FTTransformer,
     ResNet,
+    MLP,
     TabNet,
     TabTransformer,
     Trompt,
@@ -50,7 +51,7 @@ parser.add_argument(
     help='Number of repeated training and eval on the best config.')
 parser.add_argument(
     '--model_type', type=str, default='TabNet', choices=[
-        'TabNet', 'FTTransformer', 'ResNet', 'TabTransformer', 'Trompt',
+        'TabNet', 'FTTransformer', 'ResNet', 'MLP', 'TabTransformer', 'Trompt',
         'ExcelFormer', 'FTTransformerBucket', 'XGBoost', 'CatBoost', 'LightGBM'
     ])
 parser.add_argument('--seed', type=int, default=0)
@@ -152,6 +153,18 @@ else:
             'gamma_rate': [0.9, 0.95, 1.],
         }
         model_cls = ResNet
+        col_stats = dataset.col_stats
+    elif args.model_type == 'MLP':
+        model_search_space = {
+            'channels': [64, 128, 256],
+            'num_layers': [1, 2, 4],
+        }
+        train_search_space = {
+            'batch_size': [256, 512],
+            'base_lr': [0.0001, 0.001],
+            'gamma_rate': [0.9, 0.95, 1.],
+        }
+        model_cls = MLP
         col_stats = dataset.col_stats
     elif args.model_type == 'TabTransformer':
         model_search_space = {
