@@ -19,10 +19,10 @@ from torch_frame.datasets import DataFrameBenchmark
 from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.nn.encoder import EmbeddingEncoder, LinearBucketEncoder
 from torch_frame.nn.models import (
+    MLP,
     ExcelFormer,
     FTTransformer,
     ResNet,
-    MLP,
     TabNet,
     TabTransformer,
     Trompt,
