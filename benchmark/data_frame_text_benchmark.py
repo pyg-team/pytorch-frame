@@ -157,7 +157,8 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         elif model == "sentence-transformers/all-distilroberta-v1":
             target_modules = ["intermediate.dense"]
         else:
-            target_modules = "all-linear"
+            target_modules = ["intermediate.dense"]
+            # target_modules = "all-linear"
 
         peft_config = LoraConfig(
             task_type=peftTaskType.FEATURE_EXTRACTION,
@@ -167,6 +168,8 @@ class TextToEmbeddingFinetune(torch.nn.Module):
             lora_dropout=0.1,
             bias="none",
             target_modules=target_modules,
+            layers_to_transform=[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+            # layers_to_transform=[18, 19, 20, 21, 22, 23]
         )
         self.model = get_peft_model(self.model, peft_config)
 
@@ -427,11 +430,12 @@ if __name__ == "__main__":
         ])
         batch_size //= n_tokenized
 
+    batch_size = 16
     train_cfg = dict(
         channels=128,
-        num_layers=4,
-        base_lr=0.001,
-        epochs=50,
+        num_layers=1,
+        base_lr=0.0001,
+        epochs=10,
         num_prompts=32,
         batch_size=batch_size,
         gamma_rate=0.9,
@@ -522,7 +526,7 @@ if __name__ == "__main__":
             col_names_dict=train_tensor_frame.col_names_dict,
         ).to(device)
         model.reset_parameters()
-        optimizer = torch.optim.Adam(model.parameters(),
+        optimizer = torch.optim.AdamW(model.parameters(),
                                      lr=train_cfg["base_lr"])
         lr_scheduler = ExponentialLR(optimizer, gamma=train_cfg["gamma_rate"])
         main_torch(higher_is_better, train_cfg, model, train_loader,
