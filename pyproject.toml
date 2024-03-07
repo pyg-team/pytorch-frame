@@ -54,6 +54,7 @@ full=[
     "catboost",
     "lightgbm",
     "datasets",
+    "torchmetrics",
 ]
 
 [project.urls]
