@@ -206,3 +206,21 @@ def test_get_col_feat(get_fake_tensor_frame):
         else:
             assert torch.allclose(torch.cat(feat_list, dim=1),
                                   tf.feat_dict[stype])
+
+
+
+@pytest.mark.parametrize('src_device', ["cpu", "cuda:0"])
+@pytest.mark.parametrize('dst_device', ["cpu", "cuda:0"])
+def test_device_transfer(get_fake_tensor_frame, src_device, dst_device):
+    src_tf = get_fake_tensor_frame(num_rows=10, device=src_device)
+    dst_tf = src_tf.to(dst_device)
+
+    # Test .to() doesn't change the original TensorFrame in-place.
+    for feat in src_tf.feat_dict.values():
+        if hasattr(feat, "device"):
+            assert feat.device == torch.device(src_device)
+
+    # Test .to() changes the device of the new TensorFrame.
+    for feat in dst_tf.feat_dict.values():
+        if hasattr(feat, "device"):
+            assert feat.device == torch.device(dst_device)
