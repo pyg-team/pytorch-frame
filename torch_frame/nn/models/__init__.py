@@ -5,6 +5,7 @@ from .excelformer import ExcelFormer
 from .tabnet import TabNet
 from .resnet import ResNet
 from .tab_transformer import TabTransformer
+from .mlp import MLP
 
 __all__ = classes = [
     'Trompt',
@@ -13,4 +14,5 @@ __all__ = classes = [
     'TabNet',
     'ResNet',
     'TabTransformer',
+    'MLP',
 ]
