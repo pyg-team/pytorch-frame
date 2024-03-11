@@ -457,7 +457,8 @@ if __name__ == "__main__":
 
     if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
         out_channels = 1
-        loss_fun = BCEWithLogitsLoss()
+        label_imbalance = sum(train_tensor_frame.y) / len(train_tensor_frame.y)
+        loss_fun = BCEWithLogitsLoss(pos_weight=1 / label_imbalance)
         metric_computer = AUROC(task='binary').to(device)
         higher_is_better = True
     elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
