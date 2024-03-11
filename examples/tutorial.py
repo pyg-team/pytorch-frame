@@ -34,6 +34,7 @@ parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--seed', type=int, default=0)
+parser.add_argument("--framework", type=str, default="torch")
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -223,7 +224,7 @@ def train(epoch: int) -> float:
     model.train()
     loss_accum = total_count = 0
 
-    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
+    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
@@ -250,17 +251,34 @@ def test(loader: DataLoader) -> float:
     return accum / total_count
 
 
-best_val_acc = 0
-best_test_acc = 0
-for epoch in range(1, args.epochs + 1):
-    train_loss = train(epoch)
-    train_acc = test(train_loader)
-    val_acc = test(val_loader)
-    test_acc = test(test_loader)
-    if best_val_acc < val_acc:
-        best_val_acc = val_acc
-        best_test_acc = test_acc
-    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
-          f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
+if args.framework == "torch":
+    best_val_acc = 0
+    best_test_acc = 0
+    for epoch in range(1, args.epochs + 1):
+        train_loss = train(epoch)
+        train_acc = test(train_loader)
+        val_acc = test(val_loader)
+        test_acc = test(test_loader)
+        if best_val_acc < val_acc:
+            best_val_acc = val_acc
+            best_test_acc = test_acc
+        print(
+            f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
+            f"Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}"
+        )
 
-print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
+    print(f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}")
+elif args.framework == "skorch":
+    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
+    import torch.nn as nn
+
+    net = NeuralNetClassifierPytorchFrame(
+        module=model,
+        criterion=nn.CrossEntropyLoss,
+        max_epochs=args.epochs,
+        lr=args.lr,
+        device=device,
+        verbose=1,
+        batch_size=args.batch_size,
+    )
+    net.fit(dataset)
