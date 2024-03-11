@@ -1,32 +1,35 @@
-from skorch import NeuralNetClassifier, NeuralNet
-from skorch.dataset import Dataset as SkorchDataset
-import torch.nn as nn
-import torch_frame
-from torch_frame.data.tensor_frame import TensorFrame
-from torch_frame.utils import infer_df_stype
-from torch_frame.data.dataset import DataFrameToTensorFrameConverter, Dataset
-from torch_frame.data.loader import DataLoader
-import torch
-from torch_frame.typing import IndexSelectType
-from torch import Tensor
-from pandas import DataFrame
 from typing import Any
+
 import pandas as pd
+import torch
+import torch.nn as nn
 from numpy.typing import ArrayLike
+from pandas import DataFrame
+from skorch import NeuralNet, NeuralNetClassifier
+from skorch.dataset import Dataset as SkorchDataset
+from torch import Tensor
+
+import torch_frame
 from torch_frame.config import (
     ImageEmbedderConfig,
     TextEmbedderConfig,
     TextTokenizerConfig,
 )
+from torch_frame.data.dataset import DataFrameToTensorFrameConverter, Dataset
+from torch_frame.data.loader import DataLoader
+from torch_frame.data.tensor_frame import TensorFrame
+from torch_frame.typing import IndexSelectType
+from torch_frame.utils import infer_df_stype
+
 
 class NeuralNetPytorchFrameDataLoader(DataLoader):
-    def __init__(
-        self, dataset: Dataset | TensorFrame, *args, device: torch.device, **kwargs
-    ):
+    def __init__(self, dataset: Dataset | TensorFrame, *args,
+                 device: torch.device, **kwargs):
         super().__init__(dataset, *args, **kwargs)
         self.device = device
 
-    def collate_fn(self, index: IndexSelectType) -> tuple[TensorFrame, Tensor | None]:
+    def collate_fn(
+            self, index: IndexSelectType) -> tuple[TensorFrame, Tensor | None]:
         index = torch.tensor(index)
         res = super().collate_fn(index).to(self.device)
         return res, res.y
@@ -112,14 +115,18 @@ class NeuralNetPytorchFrame(NeuralNet):
         dataset_.materialize()
         return dataset_
 
-    def split_dataset(self, dataset: Dataset) -> tuple[TensorFrame, TensorFrame]:
+    def split_dataset(self,
+                      dataset: Dataset) -> tuple[TensorFrame, TensorFrame]:
         datasets = dataset.split()[:2]
         return datasets[0].tensor_frame, datasets[1].tensor_frame
 
-    def iterator_train_valid(self, dataset: Dataset, **kwargs: Any) -> DataLoader:
-        return NeuralNetPytorchFrameDataLoader(dataset, device=self.device, **kwargs)
+    def iterator_train_valid(self, dataset: Dataset,
+                             **kwargs: Any) -> DataLoader:
+        return NeuralNetPytorchFrameDataLoader(dataset, device=self.device,
+                                               **kwargs)
 
-    def fit(self, X: Dataset | DataFrame, y: ArrayLike | None=None, **fit_params):
+    def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,
+            **fit_params):
         if isinstance(X, DataFrame):
             if y is not None:
                 X["target_col"] = y
@@ -138,9 +145,11 @@ class NeuralNetPytorchFrame(NeuralNet):
             self.dataset_ = X
         return super().fit(self.dataset_.df, None, **fit_params)
 
+
 # TODO: make this behave more like NeuralNetClassifier
 class NeuralNetClassifierPytorchFrame(NeuralNetPytorchFrame):
-    def fit(self, X: Dataset | DataFrame, y: ArrayLike | None=None, **fit_params):
+    def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,
+            **fit_params):
         fit_result = super().fit(X, y, **fit_params)
         self.classes = self.dataset_.df["target_col"].unique()
         return fit_result

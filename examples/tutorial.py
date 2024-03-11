@@ -262,15 +262,16 @@ if args.framework == "torch":
         if best_val_acc < val_acc:
             best_val_acc = val_acc
             best_test_acc = test_acc
-        print(
-            f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
-            f"Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}"
-        )
+        print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
+              f"Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}")
 
-    print(f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}")
+    print(
+        f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}"
+    )
 elif args.framework == "skorch":
-    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
     import torch.nn as nn
+
+    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
 
     net = NeuralNetClassifierPytorchFrame(
         module=model,
