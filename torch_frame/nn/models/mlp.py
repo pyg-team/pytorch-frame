@@ -81,10 +81,13 @@ class MLP(Module):
         )
 
         self.mlp = Sequential()
-        norm_cls = LayerNorm if normalization == "layernorm" else BatchNorm1d
+
         for _ in range(num_layers - 1):
             self.mlp.append(Linear(channels, channels))
-            self.mlp.append(norm_cls(channels))
+            if normalization == "layernorm":
+                self.mlp.append(LayerNorm(channels))
+            elif normalization == "batchnorm":
+                self.mlp.append(BatchNorm1d(channels))
             self.mlp.append(ReLU())
             self.mlp.append(Dropout(p=dropout_prob))
         self.mlp.append(Linear(channels, out_channels))
@@ -94,8 +97,7 @@ class MLP(Module):
     def reset_parameters(self) -> None:
         self.encoder.reset_parameters()
         for param in self.mlp:
-            if (isinstance(param, Linear) or isinstance(param, BatchNorm1d)
-                    or isinstance(param, LayerNorm)):
+            if hasattr(param, 'reset_parameters'):
                 param.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:
