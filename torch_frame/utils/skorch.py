@@ -1,3 +1,17 @@
+import skorch.utils
+
+# TODO: make it more safe
+old_to_tensor = skorch.utils.to_tensor
+
+def to_tensor(X, device, accept_sparse=False):
+    if isinstance(X, TensorFrame):
+        return X
+    return old_to_tensor(X, device, accept_sparse)
+
+skorch.utils.to_tensor = to_tensor
+import importlib
+importlib.reload(skorch.net)
+
 from typing import Any
 
 import pandas as pd
