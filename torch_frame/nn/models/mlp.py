@@ -49,8 +49,8 @@ class MLP(Module):
             for categorical feature and :obj:`LinearEncoder()` for
             numerical feature)
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
-            (default: :obj:`layernorm`)
+            :obj:`batch_norm`, :obj:`layer_norm`, or :obj:`None`.
+            (default: :obj:`layer_norm`)
         dropout_prob (float): The dropout probability (default: `0.2`).
     """
     def __init__(
@@ -62,7 +62,7 @@ class MLP(Module):
         col_names_dict: dict[torch_frame.stype, list[str]],
         stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
         | None = None,
-        normalization: str | None = "layernorm",
+        normalization: str | None = "layer_norm",
         dropout_prob: float = 0.2,
     ) -> None:
         super().__init__()
@@ -84,9 +84,9 @@ class MLP(Module):
 
         for _ in range(num_layers - 1):
             self.mlp.append(Linear(channels, channels))
-            if normalization == "layernorm":
+            if normalization == "layer_norm":
                 self.mlp.append(LayerNorm(channels))
-            elif normalization == "batchnorm":
+            elif normalization == "batch_norm":
                 self.mlp.append(BatchNorm1d(channels))
             self.mlp.append(ReLU())
             self.mlp.append(Dropout(p=dropout_prob))
