@@ -11,6 +11,7 @@ import torch
 from peft import LoraConfig
 from peft import TaskType as peftTaskType
 from peft import get_peft_model
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
@@ -202,13 +203,19 @@ class OpenAIEmbedding:
     def __call__(self, sentences: list[str]) -> Tensor:
         from openai import Embedding
 
-        items: list[Embedding] = self.client.embeddings.create(
-            input=sentences, model=self.model).data
+        items: list[Embedding] = embeddings_with_backoff(
+            self.client, self.model, sentences)
         assert len(items) == len(sentences)
         embeddings = [
             torch.FloatTensor(item.embedding).view(1, -1) for item in items
         ]
         return torch.cat(embeddings, dim=0)
+
+
+@retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(6))
+def embeddings_with_backoff(client: Any, model: str,
+                            sentences: list[str]) -> list[Embedding]:
+    return client.embeddings.create(input=sentences, model=model).data
 
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
@@ -431,7 +438,7 @@ if __name__ == "__main__":
         channels=128,
         num_layers=4,
         base_lr=0.001,
-        epochs=50,
+        epochs=40,
         num_prompts=32,
         batch_size=batch_size,
         gamma_rate=0.9,
