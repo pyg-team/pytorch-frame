@@ -438,7 +438,7 @@ if __name__ == "__main__":
         channels=128,
         num_layers=4,
         base_lr=0.001,
-        epochs=40,
+        epochs=50,
         num_prompts=32,
         batch_size=batch_size,
         gamma_rate=0.9,
