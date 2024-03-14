@@ -214,7 +214,7 @@ class OpenAIEmbedding:
 
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(6))
 def embeddings_with_backoff(client: Any, model: str,
-                            sentences: list[str]) -> list[Embedding]:
+                            sentences: list[str]) -> list[Any]:
     return client.embeddings.create(input=sentences, model=model).data
 
 
