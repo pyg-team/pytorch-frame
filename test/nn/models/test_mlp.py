@@ -6,7 +6,8 @@ from torch_frame.nn import MLP
 
 
 @pytest.mark.parametrize('batch_size', [0, 5])
-def test_mlp(batch_size):
+@pytest.mark.parametrize('normalization', ["layer_norm", "batch_norm"])
+def test_mlp(batch_size, normalization):
     channels = 8
     out_channels = 1
     num_layers = 3
@@ -20,6 +21,7 @@ def test_mlp(batch_size):
         num_layers=num_layers,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
+        normalization=normalization,
     )
     model.reset_parameters()
     out = model(tensor_frame)
