@@ -34,7 +34,8 @@ parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument("--framework", type=str, default="torch")
+parser.add_argument("--framework", type=str, default="torch",
+                    choices=["torch", "skorch", "skorch-dataframe"])
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
