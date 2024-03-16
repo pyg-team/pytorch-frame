@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
 
+- Added GBDTs feature importance ([#292](https://github.com/pyg-team/pytorch-frame/pull/292))
+
 ### Changed
 
 ### Deprecated
