@@ -2,11 +2,11 @@ import pytest
 
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets import FakeDataset
-from torch_frame.nn import MLP
+from torch_frame.nn import ResNet
 
 
 @pytest.mark.parametrize('batch_size', [0, 5])
-def test_mlp(batch_size):
+def test_resnet(batch_size):
     channels = 8
     out_channels = 1
     num_layers = 3
@@ -14,7 +14,7 @@ def test_mlp(batch_size):
     dataset.materialize()
     tensor_frame = dataset.tensor_frame[:batch_size]
     # Feature-based embeddings
-    model = MLP(
+    model = ResNet(
         channels=channels,
         out_channels=out_channels,
         num_layers=num_layers,
