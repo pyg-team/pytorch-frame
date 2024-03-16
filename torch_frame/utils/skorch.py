@@ -199,5 +199,6 @@ class NeuralNetClassifierPytorchFrame(NeuralNetPytorchFrame):
     def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,
             **fit_params):
         fit_result = super().fit(X, y, **fit_params)
-        self.classes = self.dataset_.df["target_col"].unique()
+        self.classes = getattr(
+            self, "classes", None) or self.dataset_.df["target_col"].unique()
         return fit_result
