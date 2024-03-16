@@ -155,7 +155,7 @@ class NeuralNetPytorchFrame(NeuralNet):
                 X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
             self.dataset_ = Dataset(
                 X,
-                {
+                {  # type: ignore
                     k: v
                     for k, v in infer_df_stype(X).items()
                     if k not in (self.split_col, )
