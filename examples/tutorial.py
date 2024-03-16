@@ -283,3 +283,39 @@ elif args.framework == "skorch":
         batch_size=args.batch_size,
     )
     net.fit(dataset)
+    y_pred = net.predict(test_dataset)
+    test_acc = (torch.Tensor(y_pred).argmax(
+        dim=-1) == test_tensor_frame.y).float().mean()
+    print(f"Test Acc: {test_acc:.4f}")
+elif args.framework == "skorch-dataframe":
+    import pandas as pd
+    import torch.nn as nn
+
+    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
+
+    df = dataset.df
+    df_train = pd.concat([train_dataset.df, val_dataset.df])
+    X_train, y_train = df_train.drop(
+        columns=[dataset.target_col, dataset.split_col]), df_train[
+            dataset.target_col]
+    df_test = test_dataset.df
+    X_test, y_test = df_test.drop(
+        columns=[dataset.target_col, dataset.split_col]), df_test[
+            dataset.target_col]
+
+    # use DataFrames with no `split_col` or `target_col`
+    # like normal sklearn datasets from now on
+    net = NeuralNetClassifierPytorchFrame(
+        module=model,
+        criterion=nn.CrossEntropyLoss,
+        max_epochs=args.epochs,
+        lr=args.lr,
+        device=device,
+        verbose=1,
+        col_to_stype={"C_feature_7": stype.categorical},
+        batch_size=args.batch_size,
+    )
+    net.fit(X_train, y_train)
+    y_pred = net.predict(X_test)
+    test_acc = (y_pred.argmax(-1) == y_test).mean()
+    print(f"Test Acc: {test_acc:.4f}")

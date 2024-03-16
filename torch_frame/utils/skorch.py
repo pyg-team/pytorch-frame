@@ -3,8 +3,9 @@ from typing import Any
 
 import skorch.utils
 import torch
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from pandas import DataFrame
+from sklearn.model_selection import train_test_split
 from skorch import NeuralNet
 from torch import Tensor
 
@@ -58,10 +59,10 @@ class NeuralNetPytorchFrame(NeuralNet):
         lr=0.01,
         max_epochs=10,
         batch_size=128,
-        iterator_train=...,
-        iterator_valid=...,
-        dataset=...,
-        train_split=...,
+        iterator_train=None,
+        iterator_valid=None,
+        dataset=None,
+        train_split=None,
         callbacks=None,
         predict_nonlinearity="auto",
         warm_start=False,
@@ -71,8 +72,8 @@ class NeuralNetPytorchFrame(NeuralNet):
         use_caching="auto",
         # torch_frame.Dataset parameters
         col_to_stype: dict[str, torch_frame.stype] | None = None,
-        target_col: str | None = None,
-        split_col: str | None = None,
+        target_col: str | None = "target_col",
+        split_col: str | None = "split_col",
         col_to_sep: str | None | dict[str, str | None] = None,
         col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
         | TextEmbedderConfig | None = None,
@@ -112,6 +113,9 @@ class NeuralNetPytorchFrame(NeuralNet):
         self.col_to_text_tokenizer_cfg = col_to_text_tokenizer_cfg
         self.col_to_image_embedder_cfg = col_to_image_embedder_cfg
         self.col_to_time_format = col_to_time_format
+        # save dataset for partial_fit
+        self.train_split_original = train_split or (
+            lambda x: train_test_split(x, test_size=0.2))
 
     def create_dataset(self, df: DataFrame, _: Any) -> Dataset:
         dataset_ = Dataset(
@@ -142,10 +146,18 @@ class NeuralNetPytorchFrame(NeuralNet):
             **fit_params):
         if isinstance(X, DataFrame):
             if y is not None:
-                X["target_col"] = y
+                X[self.target_col] = y
+            if self.split_col not in X:
+                X_train, X_val = self.train_split_original(X, **fit_params)
+                # if index is in X_train, 0, otherwise 1
+                X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
             self.dataset_ = Dataset(
                 X,
-                self.col_to_stype or infer_df_stype(X),
+                {
+                    k: v
+                    for k, v in infer_df_stype(X).items()
+                    if k not in (self.split_col, )
+                } | (self.col_to_stype or {}),
                 split_col=self.split_col,
                 target_col=self.target_col,
                 col_to_sep=self.col_to_sep,
@@ -157,6 +169,27 @@ class NeuralNetPytorchFrame(NeuralNet):
         else:
             self.dataset_ = X
         return super().fit(self.dataset_.df, None, **fit_params)
+
+    def predict(self, X: Dataset | DataFrame) -> NDArray[Any]:
+        if isinstance(X, DataFrame):
+            self.dataset_ = Dataset(
+                X,
+                {
+                    k: v
+                    for k, v in self.dataset_.col_to_stype.items()
+                    if k not in (self.target_col, )
+                },
+                split_col=None,
+                target_col=None,
+                col_to_sep=self.col_to_sep,
+                col_to_text_embedder_cfg=self.col_to_text_embedder_cfg,
+                col_to_text_tokenizer_cfg=self.col_to_text_tokenizer_cfg,
+                col_to_image_embedder_cfg=self.col_to_image_embedder_cfg,
+                col_to_time_format=self.col_to_time_format,
+            )
+        else:
+            self.dataset_ = X
+        return super().predict(self.dataset_.df)
 
 
 # TODO: make this behave more like NeuralNetClassifier
