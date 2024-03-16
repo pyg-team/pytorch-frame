@@ -49,8 +49,8 @@ class MLP(Module):
             for categorical feature and :obj:`LinearEncoder()` for
             numerical feature)
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
-            (default: :obj:`layernorm`)
+            :obj:`batch_norm`, :obj:`layer_norm`, or :obj:`None`.
+            (default: :obj:`layer_norm`)
         dropout_prob (float): The dropout probability (default: `0.2`).
     """
     def __init__(
@@ -62,7 +62,7 @@ class MLP(Module):
         col_names_dict: dict[torch_frame.stype, list[str]],
         stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
         | None = None,
-        normalization: str | None = "layernorm",
+        normalization: str | None = "layer_norm",
         dropout_prob: float = 0.2,
     ) -> None:
         super().__init__()
@@ -81,10 +81,13 @@ class MLP(Module):
         )
 
         self.mlp = Sequential()
-        norm_cls = LayerNorm if normalization == "layernorm" else BatchNorm1d
+
         for _ in range(num_layers - 1):
             self.mlp.append(Linear(channels, channels))
-            self.mlp.append(norm_cls(channels))
+            if normalization == "layer_norm":
+                self.mlp.append(LayerNorm(channels))
+            elif normalization == "batch_norm":
+                self.mlp.append(BatchNorm1d(channels))
             self.mlp.append(ReLU())
             self.mlp.append(Dropout(p=dropout_prob))
         self.mlp.append(Linear(channels, out_channels))
@@ -94,8 +97,7 @@ class MLP(Module):
     def reset_parameters(self) -> None:
         self.encoder.reset_parameters()
         for param in self.mlp:
-            if (isinstance(param, Linear) or isinstance(param, BatchNorm1d)
-                    or isinstance(param, LayerNorm)):
+            if hasattr(param, 'reset_parameters'):
                 param.reset_parameters()
 
     def forward(self, tf: TensorFrame) -> Tensor:

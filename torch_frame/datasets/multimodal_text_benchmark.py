@@ -81,7 +81,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 6
           - multiclass_classification
-          - 0.0%
+          - 12.3%
         * - melbourne_airbnb
           - 22,895
           - 26
@@ -90,7 +90,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 10
           - multiclass_classification
-          - 0.0%
+          - 9.6%
         * - imdb_genre_prediction
           - 1,000
           - 7
@@ -180,7 +180,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 1
           - regression
-          - 0.0%
+          - 6.1%
         * - california_house_price
           - 47,439
           - 18
@@ -189,7 +189,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 11
           - 1
           - regression
-          - 0.0%
+          - 13.8%
         * - mercari_price_suggestion100K
           - 125,000
           - 0
@@ -198,7 +198,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 1
           - regression
-          - 0.0%
+          - 3.4%
     """
     base_url = 'https://automl-mm-bench.s3.amazonaws.com'
 

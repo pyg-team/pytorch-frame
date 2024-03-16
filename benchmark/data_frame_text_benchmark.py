@@ -11,6 +11,7 @@ import torch
 from peft import LoraConfig
 from peft import TaskType as peftTaskType
 from peft import get_peft_model
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
@@ -60,7 +61,7 @@ parser.add_argument(
     "--idx",
     type=int,
     default=0,
-    help="The index of the dataset within DataFrameBenchmark",
+    help="The index of the dataset within DataFrameTextBenchmark",
 )
 parser.add_argument(
     "--model_type",
@@ -86,6 +87,12 @@ parser.add_argument(
     ],
 )
 parser.add_argument("--finetune", action="store_true")
+parser.add_argument(
+    "--pos_weight",
+    action="store_true",
+    help=("Whether to set `pos_weight` in `BCEWithLogitsLoss` "
+          "for the binary classification task."),
+)
 parser.add_argument('--result_path', type=str, default='')
 parser.add_argument("--api_key", type=str, default=None)
 args = parser.parse_args()
@@ -202,13 +209,19 @@ class OpenAIEmbedding:
     def __call__(self, sentences: list[str]) -> Tensor:
         from openai import Embedding
 
-        items: list[Embedding] = self.client.embeddings.create(
-            input=sentences, model=self.model).data
+        items: list[Embedding] = embeddings_with_backoff(
+            self.client, self.model, sentences)
         assert len(items) == len(sentences)
         embeddings = [
             torch.FloatTensor(item.embedding).view(1, -1) for item in items
         ]
         return torch.cat(embeddings, dim=0)
+
+
+@retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(6))
+def embeddings_with_backoff(client: Any, model: str,
+                            sentences: list[str]) -> list[Any]:
+    return client.embeddings.create(input=sentences, model=model).data
 
 
 def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
@@ -457,7 +470,12 @@ if __name__ == "__main__":
 
     if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
         out_channels = 1
-        loss_fun = BCEWithLogitsLoss()
+        if args.pos_weight:
+            label_imbalance = sum(train_tensor_frame.y) / len(
+                train_tensor_frame.y)
+            loss_fun = BCEWithLogitsLoss(pos_weight=1 / label_imbalance)
+        else:
+            loss_fun = BCEWithLogitsLoss()
         metric_computer = AUROC(task='binary').to(device)
         higher_is_better = True
     elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
