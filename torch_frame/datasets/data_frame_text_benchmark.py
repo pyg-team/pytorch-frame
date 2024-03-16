@@ -119,7 +119,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 6
           - MultimodalTextBenchmark(name='data_scientist_salary')
-          - 0.0%
+          - 12.3%
         * - multiclass_classification
           - small
           - 3
@@ -130,7 +130,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 10
           - MultimodalTextBenchmark(name='melbourne_airbnb')
-          - 0.0%
+          - 9.6%
         * - multiclass_classification
           - medium
           - 0
@@ -240,7 +240,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 1
           - MultimodalTextBenchmark(name='ae_price_prediction')
-          - 0.0%
+          - 6.1%
         * - regression
           - small
           - 7
@@ -251,7 +251,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 11
           - 1
           - MultimodalTextBenchmark(name='california_house_price')
-          - 0.0%
+          - 13.8%
         * - regression
           - medium
           - 0
@@ -262,7 +262,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 1
           - MultimodalTextBenchmark(name='mercari_price_suggestion100K')
-          - 0.0%
+          - 3.4%
         * - regression
           - large
           - 0
@@ -495,9 +495,10 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 f'  cls={self.cls_str}\n'
                 f')')
 
-    def materialize(self, *args, **kwargs):
+    def materialize(self, *args, **kwargs) -> torch_frame.data.Dataset:
         super().materialize(*args, **kwargs)
         if self.task_type != self._task_type:
             raise RuntimeError(f"task type does not match. It should be "
                                f"{self.task_type.value} but specified as "
                                f"{self._task_type.value}.")
+        return self
