@@ -19,3 +19,5 @@ venv/*
 *.out
 data/**
 catboost_info/
+examples/storage/
+/storage
