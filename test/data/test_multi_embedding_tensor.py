@@ -45,11 +45,17 @@ def get_fake_multi_embedding_tensor(
     num_cols: int,
     embedding_dim: Optional[int] = None,
     device: Optional[torch.device] = None,
+    dtype: torch.dtype = torch.float32,
 ) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = embedding_dim or random.randint(1, 5)
-        tensor = torch.randn((num_rows, embedding_dim), device=device)
+        if dtype.is_floating_point:
+            tensor = torch.randn((num_rows, embedding_dim), device=device,
+                                 dtype=dtype)
+        else:
+            tensor = torch.randint(-5, 5, (num_rows, embedding_dim),
+                                   device=device, dtype=dtype)
         tensor_list.append(tensor)
     return MultiEmbeddingTensor.from_tensor_list(tensor_list), tensor_list
 
@@ -174,6 +180,7 @@ def test_row_index(device):
         num_rows=num_rows,
         num_cols=num_cols,
         device=device,
+        dtype=torch.long,
     )
 
     # Test [i, j] indexing
@@ -210,6 +217,7 @@ def test_row_index(device):
                         tensor_list[j][idx],
                         met_indexed[i, j],
                     )
+            assert met_indexed.dtype == met.dtype
 
     # test selection with Boolean mask
     # only ordered selection without duplicates is possible
@@ -227,6 +235,7 @@ def test_row_index(device):
                     tensor_list[j][idx],
                     met_indexed[i, j],
                 )
+        assert met_indexed.dtype == met.dtype
 
 
 @withCUDA
