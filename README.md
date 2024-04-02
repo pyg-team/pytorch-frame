@@ -264,3 +264,15 @@ pip install pytorch_frame
 ```
 
 See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.
+
+## Cite
+
+If you use PyTorch Frame in your work, please cite our paper (Bibtex below).
+```
+@article{hu2024pytorch,
+  title={PyTorch Frame: A Modular Framework for Multi-Modal Tabular Learning},
+  author={Hu, Weihua and Yuan, Yiwen and Zhang, Zecheng and Nitta, Akihiro and Cao, Kaidi and Kocijan, Vid and Leskovec, Jure and Fey, Matthias},
+  journal={arXiv preprint arXiv:2404.00776},
+  year={2024}
+}
+```
