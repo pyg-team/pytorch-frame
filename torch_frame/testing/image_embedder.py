@@ -22,5 +22,5 @@ class RandomImageEmbedder(ImageEmbedder):
         super().__init__()
         self.out_channels = out_channels
 
-    def forward_embed(self, images: list[Image]) -> Tensor:
+    def forward_embed(self, images: list[Image.Image]) -> Tensor:
         return torch.rand(len(images), self.out_channels)
