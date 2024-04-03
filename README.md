@@ -80,7 +80,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
+  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, `image_embedded`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -93,13 +93,13 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 
 ## Architecture Overview
 
-Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
+Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`.
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png" />
+  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/architecture.png" />
 </p>
 
-In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
+In essence, this modular setup empowers users to effortlessly experiment with myriad architectures, as shown in the figure above:
 
 * `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
 * `FeatureEncoder` encodes `TensorFrame` into hidden column embeddings of size `[batch_size, num_cols, channels]`.
