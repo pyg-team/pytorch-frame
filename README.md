@@ -93,13 +93,13 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 
 ## Architecture Overview
 
-Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`.
+Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
   <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/architecture.png" />
 </p>
 
-In essence, this modular setup empowers users to effortlessly experiment with myriad architectures, as shown in the figure above:
+In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
 
 * `Materialization` handles converting the raw pandas `DataFrame` into a `TensorFrame` that is amenable to Pytorch-based training and modeling.
 * `FeatureEncoder` encodes `TensorFrame` into hidden column embeddings of size `[batch_size, num_cols, channels]`.
