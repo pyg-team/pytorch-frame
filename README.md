@@ -28,7 +28,7 @@
 
 </div>
 
-**[Documentation](https://pytorch-frame.readthedocs.io)**
+**[Documentation](https://pytorch-frame.readthedocs.io)** | **[Paper](https://arxiv.org/abs/2404.00776)**
 
 PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), designed for heterogeneous tabular data with different column types, including numerical, categorical, time, text, and images. It offers a modular framework for implementing existing and future methods. The library features methods from state-of-the-art models, user-friendly mini-batch loaders, benchmark datasets, and interfaces for custom data integration.
 
