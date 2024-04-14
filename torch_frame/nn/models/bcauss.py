@@ -3,7 +3,7 @@ from typing import Any, Tuple
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import Linear, Module, Parameter, ReLU, Sequential
+from torch.nn import Linear, Module, ReLU, Sequential
 
 import torch_frame
 from torch_frame import TensorFrame, categorical, numerical
@@ -58,22 +58,30 @@ class BalanceScoreEstimator(Module):
 
 
 class BCAUSS(Module):
-    def __init__(self, channels: int, hidden_channels: int,
-                 decoder_hidden_channels: int, out_channels: int,
-                 col_stats: dict[str, dict[StatType, Any]],
-                 col_names_dict: dict[torch_frame.stype, list[str]]):
+    def __init__(
+        self,
+        channels: int,
+        hidden_channels: int,
+        decoder_hidden_channels: int,
+        out_channels: int,
+        col_stats: dict[str, dict[StatType, Any]] | None,
+        col_names_dict: dict[torch_frame.stype, list[str]] | None,
+        epsilon: float = 0.5,
+    ):
 
         super().__init__()
-        numerical_stats_list = [
-            col_stats[col_name]
-            for col_name in col_names_dict[torch_frame.numerical]
-        ]
-        mean = torch.tensor(
-            [stats[StatType.MEAN] for stats in numerical_stats_list])
-        self.register_buffer("mean", mean)
-        std = (torch.tensor(
-            [stats[StatType.STD] for stats in numerical_stats_list]) + 1e-6)
-        self.register_buffer("std", std)
+        if col_stats is not None and col_names_dict is not None:
+            numerical_stats_list = [
+                col_stats[col_name]
+                for col_name in col_names_dict[torch_frame.numerical]
+            ]
+            mean = torch.tensor(
+                [stats[StatType.MEAN] for stats in numerical_stats_list])
+            self.register_buffer("mean", mean)
+            std = (torch.tensor(
+                [stats[StatType.STD]
+                 for stats in numerical_stats_list]) + 1e-6)
+            self.register_buffer("std", std)
         self.representation_learner = MLPBlock(channels, hidden_channels,
                                                hidden_channels)
         self.balance_score_learner = BalanceScoreEstimator(
@@ -85,7 +93,7 @@ class BCAUSS(Module):
         # decoder for control group
         self.control_decoder = MLPBlock(hidden_channels,
                                         decoder_hidden_channels, out_channels)
-        self.epsilon = Parameter(torch.randn(1, 1))
+        self.epsilon = epsilon
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -98,7 +106,9 @@ class BCAUSS(Module):
                 treatment_index: int) -> Tuple[Tensor, Tensor, Tensor]:
         r"""T stands for treatment and y stands for output."""
         feat_cat = tf.feat_dict[categorical]
-        feat_num = (tf.feat_dict[numerical] - self.mean) / self.std
+        feat_num = tf.feat_dict[numerical]
+        if hasattr(self, 'mean'):
+            feat_num = (feat_num - self.mean) / self.std
         assert isinstance(feat_cat, Tensor)
         assert isinstance(feat_num, Tensor)
         x = torch.cat([feat_cat, feat_num], dim=1)
@@ -121,6 +131,8 @@ class BCAUSS(Module):
         control_weight = ~treated_mask.unsqueeze(-1) / penalty
         balance_score = torch.mean(
             torch.square(
-                torch.sum(treated_weight * x) / torch.sum(treated_weight) -
-                torch.sum(control_weight * x) / torch.sum(control_weight)))
+                torch.sum(treated_weight * x, dim=0) /
+                torch.sum(treated_weight + 0.01) -
+                torch.sum(control_weight * x, dim=0) /
+                (torch.sum(control_weight + 0.01))))
         return pred, self.epsilon * balance_score, treated_mask
