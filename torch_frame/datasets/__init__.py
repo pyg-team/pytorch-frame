@@ -18,6 +18,7 @@ from .mercari import Mercari
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
 from .diamond_images import DiamondImages
 from .huggingface_dataset import HuggingFaceDatasetDict
+from .jobs import Jobs
 
 real_world_datasets = [
     'Titanic',
@@ -36,6 +37,7 @@ real_world_datasets = [
     'Mercari',
     'AmazonFineFoodReviews',
     'DiamondImages',
+    'jobs',
 ]
 
 synthetic_datasets = [
