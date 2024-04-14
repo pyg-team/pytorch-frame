@@ -218,7 +218,7 @@ class MultiEmbeddingTensor(_MultiTensor):
         Returns:
             MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
                 Note that if :obj:`dim=0`, it will return with the original
-                offset tensor.git
+                offset tensor.
         """
         return MultiEmbeddingTensor(
             num_rows=0 if dim == 0 else self.num_rows,
