@@ -127,8 +127,8 @@ class BCAUSS(Module):
         pred[~treated_mask, :] = self.control_decoder(control)
         pred[treated_mask, :] = self.treatment_decoder(treated)
         penalty = self.balance_score_learner(out)
-        treated_weight = treated_mask.unsqueeze(-1) / penalty
-        control_weight = ~treated_mask.unsqueeze(-1) / penalty
+        treated_weight = treated_mask.unsqueeze(-1) / (penalty + 0.01)
+        control_weight = ~treated_mask.unsqueeze(-1) / (penalty + 0.01)
         balance_score = torch.mean(
             torch.square(
                 torch.sum(treated_weight * x, dim=0) /

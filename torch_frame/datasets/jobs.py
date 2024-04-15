@@ -14,6 +14,8 @@ class Jobs(torch_frame.data.Dataset):
     (1 if Hispanic, 0 otherwise), married (1 if married, 0 otherwise),
     nodegree (1 if no degree, 0 otherwise), RE74 (earnings in 1974),
     RE75 (earnings in 1975), and RE78 (earnings in 1978).
+
+    Dehejia features:
     """
     lalonde_treated = 'https://users.nber.org/~rdehejia/data/nsw_treated.txt'
     lalonde_control = 'https://users.nber.org/~rdehejia/data/nsw_control.txt'
@@ -21,21 +23,22 @@ class Jobs(torch_frame.data.Dataset):
     train = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.train.npz'
     test = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.test.npz'
 
-    def __init__(self, root: str, feature_engineering: bool = False):
-        if feature_engineering:
+    def __init__(self, root: str, dehejia: bool = False):
+        if not dehejia:
+            split = 0
             train = self.download_url(Jobs.train, root)
             test = self.download_url(Jobs.test, root)
             train_np = np.load(train)
             test_np = np.load(test)
             train_data = np.concatenate([
-                train_np.f.t[:, 0].reshape(-1, 1), train_np.f.x[:, :, 0],
-                train_np.f.e[:, 0].reshape(-1, 1), train_np.f.yf[:, 0].reshape(
-                    -1, 1)
+                train_np.f.t[:, split].reshape(-1, 1),
+                train_np.f.x[:, :, split], train_np.f.e[:, split].reshape(
+                    -1, 1), train_np.f.yf[:, split].reshape(-1, 1)
             ], axis=1)
             test_data = np.concatenate([
-                test_np.f.t[:, 0].reshape(-1, 1), test_np.f.x[:, :, 0],
-                test_np.f.e[:, 0].reshape(-1, 1), test_np.f.yf[:, 0].reshape(
-                    -1, 1)
+                test_np.f.t[:, split].reshape(-1, 1), test_np.f.x[:, :, split],
+                test_np.f.e[:, split].reshape(
+                    -1, 1), test_np.f.yf[:, split].reshape(-1, 1)
             ], axis=1)
             train_df = pd.DataFrame(
                 train_data, columns=['treated'] +
@@ -87,7 +90,7 @@ class Jobs(torch_frame.data.Dataset):
                 sep='\s+',  # noqa
                 names=names)
             assert (nsw_treated_df['treated'] == 1).all()
-            nsw_treated_df['source'] = 'nsw'
+            nsw_treated_df['source'] = 1
 
             nsw_control_df = pd.read_csv(
                 nsw_control,
