@@ -88,13 +88,12 @@ class XGBoost(GBDT):
         return feat, y, types
 
     def objective(
-        self,
-        trial: Any,  # optuna.trial.Trial
-        dtrain: Any,  # xgboost.DMatrix
-        dvalid: Any,  # xgboost.DMatrix
-        num_boost_round: int,
-        device: str = 'cpu'
-    ) -> float:
+            self,
+            trial: Any,  # optuna.trial.Trial
+            dtrain: Any,  # xgboost.DMatrix
+            dvalid: Any,  # xgboost.DMatrix
+            num_boost_round: int,
+            device: str = 'cpu') -> float:
         r"""Objective function to be optimized.
 
         Args:
@@ -123,7 +122,8 @@ class XGBoost(GBDT):
             "alpha":
             (0.0 if not trial.suggest_categorical('use_alpha', [True, False])
              else trial.suggest_float('alpha', 1e-8, 1e2, log=True)),
-            "device": device
+            "device":
+            device
         }
         if device.startswith("gpu") or device.startswith("cuda"):
             self.params["tree_method"] = "hist"
@@ -190,14 +190,9 @@ class XGBoost(GBDT):
                                     torch.from_numpy(pred))
         return score
 
-    def _tune(
-        self,
-        tf_train: TensorFrame,
-        tf_val: TensorFrame,
-        num_trials: int,
-        num_boost_round: int = 2000,
-        device: str = 'cpu'
-    ):
+    def _tune(self, tf_train: TensorFrame, tf_val: TensorFrame,
+              num_trials: int, num_boost_round: int = 2000,
+              device: str = 'cpu'):
         import optuna
         import xgboost
 
