@@ -93,6 +93,7 @@ class XGBoost(GBDT):
         dtrain: Any,  # xgboost.DMatrix
         dvalid: Any,  # xgboost.DMatrix
         num_boost_round: int,
+        device: str = 'cpu'
     ) -> float:
         r"""Objective function to be optimized.
 
@@ -101,6 +102,9 @@ class XGBoost(GBDT):
             dtrain (xgboost.DMatrix): Train data.
             dvalid (xgboost.DMatrix): Validation data.
             num_boost_round (int): Number of boosting round.
+            device (str): The device for XGBoost to train on. One of `cpu`,
+                `cuda`, `cuda<ordinal>`, `gpu`, `gpu:<ordinal>`. See XGBoost
+                documentation for details.
 
         Returns:
             float: Best objective value. Root mean squared error for
@@ -118,8 +122,12 @@ class XGBoost(GBDT):
              else trial.suggest_float('lambda', 1e-8, 1e2, log=True)),
             "alpha":
             (0.0 if not trial.suggest_categorical('use_alpha', [True, False])
-             else trial.suggest_float('alpha', 1e-8, 1e2, log=True))
+             else trial.suggest_float('alpha', 1e-8, 1e2, log=True)),
+            "device": device
         }
+        if device.startswith("gpu") or device.startswith("cuda"):
+            self.params["tree_method"] = "hist"
+
         if self.params["booster"] == "gbtree" or self.params[
                 "booster"] == "dart":
             self.params["max_depth"] = trial.suggest_int("max_depth", 3, 11)
@@ -188,6 +196,7 @@ class XGBoost(GBDT):
         tf_val: TensorFrame,
         num_trials: int,
         num_boost_round: int = 2000,
+        device: str = 'cpu'
     ):
         import optuna
         import xgboost
@@ -207,8 +216,8 @@ class XGBoost(GBDT):
                                  feature_types=val_feat_type,
                                  enable_categorical=True)
         study.optimize(
-            lambda trial: self.objective(trial, dtrain, dvalid, num_boost_round
-                                         ), num_trials)
+            lambda trial: self.objective(trial, dtrain, dvalid,
+                                         num_boost_round, device), num_trials)
         self.params.update(study.best_params)
 
         self.model = xgboost.train(self.params, dtrain,
