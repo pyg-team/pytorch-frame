@@ -197,11 +197,8 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(
-        self,
-        tf: TensorFrame,
-        mixup_encoded: bool = False
-    ) -> Tensor | tuple[Tensor, Tensor]:
+    def forward(self, tf: TensorFrame,
+                mixup_encoded: bool = False) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings.
 
         Args:
