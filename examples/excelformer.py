@@ -20,17 +20,20 @@ from tqdm import tqdm
 from torch_frame.data.loader import DataLoader
 from torch_frame.datasets.yandex import Yandex
 from torch_frame.nn import ExcelFormer
+from torch_frame.nn.utils.loss import cross_entropy_with_logits
 from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='higgs_small')
+parser.add_argument('--dataset', type=str, default='california_housing')
+parser.add_argument('--mixup', type=str, default='feature',
+                    choices=['none', 'ordinary', 'feature', 'hidden'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--num_heads', type=int, default=4)
 parser.add_argument('--num_layers', type=int, default=5)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--mixup', type=bool, default=True)
 parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
 
@@ -85,6 +88,7 @@ model = ExcelFormer(
     residual_dropout=0.,
     diam_dropout=0.3,
     aium_dropout=0.,
+    mixup=args.mixup,
     col_stats=mutual_info_sort.transformed_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
 ).to(device)
@@ -99,9 +103,11 @@ def train(epoch: int) -> float:
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
+        # Train with FEAT-MIX or HIDDEN-MIX
         pred_mixedup, y_mixedup = model.forward_mixup(tf)
         if is_classification:
-            loss = F.cross_entropy(pred_mixedup, y_mixedup)
+            # Softly mixed one-hot labels
+            loss = cross_entropy_with_logits(pred_mixedup, y_mixedup)
         else:
             loss = F.mse_loss(pred_mixedup.view(-1), y_mixedup.view(-1))
         optimizer.zero_grad()

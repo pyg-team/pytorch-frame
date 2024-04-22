@@ -15,7 +15,8 @@ from torch_frame.nn import ExcelFormer
     TaskType.MULTICLASS_CLASSIFICATION,
 ])
 @pytest.mark.parametrize('batch_size', [0, 5])
-def test_excelformer(task_type, batch_size):
+@pytest.mark.parametrize('mixup', ['none', 'ordinary', 'hidden'])
+def test_excelformer(task_type, batch_size, mixup):
     in_channels = 8
     num_heads = 2
     num_layers = 6
@@ -35,6 +36,7 @@ def test_excelformer(task_type, batch_size):
         num_cols=num_cols,
         num_layers=num_layers,
         num_heads=num_heads,
+        mixup=mixup,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )
