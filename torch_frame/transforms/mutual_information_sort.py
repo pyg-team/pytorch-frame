@@ -90,6 +90,7 @@ class MutualInformationSort(FittableBaseTransform):
         tf.col_names_dict[stype.numerical] = self.reordered_col_names
 
         # set lazy attribute for meta features
-        tf.mi_scores = torch.tensor(self.mi_scores, dtype=torch.float32, device=tf.device)
+        tf.mi_scores = torch.tensor(self.mi_scores, dtype=torch.float32,
+                                    device=tf.device)
 
         return tf

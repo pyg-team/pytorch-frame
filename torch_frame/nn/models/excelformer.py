@@ -65,13 +65,16 @@ def feature_mixup(
             assert mi_scores is not None, 'FEAT-MIX requires mutual information scores'
             mi_scores = mi_scores.to(x.device)
             # Hard masks (feature dimension)
-            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])), device=x.device) > shuffle_rates            
+            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])),
+                                    device=x.device) > shuffle_rates
             l1_norm_mi = mi_scores / mi_scores.sum()
-            lmbd = torch.sum(l1_norm_mi.unsqueeze(0) * feat_masks, dim=1, keepdim=True)
+            lmbd = torch.sum(
+                l1_norm_mi.unsqueeze(0) * feat_masks, dim=1, keepdim=True)
             feat_masks = feat_masks.unsqueeze(2)
         else:
             # Hard masks (hidden dimension)
-            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[2])), device=x.device) < shuffle_rates
+            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[2])),
+                                    device=x.device) < shuffle_rates
             feat_masks = feat_masks.unsqueeze(1)
             lmbd = shuffle_rates
         x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
@@ -85,8 +88,7 @@ def feature_mixup(
         # Classification task
         one_hot_y = F.one_hot(y, num_classes=num_classes)
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
-        y_mixedup = (lmbd * one_hot_y +
-                     (1 - lmbd) * one_hot_y_shuffled)
+        y_mixedup = (lmbd * one_hot_y + (1 - lmbd) * one_hot_y_shuffled)
     return x_mixedup, y_mixedup
 
 
@@ -158,7 +160,7 @@ class ExcelFormer(Module):
         if num_layers <= 0:
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
-        
+
         assert mixup in ['none', 'ordinary', 'feature', 'hidden']
 
         self.in_channels = in_channels
@@ -201,7 +203,7 @@ class ExcelFormer(Module):
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
-    
+
     def forward(self, tf: TensorFrame, mixup_encoded: bool = False) -> Tensor:
         r"""Transform :class:`TensorFrame` object into output embeddings.
 
@@ -235,7 +237,7 @@ class ExcelFormer(Module):
         if mixup_encoded:
             return out, y_mixedup
         return out
-    
+
     def forward_mixup(self, tf: TensorFrame) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings. If
         `self.mixup` is not `'none'`, it produces the output embeddings together with

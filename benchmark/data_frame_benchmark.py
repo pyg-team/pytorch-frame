@@ -89,11 +89,8 @@ else:
         higher_is_better = True
     elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
         out_channels = dataset.num_classes
-        loss_fun = (
-            CrossEntropyLoss()
-            if args.model_type != 'ExcelFormer'
-            else cross_entropy_with_logits
-        )
+        loss_fun = (CrossEntropyLoss() if args.model_type != 'ExcelFormer' else
+                    cross_entropy_with_logits)
         metric_computer = Accuracy(task='multiclass',
                                    num_classes=dataset.num_classes).to(device)
         higher_is_better = True

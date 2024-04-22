@@ -23,7 +23,6 @@ from torch_frame.nn import ExcelFormer
 from torch_frame.nn.utils.loss import cross_entropy_with_logits
 from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='california_housing')
 parser.add_argument('--mixup', type=str, default='feature',
