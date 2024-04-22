@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import torch
@@ -62,7 +61,7 @@ def feature_mixup(
     else:
         assert x.ndim == 3, 'FEAT-MIX or HIDDEN-MIX requires encoded features'
         if mixup_type == 'feature':
-            assert mi_scores is not None, 'FEAT-MIX requires mutual information scores'
+            assert mi_scores is not None
             mi_scores = mi_scores.to(x.device)
             # Hard masks (feature dimension)
             feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])),
@@ -192,19 +191,17 @@ class ExcelFormer(Module):
         self.mixup = mixup
         self.beta = beta
 
-        # warnings.warn(
-        #     "Excelformer only takes in numerical features, please check "
-        #     "the categorical ones have been properly converted by "
-        #     "CatBoostEncoder and input TensorFrame object has numerical "
-        #     "features. (ignore this warning if properly processed)")
-
     def reset_parameters(self) -> None:
         self.excelformer_encoder.reset_parameters()
         for excelformer_conv in self.excelformer_convs:
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(self, tf: TensorFrame, mixup_encoded: bool = False) -> Tensor:
+    def forward(
+        self,
+        tf: TensorFrame,
+        mixup_encoded: bool = False
+    ) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings.
 
         Args:
@@ -240,8 +237,8 @@ class ExcelFormer(Module):
 
     def forward_mixup(self, tf: TensorFrame) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings. If
-        `self.mixup` is not `'none'`, it produces the output embeddings together with
-        the mixed-up targets.
+        `self.mixup` is not `'none'`, it produces the output embeddings
+        together with the mixed-up targets.
 
         Args:
             tf (:class:`torch_frame.TensorFrame`):
@@ -257,9 +254,9 @@ class ExcelFormer(Module):
             raise ValueError(
                 "Excelformer only takes in numerical features, but the input "
                 "TensorFrame object does not have numerical features.")
+        assert tf.y is not None
         # Ordinary mixup on non-encoded numerical features
         if self.mixup == 'ordinary':
-            assert tf.y is not None
             numerical_feat = tf.feat_dict[stype.numerical]
             assert isinstance(numerical_feat, Tensor)
             # Mixup numerical features brefore embedding (naive)
