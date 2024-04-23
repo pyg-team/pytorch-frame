@@ -26,7 +26,7 @@ def feature_mixup(
     y: Tensor,
     num_classes: int,
     beta: float | Tensor = 0.5,
-    mixup_type: str = 'ordinary',
+    mixup_type: str = 'none',
     mi_scores: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
@@ -39,7 +39,8 @@ def feature_mixup(
         y (Tensor): The target.
         num_classes (int): Number of classes.
         beta (float): The concentration parameter of the Beta distribution.
-        mixup_type (str): The mixup methods.
+        mixup_type (str): The mixup methods. `none` means no mixup,
+            `feature` is `FEAT-MIX`, `hidden` is ``HIDDEN-MIX.
         mi_scores (Tensor): Mutual information scores for FEAT-MIX.
 
     Returns:
@@ -48,35 +49,34 @@ def feature_mixup(
             :obj:`[batch_size, num_classes]`
     """
     assert num_classes > 0
-    assert mixup_type in ['ordinary', 'feature', 'hidden']
+    assert mixup_type in ['none', 'feature', 'hidden']
+    
     beta = torch.tensor(beta, dtype=torch.float32, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
     shuffle_rates = beta_distribution.sample(torch.Size((len(x), 1)))
     shuffled_idx = torch.randperm(len(x), device=x.device)
-    if mixup_type == 'ordinary':
-        # Soft masks
-        feat_masks = shuffle_rates
-        x_mixedup = feat_masks * x + (1 - feat_masks) * x[shuffled_idx]
-        lmbd = feat_masks
+    assert x.ndim == 3, 'FEAT-MIX or HIDDEN-MIX requires encoded features'
+    if mixup_type == 'feature':
+        assert mi_scores is not None
+        mi_scores = mi_scores.to(x.device)
+        # Hard masks (feature dimension)
+        feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])),
+                                device=x.device) < shuffle_rates
+        l1_norm_mi = mi_scores / mi_scores.sum()
+        lmbd = torch.sum(
+            l1_norm_mi.unsqueeze(0) * feat_masks, dim=1, keepdim=True)
+        feat_masks = feat_masks.unsqueeze(2)
+    elif mixup_type == 'hidden':
+        # Hard masks (hidden dimension)
+        feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[2])),
+                                device=x.device) < shuffle_rates
+        feat_masks = feat_masks.unsqueeze(1)
+        lmbd = shuffle_rates
     else:
-        assert x.ndim == 3, 'FEAT-MIX or HIDDEN-MIX requires encoded features'
-        if mixup_type == 'feature':
-            assert mi_scores is not None
-            mi_scores = mi_scores.to(x.device)
-            # Hard masks (feature dimension)
-            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])),
-                                    device=x.device) > shuffle_rates
-            l1_norm_mi = mi_scores / mi_scores.sum()
-            lmbd = torch.sum(
-                l1_norm_mi.unsqueeze(0) * feat_masks, dim=1, keepdim=True)
-            feat_masks = feat_masks.unsqueeze(2)
-        else:
-            # Hard masks (hidden dimension)
-            feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[2])),
-                                    device=x.device) < shuffle_rates
-            feat_masks = feat_masks.unsqueeze(1)
-            lmbd = shuffle_rates
-        x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
+        # No mixup
+        feat_masks = torch.ones_like(x, dtype=torch.bool)
+        lmbd = torch.ones_like(shuffle_rates)
+    x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
 
     y_shuffled = y[shuffled_idx]
     if num_classes == 1:
@@ -89,7 +89,6 @@ def feature_mixup(
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
         y_mixedup = (lmbd * one_hot_y + (1 - lmbd) * one_hot_y_shuffled)
     return x_mixedup, y_mixedup
-
 
 class ExcelFormer(Module):
     r"""The ExcelFormer model introduced in the
@@ -133,10 +132,11 @@ class ExcelFormer(Module):
         residual_dropout (float, optional): residual dropout.
             (default: :obj:`0.0`)
         mixup (str, optional): mixup type.
-            (default: :obj:`'none'`, i.e., no mixup)
+            :obj:`none`, :obj:`feature`, or :obj:`hidden`.
+            (default: :obj:`none`)
         beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when `mixup` is
-                not `'none'` or during training. (default: :obj:`0.5`)
+                not `none`. (default: :obj:`0.5`)
     """
     def __init__(
         self,
@@ -160,7 +160,7 @@ class ExcelFormer(Module):
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
 
-        assert mixup in ['none', 'ordinary', 'feature', 'hidden']
+        assert mixup in ['none', 'feature', 'hidden']
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -199,7 +199,9 @@ class ExcelFormer(Module):
 
     def forward(self, tf: TensorFrame,
                 mixup_encoded: bool = False) -> Tensor | tuple[Tensor, Tensor]:
-        r"""Transform :class:`TensorFrame` object into output embeddings.
+        r"""Transform :class:`TensorFrame` object into output embeddings.  If
+        `mixup_encoded` is `True`, it produces the output embeddings
+        together with the mixed-up targets in `self.mixup` manner.
 
         Args:
             tf (:class:`torch_frame.TensorFrame`):
@@ -209,8 +211,10 @@ class ExcelFormer(Module):
                 FEAT-MIX and HIDDEN-MIX.
 
         Returns:
-            torch.Tensor: The output embeddings of size
-                [batch_size, out_channels].
+            Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
+                embeddings of size :obj:`[batch_size, out_channels]`.
+                If :obj:`mixup_encoded` is :obj:`True`, return the mixed-up
+                targets of size :obj:`[batch_size, num_classes]`as well.
         """
         x, _ = self.excelformer_encoder(tf)
         # FEAT-MIX or HIDDEN-MIX is compatible with `torch.compile`
@@ -231,58 +235,3 @@ class ExcelFormer(Module):
         if mixup_encoded:
             return out, y_mixedup
         return out
-
-    def forward_mixup(self, tf: TensorFrame) -> Tensor | tuple[Tensor, Tensor]:
-        r"""Transform :class:`TensorFrame` object into output embeddings. If
-        `self.mixup` is not `'none'`, it produces the output embeddings
-        together with the mixed-up targets.
-
-        Args:
-            tf (:class:`torch_frame.TensorFrame`):
-                Input :class:`TensorFrame` object.
-
-        Returns:
-            torch.Tensor: The output embeddings of size
-                [batch_size, out_channels].
-        """
-        # Includes non-matrix operations required in ordinary mixup
-        # that are incompatible with `torch.compile`
-        if stype.numerical not in tf.feat_dict:
-            raise ValueError(
-                "Excelformer only takes in numerical features, but the input "
-                "TensorFrame object does not have numerical features.")
-        assert tf.y is not None
-        # Ordinary mixup on non-encoded numerical features
-        if self.mixup == 'ordinary':
-            numerical_feat = tf.feat_dict[stype.numerical]
-            assert isinstance(numerical_feat, Tensor)
-            # Mixup numerical features brefore embedding (naive)
-            x_mixedup, y_mixedup = feature_mixup(
-                numerical_feat,
-                tf.y,
-                num_classes=self.out_channels,
-                beta=self.beta,
-                mixup_type=self.mixup,
-            )
-            # Create a new `feat_dict`, where stype.numerical is swapped with
-            # mixed up feature.
-            feat_dict: dict[stype, TensorData] = {}
-            for stype_name, x in tf.feat_dict.items():
-                if stype_name == stype.numerical:
-                    feat_dict[stype_name] = x_mixedup
-                else:
-                    feat_dict[stype_name] = x
-            tf_mixedup = TensorFrame(feat_dict, tf.col_names_dict, tf.y)
-
-            # Call Excelformer forward function
-            out_mixedup = self(tf_mixedup)
-            return out_mixedup, y_mixedup
-        # FEAT-MIX or HIDDEN-MIX
-        elif self.mixup in ['feature', 'hidden']:
-            return self(tf, True)
-        # No mixup (self.mixup == `'none'`)
-        out = self(tf)
-        if self.out_channels > 1:
-            one_hot_y = F.one_hot(tf.y, num_classes=self.out_channels)
-            return out, one_hot_y
-        return out, tf.y

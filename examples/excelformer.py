@@ -20,13 +20,12 @@ from tqdm import tqdm
 from torch_frame.data.loader import DataLoader
 from torch_frame.datasets.yandex import Yandex
 from torch_frame.nn import ExcelFormer
-from torch_frame.nn.utils.loss import cross_entropy_with_logits
 from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='california_housing')
-parser.add_argument('--mixup', type=str, default='feature',
-                    choices=['none', 'ordinary', 'feature', 'hidden'])
+parser.add_argument('--dataset', type=str, default='higgs_small')
+parser.add_argument('--mixup', type=str, default='hidden',
+                    choices=['none', 'feature', 'hidden'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--num_heads', type=int, default=4)
@@ -103,10 +102,10 @@ def train(epoch: int) -> float:
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
         # Train with FEAT-MIX or HIDDEN-MIX
-        pred_mixedup, y_mixedup = model.forward_mixup(tf)
+        pred_mixedup, y_mixedup = model(tf, mixup_encoded=True)
         if is_classification:
             # Softly mixed one-hot labels
-            loss = cross_entropy_with_logits(pred_mixedup, y_mixedup)
+            loss = F.cross_entropy(pred_mixedup, y_mixedup)
         else:
             loss = F.mse_loss(pred_mixedup.view(-1), y_mixedup.view(-1))
         optimizer.zero_grad()

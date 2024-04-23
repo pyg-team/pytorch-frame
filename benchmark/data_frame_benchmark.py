@@ -27,7 +27,6 @@ from torch_frame.nn.models import (
     TabTransformer,
     Trompt,
 )
-from torch_frame.nn.utils.loss import cross_entropy_with_logits
 from torch_frame.typing import TaskType
 
 TRAIN_CONFIG_KEYS = ["batch_size", "gamma_rate", "base_lr"]
@@ -89,8 +88,7 @@ else:
         higher_is_better = True
     elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
         out_channels = dataset.num_classes
-        loss_fun = (CrossEntropyLoss() if args.model_type != 'ExcelFormer' else
-                    cross_entropy_with_logits)
+        loss_fun = CrossEntropyLoss()
         metric_computer = Accuracy(task='multiclass',
                                    num_classes=dataset.num_classes).to(device)
         higher_is_better = True
@@ -231,7 +229,7 @@ else:
             'diam_dropout': [0, 0.2],
             'residual_dropout': [0, 0.2],
             'aium_dropout': [0, 0.2],
-            'mixup': ['feature', 'hidden'],
+            'mixup': ['none', 'feature', 'hidden'],
             'beta': [0.5],
             'num_cols': [train_tensor_frame.num_cols],
         }
@@ -262,7 +260,7 @@ def train(
         y = tf.y
         if isinstance(model, ExcelFormer):
             # Train with FEAT-MIX or HIDDEN-MIX
-            pred, y = model.forward_mixup(tf)
+            pred, y = model(tf, mixup_encoded=True)
         elif isinstance(model, Trompt):
             # Trompt uses the layer-wise loss
             pred = model.forward_stacked(tf)
