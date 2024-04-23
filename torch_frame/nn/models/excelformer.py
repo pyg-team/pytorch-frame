@@ -18,7 +18,7 @@ from torch_frame.nn.encoder.stypewise_encoder import (
     StypeEncoder,
     StypeWiseFeatureEncoder,
 )
-from torch_frame.typing import NAStrategy, TensorData
+from torch_frame.typing import NAStrategy
 
 
 def feature_mixup(
@@ -39,9 +39,13 @@ def feature_mixup(
         y (Tensor): The target.
         num_classes (int): Number of classes.
         beta (float): The concentration parameter of the Beta distribution.
-        mixup_type (str): The mixup methods. `none` means no mixup,
-            `feature` is `FEAT-MIX`, `hidden` is ``HIDDEN-MIX.
-        mi_scores (Tensor): Mutual information scores for FEAT-MIX.
+            (default: :obj:`0.5`)
+        mixup_type (str): The mixup methods. `none` option means no mixup,
+            options `feature` and `hidden` are `FEAT-MIX` (mixup at feature
+            dimensionality) and `HIDDEN-MIX` (mixup at hidden dimensionality)
+            proposed in ExcelFormer paper. (default: :obj:`none`)
+        mi_scores (Tensor): Mutual information scores only used in the
+            mixup weight calculation for `FEAT-MIX`. (default: :obj:`None`)
 
     Returns:
         x_mixedup (Tensor): The mixedup numerical feature.
@@ -200,7 +204,7 @@ class ExcelFormer(Module):
 
     def forward(self, tf: TensorFrame,
                 mixup_encoded: bool = False) -> Tensor | tuple[Tensor, Tensor]:
-        r"""Transform :class:`TensorFrame` object into output embeddings.  If
+        r"""Transform :class:`TensorFrame` object into output embeddings. If
         `mixup_encoded` is `True`, it produces the output embeddings
         together with the mixed-up targets in `self.mixup` manner.
 
