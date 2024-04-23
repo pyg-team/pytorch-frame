@@ -213,13 +213,12 @@ class ExcelFormer(Module):
                 Input :class:`TensorFrame` object.
             mixup_encoded (bool):
                 Whether to mixup on encoded numerical features, i.e.,
-                FEAT-MIX and HIDDEN-MIX.
+                `FEAT-MIX` and `HIDDEN-MIX`.
 
         Returns:
-            Union[torch.Tensor, (torch.Tensor, torch.Tensor)]: The output
-                embeddings of size :obj:`[batch_size, out_channels]`.
-                If :obj:`mixup_encoded` is :obj:`True`, return the mixed-up
-                targets of size :obj:`[batch_size, num_classes]`as well.
+            torch.Tensor | tuple[Tensor, Tensor]: The output embeddings of size
+            [batch_size, out_channels]. If `mixup_encoded` is `True`, return
+            the mixed-up targets of size [batch_size, num_classes] as well.
         """
         x, _ = self.excelformer_encoder(tf)
         # FEAT-MIX or HIDDEN-MIX is compatible with `torch.compile`
