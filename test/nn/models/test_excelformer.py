@@ -49,7 +49,7 @@ def test_excelformer(task_type, batch_size, mixup):
     # Test the mixup forward pass
     feat_num = copy.copy(tensor_frame.feat_dict[stype.numerical])
     # Set lazy mutual information scores for `feature` mixup
-    tensor_frame.mi_scores = torch.rand(torch.Size((feat_num.shape[1],)))
+    tensor_frame.mi_scores = torch.rand(torch.Size((feat_num.shape[1], )))
     out_mixedup, y_mixedup = model(tensor_frame, mixup_encoded=True)
     assert out_mixedup.shape == (batch_size, out_channels)
     # Make sure the numerical feature is not modified.

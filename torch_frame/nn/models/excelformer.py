@@ -50,7 +50,7 @@ def feature_mixup(
     """
     assert num_classes > 0
     assert mixup_type in ['none', 'feature', 'hidden']
-    
+
     beta = torch.tensor(beta, dtype=torch.float32, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
     shuffle_rates = beta_distribution.sample(torch.Size((len(x), 1)))
@@ -89,6 +89,7 @@ def feature_mixup(
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
         y_mixedup = (lmbd * one_hot_y + (1 - lmbd) * one_hot_y_shuffled)
     return x_mixedup, y_mixedup
+
 
 class ExcelFormer(Module):
     r"""The ExcelFormer model introduced in the
