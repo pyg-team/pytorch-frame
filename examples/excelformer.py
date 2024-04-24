@@ -4,7 +4,8 @@ based on Table 1 of the paper https://arxiv.org/abs/2301.02819.
 ExcelFormer uses the same train-validation-test split as the Yandex paper.
 The reproduced results are based on Z-score Normalization, and the
 reported ones are based on :class:`QuantileTransformer` preprocessing
-in the Sklearn Python package.
+in the Sklearn Python package. The above preprocessing is applied
+to numerical features.
 
 california_housing: 0.4587 (0.4550) mixup: feature, num_layers: 3,
 gamma: 1.00, epochs: 300
@@ -30,13 +31,13 @@ from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='california_housing')
 parser.add_argument('--mixup', type=str, default=None,
-                    choices=['feature', 'hidden'])
+                    choices=[None, 'feature', 'hidden'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--num_heads', type=int, default=4)
 parser.add_argument('--num_layers', type=int, default=5)
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--gamma', type=float, default=0.95, choices=[0.95, 1.00])
+parser.add_argument('--gamma', type=float, default=0.95)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--compile', action='store_true')
 args = parser.parse_args()
