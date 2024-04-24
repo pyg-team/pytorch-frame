@@ -229,7 +229,7 @@ else:
             'diam_dropout': [0, 0.2],
             'residual_dropout': [0, 0.2],
             'aium_dropout': [0, 0.2],
-            'mixup': ['none', 'feature', 'hidden'],
+            'mixup': [None, 'feature', 'hidden'],
             'beta': [0.5],
             'num_cols': [train_tensor_frame.num_cols],
         }

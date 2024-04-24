@@ -24,8 +24,8 @@ from torch_frame.transforms import CatToNumTransform, MutualInformationSort
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='higgs_small')
-parser.add_argument('--mixup', type=str, default='hidden',
-                    choices=['none', 'feature', 'hidden'])
+parser.add_argument('--mixup', type=str, default=None,
+                    choices=['feature', 'hidden'])
 parser.add_argument('--channels', type=int, default=256)
 parser.add_argument('--batch_size', type=int, default=512)
 parser.add_argument('--num_heads', type=int, default=4)

@@ -15,7 +15,7 @@ from torch_frame.nn import ExcelFormer
     TaskType.MULTICLASS_CLASSIFICATION,
 ])
 @pytest.mark.parametrize('batch_size', [0, 5])
-@pytest.mark.parametrize('mixup', ['none', 'feature', 'hidden'])
+@pytest.mark.parametrize('mixup', [None, 'feature', 'hidden'])
 def test_excelformer(task_type, batch_size, mixup):
     in_channels = 8
     num_heads = 2

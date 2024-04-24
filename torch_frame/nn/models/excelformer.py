@@ -26,7 +26,7 @@ def feature_mixup(
     y: Tensor,
     num_classes: int,
     beta: float | Tensor = 0.5,
-    mixup_type: str = 'none',
+    mixup_type: str | None = None,
     mi_scores: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
@@ -40,12 +40,14 @@ def feature_mixup(
         num_classes (int): Number of classes.
         beta (float): The concentration parameter of the Beta distribution.
             (default: :obj:`0.5`)
-        mixup_type (str): The mixup methods. `none` option means no mixup,
-            options `feature` and `hidden` are `FEAT-MIX` (mixup at feature
-            dimensionality) and `HIDDEN-MIX` (mixup at hidden dimensionality)
-            proposed in ExcelFormer paper. (default: :obj:`none`)
-        mi_scores (Tensor): Mutual information scores only used in the
-            mixup weight calculation for `FEAT-MIX`. (default: :obj:`None`)
+        mixup_type (str, optional): The mixup methods. No mixup if set to
+            :obj:`None`, options `feature` and `hidden` are `FEAT-MIX`
+            (mixup at feature dimension) and `HIDDEN-MIX` (mixup at
+            hidden dimension) proposed in ExcelFormer paper.
+            (default: :obj:`None`)
+        mi_scores (Tensor, optional): Mutual information scores only used in
+            the mixup weight calculation for `FEAT-MIX`.
+            (default: :obj:`None`)
 
     Returns:
         x_mixedup (Tensor): The mixedup numerical feature.
@@ -53,45 +55,52 @@ def feature_mixup(
             :obj:`[batch_size, num_classes]`
     """
     assert num_classes > 0
-    assert mixup_type in ['none', 'feature', 'hidden']
+    assert mixup_type in [None, 'feature', 'hidden']
 
-    beta = torch.tensor(beta, dtype=torch.float32, device=x.device)
+    beta = torch.tensor(beta, dtype=x.dtype, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
     shuffle_rates = beta_distribution.sample(torch.Size((len(x), 1)))
     shuffled_idx = torch.randperm(len(x), device=x.device)
-    assert x.ndim == 3, 'FEAT-MIX or HIDDEN-MIX requires encoded features'
+    assert x.ndim == 3, """
+    FEAT-MIX or HIDDEN-MIX is for encoded numerical features
+    of size [batch_size, num_cols, in_channels]."""
+    b, f, d = x.shape
     if mixup_type == 'feature':
         assert mi_scores is not None
         mi_scores = mi_scores.to(x.device)
-        # Hard masks (feature dimension)
-        feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[1])),
+        # Hard mask (feature dimension)
+        mixup_mask = torch.rand(torch.Size((b, f)),
                                 device=x.device) < shuffle_rates
-        l1_norm_mi = mi_scores / mi_scores.sum()
-        lmbd = torch.sum(
-            l1_norm_mi.unsqueeze(0) * feat_masks, dim=1, keepdim=True)
-        feat_masks = feat_masks.unsqueeze(2)
+        # L1 normalized mutual information scores
+        norm_mi_scores = mi_scores / mi_scores.sum()
+        # Mixup weights
+        lam = torch.sum(
+            norm_mi_scores.unsqueeze(0) * mixup_mask, dim=1, keepdim=True)
+        mixup_mask = mixup_mask.unsqueeze(2)
     elif mixup_type == 'hidden':
-        # Hard masks (hidden dimension)
-        feat_masks = torch.rand(torch.Size((x.shape[0], x.shape[2])),
+        # Hard mask (hidden dimension)
+        mixup_mask = torch.rand(torch.Size((b, d)),
                                 device=x.device) < shuffle_rates
-        feat_masks = feat_masks.unsqueeze(1)
-        lmbd = shuffle_rates
+        mixup_mask = mixup_mask.unsqueeze(1)
+        # Mixup weights
+        lam = shuffle_rates
     else:
         # No mixup
-        feat_masks = torch.ones_like(x, dtype=torch.bool)
-        lmbd = torch.ones_like(shuffle_rates)
-    x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
+        mixup_mask = torch.ones_like(x, dtype=torch.bool)
+        # Fake mixup weights
+        lam = torch.ones_like(shuffle_rates)
+    x_mixedup = mixup_mask * x + ~mixup_mask * x[shuffled_idx]
 
     y_shuffled = y[shuffled_idx]
     if num_classes == 1:
         # Regression task or binary classification
-        lmbd = lmbd.squeeze(1)
-        y_mixedup = lmbd * y + (1 - lmbd) * y_shuffled
+        lam = lam.squeeze(1)
+        y_mixedup = lam * y + (1 - lam) * y_shuffled
     else:
         # Classification task
         one_hot_y = F.one_hot(y, num_classes=num_classes)
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
-        y_mixedup = (lmbd * one_hot_y + (1 - lmbd) * one_hot_y_shuffled)
+        y_mixedup = (lam * one_hot_y + (1 - lam) * one_hot_y_shuffled)
     return x_mixedup, y_mixedup
 
 
@@ -101,9 +110,10 @@ class ExcelFormer(Module):
     <https://arxiv.org/abs/2301.02819>`_ paper.
 
     ExcelFormer first converts the categorical features with a target
-    statistics encoder into numerical features. Then it sorts the
-    numerical features with mutual information sort. For categorical
-    features, they are converted to numerical ones with CatBoostEncoder.
+    statistics encoder (i.e., :class:`CatBoostEncoder` in the paper)
+    into numerical features. Then it sorts the numerical features
+    with mutual information sort. So the model itself limits to
+    numerical features.
 
     .. note::
 
@@ -137,11 +147,11 @@ class ExcelFormer(Module):
         residual_dropout (float, optional): residual dropout.
             (default: :obj:`0.0`)
         mixup (str, optional): mixup type.
-            :obj:`none`, :obj:`feature`, or :obj:`hidden`.
-            (default: :obj:`none`)
+            :obj:`None`, :obj:`feature`, or :obj:`hidden`.
+            (default: :obj:`None`)
         beta (float, optional): Shape parameter for beta distribution to
                 calculate shuffle rate in mixup. Only useful when `mixup` is
-                not `none`. (default: :obj:`0.5`)
+                not :obj:`None`. (default: :obj:`0.5`)
     """
     def __init__(
         self,
@@ -157,7 +167,7 @@ class ExcelFormer(Module):
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
-        mixup: str = 'none',
+        mixup: str | None = None,
         beta: float = 0.5,
     ) -> None:
         super().__init__()
@@ -165,7 +175,7 @@ class ExcelFormer(Module):
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
 
-        assert mixup in ['none', 'feature', 'hidden']
+        assert mixup in [None, 'feature', 'hidden']
 
         self.in_channels = in_channels
         self.out_channels = out_channels
