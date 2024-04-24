@@ -81,8 +81,8 @@ class FakeDataset(torch_frame.data.Dataset):
         elif task_type == TaskType.MULTICLASS_CLASSIFICATION:
             labels = np.random.randint(0, 3, size=(num_rows, ))
             if num_rows < 3:
-                raise ValueError("Number of rows needs to be at"
-                                 " least 3 for multiclass classification")
+                raise ValueError("Number of rows needs to be at "
+                                 "least 3 for multiclass classification")
             # make sure every label exists
             labels[0] = 0
             labels[1] = 1
@@ -90,7 +90,13 @@ class FakeDataset(torch_frame.data.Dataset):
             df_dict = {'target': labels}
             col_to_stype = {'target': stype.categorical}
         elif task_type == TaskType.BINARY_CLASSIFICATION:
-            df_dict = {'target': np.random.randint(0, 2, size=(num_rows, ))}
+            labels = np.random.randint(0, 2, size=(num_rows, ))
+            if num_rows < 2:
+                raise ValueError("Number of rows needs to be at "
+                                 "least 2 for binary classification")
+            labels[0] = 0
+            labels[1] = 1
+            df_dict = {'target': labels}
             col_to_stype = {'target': stype.categorical}
         else:
             raise ValueError(
