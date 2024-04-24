@@ -19,7 +19,7 @@ import os.path as osp
 import torch
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
-from torchmetrics import Accuracy, MeanSquaredError, AUROC
+from torchmetrics import AUROC, Accuracy, MeanSquaredError
 from tqdm import tqdm
 
 from torch_frame.data.loader import DataLoader
@@ -138,7 +138,7 @@ def test(loader: DataLoader) -> float:
     metric_computer.reset()
     for tf in loader:
         tf = tf.to(device)
-        pred = model(tf)        
+        pred = model(tf)
         if is_binary_class:
             metric_computer.update(pred[:, 1], tf.y)
         elif is_classification:
