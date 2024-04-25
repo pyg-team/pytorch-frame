@@ -1,7 +1,6 @@
 from typing import Any, Tuple
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear, Module, ReLU, Sequential
 
@@ -44,50 +43,7 @@ class MLPBlock(Module):
         return self.model(x)
 
 
-class BalanceScoreEstimator(Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.model = Linear(in_channels, out_channels)
-
-    def reset_parameters(self):
-        self.model.reset_parameters()
-
-    def forward(self, x: Tensor):
-        return F.sigmoid(self.model(x))
-
-
-class BCAUSS(Module):
-    r"""The BCAUSS model introduced in the
-    `"Learning end-to-end patient representations through self-supervised
-    covariate balancing for causal treatment effect estimation"
-    <https://www.sciencedirect.com/science/article/pii/S1532046423000606>`_
-    paper.
-
-
-    .. note::
-
-        For an example of using ExcelFormer, see `examples/bcauss.py
-        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
-        bcauss.py>`_.
-
-    Args:
-        in_channels (int): Input channel dimensionality
-        hidden_channels (int): Hidden channel dimensionality
-        decoder_hidden_channels (int): Hidden channel dimensionality
-            in decoder.
-        out_channels (int): Output channels dimensionality
-        col_stats(dict[str,dict[:class:`torch_frame.data.stats.StatType`,Any]]):
-             A dictionary that maps column name into stats.
-             Available as :obj:`dataset.col_stats`.
-        col_names_dict (dict[:obj:`torch_frame.stype`, list[str]]): A
-            dictionary that maps stype to a list of column names. The column
-            names are sorted based on the ordering that appear in
-            :obj:`tensor_frame.feat_dict`. Available as
-            :obj:`tensor_frame.col_names_dict`.
-        epsilon (float): Constant weighting factor that controls the relative
-            importance of balance score w.r.t. squared factual loss
-            (default: :obj:`0.5`).
-    """
+class CFR(Module):
     def __init__(
         self,
         channels: int,
@@ -114,8 +70,6 @@ class BCAUSS(Module):
             self.register_buffer("std", std)
         self.representation_learner = MLPBlock(channels, hidden_channels,
                                                hidden_channels)
-        self.balance_score_learner = BalanceScoreEstimator(
-            hidden_channels, out_channels)
         # decoder for treatment group
         self.treatment_decoder = MLPBlock(hidden_channels,
                                           decoder_hidden_channels,
@@ -128,12 +82,11 @@ class BCAUSS(Module):
 
     def reset_parameters(self):
         self.representation_learner.reset_parameters()
-        self.balance_score_learner.reset_parameters()
         self.treatment_decoder.reset_parameters()
         self.control_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame,
-                treatment_index: int) -> Tuple[Tensor, Tensor, Tensor]:
+                treatment_index: int) -> Tuple[Tensor, Tensor]:
         r"""T stands for treatment and y stands for output."""
         feat_cat = tf.feat_dict[categorical]
         feat_num = tf.feat_dict[numerical]
@@ -156,13 +109,7 @@ class BCAUSS(Module):
         pred = torch.zeros((len(x), 1), dtype=x.dtype, device=x.device)
         pred[~treated_mask, :] = self.control_decoder(control)
         pred[treated_mask, :] = self.treatment_decoder(treated)
-        penalty = self.balance_score_learner(out)
-        treated_weight = treated_mask.unsqueeze(-1) / (penalty + 0.01)
-        control_weight = ~treated_mask.unsqueeze(-1) / (penalty + 0.01)
-        balance_score = torch.mean(
-            torch.square(
-                torch.sum(treated_weight * x, dim=0) /
-                torch.sum(treated_weight + 0.01) -
-                torch.sum(control_weight * x, dim=0) /
-                (torch.sum(control_weight + 0.01))))
-        return pred, self.epsilon * balance_score, treated_mask
+        treated_mean = torch.mean(treated, dim=0)
+        control_mean = torch.mean(control, dim=0)
+        ipm = 2 * torch.norm(treated_mean - control_mean, p=2)
+        return pred, self.epsilon * ipm

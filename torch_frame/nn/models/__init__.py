@@ -7,8 +7,9 @@ from .resnet import ResNet
 from .tab_transformer import TabTransformer
 from .mlp import MLP
 from .bcauss import BCAUSS
+from .cfr import CFR
 
 __all__ = classes = [
     'Trompt', 'FTTransformer', 'ExcelFormer', 'TabNet', 'ResNet',
-    'TabTransformer', 'MLP', 'BCAUSS'
+    'TabTransformer', 'MLP', 'BCAUSS', 'CFR'
 ]

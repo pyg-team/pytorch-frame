@@ -6,28 +6,38 @@ from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class Jobs(torch_frame.data.Dataset):
-    r"""The `Jobs
-    <https://www.fredjo.com/files/jobs_DW_bin.new.10.train.npz>`_
-    dataset from Lalonde.
-    treatment indicator (1 if treated, 0 if not treated), age,
-    education, Black (1 if black, 0 otherwise), Hispanic
-    (1 if Hispanic, 0 otherwise), married (1 if married, 0 otherwise),
-    nodegree (1 if no degree, 0 otherwise), RE74 (earnings in 1974),
-    RE75 (earnings in 1975), and RE78 (earnings in 1978).
+    r"""The Jobs dataset from "Evaluating the Econometric
+    Evaluations of Training Programs with Experimental Data"
+    by Robert Lalonde. There are two versions of the data. One
+    version is the `Dehejia subsampe.
+    <https://users.nber.org/~rdehejia/data>`_. The version
+    is a subsample of Lalonde's original dataset because it includes
+    one more feature--RE74 (earnings in 1974, two years prior the
+    treatment). The use of more than one year of pretreatment
+    earnings is key in accurately estimating the treatment effect,
+    because many people who volunteer for training programs experience
+    a drop in their earnings just prior to entering the training program.
 
-    Dehejia features:
+    Another version is a version containing additional columns obtained
+    from feature engineering, from
+    `Dr.Johansson's website <https://www.fredjo.com>_`.
+
+    The target in the dataset is index to the target tensor. The target
+    tensor is a :obj:`Tensor` of size (num_rows, 2), where the first
+    column represents the target and the second column represents the
+    treatment.
     """
-    lalonde_treated = 'https://users.nber.org/~rdehejia/data/nsw_treated.txt'
-    lalonde_control = 'https://users.nber.org/~rdehejia/data/nsw_control.txt'
-    psid = 'https://users.nber.org/~rdehejia/data/psid_controls.txt'
-    train = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.train.npz'
-    test = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.test.npz'
+    dehejia_treated_url = 'https://users.nber.org/~rdehejia/data/nswre74_treated.txt'  # noqa
+    dehejia_control_url = 'https://users.nber.org/~rdehejia/data/nswre74_control.txt'  # noqa
+    psid_url = 'https://users.nber.org/~rdehejia/data/psid_controls.txt'
+    train_url = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.train.npz'
+    test_url = 'https://www.fredjo.com/files/jobs_DW_bin.new.10.test.npz'
 
-    def __init__(self, root: str, dehejia: bool = False):
-        if not dehejia:
+    def __init__(self, root: str, feature_engineering: bool = False):
+        if feature_engineering:
             split = 0
-            train = self.download_url(Jobs.train, root)
-            test = self.download_url(Jobs.test, root)
+            train = self.download_url(self.train_url, root)
+            test = self.download_url(self.test_url, root)
             train_np = np.load(train)
             test_np = np.load(test)
             train_data = np.concatenate([
@@ -76,13 +86,13 @@ class Jobs(torch_frame.data.Dataset):
                              split_col='split')
         else:
             # National Supported Work Demonstration
-            nsw_treated = self.download_url(Jobs.lalonde_treated, root)
-            nsw_control = self.download_url(Jobs.lalonde_control, root)
+            nsw_treated = self.download_url(self.dehejia_treated_url, root)
+            nsw_control = self.download_url(self.dehejia_control_url, root)
             # Population Survey of Income Dynamics
-            psid = self.download_url(Jobs.psid, root)
+            psid = self.download_url(self.psid_url, root)
             names = [
                 'treated', 'age', 'education', 'Black', 'Hispanic', 'married',
-                'nodegree', 'RE75', 'RE78'
+                'nodegree', 'RE74', 'RE75', 'RE78'
             ]
 
             nsw_treated_df = pd.read_csv(
@@ -99,12 +109,9 @@ class Jobs(torch_frame.data.Dataset):
             assert (nsw_control_df['treated'] == 0).all()
             nsw_control_df['source'] = 1
 
-            names.insert(7, 'RE74')
-
             psid_df = pd.read_csv(psid, sep='\s+', names=names)  # noqa
             assert (psid_df['treated'] == 0).all()
             psid_df['source'] = 0
-            psid_df = psid_df.drop('RE74', axis=1)
 
             df = pd.concat([nsw_treated_df, nsw_control_df, psid_df], axis=0)
             df['target'] = df['RE78'] != 0
@@ -112,19 +119,24 @@ class Jobs(torch_frame.data.Dataset):
             col_to_stype = {
                 'treated': torch_frame.categorical,
                 'age': torch_frame.numerical,
-                'education': torch_frame.categorical,
+                'education': torch_frame.numerical,
                 'Black': torch_frame.categorical,
                 'Hispanic': torch_frame.categorical,
                 'married': torch_frame.categorical,
                 'nodegree': torch_frame.categorical,
+                'RE74': torch_frame.numerical,
                 'RE75': torch_frame.numerical,
                 'target': torch_frame.categorical,
             }
-
             super().__init__(df, col_to_stype, target_col='target')
         self.df = df
 
     def get_att(self):
+        r"""Obtain the ATT(true Average Treatment effect on Treated)).
+
+        Returns:
+            float: The ATT score from the original randomized experiments.
+        """
         df = self.df[self.df['source'] == 1]
         treated = df[df['treated'] == 1]
         control = df[df['treated'] == 0]

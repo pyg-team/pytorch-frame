@@ -1,7 +1,3 @@
-"""Reported (reproduced) E_ATT of BCAUSS based on Table 1 of the paper!
-BAUSS + in_sample 0.02 (0.0284).
-BAUSS + out_of_sample 0.05 +/- 0.02 (0.0290).
-"""
 import argparse
 import copy
 import os.path as osp
@@ -12,20 +8,23 @@ from tqdm import tqdm
 
 from torch_frame import TensorFrame, stype
 from torch_frame.data import DataLoader, Dataset
-from torch_frame.datasets import Jobs
-from torch_frame.nn.models import BCAUSS
+from torch_frame.datasets import IHDP
+from torch_frame.nn.models import CFR
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", type=int, default=1024)
-parser.add_argument("--lr", type=float, default=0.00001)
-parser.add_argument("--epochs", type=int, default=5)
+parser.add_argument("--batch_size", type=int, default=200)
+parser.add_argument("--lr", type=float, default=0.001)
+parser.add_argument("--epochs", type=int, default=300)
 parser.add_argument("--seed", type=int, default=2)
 parser.add_argument("--feature-engineering", action="store_true", default=True)
 parser.add_argument("--out-of-distribution", action="store_true", default=True)
+parser.add_argument("--lambda-reg", type=float, default=0.01,
+                    help="l2 normalization score")
 args = parser.parse_args()
 
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', "jobs")
-dataset = Jobs(root=path, feature_engineering=args.feature_engineering)
+path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', "ihdp")
+dataset = IHDP(root=path, split_num=0)
+print(dataset.get_att())
 ATT = dataset.get_att()
 print(f"ATT is {ATT}")
 
@@ -43,8 +42,7 @@ if args.out_of_distribution:
         train_dataset, _, test_dataset = dataset.split()
         train_dataset, val_dataset = train_dataset[:0.775], dataset[0.775:]
     # Calculating the validation dataset
-    treated_df = val_dataset.df[(val_dataset.df['source'] == 1)
-                                & (val_dataset.df['treated'] == 1)]
+    treated_df = val_dataset.df[(val_dataset.df['treated'] == 1)]
     treated_val_dataset = Dataset(treated_df, dataset.col_to_stype,
                                   target_col='target')
     control_df = copy.deepcopy(treated_df)
@@ -55,8 +53,7 @@ if args.out_of_distribution:
     treated_val_dataset.materialize(path=osp.join(path, "treated_val_data.pt"))
     control_val_dataset.materialize(path=osp.join(path, "control_val_data.pt"))
     # Calculating the evaluation dataset
-    treated_df = test_dataset.df[(test_dataset.df['source'] == 1)
-                                 & (test_dataset.df['treated'] == 1)]
+    treated_df = test_dataset.df[(test_dataset.df['treated'] == 1)]
     treated_test_dataset = Dataset(treated_df, dataset.col_to_stype,
                                    target_col='target')
     control_df = copy.deepcopy(treated_df)
@@ -72,8 +69,7 @@ else:
     train_dataset = dataset
 
     # Calculating the evaluation dataset
-    treated_df = dataset.df[(dataset.df['source'] == 1)
-                            & (dataset.df['treated'] == 1)]
+    treated_df = dataset.df[(dataset.df['treated'] == 1)]
     treated_test_dataset = Dataset(treated_df, dataset.col_to_stype,
                                    target_col='target')
     control_df = copy.deepcopy(treated_df)
@@ -110,7 +106,7 @@ train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
 # val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 # test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
-model = BCAUSS(
+model = CFR(
     channels=train_tensor_frame.num_cols - 1,
     hidden_channels=200,
     decoder_hidden_channels=100,
@@ -132,14 +128,18 @@ def train(epoch: int) -> float:
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
-        out, balance_score, treated_mask = model(tf,
-                                                 treatment_index=treatment_idx)
-        loss = (
-            (torch.sum(treated_mask * torch.square(tf.y - out.squeeze(-1))) +
-             torch.sum(~treated_mask * torch.square(tf.y - out.squeeze(-1)))) /
-            len(treated_mask) + balance_score)
+        out, ipm = model(tf, treatment_index=treatment_idx)
+        treatment_val = tf.feat_dict[stype.categorical][:, treatment_idx]
+        avg_treatment = torch.sum(treatment_val) / len(treatment_val)
+        w_val = treatment_val / (2 * avg_treatment) + (1 - treatment_val) / (
+            2 - 2 * avg_treatment)
+        loss = torch.mean(w_val * (tf.y - out.squeeze(-1))) + ipm
         optimizer.zero_grad()
         loss.backward()
+        for name, param in model.named_parameters():
+            if name.startswith('treatment_decoder') or name.startswith(
+                    'control_decoder'):
+                loss += args.lambda_reg * torch.sum(param**2)
         loss_accum += float(loss) * len(out)
         total_count += len(out)
         optimizer.step()
@@ -151,10 +151,10 @@ def eval(treated: TensorFrame, control: TensorFrame) -> float:
     model.eval()
 
     treated = treated.to(device)
-    treated_effect, _, _ = model(treated, treatment_idx)
+    treated_effect, _ = model(treated, treatment_idx)
 
     control = control.to(device)
-    control_effect, _, _ = model(control, treatment_idx)
+    control_effect, _ = model(control, treatment_idx)
 
     return torch.abs(ATT - torch.mean(treated_effect - control_effect))
 
