@@ -34,7 +34,8 @@ parser.add_argument(
 )
 parser.add_argument("--dataset", type=str, default="wine_reviews")
 parser.add_argument("--api_key", type=str, default=None)
-parser.add_argument('--compile', action='store_true')
+parser.add_argument('--compile', type=str, default='torch',
+                    choices=['torch', 'thunder'])
 args = parser.parse_args()
 
 # Notice that there are 568,454 rows and 2 text columns, it will
@@ -170,8 +171,11 @@ model = FTTransformer(
     col_names_dict=train_dataset.tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
-model = torch.compile(model, dynamic=True) if args.compile else model
-
+if args.compile == "torch":
+    model = torch.compile(model, dynamic=True)
+elif args.compile == "thunder":
+    import thunder
+    model = thunder.jit(model)
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 

@@ -36,7 +36,8 @@ parser.add_argument("--batch_size", type=int, default=256)
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--seed", type=int, default=0)
-parser.add_argument("--compile", action="store_true")
+parser.add_argument('--compile', type=str, default='torch',
+                    choices=['torch', 'thunder'])
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -78,7 +79,11 @@ model = Trompt(
     col_stats=dataset.col_stats,
     col_names_dict=train_tensor_frame.col_names_dict,
 ).to(device)
-model = torch.compile(model, dynamic=True) if args.compile else model
+if args.compile == "torch":
+    model = torch.compile(model, dynamic=True)
+elif args.compile == "thunder":
+    import thunder
+    model = thunder.jit(model)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 

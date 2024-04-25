@@ -37,7 +37,8 @@ parser.add_argument(
         "microsoft/swin-base-patch4-window7-224-in22k",
     ],
 )
-
+parser.add_argument('--compile', type=str, default='torch',
+                    choices=['torch', 'thunder'])
 args = parser.parse_args()
 
 # Image Embedded
@@ -110,6 +111,11 @@ model = FTTransformer(
     col_names_dict=train_tensor_frame.col_names_dict,
     stype_encoder_dict=stype_encoder_dict,
 ).to(device)
+if args.compile == "torch":
+    model = torch.compile(model, dynamic=True)
+elif args.compile == "thunder":
+    import thunder
+    model = thunder.jit(model)
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
 
