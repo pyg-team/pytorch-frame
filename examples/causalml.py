@@ -9,21 +9,25 @@ from tqdm import tqdm
 from torch_frame import TensorFrame, stype
 from torch_frame.data import DataLoader, Dataset
 from torch_frame.datasets import IHDP
-from torch_frame.nn.models import CFR
+from torch_frame.nn.models import BCAUSS, CFR
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size", type=int, default=200)
 parser.add_argument("--lr", type=float, default=0.001)
-parser.add_argument("--epochs", type=int, default=300)
+parser.add_argument("--epochs", type=int, default=3000)
 parser.add_argument("--seed", type=int, default=2)
+parser.add_argument('--model', type=str, default='cfr-mdd',
+                    choices=["bcauss", "cfr-mdd"])
 parser.add_argument("--feature-engineering", action="store_true", default=True)
-parser.add_argument("--out-of-distribution", action="store_true", default=True)
+parser.add_argument("--out-of-distribution", action="store_true",
+                    default=False)
 parser.add_argument("--lambda-reg", type=float, default=0.01,
                     help="l2 normalization score")
+parser.add_argument("--split-num", type=int, default=0)
 args = parser.parse_args()
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', "ihdp")
-dataset = IHDP(root=path, split_num=0)
+dataset = IHDP(root=path, split_num=args.split_num)
 print(dataset.get_att())
 ATT = dataset.get_att()
 print(f"ATT is {ATT}")
@@ -31,93 +35,120 @@ print(f"ATT is {ATT}")
 torch.manual_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset.materialize(path=osp.join(path, "data.pt"))
+dataset.materialize(path=osp.join(path, f"data_{args.split_num}.pt"))
 
 dataset = dataset.shuffle()
-if args.out_of_distribution:
-    if dataset.split_col is None:
-        train_dataset, val_dataset, test_dataset = dataset[:0.62], dataset[
-            0.62:0.80], dataset[0.80:]
-    else:
-        train_dataset, _, test_dataset = dataset.split()
-        train_dataset, val_dataset = train_dataset[:0.775], dataset[0.775:]
-    # Calculating the validation dataset
-    treated_df = val_dataset.df[(val_dataset.df['treated'] == 1)]
-    treated_val_dataset = Dataset(treated_df, dataset.col_to_stype,
-                                  target_col='target')
-    control_df = copy.deepcopy(treated_df)
-    control_df['treated'] = 0
-    control_val_dataset = Dataset(control_df, dataset.col_to_stype,
-                                  target_col='target')
+within_sample_dataset, _, test_dataset = dataset.split()
+# Validation is to compute within distribution metric
+# Test is to compute out of distribution metric
+train_dataset, val_dataset = within_sample_dataset[:
+                                                   0.7], within_sample_dataset[
+                                                       0.7:]
 
-    treated_val_dataset.materialize(path=osp.join(path, "treated_val_data.pt"))
-    control_val_dataset.materialize(path=osp.join(path, "control_val_data.pt"))
-    # Calculating the evaluation dataset
-    treated_df = test_dataset.df[(test_dataset.df['treated'] == 1)]
-    treated_test_dataset = Dataset(treated_df, dataset.col_to_stype,
-                                   target_col='target')
-    control_df = copy.deepcopy(treated_df)
-    control_df['treated'] = 0
-    control_test_dataset = Dataset(control_df, dataset.col_to_stype,
-                                   target_col='target')
+# Counterfactual Set is to predict the outcome of the counterfactual
+counterfactual_train_df = copy.deepcopy(train_dataset.df)
+counterfactual_train_df['treated'] = 1 - counterfactual_train_df['treated']
+counterfactual_train_df['target'] = counterfactual_train_df[
+    'counterfactual_target']
+counterfactual_train_dataset = Dataset(counterfactual_train_df,
+                                       dataset.col_to_stype,
+                                       target_col='target')
 
-    treated_test_dataset.materialize(
-        path=osp.join(path, "treated_test_data.pt"))
-    control_test_dataset.materialize(
-        path=osp.join(path, "control_test_data.pt"))
-else:
-    train_dataset = dataset
+counterfactual_train_dataset.materialize(
+    path=osp.join(path, f"counterfactual_train_data_{args.split_num}.pt"))
 
-    # Calculating the evaluation dataset
-    treated_df = dataset.df[(dataset.df['treated'] == 1)]
-    treated_test_dataset = Dataset(treated_df, dataset.col_to_stype,
-                                   target_col='target')
-    control_df = copy.deepcopy(treated_df)
-    control_df['treated'] = 0
-    control_test_dataset = Dataset(control_df, dataset.col_to_stype,
-                                   target_col='target')
+counterfactual_within_sample_df = copy.deepcopy(within_sample_dataset.df)
+counterfactual_within_sample_df[
+    'treated'] = 1 - counterfactual_within_sample_df['treated']
+counterfactual_within_sample_df['target'] = counterfactual_within_sample_df[
+    'counterfactual_target']
+counterfactual_within_sample_dataset = Dataset(counterfactual_within_sample_df,
+                                               dataset.col_to_stype,
+                                               target_col='target')
 
-    treated_test_dataset.materialize(
-        path=osp.join(path, "treated_eval_data.pt"))
-    control_test_dataset.materialize(
-        path=osp.join(path, "control_eval_data.pt"))
+counterfactual_within_sample_dataset.materialize(path=osp.join(
+    path, f"counterfactual_within_sample_data_{args.split_num}.pt"))
+
+counterfactual_val_df = copy.deepcopy(val_dataset.df)
+counterfactual_val_df['treated'] = 1 - counterfactual_val_df['treated']
+counterfactual_val_df['target'] = counterfactual_val_df[
+    'counterfactual_target']
+counterfactual_val_dataset = Dataset(counterfactual_val_df,
+                                     dataset.col_to_stype, target_col='target')
+
+counterfactual_val_dataset.materialize(
+    path=osp.join(path, f"counterfactual_val_data_{args.split_num}.pt"))
+
+counterfactual_test_df = copy.deepcopy(test_dataset.df)
+counterfactual_test_df['treated'] = 1 - counterfactual_test_df['treated']
+counterfactual_test_df['target'] = counterfactual_test_df[
+    'counterfactual_target']
+counterfactual_test_dataset = Dataset(counterfactual_test_df,
+                                      dataset.col_to_stype,
+                                      target_col='target')
+
+counterfactual_test_dataset.materialize(
+    path=osp.join(path, f"counterfactual_test_data_{args.split_num}.pt"))
 
 train_tensor_frame = train_dataset.tensor_frame
+
 treatment_idx = train_tensor_frame.col_names_dict[stype.categorical].index(
     'treated')
-if args.out_of_distribution:
-    val_tensor_frame = val_dataset.tensor_frame
-    test_tensor_frame = test_dataset.tensor_frame
-    treated_val_tensor_frame = treated_val_dataset.tensor_frame
-    # This is a bad hack. Currently the materialization logic would override
-    # 1's to 0's due to 1's being the popular class
-    treated_val_tensor_frame.feat_dict[stype.categorical][:,
-                                                          treatment_idx] = 1.
-    control_val_tensor_frame = control_val_dataset.tensor_frame
+assert torch.all(
+    torch.tensor(train_dataset.df['treated'].values, dtype=torch.long) ==
+    train_tensor_frame.feat_dict[stype.categorical][:, treatment_idx])
 
-treated_test_tensor_frame = treated_test_dataset.tensor_frame
-# This is a bad hack. Currently the materialization logic would override 1's
-# to 0's due to 1's being the popular class
-treated_test_tensor_frame.feat_dict[stype.categorical][:, treatment_idx] = 1.
-control_test_tensor_frame = control_test_dataset.tensor_frame
+counterfactual_train_tensor_frame = counterfactual_train_dataset.tensor_frame
+counterfactual_train_tensor_frame.feat_dict[
+    stype.categorical][:, treatment_idx] = torch.tensor(
+        counterfactual_train_df['treated'].values)
+val_tensor_frame = val_dataset.tensor_frame
+counterfactual_val_tensor_frame = counterfactual_val_dataset.tensor_frame
+counterfactual_val_tensor_frame.feat_dict[
+    stype.categorical][:, treatment_idx] = torch.tensor(
+        counterfactual_val_df['treated'].values)
+
+within_sample_tensor_frame = within_sample_dataset.tensor_frame
+counterfactual_within_sample_tensor_frame = (
+    counterfactual_within_sample_dataset.tensor_frame)
+counterfactual_within_sample_tensor_frame.feat_dict[
+    stype.categorical][:, treatment_idx] = torch.tensor(
+        counterfactual_within_sample_df['treated'].values)
+
+test_tensor_frame = test_dataset.tensor_frame
+counterfactual_test_tensor_frame = counterfactual_test_dataset.tensor_frame
+counterfactual_test_tensor_frame.feat_dict[
+    stype.categorical][:, treatment_idx] = torch.tensor(
+        counterfactual_test_df['treated'].values)
 
 train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
                           shuffle=True)
 # val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
 # test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
 
-model = CFR(
-    channels=train_tensor_frame.num_cols - 1,
-    hidden_channels=200,
-    decoder_hidden_channels=100,
-    out_channels=1,
-    col_stats=dataset.col_stats if not args.feature_engineering else None,
-    col_names_dict=train_tensor_frame.col_names_dict
-    if not args.feature_engineering else None,
-).to(device)
+if args.model == 'cfr-mmd':
+    model = CFR(
+        channels=train_tensor_frame.num_cols - 1,
+        hidden_channels=200,
+        decoder_hidden_channels=100,
+        out_channels=1,
+        col_stats=dataset.col_stats if not args.feature_engineering else None,
+        col_names_dict=train_tensor_frame.col_names_dict
+        if not args.feature_engineering else None,
+    ).to(device)
+else:
+    model = BCAUSS(
+        channels=train_tensor_frame.num_cols - 1,
+        hidden_channels=200,
+        decoder_hidden_channels=100,
+        out_channels=1,
+        col_stats=dataset.col_stats if not args.feature_engineering else None,
+        col_names_dict=train_tensor_frame.col_names_dict
+        if not args.feature_engineering else None,
+    ).to(device)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
-lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
+lr_scheduler = ExponentialLR(optimizer, gamma=0.8)
 
 is_classification = True
 
@@ -128,18 +159,30 @@ def train(epoch: int) -> float:
 
     for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
-        out, ipm = model(tf, treatment_index=treatment_idx)
-        treatment_val = tf.feat_dict[stype.categorical][:, treatment_idx]
-        avg_treatment = torch.sum(treatment_val) / len(treatment_val)
-        w_val = treatment_val / (2 * avg_treatment) + (1 - treatment_val) / (
-            2 - 2 * avg_treatment)
-        loss = torch.mean(w_val * (tf.y - out.squeeze(-1))) + ipm
+        if args.model == 'cfr-mdd':
+            out, ipm = model(tf, treatment_index=treatment_idx)
+            treatment_val = tf.feat_dict[stype.categorical][:, treatment_idx]
+            avg_treatment = torch.sum(treatment_val) / len(treatment_val)
+            w_val = treatment_val / (2 * avg_treatment) + (
+                1 - treatment_val) / (2 - 2 * avg_treatment)
+            rmse = torch.sqrt(torch.mean(torch.square(tf.y - out.squeeze(-1))))
+            loss = torch.mean(w_val * rmse) + 0.3 * ipm
+        else:
+            out, balance_score = model(tf, treatment_index=treatment_idx)
+            treated_mask = tf.feat_dict[stype.categorical][:,
+                                                           treatment_idx] == 1
+            loss = (
+                (torch.sum(treated_mask * torch.square(tf.y - out.squeeze(-1)))
+                 + torch.sum(
+                     ~treated_mask * torch.square(tf.y - out.squeeze(-1)))) /
+                len(treated_mask) + balance_score)
         optimizer.zero_grad()
         loss.backward()
-        for name, param in model.named_parameters():
-            if name.startswith('treatment_decoder') or name.startswith(
-                    'control_decoder'):
-                loss += args.lambda_reg * torch.sum(param**2)
+        if args.model == 'cfr-mdd':
+            for name, param in model.named_parameters():
+                if name.startswith('treatment_decoder') or name.startswith(
+                        'control_decoder'):
+                    loss += args.lambda_reg * torch.sum(param**2)
         loss_accum += float(loss) * len(out)
         total_count += len(out)
         optimizer.step()
@@ -147,35 +190,59 @@ def train(epoch: int) -> float:
 
 
 @torch.no_grad()
-def eval(treated: TensorFrame, control: TensorFrame) -> float:
+def eval(factual: TensorFrame, counterfactual: TensorFrame) -> float:
     model.eval()
 
-    treated = treated.to(device)
-    treated_effect, _ = model(treated, treatment_idx)
+    factual = factual.to(device)
+    factual_effect, _ = model(factual, treatment_idx)
+    rmse_fact = torch.sqrt(torch.mean(torch.square(factual.y -
+                                                   factual_effect)))
 
-    control = control.to(device)
-    control_effect, _ = model(control, treatment_idx)
+    counterfactual = counterfactual.to(device)
+    counterfactual_effect, _ = model(counterfactual, treatment_idx)
+    rmse_cfact = torch.sqrt(
+        torch.mean(torch.square(counterfactual.y - counterfactual_effect)))
+    eff_pred = counterfactual_effect - factual_effect
+    t = factual.feat_dict[stype.categorical][:, treatment_idx]
+    eff_pred[t > 0] = -eff_pred[t > 0]  # f(x, 1) - f(x, 0)
+    ate_pred = torch.mean(eff_pred.squeeze(-1))
+    bias_ate = torch.abs(ate_pred - ATT)
 
-    return torch.abs(ATT - torch.mean(treated_effect - control_effect))
+    pehe = torch.sqrt(torch.mean(torch.square(eff_pred - ATT)))
+    return rmse_fact, rmse_cfact, bias_ate, pehe
 
 
-best_val_metric = float('inf')
-best_test_metric = float('inf')
+best_val_error = float('inf')
+best_test_error = float('inf')
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
-    error = eval(treated_test_tensor_frame, control_test_tensor_frame)
-    if args.out_of_distribution:
-        val_error = eval(treated_val_tensor_frame, control_val_tensor_frame)
-        if val_error < best_val_metric:
-            best_val_metric = val_error
-            best_test_metric = error
-        print(
-            f'Train Loss: {train_loss:.4f}  Val Error_ATT: {val_error:.4f},\n'
-            f' Error_ATT: {error:.4f}\n')
-    else:
-        print(f'Train Loss: {train_loss:.4f}  Error_ATT: {error:.4f},\n')
+    train_rmse, train_rmse_cfact, train_error, train_pehe = eval(
+        train_tensor_frame, counterfactual_train_tensor_frame)
+    val_rmse, val_rmse_cfact, val_error, val_pehe = eval(
+        val_tensor_frame, counterfactual_val_tensor_frame)
+    test_rmse, test_rmse_cfact, test_error, test_pehe = eval(
+        test_tensor_frame, counterfactual_test_tensor_frame)
+    within_rmse, within_rmse_cfact, within_error, within_pehe = eval(
+        within_sample_tensor_frame, counterfactual_within_sample_tensor_frame)
 
-if args.out_of_distribution:
-    print(f'Best Val Error: {best_val_metric:.4f}, '
-          f'Best Test Error: {best_test_metric:.4f}')
+    if val_error < best_val_error:
+        best_val_error = within_error
+        best_test_error = test_error
+        best_val_pehe = within_pehe
+        best_test_pehe = test_pehe
+    print(
+        f'Train Loss: {train_loss:.4f}  Train Factual RMSE: {train_rmse:.4f} '
+        f'Train Counterfactual RMSE: {train_rmse_cfact:.4f}, \n'
+        f'Val Factual RMSE: {val_rmse:.4f} '
+        f'Val Counterfactual RMSE: {val_rmse_cfact:.4f}, '
+        f'Within Sample PEHE: {within_pehe:.4f}, '
+        f'Within Sample Error: {within_error:.4f}, \n'
+        f'Test Factual RMSE: {val_rmse:.4f} '
+        f'Test Counterfactual RMSE: {val_rmse_cfact:.4f}, '
+        f'Test PEHE: {test_pehe:.4f}, Test Error: {test_error:.4f}, \n')
+
+print(f'Best Within Sample Error: {best_val_error:.4f}, '
+      f'Best Within Sample PEHE: {best_val_pehe}, \n'
+      f'Best Test Error: {best_test_error:.4f}, '
+      f'Best Test PEHE: {best_test_pehe:.4f}')

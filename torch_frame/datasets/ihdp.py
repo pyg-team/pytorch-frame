@@ -9,6 +9,7 @@ from torch_frame.utils.split import SPLIT_TO_NUM
 
 
 class IHDP(torch_frame.data.Dataset):
+    r"""Counterfactual target is generated with knn."""
     train_url = 'https://www.fredjo.com/files/ihdp_npci_1-1000.train.npz.zip'
     test_url = 'https://www.fredjo.com/files/ihdp_npci_1-1000.test.npz.zip'
 
@@ -28,20 +29,22 @@ class IHDP(torch_frame.data.Dataset):
         train_data = np.concatenate([
             train_np.f.t[:, split_num].reshape(-1, 1),
             train_np.f.x[:, :, split_num], train_np.f.yf[:, split_num].reshape(
-                -1, 1)
+                -1, 1), train_np.f.ycf[:, split_num].reshape(-1, 1)
         ], axis=1)
         test_data = np.concatenate([
             test_np.f.t[:, split_num].reshape(-1, 1),
             test_np.f.x[:, :, split_num], test_np.f.yf[:, split_num].reshape(
-                -1, 1)
+                -1, 1), test_np.f.ycf[:, split_num].reshape(-1, 1)
         ], axis=1)
         train_df = pd.DataFrame(
             train_data, columns=['treated'] +
-            [f'Col_{i}' for i in range(train_np.f.x.shape[1])] + ['target'])
+            [f'Col_{i}' for i in range(train_np.f.x.shape[1])] + ['target'] +
+            ['counterfactual_target'])
         train_df['split'] = SPLIT_TO_NUM['train']
         test_df = pd.DataFrame(
             test_data, columns=['treated'] +
-            [f'Col_{i}' for i in range(train_np.f.x.shape[1])] + ['target'])
+            [f'Col_{i}' for i in range(train_np.f.x.shape[1])] + ['target'] +
+            ['counterfactual_target'])
         test_df['split'] = SPLIT_TO_NUM['test']
         df = pd.concat([train_df, test_df], axis=0)
         col_to_stype = {

@@ -133,7 +133,7 @@ class BCAUSS(Module):
         self.control_decoder.reset_parameters()
 
     def forward(self, tf: TensorFrame,
-                treatment_index: int) -> Tuple[Tensor, Tensor, Tensor]:
+                treatment_index: int) -> Tuple[Tensor, Tensor]:
         r"""T stands for treatment and y stands for output."""
         feat_cat = tf.feat_dict[categorical]
         feat_num = tf.feat_dict[numerical]
@@ -165,4 +165,4 @@ class BCAUSS(Module):
                 torch.sum(treated_weight + 0.01) -
                 torch.sum(control_weight * x, dim=0) /
                 (torch.sum(control_weight + 0.01))))
-        return pred, self.epsilon * balance_score, treated_mask
+        return pred, self.epsilon * balance_score
