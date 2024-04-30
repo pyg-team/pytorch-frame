@@ -28,9 +28,8 @@ args = parser.parse_args()
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', "ihdp")
 dataset = IHDP(root=path, split_num=args.split_num)
-print(dataset.get_att())
-ATT = dataset.get_att()
-print(f"ATT is {ATT}")
+ATE = dataset.get_att()
+print(f"True Average Treatment Effect is {ATE}")
 
 torch.manual_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,8 +38,8 @@ dataset.materialize(path=osp.join(path, f"data_{args.split_num}.pt"))
 
 dataset = dataset.shuffle()
 within_sample_dataset, _, test_dataset = dataset.split()
-# Validation is to compute within distribution metric
-# Test is to compute out of distribution metric
+# Train and Validation set is to compute within distribution metric
+# Test set is to compute out of distribution metric
 train_dataset, val_dataset = within_sample_dataset[:
                                                    0.7], within_sample_dataset[
                                                        0.7:]
@@ -150,8 +149,6 @@ else:
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.8)
 
-is_classification = True
-
 
 def train(epoch: int) -> float:
     model.train()
@@ -166,7 +163,7 @@ def train(epoch: int) -> float:
             w_val = treatment_val / (2 * avg_treatment) + (
                 1 - treatment_val) / (2 - 2 * avg_treatment)
             rmse = torch.sqrt(torch.mean(torch.square(tf.y - out.squeeze(-1))))
-            loss = torch.mean(w_val * rmse) + 0.3 * ipm
+            loss = torch.mean(w_val * rmse) + ipm
         else:
             out, balance_score = model(tf, treatment_index=treatment_idx)
             treated_mask = tf.feat_dict[stype.categorical][:,
@@ -190,30 +187,34 @@ def train(epoch: int) -> float:
 
 
 @torch.no_grad()
-def eval(factual: TensorFrame, counterfactual: TensorFrame) -> float:
+def eval(factual: TensorFrame, counterfactual: TensorFrame):
     model.eval()
 
     factual = factual.to(device)
     factual_effect, _ = model(factual, treatment_idx)
+    # RMSE for factual predictions
     rmse_fact = torch.sqrt(torch.mean(torch.square(factual.y -
                                                    factual_effect)))
 
     counterfactual = counterfactual.to(device)
     counterfactual_effect, _ = model(counterfactual, treatment_idx)
+    # RMSE for counterfactual predictions
     rmse_cfact = torch.sqrt(
         torch.mean(torch.square(counterfactual.y - counterfactual_effect)))
     eff_pred = counterfactual_effect - factual_effect
     t = factual.feat_dict[stype.categorical][:, treatment_idx]
     eff_pred[t > 0] = -eff_pred[t > 0]  # f(x, 1) - f(x, 0)
     ate_pred = torch.mean(eff_pred.squeeze(-1))
-    bias_ate = torch.abs(ate_pred - ATT)
+    bias_ate = torch.abs(ate_pred - ATE)
 
-    pehe = torch.sqrt(torch.mean(torch.square(eff_pred - ATT)))
+    pehe = torch.sqrt(torch.mean(torch.square(eff_pred - ATE)))
     return rmse_fact, rmse_cfact, bias_ate, pehe
 
 
 best_val_error = float('inf')
 best_test_error = float('inf')
+best_val_pehe = float('inf')
+best_test_pehe = float('inf')
 
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
@@ -238,11 +239,12 @@ for epoch in range(1, args.epochs + 1):
         f'Val Counterfactual RMSE: {val_rmse_cfact:.4f}, '
         f'Within Sample PEHE: {within_pehe:.4f}, '
         f'Within Sample Error: {within_error:.4f}, \n'
-        f'Test Factual RMSE: {val_rmse:.4f} '
-        f'Test Counterfactual RMSE: {val_rmse_cfact:.4f}, '
-        f'Test PEHE: {test_pehe:.4f}, Test Error: {test_error:.4f}, \n')
+        f'Out of Distribution Factual RMSE: {val_rmse:.4f} '
+        f'Out of Distribution Counterfactual RMSE: {val_rmse_cfact:.4f}, '
+        f'Out of Distribution PEHE: {test_pehe:.4f}, '
+        f'Out of Distribution Error: {test_error:.4f}, \n')
 
 print(f'Best Within Sample Error: {best_val_error:.4f}, '
       f'Best Within Sample PEHE: {best_val_pehe}, \n'
-      f'Best Test Error: {best_test_error:.4f}, '
-      f'Best Test PEHE: {best_test_pehe:.4f}')
+      f'Best Out of Distribution Error: {best_test_error:.4f}, '
+      f'Best Out of Distribution PEHE: {best_test_pehe:.4f}')

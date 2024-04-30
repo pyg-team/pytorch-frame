@@ -52,7 +52,7 @@ class CFR(Module):
         out_channels: int,
         col_stats: dict[str, dict[StatType, Any]] | None,
         col_names_dict: dict[torch_frame.stype, list[str]] | None,
-        epsilon: float = 1.0,
+        epsilon: float = 0.3,
     ):
 
         super().__init__()
