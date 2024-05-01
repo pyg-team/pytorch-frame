@@ -123,8 +123,12 @@ class CatToNumTransform(FittableBaseTransform):
             count = torch.tensor(self.col_stats[col_name][StatType.COUNT][1],
                                  device=tf.device)
             feat = tensor[:, i]
-            v = torch.index_select(count, 0, feat).unsqueeze(1).repeat(
-                1, num_classes - 1)
+            max_cat = feat.max()
+            if max_cat >= len(count):
+                raise RuntimeError(
+                    f"{col_name} contains new category {max_cat} not seen "
+                    f"during fit stage.")
+            v = count[feat].unsqueeze(1).repeat(1, num_classes - 1)
             transformed_tensor[:, i * (num_classes - 1):(i + 1) *
                                (num_classes - 1)] = ((v + target_mean) /
                                                      (self.data_size + 1))
