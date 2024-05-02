@@ -65,6 +65,11 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
         out.col_names_dict[stype.numerical]) == ((dataset.num_classes - 1) *
                                                  total_cols))
 
+    tensor_frame.feat_dict[stype.categorical] += 1
+    with pytest.raises(RuntimeError, match="contains new category"):
+        # Raise informative error when input tensor frame contains new category
+        out = transform(tensor_frame)
+
 
 @pytest.mark.parametrize('task_type', [
     TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
