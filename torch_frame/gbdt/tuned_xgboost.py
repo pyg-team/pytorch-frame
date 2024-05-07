@@ -118,8 +118,13 @@ class XGBoost(GBDT):
              else trial.suggest_float('lambda', 1e-8, 1e2, log=True)),
             "alpha":
             (0.0 if not trial.suggest_categorical('use_alpha', [True, False])
-             else trial.suggest_float('alpha', 1e-8, 1e2, log=True))
+             else trial.suggest_float('alpha', 1e-8, 1e2, log=True)),
+            "device":
+            self._device
         }
+        if self._device in ['gpu', 'cuda']:
+            self.params['tree_method'] = 'hist'
+
         if self.params["booster"] == "gbtree" or self.params[
                 "booster"] == "dart":
             self.params["max_depth"] = trial.suggest_int("max_depth", 3, 11)

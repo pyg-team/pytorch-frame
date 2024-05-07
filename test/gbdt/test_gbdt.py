@@ -30,7 +30,11 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
     (TaskType.BINARY_CLASSIFICATION, Metric.ROCAUC),
     (TaskType.MULTICLASS_CLASSIFICATION, Metric.ACCURACY),
 ])
-def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
+@pytest.mark.parametrize('device', [
+    'cpu',
+    'gpu',
+])
+def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric, device):
     task_type, metric = task_type_and_metric
     dataset: Dataset = FakeDataset(
         num_rows=30,
@@ -47,6 +51,7 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
         num_classes=dataset.num_classes
         if task_type == TaskType.MULTICLASS_CLASSIFICATION else None,
         metric=metric,
+        device=device,
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:

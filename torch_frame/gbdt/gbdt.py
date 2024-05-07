@@ -29,16 +29,21 @@ class GBDT:
             :obj:`Metric.RMSE` for regression, :obj:`Metric.ROCAUC` for binary
             classification, and :obj:`Metric.ACCURACY` for multi-
             class classification. (default: :obj:`None`).
+        device (str): The device for GBDTs to train on. (default: :obj:`cpu`).
     """
     def __init__(
         self,
         task_type: TaskType,
         num_classes: int | None = None,
         metric: Metric | None = None,
+        device: str = 'cpu',
     ):
         self.task_type = task_type
         self._is_fitted: bool = False
         self._num_classes = num_classes
+        self._device: str = device
+
+        assert self._device in ['cpu', 'gpu']
 
         # Set up metric
         self.metric = DEFAULT_METRIC[task_type]
