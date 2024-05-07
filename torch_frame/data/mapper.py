@@ -142,7 +142,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         self.index = pd.concat((self.index, (pd.Series([-1], index=[-1]))))
 
     @staticmethod
-    def split_by_sep(row: str | list[Any] | None, sep: None | str) -> set[Any]:
+    def split_by_sep(row: str | Iterable | None, sep: None | str) -> set[Any]:
         if row is None or row is np.nan:
             return {-1}
         elif isinstance(row, str):
@@ -151,7 +151,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
                 return set()
             else:
                 return {cat.strip() for cat in row.split(sep)}
-        elif isinstance(row, list):
+        elif isinstance(row, Iterable):
             assert sep is None
             return set(row)
         else:
