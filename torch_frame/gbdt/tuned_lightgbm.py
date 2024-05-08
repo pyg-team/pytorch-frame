@@ -127,6 +127,8 @@ class LightGBM(GBDT):
             -1,
             "bagging_freq":
             1,
+            "device":
+            self._device,
             "max_depth":
             trial.suggest_int("max_depth", 3, 11),
             "learning_rate":

@@ -142,12 +142,8 @@ class CatBoost(GBDT):
             num_boost_round,
             "depth":
             trial.suggest_int("depth", 3, 11),
-            "boosting_type":
-            trial.suggest_categorical("boosting_type", ["Ordered", "Plain"]),
             "bagging_temperature":
             trial.suggest_float("bagging_temperature", 0, 1),
-            "colsample_bylevel":
-            trial.suggest_float("colsample_bylevel", 0.01, 0.1),
             "leaf_estimation_iterations":
             trial.suggest_int("leaf_estimation_iterations", 1, 11),
             "l2_leaf_reg":
@@ -176,6 +172,21 @@ class CatBoost(GBDT):
         else:
             raise ValueError(f"{self.__class__.__name__} is not supported for "
                              f"{self.task_type}.")
+
+        if self._device == 'gpu':
+            self.params['task_type'] = 'GPU'
+            if self.task_type == TaskType.MULTICLASS_CLASSIFICATION:
+                self.params['boosting_type'] = 'Plain'
+            else:
+                self.params['boosting_type'] = trial.suggest_categorical(
+                    "boosting_type", ["Ordered", "Plain"])
+        elif self._device == 'cpu':
+            self.params['task_type'] = 'CPU'
+            self.params['colsample_bylevel'] = trial.suggest_float(
+                "colsample_bylevel", 0.01, 0.1)
+            self.params['boosting_type'] = trial.suggest_categorical(
+                "boosting_type", ["Ordered", "Plain"])
+
         boost = catboost.CatBoost(self.params)
         boost = boost.fit(train_x, train_y, cat_features=cat_features,
                           eval_set=[(val_x, val_y)], early_stopping_rounds=50,
