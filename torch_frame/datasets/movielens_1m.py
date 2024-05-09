@@ -16,6 +16,23 @@ class Movielens1M(torch_frame.data.Dataset):
     r"""The MovieLens 1M rating dataset, assembled by GroupLens Research
     from the MovieLens web site, consisting of movies (3,883 nodes) and
     users (6,040 nodes) with approximately 1 million ratings between them.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 10 10 10 10 20
+        :header-rows: 1
+
+        * - #Users
+          - #Items
+          - #User Field
+          - #Item Field
+          - #Samples
+        * - 6040
+          - 3952
+          - 5
+          - 3
+          - 1000209
     """
 
     url = 'https://files.grouplens.org/datasets/movielens/ml-1m.zip'
