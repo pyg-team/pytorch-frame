@@ -97,32 +97,3 @@ class Movielens1M(torch_frame.data.Dataset):
         super().__init__(df, col_to_stype, target_col='rating', col_to_sep='|',
                          col_to_text_embedder_cfg=col_to_text_embedder_cfg,
                          split_col=SPLIT_COL)
-
-
-if __name__ == '__main__':
-    import torch
-    from sentence_transformers import SentenceTransformer
-    from torch import Tensor
-
-    class PretrainedTextEncoder:
-        def __init__(self, device: torch.device) -> None:
-            self.model = SentenceTransformer("all-distilroberta-v1",
-                                             device=device)
-
-        def __call__(self, sentences: list[str]) -> Tensor:
-            # Inference on GPU (if available)
-            embeddings = self.model.encode(sentences, convert_to_numpy=False,
-                                           convert_to_tensor=True)
-            # Map back to CPU
-            return embeddings.cpu()
-
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    text_embedder = PretrainedTextEncoder(device=device)
-    dataset = Movielens1M(
-        './data',
-        col_to_text_embedder_cfg=TextEmbedderConfig(
-            text_embedder=text_embedder, batch_size=10240),
-    )
-    dataset.materialize(path='./data/ml-1m/data.pt')
-    import pdb
-    pdb.set_trace()
