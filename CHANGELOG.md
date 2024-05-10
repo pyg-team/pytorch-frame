@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `MovieLens 1M` dataset ([#397](https://github.com/pyg-team/pytorch-frame/pull/397))
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
 
 ### Changed
