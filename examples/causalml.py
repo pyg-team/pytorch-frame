@@ -227,7 +227,7 @@ for epoch in range(1, args.epochs + 1):
     within_rmse, within_rmse_cfact, within_error, within_pehe = eval(
         within_sample_tensor_frame, counterfactual_within_sample_tensor_frame)
 
-    if val_error < best_val_error:
+    if within_pehe < best_val_pehe:
         best_val_error = within_error
         best_test_error = test_error
         best_val_pehe = within_pehe
