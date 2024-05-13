@@ -124,7 +124,8 @@ def infer_series_stype(ser: Series) -> stype | None:
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized), embedding
-            if _min_count(ser) > cat_min_count_thresh:
+            if _min_count(ser) > cat_min_count_thresh or ptypes.is_bool_dtype(
+                    ser):
                 return stype.categorical
 
             # Candates: multicategorical, text_(embedded/tokenized), embedding
