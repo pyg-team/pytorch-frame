@@ -1,16 +1,30 @@
 import argparse
 import os.path as osp
 
-import numpy as np
-import pandas as pd
 import torch
 from pytorch_tabular import TabularModel
 from pytorch_tabular.config import DataConfig, OptimizerConfig, TrainerConfig
 from pytorch_tabular.models.common.heads import LinearHeadConfig
 from pytorch_tabular.models.tab_transformer import TabTransformerConfig
+from sklearn.metrics import roc_auc_score
 
 from torch_frame import TaskType, stype
 from torch_frame.datasets import DataFrameBenchmark
+
+
+def roc_auc(y_hat, y):
+    r"""Calculate the Area Under the ROC Curve (AUC)
+    for the given predictions and true labels.
+
+    Parameters:
+    y_hat (array-like): Predicted probabilities or scores.
+    y (array-like): True binary labels.
+
+    Returns:
+    float: AUC score.
+    """
+    return roc_auc_score(y, y_hat)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -38,25 +52,6 @@ args = parser.parse_args()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(args.seed)
 
-
-def load_classification_data(df, target_col, test_size):
-    torch_data = np.array(df.drop(target_col, axis=1))
-    torch_labels = np.array(df[target_col])
-    data = np.hstack([torch_data, torch_labels.reshape(-1, 1)])
-    gen_names = [f"feature_{i}" for i in range(data.shape[-1])]
-    col_names = gen_names
-    col_names[-1] = "target"
-    data = pd.DataFrame(data, columns=col_names)
-    cat_col_names = [x for x in gen_names[:-1] if len(data[x].unique()) < 10]
-    num_col_names = [
-        x for x in gen_names[:-1] if x not in [target_col] + cat_col_names
-    ]
-    test_idx = data.sample(int(test_size * len(data)), random_state=42).index
-    test = data[data.index.isin(test_idx)]
-    train = data[~data.index.isin(test_idx)]
-    return (train, test, ["target"], cat_col_names, num_col_names)
-
-
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data')
 dataset = DataFrameBenchmark(root=path, task_type=TaskType(args.task_type),
@@ -65,15 +60,15 @@ dataset.materialize()
 dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset.split()
 
-train, test, target_col, cat_col_names, num_col_names = (
-    train_dataset.df, test_dataset.df, dataset.target_col,
+train_df, val_df, test_df, target_col, cat_col_names, num_col_names = (
+    train_dataset.df, val_dataset.df, test_dataset.df, dataset.target_col,
     dataset.tensor_frame.col_names_dict[stype.categorical],
     dataset.tensor_frame.col_names_dict[stype.numerical])
 
 data_config = DataConfig(
     target=[target_col],
-    continuous_cols=cat_col_names,
-    categorical_cols=num_col_names,
+    continuous_cols=num_col_names,
+    categorical_cols=cat_col_names,
 )
 
 trainer_config = TrainerConfig(
@@ -103,5 +98,5 @@ tabular_model = TabularModel(
     optimizer_config=optimizer_config,
     trainer_config=trainer_config,
 )
-tabular_model.fit(train=train)
-tabular_model.evaluate(test)
+tabular_model.fit(train=train_df, validation=val_df, metrics=roc_auc)
+tabular_model.evaluate(test_df)
