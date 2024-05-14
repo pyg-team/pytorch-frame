@@ -102,11 +102,11 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna
 | Trompt              |                      |
 | ResNet              | 0.831±0.001 (764s)     |
 | MLP                 | 0.824±0.001 (220s)     |
-| FTTransformerBucket | 0.0825±0.001 (5387s)   |
+| FTTransformerBucket | 0.825±0.001 (5387s)    |
 | ExcelFormer         |                      |
 | FTTransformer       | 0.835±0.001 (5072s)     |
 | TabNet              | 0.837±0.001 (404s)      |
-| TabTransformer      |     |
+| TabTransformer      | 0.790±0.002 (457s)      |
 
 ### `task_type: regression`
 Metric: RMSE, lower the better.
