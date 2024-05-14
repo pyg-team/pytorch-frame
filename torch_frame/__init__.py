@@ -8,6 +8,7 @@ from ._stype import (
     multicategorical,
     sequence_numerical,
     timestamp,
+    image_embedded,
     embedding,
 )
 from .data import TensorFrame
@@ -18,7 +19,7 @@ import torch_frame.datasets  # noqa
 import torch_frame.nn  # noqa
 import torch_frame.gbdt  # noqa
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 __all__ = [
     'DataFrame',
@@ -30,6 +31,7 @@ __all__ = [
     'multicategorical',
     'sequence_numerical',
     'timestamp',
+    'image_embedded',
     'embedding',
     'TaskType',
     'Metric',

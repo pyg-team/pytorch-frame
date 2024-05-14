@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 import torch_frame
@@ -11,6 +12,7 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType
 from torch_frame.utils import generate_random_split
+from torch_frame.utils.split import SPLIT_TO_NUM
 
 SPLIT_COL = 'split'
 
@@ -117,7 +119,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 6
           - MultimodalTextBenchmark(name='data_scientist_salary')
-          - 0.0%
+          - 12.3%
         * - multiclass_classification
           - small
           - 3
@@ -128,7 +130,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 10
           - MultimodalTextBenchmark(name='melbourne_airbnb')
-          - 0.0%
+          - 9.6%
         * - multiclass_classification
           - medium
           - 0
@@ -238,7 +240,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 1
           - MultimodalTextBenchmark(name='ae_price_prediction')
-          - 0.0%
+          - 6.1%
         * - regression
           - small
           - 7
@@ -249,7 +251,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 11
           - 1
           - MultimodalTextBenchmark(name='california_house_price')
-          - 0.0%
+          - 13.8%
         * - regression
           - medium
           - 0
@@ -260,7 +262,7 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 1
           - MultimodalTextBenchmark(name='mercari_price_suggestion100K')
-          - 0.0%
+          - 3.4%
         * - regression
           - large
           - 0
@@ -430,14 +432,34 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
 
         # Add split col
         df = dataset.df
-        if SPLIT_COL in df.columns:
-            df.drop(columns=[SPLIT_COL], inplace=True)
-        split_df = pd.DataFrame({
-            SPLIT_COL:
-            generate_random_split(length=len(df), seed=split_random_state,
-                                  train_ratio=0.8, val_ratio=0.1)
-        })
-        df = pd.concat([df, split_df], axis=1)
+        # Follow default split for datasets of MultimodalTextBenchmark:
+        if class_name == 'MultimodalTextBenchmark':
+            df = df.sort_values(by=[SPLIT_COL])
+            num_unique = df[SPLIT_COL].nunique()
+            assert num_unique > 1
+            # Manually split validation set from the train one:
+            if num_unique == 2:
+                ser = df[SPLIT_COL]
+                train_ser = ser[ser == SPLIT_TO_NUM['train']]
+                split_ser = generate_random_split(length=len(train_ser),
+                                                  seed=split_random_state,
+                                                  train_ratio=0.9,
+                                                  val_ratio=0.1,
+                                                  include_test=False)
+                split_ser = np.concatenate([
+                    split_ser,
+                    np.full(len(df) - len(split_ser), SPLIT_TO_NUM['test'])
+                ])
+                df[SPLIT_COL] = split_ser
+        else:
+            if SPLIT_COL in df.columns:
+                df.drop(columns=[SPLIT_COL], inplace=True)
+            split_df = pd.DataFrame({
+                SPLIT_COL:
+                generate_random_split(length=len(df), seed=split_random_state,
+                                      train_ratio=0.8, val_ratio=0.1)
+            })
+            df = pd.concat([df, split_df], axis=1)
 
         # For regression task, we normalize the target.
         if task_type == TaskType.REGRESSION:
@@ -473,9 +495,10 @@ class DataFrameTextBenchmark(torch_frame.data.Dataset):
                 f'  cls={self.cls_str}\n'
                 f')')
 
-    def materialize(self, *args, **kwargs):
+    def materialize(self, *args, **kwargs) -> torch_frame.data.Dataset:
         super().materialize(*args, **kwargs)
         if self.task_type != self._task_type:
             raise RuntimeError(f"task type does not match. It should be "
                                f"{self.task_type.value} but specified as "
                                f"{self._task_type.value}.")
+        return self

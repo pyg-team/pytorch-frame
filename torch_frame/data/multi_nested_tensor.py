@@ -180,12 +180,7 @@ class MultiNestedTensor(_MultiTensor):
         r"""Helper function called by :obj:`index_select`."""
         # Calculate values
         if index.numel() == 0:
-            return MultiNestedTensor(
-                num_rows=0,
-                num_cols=self.num_cols,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device),
-            )
+            return self._empty(dim=0)
         index_right = (index + 1) * self.num_cols
         index_left = index * self.num_cols
         diff = self.offset[index_right] - self.offset[index_left]
@@ -218,12 +213,7 @@ class MultiNestedTensor(_MultiTensor):
     def _col_index_select(self, index: Tensor) -> MultiNestedTensor:
         r"""Helper function called by :obj:`index_select`."""
         if index.numel() == 0:
-            return MultiNestedTensor(
-                num_rows=self.num_rows,
-                num_cols=0,
-                values=torch.tensor([], device=self.device),
-                offset=torch.tensor([0], device=self.device),
-            )
+            return self._empty(dim=1)
         start_idx = (index + torch.arange(
             0,
             self.num_rows * self.num_cols,
@@ -320,13 +310,13 @@ class MultiNestedTensor(_MultiTensor):
         return dense
 
     def _empty(self, dim: int) -> MultiNestedTensor:
-        r"""Creates an empty :class:`MultiEmbeddingTensor`.
+        r"""Creates an empty :class:`MultiNestedTensor`.
 
         Args:
             dim (int): The dimension to empty.
 
         Returns:
-            MultiEmbeddingTensor: An empty :class:`MultiEmbeddingTensor`.
+            MultiNestedTensor: An empty :class:`MultiNestedTensor`.
         """
         values = torch.tensor([], device=self.device, dtype=self.dtype)
         offset = torch.zeros(1, device=self.device, dtype=torch.long)

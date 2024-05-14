@@ -19,6 +19,7 @@ from torch_frame.datasets import DataFrameBenchmark
 from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.nn.encoder import EmbeddingEncoder, LinearBucketEncoder
 from torch_frame.nn.models import (
+    MLP,
     ExcelFormer,
     FTTransformer,
     ResNet,
@@ -50,7 +51,7 @@ parser.add_argument(
     help='Number of repeated training and eval on the best config.')
 parser.add_argument(
     '--model_type', type=str, default='TabNet', choices=[
-        'TabNet', 'FTTransformer', 'ResNet', 'TabTransformer', 'Trompt',
+        'TabNet', 'FTTransformer', 'ResNet', 'MLP', 'TabTransformer', 'Trompt',
         'ExcelFormer', 'FTTransformerBucket', 'XGBoost', 'CatBoost', 'LightGBM'
     ])
 parser.add_argument('--seed', type=int, default=0)
@@ -153,6 +154,18 @@ else:
         }
         model_cls = ResNet
         col_stats = dataset.col_stats
+    elif args.model_type == 'MLP':
+        model_search_space = {
+            'channels': [64, 128, 256],
+            'num_layers': [1, 2, 4],
+        }
+        train_search_space = {
+            'batch_size': [256, 512],
+            'base_lr': [0.0001, 0.001],
+            'gamma_rate': [0.9, 0.95, 1.],
+        }
+        model_cls = MLP
+        col_stats = dataset.col_stats
     elif args.model_type == 'TabTransformer':
         model_search_space = {
             'channels': [16, 32, 64, 128],
@@ -216,6 +229,8 @@ else:
             'diam_dropout': [0, 0.2],
             'residual_dropout': [0, 0.2],
             'aium_dropout': [0, 0.2],
+            'mixup': [None, 'feature', 'hidden'],
+            'beta': [0.5],
             'num_cols': [train_tensor_frame.num_cols],
         }
         train_search_space = {
@@ -244,7 +259,8 @@ def train(
         tf = tf.to(device)
         y = tf.y
         if isinstance(model, ExcelFormer):
-            pred, y = model.forward_mixup(tf)
+            # Train with FEAT-MIX or HIDDEN-MIX
+            pred, y = model(tf, mixup_encoded=True)
         elif isinstance(model, Trompt):
             # Trompt uses the layer-wise loss
             pred = model.forward_stacked(tf)

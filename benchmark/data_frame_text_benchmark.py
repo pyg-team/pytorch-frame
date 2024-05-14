@@ -4,10 +4,14 @@ import argparse
 import math
 import os
 import os.path as osp
+import time
 from typing import Any
 
 import torch
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig
+from peft import TaskType as peftTaskType
+from peft import get_peft_model
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss
 from torch.optim.lr_scheduler import ExponentialLR
@@ -57,7 +61,7 @@ parser.add_argument(
     "--idx",
     type=int,
     default=0,
-    help="The index of the dataset within DataFrameBenchmark",
+    help="The index of the dataset within DataFrameTextBenchmark",
 )
 parser.add_argument(
     "--model_type",
@@ -73,13 +77,42 @@ parser.add_argument(
     default="sentence-transformers/all-distilroberta-v1",
     choices=[
         "distilbert-base-uncased",
+        "roberta-large",
+        "microsoft/deberta-v3-large",
+        "google/electra-large-discriminator",
         "sentence-transformers/all-distilroberta-v1",
         "sentence-transformers/average_word_embeddings_glove.6B.300d",
+        "sentence-transformers/all-roberta-large-v1",
+        "text-embedding-3-large",
     ],
 )
 parser.add_argument("--finetune", action="store_true")
+parser.add_argument(
+    "--pos_weight",
+    action="store_true",
+    help=("Whether to set `pos_weight` in `BCEWithLogitsLoss` "
+          "for the binary classification task."),
+)
 parser.add_argument('--result_path', type=str, default='')
+parser.add_argument("--api_key", type=str, default=None)
 args = parser.parse_args()
+
+model_out_channels = {
+    "distilbert-base-uncased": 768,
+    "roberta-large": 1024,
+    "microsoft/deberta-v3-large": 1024,
+    "google/electra-large-discriminator": 1024,
+    "sentence-transformers/all-distilroberta-v1": 768,
+}
+
+# Set for a 16 GB GPU
+model_batch_size = {
+    "distilbert-base-uncased": 128,
+    "roberta-large": 16,
+    "microsoft/deberta-v3-large": 8,
+    "google/electra-large-discriminator": 16,
+    "sentence-transformers/all-distilroberta-v1": 128,
+}
 
 
 class TextToEmbedding:
@@ -131,11 +164,10 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         elif model == "sentence-transformers/all-distilroberta-v1":
             target_modules = ["intermediate.dense"]
         else:
-            raise ValueError(f"Model {model} is not specified for "
-                             f"LoRA finetuning.")
+            target_modules = "all-linear"
 
         peft_config = LoraConfig(
-            task_type=TaskType.FEATURE_EXTRACTION,
+            task_type=peftTaskType.FEATURE_EXTRACTION,
             r=32,
             lora_alpha=32,
             inference_mode=False,
@@ -166,6 +198,32 @@ class TextToEmbeddingFinetune(torch.nn.Module):
                               return_tensors="pt")
 
 
+class OpenAIEmbedding:
+    def __init__(self, model: str, api_key: str):
+        # Please run `pip install openai` to install the package
+        from openai import OpenAI
+
+        self.client = OpenAI(api_key=api_key)
+        self.model = model
+
+    def __call__(self, sentences: list[str]) -> Tensor:
+        from openai import Embedding
+
+        items: list[Embedding] = embeddings_with_backoff(
+            self.client, self.model, sentences)
+        assert len(items) == len(sentences)
+        embeddings = [
+            torch.FloatTensor(item.embedding).view(1, -1) for item in items
+        ]
+        return torch.cat(embeddings, dim=0)
+
+
+@retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(6))
+def embeddings_with_backoff(client: Any, model: str,
+                            sentences: list[str]) -> list[Any]:
+    return client.embeddings.create(input=sentences, model=model).data
+
+
 def mean_pooling(last_hidden_state: Tensor, attention_mask: Tensor) -> Tensor:
     input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
         last_hidden_state.size()).float())
@@ -183,7 +241,9 @@ def get_stype_encoder_dict(
     if not args.finetune:
         text_stype_encoder = LinearEmbeddingEncoder()
     else:
-        model_cfg = ModelConfig(model=text_encoder, out_channels=768)
+        model_cfg = ModelConfig(
+            model=text_encoder,
+            out_channels=model_out_channels[args.text_model])
         col_to_model_cfg = {
             col_name: model_cfg
             for col_name in train_tensor_frame.col_names_dict[
@@ -210,7 +270,6 @@ def get_stype_encoder_dict(
 
 
 def main_gbdt(model: GBDT, train_cfg: dict[str, Any]):
-    import time
     start_time = time.time()
     model.tune(tf_train=train_dataset.tensor_frame,
                tf_val=val_dataset.tensor_frame,
@@ -296,6 +355,7 @@ def main_torch(
     lr_scheduler: Any,
     optimizer: Any,
 ):
+    start_time = time.time()
     if higher_is_better:
         best_val_metric = 0
     else:
@@ -316,8 +376,19 @@ def main_torch(
         lr_scheduler.step()
         print(f'Train Loss: {train_loss:.4f}, Val: {val_metric:.4f}')
 
-    print(f"Best Val {metric_computer}: {best_val_metric:.4f}, "
-          f"Best Test {metric_computer}: {best_test_metric:.4f}")
+    end_time = time.time()
+    result_dict = {
+        'args': args.__dict__,
+        'best_val_metric': best_val_metric,
+        'best_test_metric': best_test_metric,
+        'train_cfg': train_cfg,
+        'total_time': end_time - start_time,
+    }
+    print(result_dict)
+    # Save results
+    if args.result_path != '':
+        os.makedirs(os.path.dirname(args.result_path), exist_ok=True)
+        torch.save(result_dict, args.result_path)
 
 
 if __name__ == "__main__":
@@ -325,7 +396,13 @@ if __name__ == "__main__":
     path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data")
 
     if not args.finetune:
-        text_encoder = TextToEmbedding(model=args.text_model, device=device)
+        if args.text_model == "text-embedding-3-large":
+            assert isinstance(args.api_key, str)
+            text_encoder = OpenAIEmbedding(model=args.text_model,
+                                           api_key=args.api_key)
+        else:
+            text_encoder = TextToEmbedding(model=args.text_model,
+                                           device=device)
         text_stype = torch_frame.text_embedded
         kwargs = {
             "text_stype":
@@ -353,13 +430,23 @@ if __name__ == "__main__":
     )
 
     # TODO (zecheng): Change this to search space
+    batch_size = 512
+    if args.finetune:
+        batch_size = model_batch_size[args.text_model]
+        col_stypes = list(dataset.col_to_stype.values())
+        n_tokenized = len([
+            col_stype for col_stype in col_stypes
+            if col_stype == torch_frame.stype.text_tokenized
+        ])
+        batch_size //= n_tokenized
+
     train_cfg = dict(
         channels=128,
         num_layers=4,
         base_lr=0.001,
-        epochs=10,
-        num_prompts=20,
-        batch_size=512,
+        epochs=50,
+        num_prompts=32,
+        batch_size=batch_size,
         gamma_rate=0.9,
         num_trials=1,
     )
@@ -383,7 +470,12 @@ if __name__ == "__main__":
 
     if dataset.task_type == TaskType.BINARY_CLASSIFICATION:
         out_channels = 1
-        loss_fun = BCEWithLogitsLoss()
+        if args.pos_weight:
+            label_imbalance = sum(train_tensor_frame.y) / len(
+                train_tensor_frame.y)
+            loss_fun = BCEWithLogitsLoss(pos_weight=1 / label_imbalance)
+        else:
+            loss_fun = BCEWithLogitsLoss()
         metric_computer = AUROC(task='binary').to(device)
         higher_is_better = True
     elif dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:

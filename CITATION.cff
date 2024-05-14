@@ -5,8 +5,6 @@ title: "PyTorch Frame: A Deep Learning Framework for Tabular Data"
 authors:
 - family-names: "Hu"
   given-names: "Weihua"
-- family-names: "Fey"
-  given-names: "Matthias"
 - family-names: "Yuan"
   given-names: "Yiwen"
 - family-names: "Zhang"
@@ -17,6 +15,10 @@ authors:
   given-names: "Kaidi"
 - family-names: "Kocijan"
   given-names: "Vid"
+- family-names: "Leskovec"
+  given-names: "Jure"
+- family-names: "Fey"
+  given-names: "Matthias"
 date-released: 2023-10-24
 license: MIT
 url: "https://github.com/pyg-team/pytorch-frame"

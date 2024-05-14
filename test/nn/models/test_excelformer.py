@@ -15,7 +15,8 @@ from torch_frame.nn import ExcelFormer
     TaskType.MULTICLASS_CLASSIFICATION,
 ])
 @pytest.mark.parametrize('batch_size', [0, 5])
-def test_excelformer(task_type, batch_size):
+@pytest.mark.parametrize('mixup', [None, 'feature', 'hidden'])
+def test_excelformer(task_type, batch_size, mixup):
     in_channels = 8
     num_heads = 2
     num_layers = 6
@@ -35,6 +36,7 @@ def test_excelformer(task_type, batch_size):
         num_cols=num_cols,
         num_layers=num_layers,
         num_heads=num_heads,
+        mixup=mixup,
         col_stats=dataset.col_stats,
         col_names_dict=tensor_frame.col_names_dict,
     )
@@ -46,7 +48,9 @@ def test_excelformer(task_type, batch_size):
 
     # Test the mixup forward pass
     feat_num = copy.copy(tensor_frame.feat_dict[stype.numerical])
-    out_mixedup, y_mixedup = model.forward_mixup(tensor_frame)
+    # Set lazy mutual information scores for `feature` mixup
+    tensor_frame.mi_scores = torch.rand(torch.Size((feat_num.shape[1], )))
+    out_mixedup, y_mixedup = model(tensor_frame, mixup_encoded=True)
     assert out_mixedup.shape == (batch_size, out_channels)
     # Make sure the numerical feature is not modified.
     assert torch.allclose(feat_num, tensor_frame.feat_dict[stype.numerical])
