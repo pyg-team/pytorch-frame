@@ -99,7 +99,7 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna
 | XGBoost             |      |
 | CatBoost            |      |
 | LightGBM            |        |
-| Trompt              |                      |
+| Trompt              | 0.822±0.002 (15418s)   |
 | ResNet              | 0.831±0.001 (764s)     |
 | MLP                 | 0.824±0.001 (220s)     |
 | FTTransformerBucket | 0.825±0.001 (5387s)    |
