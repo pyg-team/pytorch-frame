@@ -46,6 +46,8 @@ parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--compile', action='store_true')
+parser.add_argument("--framework", type=str, default="torch",
+                    choices=["torch", "skorch-dataframe"])
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -156,30 +158,87 @@ def test(loader: DataLoader) -> float:
         return rmse
 
 
-if is_classification:
-    metric = 'Acc'
-    best_val_metric = 0
-    best_test_metric = 0
-else:
-    metric = 'RMSE'
-    best_val_metric = float('inf')
-    best_test_metric = float('inf')
+if args.framework == "torch":
+    if is_classification:
+        metric = 'Acc'
+        best_val_metric = 0
+        best_test_metric = 0
+    else:
+        metric = 'RMSE'
+        best_val_metric = float('inf')
+        best_test_metric = float('inf')
 
-for epoch in range(1, args.epochs + 1):
-    train_loss = train(epoch)
-    train_metric = test(train_loader)
-    val_metric = test(val_loader)
-    test_metric = test(test_loader)
+    for epoch in range(1, args.epochs + 1):
+        train_loss = train(epoch)
+        train_metric = test(train_loader)
+        val_metric = test(val_loader)
+        test_metric = test(test_loader)
 
-    if is_classification and val_metric > best_val_metric:
-        best_val_metric = val_metric
-        best_test_metric = test_metric
-    elif not is_classification and val_metric < best_val_metric:
-        best_val_metric = val_metric
-        best_test_metric = test_metric
+        if is_classification and val_metric > best_val_metric:
+            best_val_metric = val_metric
+            best_test_metric = test_metric
+        elif not is_classification and val_metric < best_val_metric:
+            best_val_metric = val_metric
+            best_test_metric = test_metric
 
-    print(f'Train Loss: {train_loss:.4f}, Train {metric}: {train_metric:.4f}, '
-          f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}')
+        print(
+            f'Train Loss: {train_loss:.4f}, '
+            f'Train {metric}: {train_metric:.4f}, '
+            f'Val {metric}: {val_metric:.4f}, Test {metric}: {test_metric:.4f}'
+        )
 
-print(f'Best Val {metric}: {best_val_metric:.4f}, '
-      f'Best Test {metric}: {best_test_metric:.4f}')
+    print(f'Best Val {metric}: {best_val_metric:.4f}, '
+          f'Best Test {metric}: {best_test_metric:.4f}')
+elif args.framework == "skorch-dataframe":
+    import numpy as np
+    import pandas as pd
+    import torch.nn as nn
+
+    from torch_frame.utils.skorch import (
+        NeuralNetClassifierPytorchFrame,
+        NeuralNetPytorchFrame,
+    )
+
+    df = dataset.df
+    df_train = pd.concat([train_dataset.df, val_dataset.df])
+    X_train, y_train = df_train.drop(
+        columns=[dataset.target_col, dataset.split_col]), df_train[
+            dataset.target_col]
+    df_test = test_dataset.df
+    X_test, y_test = df_test.drop(
+        columns=[dataset.target_col, dataset.split_col]), df_test[
+            dataset.target_col]
+
+    # use DataFrames with no `split_col` or `target_col`
+    # like normal sklearn datasets from now on
+    if is_classification:
+        net = NeuralNetClassifierPytorchFrame(
+            module=model,
+            criterion=nn.CrossEntropyLoss,
+            max_epochs=args.epochs,
+            lr=args.lr,
+            device=device,
+            verbose=1,
+            # col_to_stype={"C_feature_7": stype.categorical},
+            batch_size=args.batch_size,
+        )
+    else:
+        net = NeuralNetPytorchFrame(
+            module=model,
+            criterion=nn.MSELoss,
+            max_epochs=args.epochs,
+            lr=args.lr,
+            device=device,
+            verbose=1,
+            # col_to_stype={"C_feature_7": stype.categorical},
+            batch_size=args.batch_size,
+        )
+    net.fit(X_train, y_train)
+    y_pred = net.predict(X_test)
+
+    if is_classification:
+        test_acc = (y_pred.argmax(-1) == y_test).mean()
+        print(f"Test Acc: {test_acc:.4f}")
+    else:
+        test_rmse = np.sqrt(((y_pred.squeeze() - y_test)**2).mean())
+        print(f"Test RMSE: {test_rmse:.4f}")

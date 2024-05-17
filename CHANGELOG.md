@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+- Added an inherited class from skorch.NeuralNet that is compatible with PyTorch Frame ([#375](https://github.com/pyg-team/pytorch-frame/pull/375))
 
 ### Changed
 
