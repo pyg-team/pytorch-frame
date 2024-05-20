@@ -96,7 +96,7 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna
 
 |                     | 0                       |
 |:--------------------|:------------------------|
-| XGBoost             | 0.792 (28889s)          |
+| XGBoost             | 0.792±0.000 (28889s)    |
 | CatBoost            |      |
 | LightGBM            |        |
 | Trompt              | 0.822±0.002 (15418s)    |
