@@ -7,9 +7,6 @@ import pandas as pd
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig
-from torch_frame.utils.split import SPLIT_TO_NUM
-
-SPLIT_COL = 'split_col'
 
 
 class Movielens1M(torch_frame.data.Dataset):
@@ -76,12 +73,7 @@ class Movielens1M(torch_frame.data.Dataset):
         df = pd.merge(pd.merge(ratings, users), movies) \
                .sort_values(by='timestamp') \
                .reset_index().drop('index', axis=1)
-        num_size = df.shape[0]
-        train_size, val_size = int(num_size * 0.8), int(num_size * 0.1)
-        df.loc[:train_size, SPLIT_COL] = SPLIT_TO_NUM['train']
-        df.loc[train_size:train_size + val_size,
-               SPLIT_COL] = SPLIT_TO_NUM['val']
-        df.loc[train_size + val_size:, SPLIT_COL] = SPLIT_TO_NUM['test']
+
         col_to_stype = {
             'user_id': torch_frame.categorical,
             'gender': torch_frame.categorical,
@@ -95,5 +87,4 @@ class Movielens1M(torch_frame.data.Dataset):
             'timestamp': torch_frame.timestamp,
         }
         super().__init__(df, col_to_stype, target_col='rating', col_to_sep='|',
-                         col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-                         split_col=SPLIT_COL)
+                         col_to_text_embedder_cfg=col_to_text_embedder_cfg)
