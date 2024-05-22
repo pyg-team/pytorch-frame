@@ -114,9 +114,8 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.MULTI_COUNT:
-            ser = ser.apply(
-                lambda row: MultiCategoricalTensorMapper.split_by_sep(row, sep)
-            )
+            ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
+                            split_by_sep(row, sep))
             ser = ser.explode().dropna()
             count = ser.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
@@ -126,19 +125,16 @@ class StatType(Enum):
             return [min(year_range), max(year_range)]
 
         elif self == StatType.NEWEST_TIME:
-            return TimestampTensorMapper.to_tensor(
-                pd.Series(ser.iloc[-1])
-            ).squeeze(0)
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[-1])).squeeze(0)
 
         elif self == StatType.OLDEST_TIME:
-            return TimestampTensorMapper.to_tensor(
-                pd.Series(ser.iloc[0])
-            ).squeeze(0)
+            return TimestampTensorMapper.to_tensor(pd.Series(
+                ser.iloc[0])).squeeze(0)
 
         elif self == StatType.MEDIAN_TIME:
             return TimestampTensorMapper.to_tensor(
-                pd.Series(ser.iloc[len(ser) // 2])
-            ).squeeze(0)
+                pd.Series(ser.iloc[len(ser) // 2])).squeeze(0)
 
         elif self == StatType.EMB_DIM:
             return len(ser[0])
@@ -167,11 +163,9 @@ def compute_col_stats(
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
         if not ptypes.is_numeric_dtype(ser):
-            raise TypeError(
-                "Numerical series contains invalid entries. "
-                "Please make sure your numerical series "
-                "contains only numerical values or nans."
-            )
+            raise TypeError("Numerical series contains invalid entries. "
+                            "Please make sure your numerical series "
+                            "contains only numerical values or nans.")
     if ser.isnull().all():
         # NOTE: We may just error out here if eveything is NaN
         stats = {
