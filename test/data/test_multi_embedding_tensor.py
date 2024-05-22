@@ -167,7 +167,7 @@ def test_from_tensor_list():
 
 
 @withCUDA
-def test_index(device):
+def test_row_index(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -211,9 +211,26 @@ def test_index(device):
                         met_indexed[i, j],
                     )
 
+    # test selection with Boolean mask
+    # only ordered selection without duplicates is possible
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_rows, ), dtype=torch.bool, device=device)
+        mask[index] = True
+
+        met_indexed = met[mask]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == len(index)
+        assert met_indexed.shape[1] == num_cols
+        for i, idx in enumerate(index):
+            for j in range(num_cols):
+                assert torch.allclose(
+                    tensor_list[j][idx],
+                    met_indexed[i, j],
+                )
+
 
 @withCUDA
-def test_index_range(device):
+def test_row_index_range(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -233,7 +250,7 @@ def test_index_range(device):
 
 
 @withCUDA
-def test_index_slice(device):
+def test_row_index_slice(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -255,7 +272,7 @@ def test_index_slice(device):
 
 
 @withCUDA
-def test_index_slice_int(device):
+def test_col_index_int(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -277,7 +294,7 @@ def test_index_slice_int(device):
 
 
 @withCUDA
-def test_index_slice_slice(device):
+def test_col_index_slice(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -299,7 +316,7 @@ def test_index_slice_slice(device):
 
 
 @withCUDA
-def test_index_slice_list(device):
+def test_col_index_list(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -324,9 +341,25 @@ def test_index_slice_list(device):
                         met_indexed[i, j],
                     )
 
+    # test selection with Boolean mask
+    # only ordered selection without duplicates is possible
+    for index in [[4], [2, 3], [0, 1, 7], []]:
+        mask = torch.zeros((num_cols, ), dtype=torch.bool, device=device)
+        mask[index] = True
+        met_indexed = met[:, mask]
+        assert isinstance(met_indexed, MultiEmbeddingTensor)
+        assert met_indexed.shape[0] == num_rows
+        assert met_indexed.shape[1] == len(index)
+        for i in range(num_rows):
+            for j, idx in enumerate(index):
+                assert torch.allclose(
+                    tensor_list[idx][i],
+                    met_indexed[i, j],
+                )
+
 
 @withCUDA
-def test_index_slice_range(device):
+def test_col_index_range(device):
     num_rows = 8
     num_cols = 10
     met, tensor_list = get_fake_multi_embedding_tensor(
@@ -346,6 +379,18 @@ def test_index_slice_range(device):
                     tensor_list[idx][i],
                     met_indexed[i, j],
                 )
+
+
+@withCUDA
+def test_col_index_empty(device):
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=0,
+        num_cols=10,
+        embedding_dim=3,
+        device=device,
+    )
+    assert met[:, 1].shape == (0, 1, -1)
+    assert met[:, [1, 2]].shape == (0, 2, -1)
 
 
 @withCUDA

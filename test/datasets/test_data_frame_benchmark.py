@@ -13,7 +13,7 @@ from torch_frame.typing import TaskType
 ])
 def test_data_frame_benchmark_match(task_type, scale):
     # Make sure task_type, scale, idx triple map to the fixed underlying
-    # dataset. New dataset can be appended, but the existing mapping needes to
+    # dataset. New dataset can be appended, but the existing mapping needs to
     # be preserved.
     datasets = DataFrameBenchmark.datasets_available(task_type=task_type,
                                                      scale=scale)

@@ -32,8 +32,8 @@ class FCResidualBlock(Module):
         in_channels (int): The number of input channels.
         out_channels (int): The number of output channels.
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :class:`torch.nn.LayerNorm`, or :obj:`None`.
-            (default: :class:`torch.nn.LayerNorm`)
+            :obj:`layer_norm`, :obj:`batch_norm`, or :obj:`None`.
+            (default: :obj:`layer_norm`)
         dropout_prob (float): The dropout probability (default: `0.0`, i.e.,
             no dropout).
     """
@@ -41,7 +41,7 @@ class FCResidualBlock(Module):
         self,
         in_channels: int,
         out_channels: int,
-        normalization: str | None = "layernorm",
+        normalization: str | None = "layer_norm",
         dropout_prob: float = 0.0,
     ) -> None:
         super().__init__()
@@ -52,10 +52,10 @@ class FCResidualBlock(Module):
 
         self.norm1: BatchNorm1d | LayerNorm | None
         self.norm2: BatchNorm1d | LayerNorm | None
-        if normalization == "batchnorm":
+        if normalization == "batch_norm":
             self.norm1 = BatchNorm1d(out_channels)
             self.norm2 = BatchNorm1d(out_channels)
-        elif normalization == "layernorm":
+        elif normalization == "layer_norm":
             self.norm1 = LayerNorm(out_channels)
             self.norm2 = LayerNorm(out_channels)
         else:
@@ -92,7 +92,6 @@ class FCResidualBlock(Module):
             x = self.shortcut(x)
 
         out = out + x
-        out = self.relu(out)
 
         return out
 
@@ -128,8 +127,8 @@ class ResNet(Module):
             for categorical feature and :obj:`LinearEncoder()` for
             numerical feature)
         normalization (str, optional): The type of normalization to use.
-            :obj:`batchnorm`, :obj:`layernorm`, or :obj:`None`.
-            (default: :obj:`layernorm`)
+            :obj:`batch_norm`, :obj:`layer_norm`, or :obj:`None`.
+            (default: :obj:`layer_norm`)
         dropout_prob (float): The dropout probability (default: `0.2`).
     """
     def __init__(
@@ -141,13 +140,10 @@ class ResNet(Module):
         col_names_dict: dict[torch_frame.stype, list[str]],
         stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
         | None = None,
-        normalization: str | None = "layernorm",
+        normalization: str | None = "layer_norm",
         dropout_prob: float = 0.2,
     ) -> None:
         super().__init__()
-        if num_layers <= 0:
-            raise ValueError(
-                f"num_layers must be a positive integer (got {num_layers})")
 
         if stype_encoder_dict is None:
             stype_encoder_dict = {

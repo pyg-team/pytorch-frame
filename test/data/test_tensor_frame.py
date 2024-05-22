@@ -11,7 +11,21 @@ from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 
 def test_tensor_frame_basics(get_fake_tensor_frame):
     tf = get_fake_tensor_frame(num_rows=10)
+    assert tf.is_empty is False
+    assert tf.device == torch.device("cpu")
     assert tf.num_rows == len(tf) == 10
+    assert tf.num_cols == 16
+    # The order is guaranteed to be the same as that of stype definitions in
+    # the stype enum even though `feat_dict` has a different order.
+    assert tf.stypes == [
+        torch_frame.numerical,
+        torch_frame.categorical,
+        torch_frame.text_embedded,
+        torch_frame.text_tokenized,
+        torch_frame.multicategorical,
+        torch_frame.sequence_numerical,
+        torch_frame.embedding,
+    ]
     assert str(tf) == (
         "TensorFrame(\n"
         "  num_cols=16,\n"
@@ -27,6 +41,19 @@ def test_tensor_frame_basics(get_fake_tensor_frame):
         "  has_target=True,\n"
         "  device='cpu',\n"
         ")")
+
+    tf = TensorFrame({}, {})
+    assert tf.is_empty is True
+    assert tf.device is None
+    assert tf.num_rows == len(tf) == 0
+    assert tf.num_cols == 0
+    assert tf.stypes == []
+    assert str(tf) == ("TensorFrame(\n"
+                       "  num_cols=0,\n"
+                       "  num_rows=0,\n"
+                       "  has_target=False,\n"
+                       "  device=None,\n"
+                       ")")
 
 
 def test_tensor_frame_error():
@@ -140,6 +167,12 @@ def test_equal_tensor_frame(get_fake_tensor_frame):
     tf2 = get_fake_tensor_frame(num_rows=11)
     assert tf1 != tf2
     assert tf2 != tf1
+
+    # Test empty TensorFrames
+    tf1 = TensorFrame({}, {})
+    tf2 = TensorFrame({}, {})
+    assert tf1 == tf2
+    assert tf2 == tf1
 
 
 def test_get_col_feat(get_fake_tensor_frame):

@@ -13,8 +13,10 @@ from .dota2 import Dota2
 from .kdd_census_income import KDDCensusIncome
 from .multimodal_text_benchmark import MultimodalTextBenchmark
 from .data_frame_benchmark import DataFrameBenchmark
+from .data_frame_text_benchmark import DataFrameTextBenchmark
 from .mercari import Mercari
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
+from .diamond_images import DiamondImages
 from .huggingface_dataset import HuggingFaceDatasetDict
 
 real_world_datasets = [
@@ -30,8 +32,10 @@ real_world_datasets = [
     'KDDCensusIncome',
     'MultimodalTextBenchmark',
     'DataFrameBenchmark',
+    'DataFrameTextBenchmark',
     'Mercari',
     'AmazonFineFoodReviews',
+    'DiamondImages',
 ]
 
 synthetic_datasets = [

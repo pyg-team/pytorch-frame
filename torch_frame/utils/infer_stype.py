@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import math
+import warnings
 from typing import Any
 
 import pandas as pd
@@ -19,7 +21,9 @@ def _is_timestamp(ser: Series) -> bool:
     is_timestamp = False
     for time_format in POSSIBLE_TIME_FORMATS:
         try:
-            pd.to_datetime(ser, format=time_format)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pd.to_datetime(ser, format=time_format)
             is_timestamp = True
         except (ValueError, ParserError, TypeError):
             pass
@@ -121,7 +125,8 @@ def infer_series_stype(ser: Series) -> stype | None:
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized), embedding
-            if _min_count(ser) > cat_min_count_thresh:
+            if _min_count(ser) > cat_min_count_thresh or ptypes.is_bool_dtype(
+                    ser):
                 return stype.categorical
 
             # Candates: multicategorical, text_(embedded/tokenized), embedding
@@ -134,10 +139,16 @@ def infer_series_stype(ser: Series) -> stype | None:
             # Try different possible seps and mick the largest min_count.
             min_count_list = []
             for sep in POSSIBLE_SEPS:
-                min_count_list.append(
-                    _min_count(
-                        ser.apply(lambda row: MultiCategoricalTensorMapper.
-                                  split_by_sep(row, sep)).explode()))
+                try:
+                    min_count_list.append(
+                        _min_count(
+                            ser.apply(lambda row: MultiCategoricalTensorMapper.
+                                      split_by_sep(row, sep)).explode()))
+                except Exception as e:
+                    logging.warn(
+                        "Mapping series into multicategorical stype "
+                        f"with separator {sep} raised an exception {e}")
+                    continue
             if max(min_count_list) > cat_min_count_thresh:
                 return stype.multicategorical
             else:

@@ -69,6 +69,7 @@ class MutualInformationSort(FittableBaseTransform):
             feat_train = feat_train[not_nan_indices]
         mi_scores = self.mi_func(feat_train.cpu(), y_train.cpu())
         self.mi_ranks = np.argsort(-mi_scores)
+        self.mi_scores = mi_scores[self.mi_ranks]
         col_names = tf_train.col_names_dict[stype.numerical]
         ranks = {col_names[self.mi_ranks[i]]: i for i in range(len(col_names))}
         self.reordered_col_names = tf_train.col_names_dict[
@@ -87,5 +88,9 @@ class MutualInformationSort(FittableBaseTransform):
             stype.numerical][:, self.mi_ranks]
 
         tf.col_names_dict[stype.numerical] = self.reordered_col_names
+
+        # set lazy attribute for meta features
+        tf.mi_scores = torch.tensor(self.mi_scores, dtype=torch.float32,
+                                    device=tf.device)
 
         return tf

@@ -4,6 +4,10 @@
 [contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
 [slack-image]: https://img.shields.io/badge/slack-pyf-brightgreen
 [slack-url]: https://data.pyg.org/slack.html
+[pypi-image]: https://badge.fury.io/py/pytorch-frame.svg
+[pypi-url]: https://pypi.python.org/pypi/pytorch-frame
+[docs-image]: https://readthedocs.org/projects/pytorch-frame/badge/?version=latest
+[docs-url]: https://pytorch-frame.readthedocs.io/en/latest
 
 <div align="center">
 
@@ -16,13 +20,15 @@
 
 --------------------------------------------------------------------------------
 
+[![PyPI Version][pypi-image]][pypi-url]
 [![Testing Status][testing-image]][testing-url]
+[![Docs Status][docs-image]][docs-url]
 [![Contributing][contributing-image]][contributing-url]
 [![Slack][slack-image]][slack-url]
 
 </div>
 
-**[Documentation](https://pytorch-frame.readthedocs.io)**
+**[Documentation](https://pytorch-frame.readthedocs.io)** | **[Paper](https://arxiv.org/abs/2404.00776)**
 
 PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), designed for heterogeneous tabular data with different column types, including numerical, categorical, time, text, and images. It offers a modular framework for implementing existing and future methods. The library features methods from state-of-the-art models, user-friendly mini-batch loaders, benchmark datasets, and interfaces for custom data integration.
 
@@ -74,7 +80,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
+  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, `image_embedded`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -90,7 +96,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png" />
+  <img width="50%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/architecture.png" />
 </p>
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
@@ -238,13 +244,14 @@ We see that some recent deep tabular models were able to achieve competitive mod
 
 We also benchmark different text encoders on a real-world tabular dataset ([Wine Reviews](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.datasets.MultimodalTextBenchmark.html#torch_frame.datasets.MultimodalTextBenchmark)) with one text column. The following table shows the performance:
 
-| Test Acc   | Method          | Model Name                                                  | Source        |
-|:-----------|:----------------|:------------------------------------------------------------|:--------------|
-| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)               | OpenAI        |
-| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                   | Cohere        |
-| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                            | Voyage AI     |
-| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params)  | Hugging Face  |
-| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                   | Hugging Face  |
+| Test Acc   | Method          | Model Name                                                 | Source        |
+|:-----------|:----------------|:-----------------------------------------------------------|:--------------|
+| 0.7926     | Pre-trained     | sentence-transformers/all-distilroberta-v1 (125M # params) | Hugging Face  |
+| 0.7998     | Pre-trained     | embed-english-v3.0 (dimension size: 1024)                  | Cohere        |
+| 0.8102     | Pre-trained     | text-embedding-ada-002 (dimension size: 1536)              | OpenAI        |
+| 0.8147     | Pre-trained     | voyage-01 (dimension size: 1024)                           | Voyage AI     |
+| 0.8203     | Pre-trained     | intfloat/e5-mistral-7b-instruct (7B # params)              | Hugging Face  |
+| **0.8230** | LoRA Finetune   | DistilBERT (66M # params)                                  | Hugging Face  |
 
 The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py).
 
@@ -257,3 +264,15 @@ pip install pytorch_frame
 ```
 
 See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.
+
+## Cite
+
+If you use PyTorch Frame in your work, please cite our paper (Bibtex below).
+```
+@article{hu2024pytorch,
+  title={PyTorch Frame: A Modular Framework for Multi-Modal Tabular Learning},
+  author={Hu, Weihua and Yuan, Yiwen and Zhang, Zecheng and Nitta, Akihiro and Cao, Kaidi and Kocijan, Vid and Leskovec, Jure and Fey, Matthias},
+  journal={arXiv preprint arXiv:2404.00776},
+  year={2024}
+}
+```

@@ -7,11 +7,54 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
 
+- Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+
+### Changed
+
+- Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.2.2] - 2024-03-04
+
+### Added
+
+- Avoided for-loop in `EmbeddingEncoder` ([#366](https://github.com/pyg-team/pytorch-frame/pull/366))
+- Added `image_embedded` and one tabular image dataset ([#344](https://github.com/pyg-team/pytorch-frame/pull/344))
+- Added benchmarking suite for encoders ([#360](https://github.com/pyg-team/pytorch-frame/pull/360))
+- Added dataframe text benchmark script ([#354](https://github.com/pyg-team/pytorch-frame/pull/354), [#367](https://github.com/pyg-team/pytorch-frame/pull/367))
+- Added `DataFrameTextBenchmark` dataset ([#349](https://github.com/pyg-team/pytorch-frame/pull/349))
+- Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
+
+### Changed
+
+- Changed a workflow of Encoder's `na_forward` method resulting in performance boost ([#364](https://github.com/pyg-team/pytorch-frame/pull/364))
+- Removed ReLU applied in `FCResidualBlock` ([#368](https://github.com/pyg-team/pytorch-frame/pull/368))
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Fixed bug in empty `MultiNestedTensor` handling ([#369](https://github.com/pyg-team/pytorch-frame/pull/369))
+- Fixed the split of `DataFrameTextBenchmark` ([#358](https://github.com/pyg-team/pytorch-frame/pull/358))
+- Fixed empty `MultiNestedTensor` col indexing ([#355](https://github.com/pyg-team/pytorch-frame/pull/355))
+
+## [0.2.1] - 2024-01-16
+
+### Added
+- Support more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
+- Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
 - Added `HuggingFaceDatasetDict` ([#287](https://github.com/pyg-team/pytorch-frame/pull/287))
 
 ### Changed
+- Supported decoder embedding model in `examples/transformers_text.py` ([#333](https://github.com/pyg-team/pytorch-frame/pull/333))
 - Removed implicit clones in `StypeEncoder` ([#286](https://github.com/pyg-team/pytorch-frame/pull/286))
 
 ### Deprecated
@@ -26,6 +69,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for Boolean masks in `index_select` of `_MultiTensor` [334](https://github.com/pyg-team/pytorch-frame/pull/334)
 - Added more text documentation ([#291](https://github.com/pyg-team/pytorch-frame/pull/291))
 - Added `col_to_model_cfg` ([#270](https://github.com/pyg-team/pytorch-frame/pull/270))
 - Support saving/loading of GBDT models ([#269](https://github.com/pyg-team/pytorch-frame/pull/269))

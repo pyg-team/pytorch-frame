@@ -25,7 +25,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
     **STATS:**
 
     .. list-table::
-        :widths: 20 10 10 10 10 10 20 10
+        :widths: 20 10 10 10 10 10 10 20 10
         :header-rows: 1
 
         * - Name
@@ -33,6 +33,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - #cols (numerical)
           - #cols (categorical)
           - #cols (text)
+          - #cols (other)
           - #classes
           - Task
           - Missing value ratio
@@ -41,6 +42,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 1
+          - 0
           - 4
           - multiclass_classification
           - 0.0%
@@ -49,6 +51,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 29
           - 0
           - 1
+          - 0
           - 2
           - binary_classification
           - 41.4%
@@ -57,6 +60,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 14
           - 0
           - 1
+          - 0
           - 6
           - multiclass_classification
           - 0.0%
@@ -65,14 +69,52 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 2
           - 1
+          - 0
           - 30
           - multiclass_classification
           - 1.0%
+        * - data_scientist_salary
+          - 19,802
+          - 0
+          - 3
+          - 2
+          - 1
+          - 6
+          - multiclass_classification
+          - 12.3%
+        * - melbourne_airbnb
+          - 22,895
+          - 26
+          - 47
+          - 13
+          - 3
+          - 10
+          - multiclass_classification
+          - 9.6%
+        * - imdb_genre_prediction
+          - 1,000
+          - 7
+          - 1
+          - 2
+          - 1
+          - 2
+          - binary_classification
+          - 0.0%
+        * - kick_starter_funding
+          - 108,128
+          - 1
+          - 3
+          - 3
+          - 2
+          - 2
+          - binary_classification
+          - 0.0%
         * - fake_job_postings2
           - 15,907
           - 0
           - 3
           - 2
+          - 0
           - 2
           - binary_classification
           - 23.8%
@@ -81,6 +123,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 3
+          - 0
           - 1
           - regression
           - 0.0%
@@ -89,6 +132,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 0
           - 1
           - 3
+          - 0
           - 1
           - regression
           - 0.0%
@@ -97,6 +141,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 3
           - 3
+          - 0
           - 1
           - regression
           - 1.7%
@@ -105,6 +150,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 2
           - 1
           - 2
+          - 0
           - 1
           - regression
           - 13.7%
@@ -113,6 +159,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 1
           - 3
           - 2
+          - 0
           - 1
           - regression
           - 1.8%
@@ -121,9 +168,37 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
           - 3
           - 0
           - 1
+          - 0
           - 1
           - regression
           - 0.0%
+        * - ae_price_prediction
+          - 28,328
+          - 2
+          - 5
+          - 1
+          - 3
+          - 1
+          - regression
+          - 6.1%
+        * - california_house_price
+          - 47,439
+          - 18
+          - 8
+          - 2
+          - 11
+          - 1
+          - regression
+          - 13.8%
+        * - mercari_price_suggestion100K
+          - 125,000
+          - 0
+          - 6
+          - 2
+          - 1
+          - 1
+          - regression
+          - 3.4%
     """
     base_url = 'https://automl-mm-bench.s3.amazonaws.com'
 
@@ -212,7 +287,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
         'women_clothing_review': ['train', 'test'],
         'ae_price_prediction': ['train', 'test'],
         'news_popularity2': ['train', 'test'],
-        'california_house_price': ['train', 'test', 'competition'],
+        'california_house_price': ['train', 'test'],
         'mercari_price_suggestion100K': ['train', 'test'],
     }
 
