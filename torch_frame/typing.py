@@ -23,6 +23,7 @@ class Metric(Enum):
     ROCAUC = 'rocauc'
     RMSE = 'rmse'
     MAE = 'mae'
+    R2 = 'r2'
 
     def supports_task_type(self, task_type: 'TaskType') -> bool:
         return self in task_type.supported_metrics
@@ -53,7 +54,7 @@ class TaskType(Enum):
     @property
     def supported_metrics(self) -> list[Metric]:
         if self == TaskType.REGRESSION:
-            return [Metric.RMSE, Metric.MAE]
+            return [Metric.RMSE, Metric.MAE, Metric.R2]
         elif self == TaskType.BINARY_CLASSIFICATION:
             return [Metric.ACCURACY, Metric.ROCAUC]
         elif self == TaskType.MULTICLASS_CLASSIFICATION:

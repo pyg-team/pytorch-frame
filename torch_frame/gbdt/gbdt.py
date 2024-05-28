@@ -161,6 +161,9 @@ class GBDT:
             total_correct = (target == pred).sum().item()
             test_size = len(target)
             score = total_correct / test_size
+        elif self.metric == Metric.R2:
+            from sklearn.metrics import r2_score
+            score = r2_score(target.cpu(), pred.cpu())
         else:
             raise ValueError(f'{self.metric} is not supported.')
         return score
