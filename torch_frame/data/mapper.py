@@ -110,7 +110,7 @@ class CategoricalTensorMapper(TensorMapper):
 
     def backward(self, tensor: Tensor) -> pd.Series:
         index = tensor.cpu().numpy()
-        ser = pd.Series(self.categories[index].index)
+        ser = pd.Series(self.categories.iloc[index].index)
         ser[index < 0] = None
         return ser
 
