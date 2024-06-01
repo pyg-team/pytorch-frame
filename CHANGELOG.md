@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `TensorFrame.describe()` ([#](https://github.com/pyg-team/pytorch-frame/pull/))
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
 - Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
 

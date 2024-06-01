@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Callable
 
+import pandas as pd
 import torch
 from torch import Tensor
 
@@ -225,28 +226,22 @@ class TensorFrame:
         # Match feat_dict
         for stype_name, self_feat in self.feat_dict.items():
             other_feat = other.feat_dict[stype_name]
-            if isinstance(self_feat, Tensor):
-                if not isinstance(other_feat, Tensor):
-                    return False
+            if type(self_feat) is not type(other_feat):
+                return False
+            elif isinstance(self_feat, Tensor):
                 if self_feat.shape != other_feat.shape:
                     return False
                 if not torch.allclose(self_feat, other_feat, equal_nan=True):
                     return False
             elif isinstance(self_feat, MultiNestedTensor):
-                if not isinstance(other_feat, MultiNestedTensor):
-                    return False
                 if not MultiNestedTensor.allclose(self_feat, other_feat,
                                                   equal_nan=True):
                     return False
             elif isinstance(self_feat, MultiEmbeddingTensor):
-                if not isinstance(other_feat, MultiEmbeddingTensor):
-                    return False
                 if not MultiEmbeddingTensor.allclose(self_feat, other_feat,
                                                      equal_nan=True):
                     return False
             elif isinstance(self_feat, dict):
-                if not isinstance(other_feat, dict):
-                    return False
                 if self_feat.keys() != other_feat.keys():
                     return False
                 for feat_name in self_feat.keys():
@@ -352,3 +347,41 @@ class TensorFrame:
             out.y = y
 
         return out
+
+    def describe(self) -> None:
+        r"""Prints the description of the :class:`TensorFrame` object."""
+        if self.is_empty:
+            return None
+
+        for stype_name, col_names in self.col_names_dict.items():
+            feat = self.feat_dict[stype_name]
+            if isinstance(feat, dict):
+                continue
+
+            print("stype:", stype_name)
+            if isinstance(feat, Tensor):
+                _describe_tensor(feat, col_names)
+            elif isinstance(feat, MultiNestedTensor):
+                pass  # TODO: Add support for `MultiNestedTensor`
+            elif isinstance(feat, MultiEmbeddingTensor):
+                pass  # TODO: Add support for `MultiEmbeddingTensor`
+            elif isinstance(feat, dict):
+                pass  # TODO: Add support for `Dict[str, MultiNestedTensor]`
+            print()
+
+
+def _describe_tensor(tensor: Tensor, col_names: list[str]) -> None:
+    r"""Describes the statistics of a tensor."""
+    sers = []
+    for col_idx, col_name in enumerate(col_names):
+        t = tensor[:, col_idx]
+        ser0 = pd.Series(t.cpu().numpy()).describe()
+        ser1 = pd.Series(
+            {
+                'Device': t.device,
+                'Dtype': t.dtype,
+            },
+        )
+        sers.append(pd.concat([ser0, ser1]))
+    result = pd.concat(sers, axis=1, keys=col_names)
+    print(result)
