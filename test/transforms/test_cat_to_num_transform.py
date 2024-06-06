@@ -135,7 +135,8 @@ def test_cat_to_num_transform_with_loading(task_type):
         # (num_count + target_mean)/(num_rows + 1).
         # This test tests the correctness in multiclass classification
         # task.
-        src = (num_rows + dataset.tensor_frame.y.float().mean())/(num_rows + 1)
+        src = (num_rows + dataset.tensor_frame.y.float().mean()) / (num_rows +
+                                                                    1)
         assert torch.allclose(
             out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
             src.clone().detach().to(out.device).repeat(num_rows))
