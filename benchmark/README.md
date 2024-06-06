@@ -150,6 +150,8 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 #### `scale: large`
 
+Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna search trials and 10 epochs training for deep learning models.
+
 |                     | 0                       |
 |:--------------------|:------------------------|
 | XGBoost             | 0.966±0.000 (19327s)    |
