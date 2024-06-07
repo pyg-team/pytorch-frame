@@ -6,6 +6,7 @@ import torch
 from packaging.requirements import Requirement
 from packaging.version import Version
 
+
 def has_package(package: str) -> bool:
     r"""Returns :obj:`True` in case :obj:`package` is installed."""
     if '|' in package:
