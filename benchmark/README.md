@@ -73,7 +73,7 @@ Experimental setting: 20 Optuna search trials. 50 epochs of training.
 
 #### `scale: medium`
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna search trials and 25 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 5 Optuna search trials and 25 epochs training for deep learning models.
 
 |                     | 0                       | 1                       | 2                       | 3                       | 4                      | 5                         | 6                        | 7                       | 8                       |
 |:--------------------|:------------------------|:------------------------|:------------------------|:------------------------|:-----------------------|:--------------------------|:-------------------------|:------------------------|:------------------------|
@@ -92,7 +92,7 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 #### `scale: large`
 
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna search trials and 10 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
 |                     | 0                       |
 |:--------------------|:------------------------|
@@ -150,7 +150,7 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 #### `scale: large`
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 3 Optuna search trials and 10 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
 |                     | 0                       |
 |:--------------------|:------------------------|
@@ -172,7 +172,7 @@ Metric: Accuracy, the higher the better.
 
 #### `scale: medium`
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna search trials and 25 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 5 Optuna search trials and 25 epochs training for deep learning models.
 
 \*Too slow: Taking more than a day for a single trial.
 
