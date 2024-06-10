@@ -152,19 +152,19 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
-|                     | 0                       |
-|:--------------------|:------------------------|
-| XGBoost             | 0.966±0.000 (19327s)    |
-| CatBoost            | 0.971±0.000 (223s)      |
-| LightGBM            | **0.965±0.000 (67s)**   |
-| Trompt              | 0.970±0.000 (12358s)    |
-| ResNet              | 0.970±0.000 (672s)      |
-| MLP                 | 0.973±0.000 (223s)      |
-| FTTransformerBucket | 0.970±0.000 (2071s)     |
-| ExcelFormer         | 0.969±0.000 (1785s)     |
-| FTTransformer       | 0.971±0.000 (2918s)     |
-| TabNet              | 0.970±0.000 (323s)      |
-| TabTransformer      | 0.984±0.000 (318s)      |
+|                     | 0                       | 1                     |
+|:--------------------|:------------------------|:----------------------|
+| XGBoost             | 0.966±0.000 (19327s)    |                       |
+| CatBoost            | 0.971±0.000 (223s)      |                       |
+| LightGBM            | **0.965±0.000 (67s)**   |                       |
+| Trompt              | 0.970±0.000 (12358s)    | Too slow\*            |
+| ResNet              | 0.970±0.000 (672s)      |                       |
+| MLP                 | 0.973±0.000 (223s)      |                       |
+| FTTransformerBucket | 0.970±0.000 (2071s)     |                       |
+| ExcelFormer         | 0.969±0.000 (1785s)     |                       |
+| FTTransformer       | 0.971±0.000 (2918s)     |                       |
+| TabNet              | 0.970±0.000 (323s)      |                       |
+| TabTransformer      | 0.984±0.000 (318s)      |                       |
 
 ### `task_type: multiclass_classification`
 Metric: Accuracy, the higher the better.
