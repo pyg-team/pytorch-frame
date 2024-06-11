@@ -52,10 +52,10 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     # The transform uses m-target estimation, where each categorical
     # feature is transformed to (num_count + target_mean)/(num_rows + 1).
     # This test tests the correctness in multiclass classification task.
-    source_tensor = (num_rows + target_mean[0]) / (num_rows + 1)
+    src_tensor = (num_rows + target_mean[0]) / (num_rows + 1)
     assert torch.allclose(
         out.feat_dict[stype.numerical][:, 0].float(),
-        source_tensor.clone().detach().to(out.device).repeat(num_rows))
+        src_tensor.clone().detach().to(out.device).repeat(num_rows))
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
