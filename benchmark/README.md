@@ -158,7 +158,7 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 | CatBoost            | 0.971±0.000 (223s)      |                       |
 | LightGBM            | **0.965±0.000 (67s)**   |                       |
 | Trompt              | 0.970±0.000 (12358s)    | Too slow\*            |
-| ResNet              | 0.970±0.000 (672s)      |                       |
+| ResNet              | 0.970±0.000 (672s)      | 0.978±0.001 (10584s)  |
 | MLP                 | 0.973±0.000 (223s)      |                       |
 | FTTransformerBucket | 0.970±0.000 (2071s)     |                       |
 | ExcelFormer         | 0.969±0.000 (1785s)     | 0.978±0.001 (47745s)  |
