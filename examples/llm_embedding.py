@@ -90,8 +90,9 @@ class CohereEmbedding:
     def __call__(self, sentences: List[str]) -> Tensor:
         from cohere import EmbedResponse
 
-        response: EmbedResponse = self.co.embed(model=self.model, texts=sentences,
-                                          input_type="classification")
+        response: EmbedResponse = self.co.embed(model=self.model,
+                                                texts=sentences,
+                                                input_type="classification")
         assert len(response.embeddings) == len(sentences)
         embeddings = torch.tensor(response.embeddings)
         return embeddings
