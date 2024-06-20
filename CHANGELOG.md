@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
 - Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
 
+- Added GBDTs feature importance ([#292](https://github.com/pyg-team/pytorch-frame/pull/292))
+
 ### Changed
 
 - Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
