@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from typing import Any
 
 import pandas as pd
 import pytest
 import torch.nn as nn
 import torch.nn.functional as F
-from __furure__ import annotations
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import train_test_split
