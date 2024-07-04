@@ -1,3 +1,4 @@
+from typing import Any
 import pandas as pd
 import pytest
 import torch.nn as nn
@@ -7,6 +8,7 @@ from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.nn.models.mlp import MLP
+from torch_frame.data.stats import StatType
 from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.utils.skorch import NeuralNetBinaryClassifierPytorchFrame, NeuralNetClassifierPytorchFrame
 import torch.nn.functional as F
@@ -69,26 +71,27 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
 
         # never use dataset again
         # we assume that only dataframes are available
-        # del dataset, train_dataset, val_dataset, test_dataset
+        del train_dataset, val_dataset, test_dataset
 
     if cls == "mlp":
-        channels = 8
-        out_channels = dataset.num_classes if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1
-        num_layers = 3
-        model = MLP(
-            channels=channels,
-            out_channels=out_channels,
-            num_layers=num_layers,
-            col_stats=dataset.col_stats,
-            col_names_dict=dataset.tensor_frame.col_names_dict,
-            normalization="layer_norm",
-        )
+        def get_module(*, col_stats: dict[str, dict[StatType, Any]], col_names_dict: dict[stype, list[str]]) -> MLP:
+            channels = 8
+            out_channels = dataset.num_classes if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1
+            num_layers = 3
+            return MLP(
+                channels=channels,
+                out_channels=out_channels,
+                num_layers=num_layers,
+                col_stats=col_stats,
+                col_names_dict=col_names_dict,
+                normalization="layer_norm",
+            )
     else:
         raise NotImplementedError
 
     if task_type in [TaskType.REGRESSION, TaskType.MULTICLASS_CLASSIFICATION]:
         net = NeuralNetClassifierPytorchFrame(
-            module=model,
+            module=get_module,
             criterion=loss,
             max_epochs=2,
             # lr=args.lr,
@@ -99,7 +102,7 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
         )
     elif task_type == TaskType.BINARY_CLASSIFICATION:
         net = NeuralNetBinaryClassifierPytorchFrame(
-            module=model,
+            module=get_module,
             criterion=loss,
             max_epochs=2,
             # lr=args.lr,

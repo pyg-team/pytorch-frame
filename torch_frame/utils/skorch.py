@@ -14,6 +14,7 @@ from skorch import NeuralNet
 from torch import Tensor
 
 import torch_frame
+from torch_frame import nn
 from torch_frame.config import (
     ImageEmbedderConfig,
     TextEmbedderConfig,
@@ -199,6 +200,12 @@ class NeuralNetPytorchFrame(NeuralNet):
         # skorch API
         return NeuralNetPytorchFrameDataLoader(dataset, device=self.device,
                                                **kwargs)
+        
+    def initialize_module(self):
+        if isinstance(self.module, nn.Module):
+            return super().initialize_module()
+        self.module_ = staticmethod(self.module)(col_stats=self.dataset_.col_stats,col_names_dict= self.dataset_.tensor_frame.col_names_dict)
+        return self
 
     def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,
             **fit_params):
@@ -248,6 +255,9 @@ class NeuralNetPytorchFrame(NeuralNet):
         # self.module = self.module.__class__(col_stats=self.dataset_.col_stats,
         #                                     col_names_dict=self.dataset_.tensor_frame.col_names_dict,
         #                                     **{k: v for k, v in self.module.__dict__.items() if k in init_param_names})
+        
+        # if function
+        
         return super().fit(self.dataset_.df, None, **fit_params)
 
     def predict(self, X: Dataset | DataFrame) -> NDArray[Any]:
