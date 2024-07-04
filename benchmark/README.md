@@ -73,7 +73,7 @@ Experimental setting: 20 Optuna search trials. 50 epochs of training.
 
 #### `scale: medium`
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna search trials and 25 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 5 Optuna search trials and 25 epochs training for deep learning models.
 
 |                     | 0                       | 1                       | 2                       | 3                       | 4                      | 5                         | 6                        | 7                       | 8                       |
 |:--------------------|:------------------------|:------------------------|:------------------------|:------------------------|:-----------------------|:--------------------------|:-------------------------|:------------------------|:------------------------|
@@ -91,7 +91,22 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 #### `scale: large`
 
-TODO: Add results.
+
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
+
+|                     | 0                       |
+|:--------------------|:------------------------|
+| XGBoost             | 0.792±0.000 (28889s)    |
+| CatBoost            | 0.788±0.000 (240s)      |
+| LightGBM            | 0.831±0.000 (167s)      |
+| Trompt              | 0.822±0.002 (15418s)    |
+| ResNet              | 0.831±0.001 (764s)      |
+| MLP                 | 0.824±0.001 (220s)      |
+| FTTransformerBucket | 0.825±0.001 (5387s)     |
+| ExcelFormer         | **0.842±0.002 (5264s)** |
+| FTTransformer       | 0.835±0.001 (5072s)     |
+| TabNet              | 0.837±0.001 (404s)      |
+| TabTransformer      | 0.790±0.002 (457s)      |
 
 ### `task_type: regression`
 Metric: RMSE, lower the better.
@@ -135,7 +150,21 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 #### `scale: large`
 
-TODO: Add results.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
+
+|                     | 0                       |
+|:--------------------|:------------------------|
+| XGBoost             | 0.966±0.000 (19327s)    |
+| CatBoost            | 0.971±0.000 (223s)      |
+| LightGBM            | **0.965±0.000 (67s)**   |
+| Trompt              | 0.970±0.000 (12358s)    |
+| ResNet              | 0.970±0.000 (672s)      |
+| MLP                 | 0.973±0.000 (223s)      |
+| FTTransformerBucket | 0.970±0.000 (2071s)     |
+| ExcelFormer         | 0.969±0.000 (1785s)     |
+| FTTransformer       | 0.971±0.000 (2918s)     |
+| TabNet              | 0.970±0.000 (323s)      |
+| TabTransformer      | 0.984±0.000 (318s)      |
 
 ### `task_type: multiclass_classification`
 Metric: Accuracy, the higher the better.
@@ -143,7 +172,7 @@ Metric: Accuracy, the higher the better.
 
 #### `scale: medium`
 
-Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna search trials and 25 epochs training for deep learning models.
+Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 5 Optuna search trials and 25 epochs training for deep learning models.
 
 \*Too slow: Taking more than a day for a single trial.
 
