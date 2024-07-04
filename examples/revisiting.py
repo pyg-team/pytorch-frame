@@ -219,7 +219,6 @@ elif args.framework == "skorch-dataframe":
             lr=args.lr,
             device=device,
             verbose=1,
-            # col_to_stype={"C_feature_7": stype.categorical},
             batch_size=args.batch_size,
         )
     else:
@@ -230,7 +229,6 @@ elif args.framework == "skorch-dataframe":
             lr=args.lr,
             device=device,
             verbose=1,
-            # col_to_stype={"C_feature_7": stype.categorical},
             batch_size=args.batch_size,
         )
     net.fit(X_train, y_train)
