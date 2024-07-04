@@ -7,6 +7,7 @@ from abc import ABC
 from collections import defaultdict
 from typing import Any, Dict
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -733,8 +734,7 @@ class Dataset(ABC):
         if split not in ["train", "val", "test"]:
             raise ValueError(f"The split named '{split}' is not available. "
                              f"Needs to be either 'train', 'val', or 'test'.")
-        indices = self.df.index[self.df[self.split_col] ==
-                                SPLIT_TO_NUM[split]].tolist()
+        indices = np.where(self.df[self.split_col] == SPLIT_TO_NUM[split])[0]
         return self[indices]
 
     def split(self) -> tuple[Dataset, Dataset, Dataset]:
