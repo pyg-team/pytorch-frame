@@ -1,3 +1,5 @@
+from __furure__ import annotations
+
 from typing import Any
 
 import pandas as pd
