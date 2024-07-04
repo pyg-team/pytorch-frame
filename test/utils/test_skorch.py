@@ -1,25 +1,33 @@
 from typing import Any
+
 import pandas as pd
 import pytest
-from sklearn.model_selection import train_test_split
 import torch.nn as nn
+import torch.nn.functional as F
+from sklearn.datasets import load_diabetes, load_iris
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import train_test_split
 
-from sklearn.datasets import load_iris, load_diabetes
 from torch_frame import TaskType, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
+from torch_frame.data.stats import StatType
 from torch_frame.datasets.fake import FakeDataset
 from torch_frame.nn.models.mlp import MLP
-from torch_frame.data.stats import StatType
 from torch_frame.testing.text_embedder import HashTextEmbedder
-from torch_frame.utils.skorch import NeuralNetBinaryClassifierPytorchFrame, NeuralNetClassifierPytorchFrame
-import torch.nn.functional as F
+from torch_frame.utils.skorch import (
+    NeuralNetBinaryClassifierPytorchFrame,
+    NeuralNetClassifierPytorchFrame,
+)
+
+
 class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     def forward(self, input, target):
         # float to long
         input = F.sigmoid(input).float().squeeze()
         target = target.float()
         return super().forward(input, target)
+
 
 @pytest.mark.parametrize('cls', ["mlp"])
 @pytest.mark.parametrize(
@@ -68,7 +76,7 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
             columns=[dataset.target_col, dataset.split_col]), df_train[
                 dataset.target_col]
         df_test = test_dataset.df
-        X_test, y_test = df_test.drop(
+        X_test, _ = df_test.drop(
             columns=[dataset.target_col, dataset.split_col]), df_test[
                 dataset.target_col]
 
@@ -77,9 +85,13 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
         del train_dataset, val_dataset, test_dataset
 
     if cls == "mlp":
-        def get_module(*, col_stats: dict[str, dict[StatType, Any]], col_names_dict: dict[stype, list[str]]) -> MLP:
+
+        def get_module(*, col_stats: dict[str, dict[StatType, Any]],
+                       col_names_dict: dict[stype, list[str]]) -> MLP:
             channels = 8
-            out_channels = dataset.num_classes if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1
+            out_channels = 1
+            if task_type == TaskType.MULTICLASS_CLASSIFICATION:
+                out_channels = dataset.num_classes
             num_layers = 3
             return MLP(
                 channels=channels,
@@ -113,30 +125,33 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
             verbose=1,
             batch_size=3,
             # col_to_stype=col_to_stype,
-        )       
-        
+        )
+
     if pass_dataset:
         net.fit(dataset)
-        y_pred = net.predict(test_dataset)
+        _ = net.predict(test_dataset)
     else:
         net.fit(X_train, y_train)
-        y_pred = net.predict(X_test)
+        _ = net.predict(X_test)
 
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score, mean_squared_error
-@pytest.mark.parametrize('task_type', [TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION])
+
+@pytest.mark.parametrize(
+    'task_type', [TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION])
 def test_sklearn_only(task_type) -> None:
     if task_type == TaskType.MULTICLASS_CLASSIFICATION:
         X, y = load_iris(return_X_y=True, as_frame=True)
         num_classes = 3
     else:
         X, y = load_diabetes(return_X_y=True, as_frame=True)
-        
+
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    
-    def get_module(*, col_stats: dict[str, dict[StatType, Any]], col_names_dict: dict[stype, list[str]]) -> MLP:
+
+    def get_module(*, col_stats: dict[str, dict[StatType, Any]],
+                   col_names_dict: dict[stype, list[str]]) -> MLP:
         channels = 8
-        out_channels = num_classes if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1
+        out_channels = 1
+        if task_type == TaskType.MULTICLASS_CLASSIFICATION:
+            out_channels = num_classes
         num_layers = 3
         return MLP(
             channels=channels,
@@ -146,9 +161,11 @@ def test_sklearn_only(task_type) -> None:
             col_names_dict=col_names_dict,
             normalization="layer_norm",
         )
+
     net = NeuralNetClassifierPytorchFrame(
         module=get_module,
-        criterion=nn.CrossEntropyLoss() if task_type == TaskType.MULTICLASS_CLASSIFICATION else nn.MSELoss(),
+        criterion=nn.CrossEntropyLoss()
+        if task_type == TaskType.MULTICLASS_CLASSIFICATION else nn.MSELoss(),
         max_epochs=2,
         verbose=1,
         lr=0.0001,
@@ -156,7 +173,7 @@ def test_sklearn_only(task_type) -> None:
     )
     net.fit(X_train, y_train)
     y_pred = net.predict(X_test)
-    
+
     if task_type == TaskType.MULTICLASS_CLASSIFICATION:
         assert y_pred.shape == (len(y_test), num_classes)
         acc = accuracy_score(y_test, y_pred.argmax(-1))

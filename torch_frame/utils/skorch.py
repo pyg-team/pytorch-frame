@@ -92,7 +92,8 @@ class NeuralNetPytorchFrame(NeuralNet):
     ) -> None:
         """`skorch.NeuralNet` with `torch_frame` support.
 
-        Additional parameters are **ONLY** used when creating a dummy torch_frame.data.dataset.Dataset
+        Additional parameters are **ONLY** used
+        when creating a dummy torch_frame.data.dataset.Dataset
         if pandas.DataFrame is passed as X in `fit` or `predict` methods.
 
         Parameters
@@ -200,11 +201,14 @@ class NeuralNetPytorchFrame(NeuralNet):
         # skorch API
         return NeuralNetPytorchFrameDataLoader(dataset, device=self.device,
                                                **kwargs)
-        
+
     def initialize_module(self):
+        # skorch API
         if isinstance(self.module, nn.Module):
             return super().initialize_module()
-        self.module_ = staticmethod(self.module)(col_stats=self.dataset_.col_stats,col_names_dict= self.dataset_.tensor_frame.col_names_dict)
+        self.module_ = staticmethod(self.module)(
+            col_stats=self.dataset_.col_stats,
+            col_names_dict=self.dataset_.tensor_frame.col_names_dict)
         return self
 
     def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,
@@ -215,8 +219,8 @@ class NeuralNetPytorchFrame(NeuralNet):
                 X[self.target_col] = y
             elif self.target_col not in X:
                 warnings.warn(
-                    f"target_col {self.target_col} not found in X and y is None",
-                    UserWarning, stacklevel=2)
+                    f"target_col {self.target_col}"
+                    " not found in X and y is None", UserWarning, stacklevel=2)
 
             # create split_col if not exists
             if self.split_col not in X:
@@ -230,7 +234,7 @@ class NeuralNetPytorchFrame(NeuralNet):
             self.dataset_ = Dataset(
                 X,
                 # do not include split_col
-                {  # type: ignore
+                {
                     k: v
                     for k, v in infer_df_stype(X).items()
                     if k not in (self.split_col, )
@@ -248,16 +252,6 @@ class NeuralNetPytorchFrame(NeuralNet):
         else:
             self.dataset_ = X
 
-        # self.module.encoder.col_stats = self.dataset_.col_stats
-        # self.module.encoder.col_names_dict = self.dataset_.tensor_frame.col_names_dict
-        # import inspect
-        # init_param_names = inspect.signature(self.module.__class__).parameters.keys()
-        # self.module = self.module.__class__(col_stats=self.dataset_.col_stats,
-        #                                     col_names_dict=self.dataset_.tensor_frame.col_names_dict,
-        #                                     **{k: v for k, v in self.module.__dict__.items() if k in init_param_names})
-        
-        # if function
-        
         return super().fit(self.dataset_.df, None, **fit_params)
 
     def predict(self, X: Dataset | DataFrame) -> NDArray[Any]:
@@ -292,6 +286,6 @@ class NeuralNetClassifierPytorchFrame(NeuralNetPytorchFrame):
             self, "classes", None) or self.dataset_.df["target_col"].unique()
         return fit_result
 
-# class NeuralNetBinaryClassifierPytorchFrame(NeuralNetPytorchFrame, skorch.NeuralNetBinaryClassifier):
+
 class NeuralNetBinaryClassifierPytorchFrame(NeuralNetPytorchFrame):
     num_classes = np.array([0, 1])
