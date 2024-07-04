@@ -4,6 +4,7 @@ import importlib
 import warnings
 from typing import Any
 
+import numpy as np
 import skorch.utils
 import torch
 from numpy.typing import ArrayLike, NDArray
@@ -242,9 +243,11 @@ class NeuralNetPytorchFrame(NeuralNet):
 
         # self.module.encoder.col_stats = self.dataset_.col_stats
         # self.module.encoder.col_names_dict = self.dataset_.tensor_frame.col_names_dict
+        # import inspect
+        # init_param_names = inspect.signature(self.module.__class__).parameters.keys()
         # self.module = self.module.__class__(col_stats=self.dataset_.col_stats,
         #                                     col_names_dict=self.dataset_.tensor_frame.col_names_dict,
-        #                                     **self.module.__dict__
+        #                                     **{k: v for k, v in self.module.__dict__.items() if k in init_param_names})
         return super().fit(self.dataset_.df, None, **fit_params)
 
     def predict(self, X: Dataset | DataFrame) -> NDArray[Any]:
@@ -278,3 +281,7 @@ class NeuralNetClassifierPytorchFrame(NeuralNetPytorchFrame):
         self.classes = getattr(
             self, "classes", None) or self.dataset_.df["target_col"].unique()
         return fit_result
+
+# class NeuralNetBinaryClassifierPytorchFrame(NeuralNetPytorchFrame, skorch.NeuralNetBinaryClassifier):
+class NeuralNetBinaryClassifierPytorchFrame(NeuralNetPytorchFrame):
+    num_classes = np.array([0, 1])
