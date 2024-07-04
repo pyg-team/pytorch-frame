@@ -1,8 +1,10 @@
 from typing import Any
 import pandas as pd
 import pytest
+from sklearn.model_selection import train_test_split
 import torch.nn as nn
 
+from sklearn.datasets import load_iris, load_diabetes
 from torch_frame import TaskType, stype
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.data.dataset import Dataset
@@ -119,3 +121,47 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
     else:
         net.fit(X_train, y_train)
         y_pred = net.predict(X_test)
+
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import accuracy_score, mean_squared_error
+@pytest.mark.parametrize('task_type', [TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION])
+def test_sklearn_only(task_type) -> None:
+    if task_type == TaskType.MULTICLASS_CLASSIFICATION:
+        X, y = load_iris(return_X_y=True, as_frame=True)
+        num_classes = 3
+    else:
+        X, y = load_diabetes(return_X_y=True, as_frame=True)
+        
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    
+    def get_module(*, col_stats: dict[str, dict[StatType, Any]], col_names_dict: dict[stype, list[str]]) -> MLP:
+        channels = 8
+        out_channels = num_classes if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1
+        num_layers = 3
+        return MLP(
+            channels=channels,
+            out_channels=out_channels,
+            num_layers=num_layers,
+            col_stats=col_stats,
+            col_names_dict=col_names_dict,
+            normalization="layer_norm",
+        )
+    net = NeuralNetClassifierPytorchFrame(
+        module=get_module,
+        criterion=nn.CrossEntropyLoss() if task_type == TaskType.MULTICLASS_CLASSIFICATION else nn.MSELoss(),
+        max_epochs=2,
+        verbose=1,
+        lr=0.0001,
+        batch_size=3,
+    )
+    net.fit(X_train, y_train)
+    y_pred = net.predict(X_test)
+    
+    if task_type == TaskType.MULTICLASS_CLASSIFICATION:
+        assert y_pred.shape == (len(y_test), num_classes)
+        acc = accuracy_score(y_test, y_pred.argmax(-1))
+        print(acc)
+    else:
+        assert y_pred.shape == (len(y_test), 1)
+        mse = mean_squared_error(y_test, y_pred)
+        print(mse)
