@@ -15,8 +15,9 @@ import torch.nn.functional as F
 class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     def forward(self, input, target):
         # float to long
-        input = F.sigmoid(input).long()
-        return super().forward(input.squeeze(), target.long())
+        input = F.sigmoid(input).float().squeeze()
+        target = target.float()
+        return super().forward(input, target)
 
 @pytest.mark.parametrize('cls', ["mlp"])
 @pytest.mark.parametrize(
@@ -29,7 +30,7 @@ class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     ])
 @pytest.mark.parametrize('task_type_and_loss_cls', [
     (TaskType.REGRESSION, nn.MSELoss),
-    # (TaskType.BINARY_CLASSIFICATION, BCEWithLogitsLossSqueeze),
+    (TaskType.BINARY_CLASSIFICATION, BCEWithLogitsLossSigmoidSqueeze),
     (TaskType.MULTICLASS_CLASSIFICATION, nn.CrossEntropyLoss),
 ])
 @pytest.mark.parametrize('pass_dataset', [False])
