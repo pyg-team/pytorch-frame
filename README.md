@@ -68,12 +68,15 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 
 <hr style="border: 0.5px solid #ccc;">
 
-* [Library Highlights](#library-highlights)
-* [Architecture Overview](#architecture-overview)
-* [Quick Tour](#quick-tour)
-* [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
-* [Benchmark](#benchmark)
-* [Installation](#installation)
+- [Library Highlights](#library-highlights)
+- [Architecture Overview](#architecture-overview)
+- [Quick Tour](#quick-tour)
+  - [Build and train your own deep tabular model](#build-and-train-your-own-deep-tabular-model)
+  - [Scikit-learn Compatible API](#scikit-learn-compatible-api)
+- [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
+- [Benchmark](#benchmark)
+- [Installation](#installation)
+- [Cite](#cite)
 
 ## Library Highlights
 
@@ -204,6 +207,65 @@ for epoch in range(50):
         loss = F.cross_entropy(pred, tf.y)
         optimizer.zero_grad()
         loss.backward()
+```
+
+### Scikit-learn Compatible API (Experimental)
+
+A scikit-learn compliant API based on skorch allows DataFrame to be trained directly as a dataset. However, this has many limitations.
+
+```python
+from typing import Any
+
+import torch.nn as nn
+from sklearn.datasets import load_diabetes
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+
+from torch_frame import stype
+from torch_frame.data.stats import StatType
+from torch_frame.nn import Trompt
+from torch_frame.nn.models.trompt import Trompt
+from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
+
+# load the diabetes dataset
+X, y = load_diabetes(return_X_y=True, as_frame=True)
+
+# split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+
+# define the function to get the module
+def get_module(*, col_stats: dict[str, dict[StatType, Any]],
+               col_names_dict: dict[stype, list[str]]) -> Trompt:
+    channels = 8
+    out_channels = 1
+    num_prompts = 2
+    num_layers = 3
+    return Trompt(channels=channels, out_channels=out_channels,
+                  num_prompts=num_prompts, num_layers=num_layers,
+                  col_stats=col_stats, col_names_dict=col_names_dict,
+                  stype_encoder_dicts=None)
+
+
+# wrap the function in a NeuralNetClassifierPytorchFrame
+net = NeuralNetClassifierPytorchFrame(
+    module=get_module,
+    criterion=nn.MSELoss(),
+    max_epochs=10,
+    verbose=1,
+    lr=0.0001,
+    batch_size=30,
+)
+
+# fit the model
+net.fit(X_train, y_train)
+
+# predict on the test set
+y_pred = net.predict(X_test)
+
+# calculate the mean squared error
+mse = mean_squared_error(y_test, y_pred)
+print(mse)
 ```
 
 ## Implemented Deep Tabular Models
