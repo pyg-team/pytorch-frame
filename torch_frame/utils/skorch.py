@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import importlib
-from typing import Any
 import warnings
+from typing import Any
 
 import skorch.utils
 import torch
@@ -89,7 +89,7 @@ class NeuralNetPytorchFrame(NeuralNet):
         **kwargs,
     ) -> None:
         """`skorch.NeuralNet` with `torch_frame` support.
-        
+
         Additional parameters are **ONLY** used when creating a dummy torch_frame.data.dataset.Dataset
         if pandas.DataFrame is passed as X in `fit` or `predict` methods.
 
@@ -156,7 +156,7 @@ class NeuralNetPytorchFrame(NeuralNet):
             use_caching=use_caching,
             **kwargs,
         )
-        # additional parameters used when creating a dummy 
+        # additional parameters used when creating a dummy
         # torch_frame.data.dataset.Dataset
         self.col_to_stype = col_to_stype
         self.target_col = target_col
@@ -208,9 +208,8 @@ class NeuralNetPytorchFrame(NeuralNet):
             elif self.target_col not in X:
                 warnings.warn(
                     f"target_col {self.target_col} not found in X and y is None",
-                    UserWarning
-                , stacklevel=2)
-                
+                    UserWarning, stacklevel=2)
+
             # create split_col if not exists
             if self.split_col not in X:
                 # first split the data with the split function
@@ -219,7 +218,7 @@ class NeuralNetPytorchFrame(NeuralNet):
                 # X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
                 # split_col uses iloc instead of loc, this is weird
                 X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
-            
+
             self.dataset_ = Dataset(
                 X,
                 # do not include split_col
