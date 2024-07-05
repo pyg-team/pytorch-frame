@@ -231,6 +231,7 @@ class NeuralNetPytorchFrame(NeuralNet):
         if isinstance(X, DataFrame):
             # create target_col if not exists
             if y is not None:
+                X = X.copy()
                 X[self.target_col] = y
             elif self.target_col not in X:
                 warnings.warn(
@@ -239,6 +240,8 @@ class NeuralNetPytorchFrame(NeuralNet):
 
             # create split_col if not exists
             if self.split_col not in X:
+                if y is None:
+                    X = X.copy()
                 # first split the data with the split function
                 X_train, X_val = self.train_split_original(X, **fit_params)
                 # if index is in X_train, 0, otherwise 1
