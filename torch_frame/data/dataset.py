@@ -734,7 +734,8 @@ class Dataset(ABC):
         if split not in ["train", "val", "test"]:
             raise ValueError(f"The split named '{split}' is not available. "
                              f"Needs to be either 'train', 'val', or 'test'.")
-        indices = np.where(self.df[self.split_col] == SPLIT_TO_NUM[split])[0]
+        indices = np.where(
+            self.df[self.split_col] == SPLIT_TO_NUM[split])[0].tolist()
         return self[indices]
 
     def split(self) -> tuple[Dataset, Dataset, Dataset]:
