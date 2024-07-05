@@ -41,6 +41,9 @@ def _patch_skorch_support_tenforframe() -> None:
     importlib.reload(skorch.net)
 
 
+_patch_skorch_support_tenforframe()
+
+
 class NeuralNetPytorchFrameDataLoader(DataLoader):
     def __init__(self, dataset: Dataset | TensorFrame, *args,
                  device: torch.device, **kwargs):
@@ -139,7 +142,6 @@ class NeuralNetPytorchFrame(NeuralNet):
             to_datetime function will be used to auto parse time columns.
             (default: :obj:`None`)
         """
-        _patch_skorch_support_tenforframe()
         super().__init__(
             module=module,
             criterion=criterion,
