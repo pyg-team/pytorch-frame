@@ -173,6 +173,16 @@ class NeuralNetPytorchFrame(NeuralNet):
         self.train_split_original = train_split or (
             lambda x: train_test_split(x, test_size=0.2))
         # 0.2 is the default test_size in train_test_split in skorch
+        for name, v in zip(
+            ["iterator_train", "iterator_valid", "dataset"],
+            [iterator_train, iterator_valid, dataset],
+        ):
+            if v is not None:
+                warnings.warn(
+                    "NeuralNetPytorchFrame does not support"
+                    f" specifying {name}, "
+                    "consider overriding the methods instead", UserWarning,
+                    stacklevel=2)
 
     def create_dataset(self, df: DataFrame, _: Any) -> Dataset:
         # skorch API
@@ -206,7 +216,7 @@ class NeuralNetPytorchFrame(NeuralNet):
         # skorch API
         if isinstance(self.module, nn.Module):
             return super().initialize_module()
-        self.module_ = staticmethod(self.module)(
+        self.module_ = staticmethod(self.module).__func__(
             col_stats=self.dataset_.col_stats,
             col_names_dict=self.dataset_.tensor_frame.col_names_dict)
         return self
