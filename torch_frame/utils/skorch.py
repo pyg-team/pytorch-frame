@@ -231,14 +231,19 @@ class NeuralNetPytorchFrame(NeuralNet):
                 # split_col uses iloc instead of loc, this is weird
                 X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
 
+            # col_to_stype
+            col_to_stype = {
+                k: v
+                for k, v in infer_df_stype(X).items()
+                if k not in (self.split_col, )
+            }
+            if self.col_to_stype is not None:
+                col_to_stype.update(self.col_to_stype)
+
             self.dataset_ = Dataset(
                 X,
                 # do not include split_col
-                {
-                    k: v
-                    for k, v in infer_df_stype(X).items()
-                    if k not in (self.split_col, )
-                } | (self.col_to_stype or {}),
+                col_to_stype=col_to_stype,
                 split_col=self.split_col,
                 target_col=self.target_col,
                 col_to_sep=self.col_to_sep,
@@ -248,6 +253,7 @@ class NeuralNetPytorchFrame(NeuralNet):
                 col_to_time_format=self.col_to_time_format,
             )
             # materialize the dataset to add col_stats and col_names_dict
+            # in initialize_module()
             self.dataset_.materialize()
         else:
             self.dataset_ = X
