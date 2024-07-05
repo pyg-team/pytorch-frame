@@ -26,19 +26,19 @@ from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.typing import IndexSelectType
 from torch_frame.utils import infer_df_stype
 
+
 # TODO: make it more safe
-old_to_tensor = skorch.utils.to_tensor
+def _patch_skorch_support_tenforframe() -> None:
+    old_to_tensor = skorch.utils.to_tensor
 
+    def to_tensor(X, device, accept_sparse=False):
+        if isinstance(X, TensorFrame):
+            return X
+        return old_to_tensor(X, device, accept_sparse)
 
-def to_tensor(X, device, accept_sparse=False):
-    if isinstance(X, TensorFrame):
-        return X
-    return old_to_tensor(X, device, accept_sparse)
+    skorch.utils.to_tensor = to_tensor
 
-
-skorch.utils.to_tensor = to_tensor
-
-importlib.reload(skorch.net)
+    importlib.reload(skorch.net)
 
 
 class NeuralNetPytorchFrameDataLoader(DataLoader):
@@ -139,6 +139,7 @@ class NeuralNetPytorchFrame(NeuralNet):
             to_datetime function will be used to auto parse time columns.
             (default: :obj:`None`)
         """
+        _patch_skorch_support_tenforframe()
         super().__init__(
             module=module,
             criterion=criterion,
@@ -214,8 +215,10 @@ class NeuralNetPytorchFrame(NeuralNet):
 
     def initialize_module(self):
         # skorch API
-        if isinstance(self.module, nn.Module):
+        # if module, behave like the original NeuralNet
+        if isinstance(self.module, nn.Module) or isinstance(self.module, type):
             return super().initialize_module()
+        # assume that self.module is a function
         self.module_ = staticmethod(self.module).__func__(
             col_stats=self.dataset_.col_stats,
             col_names_dict=self.dataset_.tensor_frame.col_names_dict)
@@ -237,8 +240,6 @@ class NeuralNetPytorchFrame(NeuralNet):
                 # first split the data with the split function
                 X_train, X_val = self.train_split_original(X, **fit_params)
                 # if index is in X_train, 0, otherwise 1
-                # X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
-                # split_col uses iloc instead of loc, this is weird
                 X[self.split_col] = (X.index.isin(X_train.index)).astype(int)
 
             # col_to_stype
