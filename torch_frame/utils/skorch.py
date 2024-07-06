@@ -29,6 +29,9 @@ from torch_frame.utils import infer_df_stype
 
 # TODO: make it more safe
 def _patch_skorch_support_tenforframe() -> None:
+    """Patch skorch.utils.to_tensor to support TensorFrame
+    as it raises an error when TensorFrame is passed.
+    """
     old_to_tensor = skorch.utils.to_tensor
 
     def to_tensor(X, device, accept_sparse=False):
