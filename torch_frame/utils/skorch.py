@@ -52,6 +52,10 @@ _patch_skorch_support_tenforframe()
 
 
 class NeuralNetPytorchFrameDataLoader(DataLoader):
+    """Custom DataLoader for NeuralNetPytorchFrame.
+
+    Converts the index to a tensor and separates the input and target tensors.
+    """
     def __init__(self, dataset: Dataset | TensorFrame, *args,
                  device: torch.device, **kwargs):
         super().__init__(dataset, *args, **kwargs)
