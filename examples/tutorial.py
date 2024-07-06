@@ -7,7 +7,9 @@ import math
 import os.path as osp
 from typing import Any, Dict, List
 
+import pandas as pd
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ModuleList
@@ -270,7 +272,6 @@ if args.framework == "torch":
         f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}"
     )
 elif args.framework == "skorch":
-    import torch.nn as nn
 
     from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
 
@@ -289,8 +290,6 @@ elif args.framework == "skorch":
         dim=-1) == test_tensor_frame.y).float().mean()
     print(f"Test Acc: {test_acc:.4f}")
 elif args.framework == "skorch-dataframe":
-    import pandas as pd
-    import torch.nn as nn
 
     from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
 

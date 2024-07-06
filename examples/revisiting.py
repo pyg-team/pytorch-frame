@@ -17,7 +17,10 @@ california_housing 0.486 (0.523)
 import argparse
 import os.path as osp
 
+import numpy as np
+import pandas as pd
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
@@ -190,9 +193,6 @@ if args.framework == "torch":
     print(f'Best Val {metric}: {best_val_metric:.4f}, '
           f'Best Test {metric}: {best_test_metric:.4f}')
 elif args.framework == "skorch-dataframe":
-    import numpy as np
-    import pandas as pd
-    import torch.nn as nn
 
     from torch_frame.utils.skorch import (
         NeuralNetClassifierPytorchFrame,
