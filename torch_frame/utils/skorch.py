@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import warnings
+from functools import wraps
 from typing import Any
 
 import numpy as np
@@ -32,12 +33,13 @@ def _patch_skorch_support_tenforframe() -> None:
     """Patch skorch.utils.to_tensor to support TensorFrame
     as it raises an error when TensorFrame is passed.
     """
-    old_to_tensor = skorch.utils.to_tensor
+    original_to_tensor = skorch.utils.to_tensor
 
+    @wraps(original_to_tensor)
     def to_tensor(X, device, accept_sparse=False):
         if isinstance(X, TensorFrame):
             return X
-        return old_to_tensor(X, device, accept_sparse)
+        return original_to_tensor(X, device, accept_sparse)
 
     skorch.utils.to_tensor = to_tensor
 
