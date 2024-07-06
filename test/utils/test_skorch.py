@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 import pytest
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -24,12 +24,18 @@ from torch_frame.utils.skorch import (
 )
 
 
-class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
+class EnsureDtypeLoss(nn.Module):
+    def __init__(self, loss: nn.Module, dtype_input: torch.dtype = torch.float,
+                 dtype_target: torch.dtype = torch.float):
+        super().__init__()
+        self.loss = loss
+        self.dtype_input = dtype_input
+        self.dtype_target = dtype_target
+
     def forward(self, input, target):
-        # float to long
-        input = F.sigmoid(input).float().squeeze()
-        target = target.float().squeeze()
-        return super().forward(input, target)
+        return self.loss(
+            input.to(dtype=self.dtype_input).squeeze(),
+            target.to(dtype=self.dtype_target).squeeze())
 
 
 @pytest.mark.parametrize('cls', ["mlp"])
@@ -43,7 +49,7 @@ class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     ])
 @pytest.mark.parametrize('task_type_and_loss_cls', [
     (TaskType.REGRESSION, nn.MSELoss),
-    (TaskType.BINARY_CLASSIFICATION, BCEWithLogitsLossSigmoidSqueeze),
+    (TaskType.BINARY_CLASSIFICATION, nn.BCEWithLogitsLoss),
     (TaskType.MULTICLASS_CLASSIFICATION, nn.CrossEntropyLoss),
 ])
 @pytest.mark.parametrize('pass_dataset', [False, True])
@@ -53,6 +59,9 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
                                    module_as_function: bool):
     task_type, loss_cls = task_type_and_loss_cls
     loss = loss_cls()
+    loss = EnsureDtypeLoss(
+        loss, dtype_target=torch.long
+        if task_type == TaskType.MULTICLASS_CLASSIFICATION else torch.float)
 
     # initialize dataset
     dataset: Dataset = FakeDataset(
