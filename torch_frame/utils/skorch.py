@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib
 import warnings
 from functools import wraps
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import skorch.utils
@@ -15,7 +15,7 @@ from skorch import NeuralNet
 from torch import Tensor
 
 import torch_frame
-from torch_frame import nn
+from torch_frame import nn, stype
 from torch_frame.config import (
     ImageEmbedderConfig,
     TextEmbedderConfig,
@@ -23,6 +23,7 @@ from torch_frame.config import (
 )
 from torch_frame.data.dataset import Dataset
 from torch_frame.data.loader import DataLoader
+from torch_frame.data.stats import StatType
 from torch_frame.data.tensor_frame import TensorFrame
 from torch_frame.typing import IndexSelectType
 from torch_frame.utils import infer_df_stype
@@ -66,7 +67,9 @@ class NeuralNetPytorchFrame(NeuralNet):
     def __init__(
         self,
         # NeuralNet parameters
-        module,
+        module: type[nn.Module] | nn.Module
+        | Callable[[dict[str, dict[StatType, Any]], dict[stype, list[str]]],
+                   nn.Module],
         criterion,
         optimizer=torch.optim.SGD,
         lr=0.01,
