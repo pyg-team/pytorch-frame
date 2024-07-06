@@ -72,7 +72,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 - [Architecture Overview](#architecture-overview)
 - [Quick Tour](#quick-tour)
   - [Build and train your own deep tabular model](#build-and-train-your-own-deep-tabular-model)
-  - [Scikit-learn Compatible API](#scikit-learn-compatible-api)
+  - [Scikit-learn Compatible API (Experimental)](#scikit-learn-compatible-api-experimental)
 - [Implemented Deep Tabular Models](#implemented-deep-tabular-models)
 - [Benchmark](#benchmark)
 - [Installation](#installation)
@@ -225,7 +225,7 @@ from torch_frame import stype
 from torch_frame.data.stats import StatType
 from torch_frame.nn import Trompt
 from torch_frame.nn.models.trompt import Trompt
-from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
+from torch_frame.utils.skorch import NeuralNetPytorchFrame
 
 # load the diabetes dataset
 X, y = load_diabetes(return_X_y=True, as_frame=True)
@@ -247,8 +247,10 @@ def get_module(*, col_stats: dict[str, dict[StatType, Any]],
                   stype_encoder_dicts=None)
 
 
-# wrap the function in a NeuralNetClassifierPytorchFrame
-net = NeuralNetClassifierPytorchFrame(
+# wrap the function in a NeuralNetPytorchFrame
+# NeuralNetClassifierPytorchFrame and NeuralNetBinaryClassifierPytorchFrame
+# are also available
+net = NeuralNetPytorchFrame(
     module=get_module,
     criterion=nn.MSELoss(),
     max_epochs=10,

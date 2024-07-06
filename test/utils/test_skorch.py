@@ -20,6 +20,7 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
 from torch_frame.utils.skorch import (
     NeuralNetBinaryClassifierPytorchFrame,
     NeuralNetClassifierPytorchFrame,
+    NeuralNetPytorchFrame,
 )
 
 
@@ -106,7 +107,16 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
     else:
         raise NotImplementedError
 
-    if task_type in [TaskType.REGRESSION, TaskType.MULTICLASS_CLASSIFICATION]:
+    if task_type == TaskType.REGRESSION:
+        net = NeuralNetPytorchFrame(
+            module=get_module,
+            criterion=loss,
+            max_epochs=2,
+            verbose=1,
+            batch_size=3,
+            # col_to_stype=col_to_stype,
+        )
+    if task_type == TaskType.MULTICLASS_CLASSIFICATION:
         net = NeuralNetClassifierPytorchFrame(
             module=get_module,
             criterion=loss,
