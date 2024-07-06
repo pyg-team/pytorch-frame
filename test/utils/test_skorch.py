@@ -28,7 +28,7 @@ class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     def forward(self, input, target):
         # float to long
         input = F.sigmoid(input).float().squeeze()
-        target = target.float()
+        target = target.float().squeeze()
         return super().forward(input, target)
 
 
@@ -46,9 +46,11 @@ class BCEWithLogitsLossSigmoidSqueeze(nn.BCEWithLogitsLoss):
     (TaskType.BINARY_CLASSIFICATION, BCEWithLogitsLossSigmoidSqueeze),
     (TaskType.MULTICLASS_CLASSIFICATION, nn.CrossEntropyLoss),
 ])
-@pytest.mark.parametrize('pass_dataset', [False])
+@pytest.mark.parametrize('pass_dataset', [False, True])
+@pytest.mark.parametrize('module_as_function', [False, True])
 def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
-                                   pass_dataset: bool):
+                                   pass_dataset: bool,
+                                   module_as_function: bool):
     task_type, loss_cls = task_type_and_loss_cls
     loss = loss_cls()
 
@@ -88,52 +90,56 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
         del train_dataset, val_dataset, test_dataset
 
     if cls == "mlp":
+        if module_as_function:
 
-        def get_module(*, col_stats: dict[str, dict[StatType, Any]],
-                       col_names_dict: dict[stype, list[str]]) -> MLP:
-            channels = 8
-            out_channels = 1
-            if task_type == TaskType.MULTICLASS_CLASSIFICATION:
-                out_channels = dataset.num_classes
-            num_layers = 3
-            return MLP(
-                channels=channels,
-                out_channels=out_channels,
-                num_layers=num_layers,
-                col_stats=col_stats,
-                col_names_dict=col_names_dict,
-                normalization="layer_norm",
-            )
+            def get_module(col_stats: dict[str, dict[StatType, Any]],
+                           col_names_dict: dict[stype, list[str]]) -> MLP:
+                channels = 8
+                out_channels = 1
+                if task_type == TaskType.MULTICLASS_CLASSIFICATION:
+                    out_channels = dataset.num_classes
+                num_layers = 3
+                return MLP(
+                    channels=channels,
+                    out_channels=out_channels,
+                    num_layers=num_layers,
+                    col_stats=col_stats,
+                    col_names_dict=col_names_dict,
+                    normalization="layer_norm",
+                )
+
+            module = get_module
+            kwargs = {}
+        else:
+            module = MLP
+            kwargs = {
+                "channels":
+                8,
+                "out_channels":
+                dataset.num_classes
+                if task_type == TaskType.MULTICLASS_CLASSIFICATION else 1,
+                "num_layers":
+                3,
+                "normalization":
+                "layer_norm",
+            }
+            kwargs = {f"module__{k}": v for k, v in kwargs.items()}
     else:
         raise NotImplementedError
+    kwargs.update({
+        "module": module,
+        "criterion": loss,
+        "max_epochs": 2,
+        "verbose": 1,
+        "batch_size": 3,
+    })
 
     if task_type == TaskType.REGRESSION:
-        net = NeuralNetPytorchFrame(
-            module=get_module,
-            criterion=loss,
-            max_epochs=2,
-            verbose=1,
-            batch_size=3,
-            # col_to_stype=col_to_stype,
-        )
+        net = NeuralNetPytorchFrame(**kwargs, )
     if task_type == TaskType.MULTICLASS_CLASSIFICATION:
-        net = NeuralNetClassifierPytorchFrame(
-            module=get_module,
-            criterion=loss,
-            max_epochs=2,
-            verbose=1,
-            batch_size=3,
-            # col_to_stype=col_to_stype,
-        )
+        net = NeuralNetClassifierPytorchFrame(**kwargs, )
     elif task_type == TaskType.BINARY_CLASSIFICATION:
-        net = NeuralNetBinaryClassifierPytorchFrame(
-            module=get_module,
-            criterion=loss,
-            max_epochs=2,
-            verbose=1,
-            batch_size=3,
-            # col_to_stype=col_to_stype,
-        )
+        net = NeuralNetBinaryClassifierPytorchFrame(**kwargs, )
 
     if pass_dataset:
         net.fit(dataset)

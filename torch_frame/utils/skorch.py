@@ -8,6 +8,7 @@ from typing import Any, Callable
 import numpy as np
 import skorch.utils
 import torch
+import torch.nn as nn
 from numpy.typing import ArrayLike, NDArray
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
@@ -15,7 +16,7 @@ from skorch import NeuralNet
 from torch import Tensor
 
 import torch_frame
-from torch_frame import nn, stype
+from torch_frame import stype
 from torch_frame.config import (
     ImageEmbedderConfig,
     TextEmbedderConfig,
@@ -227,6 +228,9 @@ class NeuralNetPytorchFrame(NeuralNet):
         # skorch API
         # if module, behave like the original NeuralNet
         if isinstance(self.module, nn.Module) or isinstance(self.module, type):
+            self.module__col_stats = self.dataset_.col_stats
+            self.module__col_names_dict = (
+                self.dataset_.tensor_frame.col_names_dict)
             return super().initialize_module()
         # assume that self.module is a function
         self.module_ = staticmethod(self.module).__func__(
@@ -313,7 +317,8 @@ class NeuralNetClassifierPytorchFrame(NeuralNetPytorchFrame):
             **fit_params):
         fit_result = super().fit(X, y, **fit_params)
         self.classes = getattr(
-            self, "classes", None) or self.dataset_.df["target_col"].unique()
+            self, "classes",
+            None) or self.dataset_.df[self.dataset_.target_col].unique()
         return fit_result
 
 
