@@ -119,7 +119,7 @@ class ExcelFormer(Module):
 
         For an example of using ExcelFormer, see `examples/excelformer.py
         <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
-        excelfromer.py>`_.
+        excelformer.py>`_.
 
     Args:
         in_channels (int): Input channel dimensionality
