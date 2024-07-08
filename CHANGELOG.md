@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.2.3] - 2024-07-08
+
+### Added
+
 - Added `MovieLens 1M` dataset ([#397](https://github.com/pyg-team/pytorch-frame/pull/397))
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
 - Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
@@ -16,11 +28,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
 
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ## [0.2.2] - 2024-03-04
 
