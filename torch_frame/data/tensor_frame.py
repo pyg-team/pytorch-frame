@@ -348,6 +348,7 @@ class TensorFrame:
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:
             y = fn(out.y)
+            assert isinstance(y, (torch.Tensor, MultiNestedTensor))
             out.y = y
 
         return out
