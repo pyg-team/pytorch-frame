@@ -4,7 +4,7 @@ build-backend="flit_core.buildapi"
 
 [project]
 name="pytorch_frame"
-version="0.2.1"
+version="0.2.2"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
 ]
@@ -33,6 +33,7 @@ dependencies=[
     "torch",
     "tqdm",
     "pyarrow",
+    "Pillow",
 ]
 
 [project.optional-dependencies]
@@ -49,9 +50,12 @@ full=[
     "scikit-learn",
     "xgboost>=1.7.0, <2.0.0",
     "optuna>=3.0.0",
+    "optuna-integration",
+    "mpmath==1.3.0",
     "catboost",
     "lightgbm",
     "datasets",
+    "torchmetrics",
 ]
 
 [project.urls]

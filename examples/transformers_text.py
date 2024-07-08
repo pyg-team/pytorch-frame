@@ -315,7 +315,7 @@ stype_encoder_dict = {
     EmbeddingEncoder(),
     stype.numerical:
     LinearEncoder(),
-    # If text_stype is text_embeddeding,
+    # If text_stype is text_embedded,
     # it becomes embedding after materialization
     text_stype.parent:
     text_stype_encoder,

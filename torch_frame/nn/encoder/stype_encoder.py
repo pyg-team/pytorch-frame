@@ -171,13 +171,14 @@ class StypeEncoder(Module, ABC):
         return out
 
     def na_forward(self, feat: TensorData) -> TensorData:
-        r"""Replace NaN values in input :obj:`Tensor` given :obj:`na_strategy`.
+        r"""Replace NaN values in input :obj:`TensorData` given
+        :obj:`na_strategy`.
 
         Args:
-            feat (Tensor): Input :obj:`Tensor`.
+            feat (TensorData): Input :obj:`TensorData`.
 
         Returns:
-            torch.Tensor: Output :obj:`Tensor` with NaNs replaced given
+            TensorData: Output :obj:`TensorData` with NaNs replaced given
                 :obj:`na_strategy`.
         """
         if self.na_strategy is None:
@@ -187,7 +188,9 @@ class StypeEncoder(Module, ABC):
         # faster to just clone the values, while reusing the same offset
         # object.
         if isinstance(feat, Tensor):
-            if get_na_mask(feat).any():
+            # cache for future use
+            na_mask = get_na_mask(feat)
+            if na_mask.any():
                 feat = feat.clone()
             else:
                 return feat
@@ -210,7 +213,7 @@ class StypeEncoder(Module, ABC):
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
 
-        # TODO: Remove for-loop over columns
+        fill_values = []
         for col in range(feat.size(1)):
             if self.na_strategy == NAStrategy.MOST_FREQUENT:
                 # Categorical index is sorted based on count,
@@ -231,16 +234,22 @@ class StypeEncoder(Module, ABC):
                     feat.device)
             else:
                 raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
-            if isinstance(feat, _MultiTensor):
+            fill_values.append(fill_value)
+
+        if isinstance(feat, _MultiTensor):
+            for col, fill_value in enumerate(fill_values):
                 feat.fillna_col(col, fill_value)
-            else:
-                column_data = feat[:, col]
-                na_mask = get_na_mask(column_data)
-                if na_mask.ndim == 2:
-                    na_mask = na_mask.any(dim=-1)
-                assert na_mask.ndim == 1
-                assert len(na_mask) == len(column_data)
-                column_data[na_mask] = fill_value
+        else:
+            if na_mask.ndim == 3:
+                # when feat is 3D, it is faster to iterate over columns
+                for col, fill_value in enumerate(fill_values):
+                    col_data = feat[:, col]
+                    col_na_mask = na_mask[:, col].any(dim=-1)
+                    col_data[col_na_mask] = fill_value
+            else:  # na_mask.ndim == 2
+                fill_values = torch.tensor(fill_values, device=feat.device)
+                assert feat.size(-1) == fill_values.size(-1)
+                feat = torch.where(na_mask, fill_values, feat)
         # Add better safeguard here to make sure nans are actually
         # replaced, expecially when nans are represented as -1's. They are
         # very hard to catch as they won't error out.
@@ -275,39 +284,45 @@ class EmbeddingEncoder(StypeEncoder):
 
     def init_modules(self):
         super().init_modules()
-        self.embs = ModuleList([])
+        num_categories_list = [0]
         for stats in self.stats_list:
             num_categories = len(stats[StatType.COUNT][0])
-            # 0-th category is for NaN.
-            self.embs.append(
-                Embedding(
-                    num_categories + 1,
-                    self.out_channels,
-                    padding_idx=0,
-                ))
+            num_categories_list.append(num_categories)
+        # Single embedding module that stores embeddings of all categories
+        # across all categorical columns.
+        # 0-th category is for NaN.
+        self.emb = Embedding(
+            sum(num_categories_list) + 1,
+            self.out_channels,
+            padding_idx=0,
+        )
+        # [num_cols, ]
+        self.register_buffer(
+            "offset",
+            torch.cumsum(
+                torch.tensor(num_categories_list[:-1], dtype=torch.long),
+                dim=0))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
-        for emb in self.embs:
-            emb.reset_parameters()
+        self.emb.reset_parameters()
 
     def encode_forward(
         self,
         feat: Tensor,
         col_names: list[str] | None = None,
     ) -> Tensor:
-        # TODO: Make this more efficient.
-        # Increment the index by one so that NaN index (-1) becomes 0
-        # (padding_idx)
         # feat: [batch_size, num_cols]
-        feat = feat + 1
-        xs = []
-        for i, emb in enumerate(self.embs):
-            xs.append(emb(feat[:, i]))
-        # [batch_size, num_cols, hidden_channels]
-        x = torch.stack(xs, dim=1)
-        return x
+        # Get NaN mask
+        na_mask = feat < 0
+        # Increment the index by one not to conflict with the padding idx
+        # Also add offset for each column to avoid embedding conflict
+        feat = feat + self.offset + 1
+        # Use 0th index for NaN
+        feat[na_mask] = 0
+        # [batch_size, num_cols, channels]
+        return self.emb(feat)
 
 
 class MultiCategoricalEmbeddingEncoder(StypeEncoder):

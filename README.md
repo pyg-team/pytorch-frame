@@ -28,7 +28,7 @@
 
 </div>
 
-**[Documentation](https://pytorch-frame.readthedocs.io)**
+**[Documentation](https://pytorch-frame.readthedocs.io)** | **[Paper](https://arxiv.org/abs/2404.00776)**
 
 PyTorch Frame is a deep learning extension for [PyTorch](https://pytorch.org/), designed for heterogeneous tabular data with different column types, including numerical, categorical, time, text, and images. It offers a modular framework for implementing existing and future methods. The library features methods from state-of-the-art models, user-friendly mini-batch loaders, benchmark datasets, and interfaces for custom data integration.
 
@@ -80,7 +80,7 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
 PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for existing PyTorch users. Key features include:
 
 * **Diverse column types**:
-  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
+  PyTorch Frame supports learning across various column types: `numerical`, `categorical`, `multicategorical`, `text_embedded`, `text_tokenized`, `timestamp`, `image_embedded`, and `embedding`. See [here](https://pytorch-frame.readthedocs.io/en/latest/handling_advanced_stypes/handle_heterogeneous_stypes.html) for the detailed tutorial.
 * **Modular model design**:
   Enables modular deep learning model implementations, promoting reusability, clear coding, and experimentation flexibility. Further details in the [architecture overview](#architecture-overview).
 * **Models**
@@ -96,7 +96,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/modular.png" />
+  <img width="50%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/architecture.png" />
 </p>
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
@@ -215,7 +215,7 @@ We list currently supported deep tabular models:
 * **[ResNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ResNet.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/revisiting.py)]
 * **[TabNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabnet.py)]
 * **[ExcelFormer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)]
-* **[TabTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabtransformer.py)]
+* **[TabTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) [[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tab_transformer.py)]
 
 In addition, we implemented `XGBoost`, `CatBoost`, and `LightGBM` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
 
@@ -264,3 +264,15 @@ pip install pytorch_frame
 ```
 
 See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.
+
+## Cite
+
+If you use PyTorch Frame in your work, please cite our paper (Bibtex below).
+```
+@article{hu2024pytorch,
+  title={PyTorch Frame: A Modular Framework for Multi-Modal Tabular Learning},
+  author={Hu, Weihua and Yuan, Yiwen and Zhang, Zecheng and Nitta, Akihiro and Cao, Kaidi and Kocijan, Vid and Leskovec, Jure and Fey, Matthias},
+  journal={arXiv preprint arXiv:2404.00776},
+  year={2024}
+}
+```

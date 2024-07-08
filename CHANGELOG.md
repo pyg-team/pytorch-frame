@@ -8,9 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
+- Added `MovieLens 1M` dataset ([#397](https://github.com/pyg-team/pytorch-frame/pull/397))
+- Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+- Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
 
 ### Changed
+
+- Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
 
 ### Deprecated
 
@@ -18,6 +22,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+## [0.2.2] - 2024-03-04
+
+### Added
+
+- Avoided for-loop in `EmbeddingEncoder` ([#366](https://github.com/pyg-team/pytorch-frame/pull/366))
+- Added `image_embedded` and one tabular image dataset ([#344](https://github.com/pyg-team/pytorch-frame/pull/344))
+- Added benchmarking suite for encoders ([#360](https://github.com/pyg-team/pytorch-frame/pull/360))
+- Added dataframe text benchmark script ([#354](https://github.com/pyg-team/pytorch-frame/pull/354), [#367](https://github.com/pyg-team/pytorch-frame/pull/367))
+- Added `DataFrameTextBenchmark` dataset ([#349](https://github.com/pyg-team/pytorch-frame/pull/349))
+- Added support for empty `TensorFrame` ([#339](https://github.com/pyg-team/pytorch-frame/pull/339))
+
+### Changed
+
+- Changed a workflow of Encoder's `na_forward` method resulting in performance boost ([#364](https://github.com/pyg-team/pytorch-frame/pull/364))
+- Removed ReLU applied in `FCResidualBlock` ([#368](https://github.com/pyg-team/pytorch-frame/pull/368))
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Fixed bug in empty `MultiNestedTensor` handling ([#369](https://github.com/pyg-team/pytorch-frame/pull/369))
+- Fixed the split of `DataFrameTextBenchmark` ([#358](https://github.com/pyg-team/pytorch-frame/pull/358))
+- Fixed empty `MultiNestedTensor` col indexing ([#355](https://github.com/pyg-team/pytorch-frame/pull/355))
 
 ## [0.2.1] - 2024-01-16
 
