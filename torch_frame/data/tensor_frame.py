@@ -348,7 +348,6 @@ class TensorFrame:
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:
             y = fn(out.y)
-            assert isinstance(y, Tensor)
             out.y = y
 
         return out
