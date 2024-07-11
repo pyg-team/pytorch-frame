@@ -238,8 +238,7 @@ class NeuralNetPytorchFrame(NeuralNet):
             return super().initialize_module()
         # assume that self.module is a function
         self.module_ = staticmethod(self.module).__func__(
-            col_stats=self.dataset_.col_stats,
-            col_names_dict=self.dataset_.tensor_frame.col_names_dict)
+            self.dataset_.col_stats, self.dataset_.tensor_frame.col_names_dict)
         return self
 
     def fit(self, X: Dataset | DataFrame, y: ArrayLike | None = None,

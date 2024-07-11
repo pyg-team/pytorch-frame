@@ -160,7 +160,7 @@ def test_sklearn_only(task_type) -> None:
 
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    def get_module(*, col_stats: dict[str, dict[StatType, Any]],
+    def get_module(col_stats: dict[str, dict[StatType, Any]],
                    col_names_dict: dict[stype, list[str]]) -> MLP:
         channels = 8
         out_channels = 1
