@@ -75,15 +75,6 @@ def test_skorch_torchframe_dataset(cls, stypes, task_type_and_loss_cls,
     )
     dataset.materialize()
     train_dataset, val_dataset, test_dataset = dataset.split()
-    # print(dataset.col_stats)
-    # # convert to dataframe
-    # col_to_stype = dataset.col_to_stype
-    # # remove split_col and target_col
-    # col_to_stype = {
-    #     k: v
-    #     for k, v in col_to_stype.items()
-    #     if k not in [dataset.split_col, dataset.target_col]
-    # }
     if not pass_dataset:
         df_train = pd.concat([train_dataset.df, val_dataset.df])
         X_train, y_train = df_train.drop(
