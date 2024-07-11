@@ -7,9 +7,7 @@ import math
 import os.path as osp
 from typing import Any, Dict, List
 
-import pandas as pd
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import LayerNorm, Linear, Module, ModuleList
@@ -36,8 +34,6 @@ parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument("--framework", type=str, default="torch",
-                    choices=["torch", "skorch", "skorch-dataframe"])
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -227,7 +223,7 @@ def train(epoch: int) -> float:
     model.train()
     loss_accum = total_count = 0
 
-    for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
+    for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
         tf = tf.to(device)
         pred = model(tf)
         loss = F.cross_entropy(pred, tf.y)
@@ -254,68 +250,17 @@ def test(loader: DataLoader) -> float:
     return accum / total_count
 
 
-if args.framework == "torch":
-    best_val_acc = 0
-    best_test_acc = 0
-    for epoch in range(1, args.epochs + 1):
-        train_loss = train(epoch)
-        train_acc = test(train_loader)
-        val_acc = test(val_loader)
-        test_acc = test(test_loader)
-        if best_val_acc < val_acc:
-            best_val_acc = val_acc
-            best_test_acc = test_acc
-        print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, "
-              f"Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}")
+best_val_acc = 0
+best_test_acc = 0
+for epoch in range(1, args.epochs + 1):
+    train_loss = train(epoch)
+    train_acc = test(train_loader)
+    val_acc = test(val_loader)
+    test_acc = test(test_loader)
+    if best_val_acc < val_acc:
+        best_val_acc = val_acc
+        best_test_acc = test_acc
+    print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, '
+          f'Val Acc: {val_acc:.4f}, Test Acc: {test_acc:.4f}')
 
-    print(
-        f"Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}"
-    )
-elif args.framework == "skorch":
-
-    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
-
-    net = NeuralNetClassifierPytorchFrame(
-        module=model,
-        criterion=nn.CrossEntropyLoss,
-        max_epochs=args.epochs,
-        lr=args.lr,
-        device=device,
-        verbose=1,
-        batch_size=args.batch_size,
-    )
-    net.fit(dataset)
-    y_pred = net.predict(test_dataset)
-    test_acc = (torch.Tensor(y_pred).argmax(
-        dim=-1) == test_tensor_frame.y).float().mean()
-    print(f"Test Acc: {test_acc:.4f}")
-elif args.framework == "skorch-dataframe":
-
-    from torch_frame.utils.skorch import NeuralNetClassifierPytorchFrame
-
-    df = dataset.df
-    df_train = pd.concat([train_dataset.df, val_dataset.df])
-    X_train, y_train = df_train.drop(
-        columns=[dataset.target_col, dataset.split_col]), df_train[
-            dataset.target_col]
-    df_test = test_dataset.df
-    X_test, y_test = df_test.drop(
-        columns=[dataset.target_col, dataset.split_col]), df_test[
-            dataset.target_col]
-
-    # use DataFrames with no `split_col` or `target_col`
-    # like normal sklearn datasets from now on
-    net = NeuralNetClassifierPytorchFrame(
-        module=model,
-        criterion=nn.CrossEntropyLoss,
-        max_epochs=args.epochs,
-        lr=args.lr,
-        device=device,
-        verbose=1,
-        col_to_stype={"C_feature_7": stype.categorical},
-        batch_size=args.batch_size,
-    )
-    net.fit(X_train, y_train)
-    y_pred = net.predict(X_test)
-    test_acc = (y_pred.argmax(-1) == y_test).mean()
-    print(f"Test Acc: {test_acc:.4f}")
+print(f'Best Val Acc: {best_val_acc:.4f}, Best Test Acc: {best_test_acc:.4f}')
