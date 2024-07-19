@@ -70,7 +70,8 @@ def infer_series_stype(ser: Series) -> stype | None:
     # Categorical minimum counting threshold. If the count of the most minor
     # categories is larger than this value, we treat the column as categorical.
     cat_min_count_thresh = 4
-
+    import pdb
+    pdb.set_trace()
     if isinstance(ser.iloc[0], list):
         # Candidates: embedding, sequence_numerical, multicategorical
 
