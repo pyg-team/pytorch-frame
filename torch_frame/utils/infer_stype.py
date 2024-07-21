@@ -5,6 +5,7 @@ import math
 import warnings
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pandas.api.types as ptypes
 from dateutil.parser import ParserError
@@ -137,19 +138,26 @@ def infer_series_stype(ser: Series) -> stype | None:
                     return stype.embedding
 
             # Try different possible seps and mick the largest min_count.
-            min_count_list = []
-            for sep in POSSIBLE_SEPS:
-                try:
-                    min_count_list.append(
-                        _min_count(
-                            ser.apply(lambda row: MultiCategoricalTensorMapper.
-                                      split_by_sep(row, sep)).explode()))
-                except Exception as e:
-                    logging.warn(
-                        "Mapping series into multicategorical stype "
-                        f"with separator {sep} raised an exception {e}")
-                    continue
-            if max(min_count_list) > cat_min_count_thresh:
+            if isinstance(ser.iloc[0], list) or isinstance(
+                    ser.iloc[0], np.ndarray):
+                max_min_count = _min_count(ser.explode())
+            else:
+                min_count_list = []
+                for sep in POSSIBLE_SEPS:
+                    try:
+                        min_count_list.append(
+                            _min_count(
+                                ser.apply(
+                                    lambda row: MultiCategoricalTensorMapper.
+                                    split_by_sep(row, sep)).explode()))
+                    except Exception as e:
+                        logging.warn(
+                            "Mapping series into multicategorical stype "
+                            f"with separator {sep} raised an exception {e}")
+                        continue
+                max_min_count = max(min_count_list or [0])
+
+            if max_min_count > cat_min_count_thresh:
                 return stype.multicategorical
             else:
                 return stype.text_embedded
