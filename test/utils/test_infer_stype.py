@@ -41,7 +41,7 @@ def test_infer_df_stype(with_nan):
     assert col_to_stype_inferred == dataset.col_to_stype
 
 
-def test_infer_multicategorical_stype():
+def test_infer_stypes():
     # Test when multicategoricals are lists
     df = pd.DataFrame({
         'category': [['Books', 'Mystery, Thriller'],
@@ -52,3 +52,8 @@ def test_infer_multicategorical_stype():
     })
     col_to_stype_inferred = infer_df_stype(df)
     assert col_to_stype_inferred['category'] == torch_frame.multicategorical
+
+    df = pd.DataFrame({'bool': [True] * 50 + [False] * 50})
+
+    col_to_stype_inferred = infer_df_stype(df)
+    assert col_to_stype_inferred['bool'] == torch_frame.categorical

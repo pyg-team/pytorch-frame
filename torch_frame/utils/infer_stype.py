@@ -109,6 +109,9 @@ def infer_series_stype(ser: Series) -> stype | None:
         # text_(embedded/tokenized)
 
         if ptypes.is_numeric_dtype(ser):
+
+            if ptypes.is_bool_dtype(ser):
+                return stype.categorical
             # Candidates: numerical, categorical
             if ptypes.is_float_dtype(ser) and not (has_nan and
                                                    (ser % 1 == 0).all()):
