@@ -18,6 +18,7 @@ from torch_frame.typing import TensorData
 torch.serialization.add_safe_globals([torch_frame.stype])
 torch.serialization.add_safe_globals([StatType])
 
+
 def serialize_feat_dict(
     feat_dict: dict[torch_frame.stype, TensorData]
 ) -> dict[torch_frame.stype, Any]:
@@ -97,7 +98,7 @@ def load(
         tuple: A tuple of loaded :class:`TensorFrame` object and
             optional :obj:`col_stats`.
     """
-    tf_dict, col_stats = torch.load(path, weights_only = True)
+    tf_dict, col_stats = torch.load(path, weights_only=True)
     tf_dict['feat_dict'] = deserialize_feat_dict(
         tf_dict.pop('feat_serialized_dict'))
     tensor_frame = TensorFrame(**tf_dict)
