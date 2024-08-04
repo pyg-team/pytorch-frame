@@ -186,8 +186,13 @@ class XGBoost(GBDT):
         else:
             iteration_range = None
         pred = boost.predict(dvalid, iteration_range)
-        score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
-                                    torch.from_numpy(pred))
+        if (boost.best_iteration
+                and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
+            assert pred.shape[1] == self.params["num_class"]
+            pred = torch.argmax(torch.from_numpy(pred), dim=1)
+        else:
+            pred = torch.from_numpy(pred)
+        score = self.compute_metric(torch.from_numpy(dvalid.get_label()), pred)
         return score
 
     def _tune(
@@ -240,7 +245,14 @@ class XGBoost(GBDT):
         else:
             iteration_range = None
         pred = self.model.predict(dtest, iteration_range)
-        return torch.from_numpy(pred).to(device)
+
+        if (self.model.best_iteration
+                and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
+            assert pred.shape[1] == self._num_classes
+            pred = torch.argmax(torch.from_numpy(pred), dim=1)
+        else:
+            pred = torch.from_numpy(pred)
+        return pred.to(device)
 
     def _load(self, path: str) -> None:
         import xgboost
