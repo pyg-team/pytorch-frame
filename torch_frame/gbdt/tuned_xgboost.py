@@ -186,6 +186,10 @@ class XGBoost(GBDT):
         else:
             iteration_range = None
         pred = boost.predict(dvalid, iteration_range)
+
+        # If xgboost early stops on multiclass classification
+        # task, then the output shape would be (batch_size, num_classes).
+        # We need to take argmax to get the final prediction output.
         if (boost.best_iteration
                 and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
             assert pred.shape[1] == self.params["num_class"]
@@ -246,6 +250,9 @@ class XGBoost(GBDT):
             iteration_range = None
         pred = self.model.predict(dtest, iteration_range)
 
+        # If xgboost early stops on multiclass classification
+        # task, then the output shape would be (batch_size, num_classes).
+        # We need to take argmax to get the final prediction output.
         if (self.model.best_iteration
                 and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
             assert pred.shape[1] == self._num_classes
