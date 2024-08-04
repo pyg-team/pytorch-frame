@@ -93,6 +93,7 @@ class XGBoost(GBDT):
         dtrain: Any,  # xgboost.DMatrix
         dvalid: Any,  # xgboost.DMatrix
         num_boost_round: int,
+        early_stopping_rounds: int,
     ) -> float:
         r"""Objective function to be optimized.
 
@@ -101,6 +102,8 @@ class XGBoost(GBDT):
             dtrain (xgboost.DMatrix): Train data.
             dvalid (xgboost.DMatrix): Validation data.
             num_boost_round (int): Number of boosting round.
+            early_stopping_rounds (int): Number of early stopping
+                rounds.
 
         Returns:
             float: Best objective value. Root mean squared error for
@@ -174,10 +177,15 @@ class XGBoost(GBDT):
 
         boost = xgboost.train(self.params, dtrain,
                               num_boost_round=num_boost_round,
-                              early_stopping_rounds=50, verbose_eval=False,
-                              evals=[(dvalid, 'validation')],
-                              callbacks=[pruning_callback])
-        pred = boost.predict(dvalid)
+                              early_stopping_rounds=early_stopping_rounds,
+                              verbose_eval=False, evals=[
+                                  (dvalid, 'validation')
+                              ], callbacks=[pruning_callback])
+        if boost.best_iteration:
+            iteration_range = (0, boost.best_iteration + 1)
+        else:
+            iteration_range = None
+        pred = boost.predict(dvalid, iteration_range)
         score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
                                     torch.from_numpy(pred))
         return score
@@ -188,6 +196,7 @@ class XGBoost(GBDT):
         tf_val: TensorFrame,
         num_trials: int,
         num_boost_round: int = 2000,
+        early_stopping_rounds: int = 50,
     ):
         import optuna
         import xgboost
@@ -207,13 +216,14 @@ class XGBoost(GBDT):
                                  feature_types=val_feat_type,
                                  enable_categorical=True)
         study.optimize(
-            lambda trial: self.objective(trial, dtrain, dvalid, num_boost_round
-                                         ), num_trials)
+            lambda trial: self.objective(
+                trial, dtrain, dvalid, num_boost_round, early_stopping_rounds),
+            num_trials)
         self.params.update(study.best_params)
 
         self.model = xgboost.train(self.params, dtrain,
                                    num_boost_round=num_boost_round,
-                                   early_stopping_rounds=50,
+                                   early_stopping_rounds=early_stopping_rounds,
                                    verbose_eval=False,
                                    evals=[(dvalid, 'validation')])
 
@@ -225,7 +235,11 @@ class XGBoost(GBDT):
         dtest = xgboost.DMatrix(test_feat, label=test_y,
                                 feature_types=test_feat_type,
                                 enable_categorical=True)
-        pred = self.model.predict(dtest)
+        if self.model.best_iteration is not None:
+            iteration_range = self.model.best_iteration
+        else:
+            iteration_range = None
+        pred = self.model.predict(dtest, iteration_range)
         return torch.from_numpy(pred).to(device)
 
     def _load(self, path: str) -> None:
