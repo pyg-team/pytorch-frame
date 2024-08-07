@@ -8,6 +8,8 @@
 [pypi-url]: https://pypi.python.org/pypi/pytorch-frame
 [docs-image]: https://readthedocs.org/projects/pytorch-frame/badge/?version=latest
 [docs-url]: https://pytorch-frame.readthedocs.io/en/latest
+[arxiv-image]: https://img.shields.io/badge/arXiv-2404.00776-b31b1b.svg
+[arxiv-url]: https://arxiv.org/abs/2404.00776
 
 <div align="center">
 
@@ -20,6 +22,7 @@
 
 --------------------------------------------------------------------------------
 
+[![arXiv][arxiv-image]][arxiv-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![Testing Status][testing-image]][testing-url]
 [![Docs Status][docs-image]][docs-url]
