@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import openml
 import pandas as pd
@@ -9,16 +10,16 @@ from torch_frame.utils.infer_stype import infer_series_stype
 
 
 class OpenMLDataset(torch_frame.data.Dataset):
-    """A dataset class for loading datasets from OpenML, \
+    r"""A dataset class for loading datasets from OpenML,
     designed to integrate with the torch_frame library.
     More information about OpenML can be found at https://www.openml.org/.
 
     Parameters:
     - dataset_id (int): The ID of the dataset to be loaded from OpenML.
-    - cache_dir (str, optional): The directory where the dataset is cached. \
+    - cache_dir (str, optional): The directory where the dataset is cached.
     If None, the default cache directory is used.
     """
-    def __init__(self, dataset_id: int, cache_dir: str | None = None):
+    def __init__(self, dataset_id: int, cache_dir: Optional[str] = None):
         if cache_dir is not None:
             openml.config.set_root_cache_directory(
                 os.path.expanduser(cache_dir))
