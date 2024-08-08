@@ -19,6 +19,7 @@ from .movielens_1m import Movielens1M
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
 from .diamond_images import DiamondImages
 from .huggingface_dataset import HuggingFaceDatasetDict
+from .openml_dataset import OpenMLDataset
 
 real_world_datasets = [
     'Titanic',
@@ -38,6 +39,7 @@ real_world_datasets = [
     'Movielens1M',
     'AmazonFineFoodReviews',
     'DiamondImages',
+    'OpenMLDataset',
 ]
 
 synthetic_datasets = [
