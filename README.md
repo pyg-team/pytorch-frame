@@ -119,14 +119,13 @@ In this quick tour, we showcase the ease of creating and training a deep tabular
 As an example, we implement a simple `ExampleTransformer` following the modular architecture of Pytorch Frame.
 In the example below:
 * `self.encoder` maps an input `TensorFrame` to an embedding of size `[batch_size, num_cols, channels]`.
-* `self.convs` interatively transforms the embedding of size `[batch_size, num_cols, channels]` into an embedding of the same size.
+* `self.convs` iteratively transforms the embedding of size `[batch_size, num_cols, channels]` into an embedding of the same size.
 * `self.decoder` pools the embedding of size `[batch_size, num_cols, channels]` into `[batch_size, out_channels]`.
 
 ```python
 from torch import Tensor
 from torch.nn import Linear, Module, ModuleList
 
-import torch_frame
 from torch_frame import TensorFrame, stype
 from torch_frame.nn.conv import TabTransformerConv
 from torch_frame.nn.encoder import (
@@ -229,18 +228,18 @@ We benchmark recent tabular deep learning models against GBDTs over diverse publ
 
 The following chart shows the performance of various models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
 
-| Model Name          | dataset_0       | dataset_1       | dataset_2       | dataset_3       | dataset_4       | dataset_5       | dataset_6       | dataset_7       | dataset_8       | dataset_9       | dataset_10      | dataset_11      | dataset_12      |
-|:--------------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|:----------------|
-| XGBoost             | **0.250±0.000**  | 0.038±0.000        | 0.187±0.000       | 0.475±0.000       | 0.328±0.000       | 0.401±0.000       | **0.249±0.000** | 0.363±0.000    |   0.904±0.000   | 0.056±0.000     |   0.820±0.000   | **0.857±0.000**     | 0.418±0.000       |
-| CatBoost            | 0.265±0.000     | 0.062±0.000     | 0.128±0.000     | 0.336±0.000     | 0.346±0.000     | 0.443±0.000     | 0.375±0.000     | 0.273±0.000     | 0.881±0.000     | 0.040±0.000     | 0.756±0.000     | 0.876±0.000     | 0.439±0.000     |
-| LightGBM            | 0.253±0.000     | 0.054±0.000     | **0.112±0.000** | 0.302±0.000     | 0.325±0.000     | **0.384±0.000** | 0.295±0.000     | **0.272±0.000** | **0.877±0.000**     | 0.011±0.000     | **0.702±0.000**     | 0.863±0.000     | **0.395±0.000** |
-| Trompt              | 0.261±0.003     | **0.015±0.005** | 0.118±0.001     | **0.262±0.001** | **0.323±0.001** | 0.418±0.003     | 0.329±0.009     | 0.312±0.002     | OOM             | **0.008±0.001** | 0.779±0.006     | 0.874±0.004     | 0.424±0.005     |
-| ResNet              | 0.288±0.006     | 0.018±0.003     | 0.124±0.001     | 0.268±0.001     | 0.335±0.001     | 0.434±0.004     | 0.325±0.012     | 0.324±0.004     | 0.895±0.005     | 0.036±0.002     | 0.794±0.006     | 0.875±0.004     | 0.468±0.004     |
-| FTTransformerBucket | 0.325±0.008     | 0.096±0.005     | 0.360±0.354     | 0.284±0.005     | 0.342±0.004     | 0.441±0.003     | 0.345±0.007     | 0.339±0.003     | OOM             | 0.105±0.011     | 0.807±0.010     | 0.885±0.008     | 0.468±0.006     |
-| ExcelFormer         | 0.302±0.003     | 0.099±0.003     | 0.145±0.003     | 0.382±0.011     | 0.344±0.002     | 0.411±0.005     | 0.359±0.016     | 0.336±0.008     | OOM             | 0.192±0.014     | 0.794±0.005     | 0.890±0.003     | 0.445±0.005     |
-| FTTransformer       | 0.335±0.010     | 0.161±0.022     | 0.140±0.002     | 0.277±0.004     | 0.335±0.003     | 0.445±0.003     | 0.361±0.018     | 0.345±0.005     | OOM             | 0.106±0.012     | 0.826±0.005     | 0.896±0.007     | 0.461±0.003     |
-| TabNet              | 0.279±0.003     | 0.224±0.016     | 0.141±0.010     | 0.275±0.002     | 0.348±0.003     | 0.451±0.007     | 0.355±0.030     | 0.332±0.004     | 0.992±0.182     | 0.015±0.002     | 0.805±0.014     | 0.885±0.013     | 0.544±0.011     |
-| TabTransformer      | 0.624±0.003     | 0.229±0.003     | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003     | 0.619±0.005     | 0.351±0.001     | 0.893±0.005     | 0.431±0.001     | 0.819±0.002     | 0.886±0.005     | 0.545±0.004     |
+| Model Name          | dataset_0       | dataset_1        | dataset_2       | dataset_3       | dataset_4       | dataset_5        | dataset_6       | dataset_7       | dataset_8          | dataset_9       | dataset_10      | dataset_11         | dataset_12      |
+|:--------------------|:----------------|:-----------------|:----------------|:----------------|:----------------|:-----------------|:----------------|:----------------|:-------------------|:----------------|:----------------|:-------------------|:----------------|
+| XGBoost             | **0.250±0.000** | 0.038±0.000      | 0.187±0.000     | 0.475±0.000     | 0.328±0.000     | 0.401±0.000      | **0.249±0.000** | 0.363±0.000     | 0.904±0.000        | 0.056±0.000     | 0.820±0.000     | **0.857±0.000**    | 0.418±0.000     |
+| CatBoost            | 0.265±0.000     | 0.062±0.000      | 0.128±0.000     | 0.336±0.000     | 0.346±0.000     | 0.443±0.000      | 0.375±0.000     | 0.273±0.000     | 0.881±0.000        | 0.040±0.000     | 0.756±0.000     | 0.876±0.000        | 0.439±0.000     |
+| LightGBM            | 0.253±0.000     | 0.054±0.000      | **0.112±0.000** | 0.302±0.000     | 0.325±0.000     | **0.384±0.000**  | 0.295±0.000     | **0.272±0.000** | **0.877±0.000**    | 0.011±0.000     | **0.702±0.000** | 0.863±0.000        | **0.395±0.000** |
+| Trompt              | 0.261±0.003     | **0.015±0.005**  | 0.118±0.001     | **0.262±0.001** | **0.323±0.001** | 0.418±0.003      | 0.329±0.009     | 0.312±0.002     | OOM                | **0.008±0.001** | 0.779±0.006     | 0.874±0.004        | 0.424±0.005     |
+| ResNet              | 0.288±0.006     | 0.018±0.003      | 0.124±0.001     | 0.268±0.001     | 0.335±0.001     | 0.434±0.004      | 0.325±0.012     | 0.324±0.004     | 0.895±0.005        | 0.036±0.002     | 0.794±0.006     | 0.875±0.004        | 0.468±0.004     |
+| FTTransformerBucket | 0.325±0.008     | 0.096±0.005      | 0.360±0.354     | 0.284±0.005     | 0.342±0.004     | 0.441±0.003      | 0.345±0.007     | 0.339±0.003     | OOM                | 0.105±0.011     | 0.807±0.010     | 0.885±0.008        | 0.468±0.006     |
+| ExcelFormer         | 0.262±0.004     | 0.099±0.003      | 0.128±0.000     | 0.264±0.003     | 0.331±0.003     | 0.411±0.005      | 0.298±0.012     | 0.308±0.007     | OOM                | 0.011±0.001     | 0.785±0.011     | 0.890±0.003        | 0.431±0.006     |
+| FTTransformer       | 0.335±0.010     | 0.161±0.022      | 0.140±0.002     | 0.277±0.004     | 0.335±0.003     | 0.445±0.003      | 0.361±0.018     | 0.345±0.005     | OOM                | 0.106±0.012     | 0.826±0.005     | 0.896±0.007        | 0.461±0.003     |
+| TabNet              | 0.279±0.003     | 0.224±0.016      | 0.141±0.010     | 0.275±0.002     | 0.348±0.003     | 0.451±0.007      | 0.355±0.030     | 0.332±0.004     | 0.992±0.182        | 0.015±0.002     | 0.805±0.014     | 0.885±0.013        | 0.544±0.011     |
+| TabTransformer      | 0.624±0.003     | 0.229±0.003      | 0.369±0.005     | 0.340±0.004     | 0.388±0.002     | 0.539±0.003      | 0.619±0.005     | 0.351±0.001     | 0.893±0.005        | 0.431±0.001     | 0.819±0.002     | 0.886±0.005        | 0.545±0.004     |
 
 
 We see that some recent deep tabular models were able to achieve competitive model performance to strong GBDTs (despite being 5--100 times slower to train). Making deep tabular models even more performant with less compute is a fruitful direction for future research.
