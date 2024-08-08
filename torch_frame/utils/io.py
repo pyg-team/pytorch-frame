@@ -95,7 +95,7 @@ def load(
         tuple: A tuple of loaded :class:`TensorFrame` object and
             optional :obj:`col_stats`.
     """
-    tf_dict, col_stats = torch.load(path)
+    tf_dict, col_stats = torch.load(path, weights_only=False)
     tf_dict['feat_dict'] = deserialize_feat_dict(
         tf_dict.pop('feat_serialized_dict'))
     tensor_frame = TensorFrame(**tf_dict)
