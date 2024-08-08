@@ -9,18 +9,19 @@ from torch_frame.utils.infer_stype import infer_series_stype
 
 
 class OpenMLDataset(torch_frame.data.Dataset):
-    """
-    A dataset class for loading datasets from OpenML, designed to integrate with the torch_frame library.
+    """A dataset class for loading datasets from OpenML, \
+    designed to integrate with the torch_frame library.
     More information about OpenML can be found at https://www.openml.org/.
 
     Parameters:
     - dataset_id (int): The ID of the dataset to be loaded from OpenML.
-    - cache_dir (str, optional): The directory where the dataset is cached. If None, the default cache directory is used.
+    - cache_dir (str, optional): The directory where the dataset is cached. \
+    If None, the default cache directory is used.
     """
-
-    def __init__(self, dataset_id: int, cache_dir: str = None):
+    def __init__(self, dataset_id: int, cache_dir: str | None = None):
         if cache_dir is not None:
-            openml.config.set_root_cache_directory(os.path.expanduser(cache_dir))
+            openml.config.set_root_cache_directory(
+                os.path.expanduser(cache_dir))
         self.dataset_id = dataset_id
         self._openml_dataset = openml.datasets.get_dataset(
             self.dataset_id,
@@ -32,15 +33,17 @@ class OpenMLDataset(torch_frame.data.Dataset):
         self.dataset_info = self._openml_dataset.qualities
         target_col = self._openml_dataset.default_target_attribute
         X, y, self.categorical_indicator, _ = self._openml_dataset.get_data(
-            target=target_col
-        )
+            target=target_col)
         df = pd.concat([X, y], axis=1)
-        self._task_type: torch_frame.TaskType = None
-        self._num_classes: int = None
+        self._task_type: torch_frame.TaskType = (
+            torch_frame.TaskType.BINARY_CLASSIFICATION)
+        self._num_classes: int = 0
 
         # The column type can be inferred from the categorical_indicator
         col_to_stype = {
-            col: stype.categorical if self.categorical_indicator[i] else stype.numerical
+            col:
+            stype.categorical
+            if self.categorical_indicator[i] else stype.numerical
             for i, col in enumerate(X.columns)
         }
 
@@ -53,8 +56,10 @@ class OpenMLDataset(torch_frame.data.Dataset):
                 self._task_type = torch_frame.TaskType.BINARY_CLASSIFICATION
                 self._num_classes = 2
             else:
-                assert df[target_col].nunique() == self.dataset_info["NumberOfClasses"]
-                self._task_type = torch_frame.TaskType.MULTICLASS_CLASSIFICATION
+                assert df[target_col].nunique(
+                ) == self.dataset_info["NumberOfClasses"]
+                self._task_type = (
+                    torch_frame.TaskType.MULTICLASS_CLASSIFICATION)
                 self._num_classes = int(self.dataset_info["NumberOfClasses"])
             col_to_stype[target_col] = torch_frame.categorical
         else:
@@ -63,7 +68,8 @@ class OpenMLDataset(torch_frame.data.Dataset):
             self._num_classes = 0
             col_to_stype[target_col] = torch_frame.numerical
 
-        super().__init__(df=df, col_to_stype=col_to_stype, target_col=target_col)
+        super().__init__(df=df, col_to_stype=col_to_stype,
+                         target_col=target_col)
 
     # NOTE: Overriding the `task_type()` and `num_classes` property method
     @property
