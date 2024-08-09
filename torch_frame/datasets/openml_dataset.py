@@ -22,13 +22,12 @@ class OpenMLDataset(torch_frame.data.Dataset):
                 If None, the default cache directory is used.
     """
     def __init__(self, dataset_id: int, cache_dir: Optional[str] = None):
-        try:      
+        try:
             import openml
         except ImportError:
             raise ImportError(
-                "The OpenML library is required to use the OpenMLDataset class. "
-                "You can install it using `pip install openml`."
-            )
+                "The OpenML library is required by OpenMLDataset class. "
+                "You can install it using `pip install openml`.")
         if cache_dir is not None:
             openml.config.set_root_cache_directory(
                 os.path.expanduser(cache_dir))
