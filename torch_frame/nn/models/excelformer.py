@@ -29,7 +29,7 @@ def feature_mixup(
     mixup_type: str | None = None,
     mi_scores: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
-    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
+    r"""Mixup input numerical feature tensor :obj:`x` by swapping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
     linearly mixed up.
@@ -180,8 +180,8 @@ class ExcelFormer(Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         if col_names_dict.keys() != {stype.numerical}:
-            raise ValueError("ExcelFormer only accepts numerical"
-                             " features.")
+            raise ValueError("ExcelFormer only accepts numerical "
+                             "features.")
 
         if stype_encoder_dict is None:
             stype_encoder_dict = {
@@ -212,23 +212,27 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(self, tf: TensorFrame,
-                mixup_encoded: bool = False) -> Tensor | tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        tf: TensorFrame,
+        mixup_encoded: bool = False,
+    ) -> Tensor | tuple[Tensor, Tensor]:
         r"""Transform :class:`TensorFrame` object into output embeddings. If
-        `mixup_encoded` is `True`, it produces the output embeddings
-        together with the mixed-up targets in `self.mixup` manner.
+        :obj:`mixup_encoded` is :obj:`True`, it produces the output embeddings
+        together with the mixed-up targets in :obj:`self.mixup` manner.
 
         Args:
-            tf (:class:`torch_frame.TensorFrame`):
-                Input :class:`TensorFrame` object.
-            mixup_encoded (bool):
-                Whether to mixup on encoded numerical features, i.e.,
-                `FEAT-MIX` and `HIDDEN-MIX`.
+            tf (:class:`torch_frame.TensorFrame`): Input :class:`TensorFrame`
+                object.
+            mixup_encoded (bool): Whether to mixup on encoded numerical
+                features, i.e., `FEAT-MIX` and `HIDDEN-MIX`.
+                (default: :obj:`False`)
 
         Returns:
             torch.Tensor | tuple[Tensor, Tensor]: The output embeddings of size
-            [batch_size, out_channels]. If `mixup_encoded` is `True`, return
-            the mixed-up targets of size [batch_size, num_classes] as well.
+                [batch_size, out_channels]. If :obj:`mixup_encoded` is
+                :obj:`True`, return the mixed-up targets of size
+                [batch_size, num_classes] as well.
         """
         x, _ = self.excelformer_encoder(tf)
         # FEAT-MIX or HIDDEN-MIX is compatible with `torch.compile`
