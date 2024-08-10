@@ -716,7 +716,9 @@ class LinearEmbeddingEncoder(StypeEncoder):
     def init_modules(self) -> None:
         super().init_modules()
         num_cols = len(self.stats_list)
-        self.emb_dim_list = [stats[StatType.EMB_DIM] for stats in self.stats_list]
+        self.emb_dim_list = [
+            stats[StatType.EMB_DIM] for stats in self.stats_list
+        ]
         self.weight_list = ParameterList([
             Parameter(torch.empty(emb_dim, self.out_channels))
             for emb_dim in self.emb_dim_list
