@@ -46,7 +46,7 @@ repos:
       - id: autoflake
         name: Remove unused imports and variables
         args: [
-          # --remove-all-unused-imports,
+          --remove-all-unused-imports,
           --remove-unused-variables,
           --remove-duplicate-keys,
           --ignore-init-module-imports,
