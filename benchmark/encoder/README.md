@@ -12,16 +12,17 @@ It will create a dataset that will contain categorical and numerical columns and
 embedding and linear encoders, respectively.
 
 Arguments:
-**--stype-kv**: Specify the stype(s) and corresponding encoder(s) to run.
-**--num-rows**: The number of rows in the dataset (default is *8192*).
-**--out-channels**: The number of output channels (default is *128*).
-**--with-nan**: If specified, the dataset will include NaN values.
-**--runs**: The number of runs for the benchmark (default is *1000*).
-**--warmup-size**: The size of the warmup stage (default is \*200()).
-**--torch-profile**: If specified, torch profiling will be enabled.
-**--line-profile**: If specified, line profiling will be enabled.
-**--line-profile-level**: The level of line profiling (default is *'encode_forward'*).
-**--device**: The device to run the benchmark on (default is *'cpu'*).
+
+- **--stype-kv**: Specify the stype(s) and corresponding encoder(s) to run.
+- **--num-rows**: The number of rows in the dataset (default is `8192`).
+- **--out-channels**: The number of output channels (default is `128`).
+- **--with-nan**: If specified, the dataset will include NaN values.
+- **--runs**: The number of runs for the benchmark (default is `1000`).
+- **--warmup-size**: The size of the warmup stage (default is `200`).
+- **--torch-profile**: If specified, torch profiling will be enabled.
+- **--line-profile**: If specified, line profiling will be enabled.
+- **--line-profile-level**: The level of line profiling (default is `'encode_forward'`).
+- **--device**: The device to run the benchmark on (default is `'cpu'`).
 
 No matter if any profiler is used, benchmark always outputs a latency (single run execution time), e.g.:
 
