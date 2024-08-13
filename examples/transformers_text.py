@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import os.path as osp
-from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -121,7 +120,7 @@ class TextToEmbedding:
             self.model = AutoModel.from_pretrained(model).to(device)
             self.pooling = "mean"
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         if self.model_name == "intfloat/e5-mistral-7b-instruct":
             sentences = [(f"Instruct: Retrieve relevant knowledge and "
                           f"embeddings.\nQuery: {sentence}")
@@ -226,7 +225,7 @@ class TextToEmbeddingFinetune(torch.nn.Module):
         # Return value has the shape [batch_size, 1, text_model_out_channels]
         return mean_pooling(out.last_hidden_state, mask)
 
-    def tokenize(self, sentences: List[str]) -> TextTokenizationOutputs:
+    def tokenize(self, sentences: list[str]) -> TextTokenizationOutputs:
         # Tokenize batches of sentences
         return self.tokenizer(sentences, truncation=True, padding=True,
                               return_tensors='pt')
