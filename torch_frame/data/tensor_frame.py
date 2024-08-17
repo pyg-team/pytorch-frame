@@ -340,6 +340,17 @@ class TensorFrame:
 
         return self._apply(fn)
 
+    def pin_memory(self, *args, **kwargs):
+        def fn(x):
+            if isinstance(x, dict):
+                for key in x:
+                    x[key] = x[key].pin_memory(*args, **kwargs)
+            else:
+                x = x.pin_memory(*args, **kwargs)
+            return x
+
+        return self._apply(fn)
+
     # Helper Functions ########################################################
 
     def _apply(self, fn: Callable[[TensorData], TensorData]) -> TensorFrame:

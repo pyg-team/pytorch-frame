@@ -476,3 +476,17 @@ def test_cat(device):
     # case: list of non-MultiEmbeddingTensor should raise error
     with pytest.raises(AssertionError):
         MultiEmbeddingTensor.cat([object()], dim=0)
+
+
+def test_pin_memory():
+    met, _ = get_fake_multi_embedding_tensor(
+        num_rows=2,
+        num_cols=3,
+    )
+    assert not met.is_pinned()
+    assert not met.values.is_pinned()
+    assert not met.offset.is_pinned()
+    met = met.pin_memory()
+    assert met.is_pinned()
+    assert met.values.is_pinned()
+    assert met.offset.is_pinned()
