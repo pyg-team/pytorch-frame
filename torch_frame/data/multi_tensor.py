@@ -97,7 +97,7 @@ class _MultiTensor:
         return self._apply(lambda x: x.pin_memory(*args, **kwargs))
 
     def is_pinned(self) -> bool:
-        return self.values.is_pinned()
+        return self.values.is_pinned() and self.offset.is_pinned()
 
     # Helper Functions ########################################################
 
