@@ -163,7 +163,7 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 | FTTransformerBucket | 0.970±0.000 (2071s)     |                       |                       |                       |                       |                       |
 | ExcelFormer         | 0.969±0.000 (1785s)     | 0.978±0.001 (47745s)  |                       |                       |                       |                       |
 | FTTransformer       | 0.971±0.000 (2918s)     |                       |                       |                       |                       |                       |
-| TabNet              | 0.970±0.000 (323s)      |                       |                       |                       |                       |                       |
+| TabNet              | 0.968±0.001 (3177s)     | 0.974±0.000 (44035s)  | 0.655±0.001 (2679s)   | 0.891±0.001 (6800s)   | 0.767±0.001 (6242s)   | 0.784±0.001 (2307s)   |
 | TabTransformer      | 0.984±0.000 (318s)      |                       |                       |                       |                       |                       |
 
 ### `task_type: multiclass_classification`
