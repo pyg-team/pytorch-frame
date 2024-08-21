@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence, Union, cast
+from typing import Sequence, cast
 
 import torch
 from torch import Tensor
@@ -268,7 +268,7 @@ class MultiNestedTensor(_MultiTensor):
     def fillna_col(
         self,
         col_index: int,
-        fill_value: Union[int, float, Tensor],
+        fill_value: int | float | Tensor,
     ) -> None:
         start_idx = torch.arange(
             col_index,

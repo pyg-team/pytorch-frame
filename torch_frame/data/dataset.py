@@ -5,7 +5,7 @@ import functools
 import os.path as osp
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 import torch
@@ -437,7 +437,7 @@ class Dataset(ABC):
         self,
         col_to_pattern: Any,
         col_to_pattern_name: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         canonical_col_to_pattern = canonicalize_col_to_pattern(
             col_to_pattern_name=col_to_pattern_name,
             col_to_pattern=col_to_pattern,

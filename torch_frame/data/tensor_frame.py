@@ -141,25 +141,24 @@ class TensorFrame:
                 is :obj:`[num_rows, 1, *]`.
         """
         if col_name not in self._col_to_stype_idx:
-            raise ValueError(
-                f"{col_name} is not available in the TensorFrame object.")
+            raise ValueError(f"'{col_name}' is not available in the "
+                             f"'{self.__class__.__name__}' object")
+
         stype_name, idx = self._col_to_stype_idx[col_name]
+
         feat = self.feat_dict[stype_name]
-        if stype_name.use_dict_multi_nested_tensor:
-            assert isinstance(feat, dict)
+        if isinstance(feat, dict):
             col_feat: dict[str, MultiNestedTensor] = {}
             for key, mnt in feat.items():
                 value = mnt[:, idx]
                 assert isinstance(value, MultiNestedTensor)
                 col_feat[key] = value
             return col_feat
+        elif isinstance(feat, _MultiTensor):
+            return feat[:, idx]
         else:
-            if stype_name.use_multi_tensor:
-                assert isinstance(feat, _MultiTensor)
-                return feat[:, idx]
-            else:
-                assert isinstance(feat, Tensor)
-                return feat[:, idx].unsqueeze(1)
+            assert isinstance(feat, Tensor)
+            return feat[:, idx].unsqueeze(1)
 
     @property
     def stypes(self) -> list[torch_frame.stype]:
@@ -348,7 +347,7 @@ class TensorFrame:
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:
             y = fn(out.y)
-            assert isinstance(y, Tensor)
+            assert isinstance(y, (Tensor, MultiNestedTensor))
             out.y = y
 
         return out
