@@ -25,7 +25,7 @@ class Metric(Enum):
     MAE = 'mae'
     R2 = 'r2'
 
-    def supports_task_type(self, task_type: 'TaskType') -> bool:
+    def supports_task_type(self, task_type: TaskType) -> bool:
         return self in task_type.supported_metrics
 
 
