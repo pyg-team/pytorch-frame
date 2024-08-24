@@ -13,7 +13,7 @@ from torch_frame.data import (
 )
 from torch_frame.data.multi_tensor import _MultiTensor
 from torch_frame.data.stats import StatType
-from torch_frame.typing import TensorData
+from torch_frame.typing import WITH_PT24, TensorData
 
 
 def serialize_feat_dict(
@@ -96,7 +96,7 @@ def load(
         tuple: A tuple of loaded :class:`TensorFrame` object and
             optional :obj:`col_stats`.
     """
-    tf_dict, col_stats = torch.load(path, weights_only=True)
+    tf_dict, col_stats = torch.load(path, weights_only=WITH_PT24)
     tf_dict['feat_dict'] = deserialize_feat_dict(
         tf_dict.pop('feat_serialized_dict'))
     tensor_frame = TensorFrame(**tf_dict)
