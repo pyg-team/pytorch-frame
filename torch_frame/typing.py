@@ -4,10 +4,14 @@ from enum import Enum
 from typing import Dict, List, Mapping, Union
 
 import pandas as pd
+import torch
 from torch import Tensor
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+
+WITH_PT20 = int(torch.__version__.split('.')[0]) >= 2
+WITH_PT24 = WITH_PT20 and int(torch.__version__.split('.')[1]) >= 4
 
 
 class Metric(Enum):
