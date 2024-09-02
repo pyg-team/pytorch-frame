@@ -18,16 +18,18 @@ from torch_frame.nn.encoder.stypewise_encoder import (
     StypeEncoder,
     StypeWiseFeatureEncoder,
 )
-from torch_frame.typing import NAStrategy, TensorData
+from torch_frame.typing import NAStrategy
 
 
 def feature_mixup(
     x: Tensor,
     y: Tensor,
     num_classes: int,
-    beta: float = 0.5,
+    beta: float | Tensor = 0.5,
+    mixup_type: str | None = None,
+    mi_scores: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
-    r"""Mixup :obj: input numerical feature tensor :obj:`x` by swapping some
+    r"""Mixup input numerical feature tensor :obj:`x` by swapping some
     feature elements of two shuffled sample samples. The shuffle rates for
     each row is sampled from the Beta distribution. The target `y` is also
     linearly mixed up.
@@ -37,6 +39,15 @@ def feature_mixup(
         y (Tensor): The target.
         num_classes (int): Number of classes.
         beta (float): The concentration parameter of the Beta distribution.
+            (default: :obj:`0.5`)
+        mixup_type (str, optional): The mixup methods. No mixup if set to
+            :obj:`None`, options `feature` and `hidden` are `FEAT-MIX`
+            (mixup at feature dimension) and `HIDDEN-MIX` (mixup at
+            hidden dimension) proposed in ExcelFormer paper.
+            (default: :obj:`None`)
+        mi_scores (Tensor, optional): Mutual information scores only used in
+            the mixup weight calculation for `FEAT-MIX`.
+            (default: :obj:`None`)
 
     Returns:
         x_mixedup (Tensor): The mixedup numerical feature.
@@ -44,23 +55,52 @@ def feature_mixup(
             :obj:`[batch_size, num_classes]`
     """
     assert num_classes > 0
+    assert mixup_type in [None, 'feature', 'hidden']
+
+    beta = torch.tensor(beta, dtype=x.dtype, device=x.device)
     beta_distribution = torch.distributions.beta.Beta(beta, beta)
     shuffle_rates = beta_distribution.sample(torch.Size((len(x), 1)))
-    feat_masks = torch.rand(x.shape, device=x.device) < shuffle_rates
     shuffled_idx = torch.randperm(len(x), device=x.device)
-    x_mixedup = feat_masks * x + ~feat_masks * x[shuffled_idx]
+    assert x.ndim == 3, """
+    FEAT-MIX or HIDDEN-MIX is for encoded numerical features
+    of size [batch_size, num_cols, in_channels]."""
+    b, f, d = x.shape
+    if mixup_type == 'feature':
+        assert mi_scores is not None
+        mi_scores = mi_scores.to(x.device)
+        # Hard mask (feature dimension)
+        mixup_mask = torch.rand(torch.Size((b, f)),
+                                device=x.device) < shuffle_rates
+        # L1 normalized mutual information scores
+        norm_mi_scores = mi_scores / mi_scores.sum()
+        # Mixup weights
+        lam = torch.sum(
+            norm_mi_scores.unsqueeze(0) * mixup_mask, dim=1, keepdim=True)
+        mixup_mask = mixup_mask.unsqueeze(2)
+    elif mixup_type == 'hidden':
+        # Hard mask (hidden dimension)
+        mixup_mask = torch.rand(torch.Size((b, d)),
+                                device=x.device) < shuffle_rates
+        mixup_mask = mixup_mask.unsqueeze(1)
+        # Mixup weights
+        lam = shuffle_rates
+    else:
+        # No mixup
+        mixup_mask = torch.ones_like(x, dtype=torch.bool)
+        # Fake mixup weights
+        lam = torch.ones_like(shuffle_rates)
+    x_mixedup = mixup_mask * x + ~mixup_mask * x[shuffled_idx]
 
     y_shuffled = y[shuffled_idx]
     if num_classes == 1:
         # Regression task or binary classification
-        shuffle_rates = shuffle_rates.view(-1, )
-        y_mixedup = shuffle_rates * y + (1 - shuffle_rates) * y_shuffled
+        lam = lam.squeeze(1)
+        y_mixedup = lam * y + (1 - lam) * y_shuffled
     else:
         # Classification task
         one_hot_y = F.one_hot(y, num_classes=num_classes)
         one_hot_y_shuffled = F.one_hot(y_shuffled, num_classes=num_classes)
-        y_mixedup = (shuffle_rates * one_hot_y +
-                     (1 - shuffle_rates) * one_hot_y_shuffled)
+        y_mixedup = (lam * one_hot_y + (1 - lam) * one_hot_y_shuffled)
     return x_mixedup, y_mixedup
 
 
@@ -70,15 +110,16 @@ class ExcelFormer(Module):
     <https://arxiv.org/abs/2301.02819>`_ paper.
 
     ExcelFormer first converts the categorical features with a target
-    statistics encoder into numerical features. Then it sorts the
-    numerical features with mutual information sort. So the model
-    itself limits to numerical features.
+    statistics encoder (i.e., :class:`CatBoostEncoder` in the paper)
+    into numerical features. Then it sorts the numerical features
+    with mutual information sort. So the model itself limits to
+    numerical features.
 
     .. note::
 
         For an example of using ExcelFormer, see `examples/excelformer.py
         <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
-        excelfromer.py>`_.
+        excelformer.py>`_.
 
     Args:
         in_channels (int): Input channel dimensionality
@@ -105,6 +146,12 @@ class ExcelFormer(Module):
         aium_dropout (float, optional): aium_dropout. (default: :obj:`0.0`)
         residual_dropout (float, optional): residual dropout.
             (default: :obj:`0.0`)
+        mixup (str, optional): mixup type.
+            :obj:`None`, :obj:`feature`, or :obj:`hidden`.
+            (default: :obj:`None`)
+        beta (float, optional): Shape parameter for beta distribution to
+                calculate shuffle rate in mixup. Only useful when `mixup` is
+                not :obj:`None`. (default: :obj:`0.5`)
     """
     def __init__(
         self,
@@ -120,17 +167,21 @@ class ExcelFormer(Module):
         diam_dropout: float = 0.0,
         aium_dropout: float = 0.0,
         residual_dropout: float = 0.0,
+        mixup: str | None = None,
+        beta: float = 0.5,
     ) -> None:
         super().__init__()
         if num_layers <= 0:
             raise ValueError(
                 f"num_layers must be a positive integer (got {num_layers})")
 
+        assert mixup in [None, 'feature', 'hidden']
+
         self.in_channels = in_channels
         self.out_channels = out_channels
         if col_names_dict.keys() != {stype.numerical}:
-            raise ValueError("ExcelFormer only accepts numerical"
-                             " features.")
+            raise ValueError("ExcelFormer only accepts numerical "
+                             "features.")
 
         if stype_encoder_dict is None:
             stype_encoder_dict = {
@@ -152,6 +203,8 @@ class ExcelFormer(Module):
         self.excelformer_decoder = ExcelFormerDecoder(in_channels,
                                                       out_channels, num_cols)
         self.reset_parameters()
+        self.mixup = mixup
+        self.beta = beta
 
     def reset_parameters(self) -> None:
         self.excelformer_encoder.reset_parameters()
@@ -159,72 +212,44 @@ class ExcelFormer(Module):
             excelformer_conv.reset_parameters()
         self.excelformer_decoder.reset_parameters()
 
-    def forward(self, tf: TensorFrame) -> Tensor:
-        r"""Transform :class:`TensorFrame` object into output embeddings.
+    def forward(
+        self,
+        tf: TensorFrame,
+        mixup_encoded: bool = False,
+    ) -> Tensor | tuple[Tensor, Tensor]:
+        r"""Transform :class:`TensorFrame` object into output embeddings. If
+        :obj:`mixup_encoded` is :obj:`True`, it produces the output embeddings
+        together with the mixed-up targets in :obj:`self.mixup` manner.
 
         Args:
-            tf (:class:`torch_frame.TensorFrame`):
-                Input :class:`TensorFrame` object.
+            tf (:class:`torch_frame.TensorFrame`): Input :class:`TensorFrame`
+                object.
+            mixup_encoded (bool): Whether to mixup on encoded numerical
+                features, i.e., `FEAT-MIX` and `HIDDEN-MIX`.
+                (default: :obj:`False`)
 
         Returns:
-            torch.Tensor: The output embeddings of size
-                [batch_size, out_channels].
+            torch.Tensor | tuple[Tensor, Tensor]: The output embeddings of size
+                [batch_size, out_channels]. If :obj:`mixup_encoded` is
+                :obj:`True`, return the mixed-up targets of size
+                [batch_size, num_classes] as well.
         """
-        if stype.numerical not in tf.feat_dict:
-            raise ValueError(
-                "Excelformer only takes in numerical features, but the input "
-                "TensorFrame object does not have numerical features.")
         x, _ = self.excelformer_encoder(tf)
+        # FEAT-MIX or HIDDEN-MIX is compatible with `torch.compile`
+        if mixup_encoded:
+            assert tf.y is not None
+            x, y_mixedup = feature_mixup(
+                x,
+                tf.y,
+                num_classes=self.out_channels,
+                beta=self.beta,
+                mixup_type=self.mixup,
+                mi_scores=getattr(tf, 'mi_scores', None),
+            )
         for excelformer_conv in self.excelformer_convs:
             x = excelformer_conv(x)
         out = self.excelformer_decoder(x)
+
+        if mixup_encoded:
+            return out, y_mixedup
         return out
-
-    def forward_mixup(
-        self,
-        tf: TensorFrame,
-        beta: float = 0.5,
-    ) -> tuple[Tensor, Tensor]:
-        r"""Transform :class:`TensorFrame` object into output embeddings. If
-        `mixup` is :obj:`True`, it produces the output embeddings together with
-        the mixed-up targets.
-
-        Args:
-            tf (TensorFrame): Input :class:`TensorFrame` object.
-            beta (float, optional): Shape parameter for beta distribution to
-                calculate shuffle rate in mixup. Only useful when mixup is
-                true. (default: :obj:`0.5`)
-
-        Returns:
-            (torch.Tensor, torch.Tensor): The first :class:`~torch.Tensor` is
-                the mixed up output embeddings of size
-                :obj:`[batch_size, out_channels]`. The second
-                :class:`~torch.Tensor` is the mixed target whose size is either
-                :obj:`[batch_size, num_classes]` for classification or
-                :obj:`[batch_size, 1]` for regression.
-        """
-        assert tf.y is not None
-        numerical_feat = tf.feat_dict[stype.numerical]
-        assert isinstance(numerical_feat, Tensor)
-        # Mixup numerical features
-        x_mixedup, y_mixedup = feature_mixup(
-            numerical_feat,
-            tf.y,
-            num_classes=self.out_channels,
-            beta=beta,
-        )
-
-        # Create a new `feat_dict`, where stype.numerical is swapped with
-        # mixed up feature.
-        feat_dict: dict[stype, TensorData] = {}
-        for stype_name, x in tf.feat_dict.items():
-            if stype_name == stype.numerical:
-                feat_dict[stype_name] = x_mixedup
-            else:
-                feat_dict[stype_name] = x
-        tf_mixedup = TensorFrame(feat_dict, tf.col_names_dict, tf.y)
-
-        # Call Excelformer forward function
-        out_mixedup = self(tf_mixedup)
-
-        return out_mixedup, y_mixedup

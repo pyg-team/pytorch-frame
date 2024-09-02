@@ -52,10 +52,10 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     # The transform uses m-target estimation, where each categorical
     # feature is transformed to (num_count + target_mean)/(num_rows + 1).
     # This test tests the correctness in multiclass classification task.
+    src_tensor = (num_rows + target_mean[0]) / (num_rows + 1)
     assert torch.allclose(
         out.feat_dict[stype.numerical][:, 0].float(),
-        torch.tensor((num_rows + target_mean[0]) / (num_rows + 1),
-                     device=out.device).repeat(num_rows))
+        src_tensor.clone().detach().to(out.device).repeat(num_rows))
 
     # assert that there are no categorical features
     assert (stype.categorical not in out.col_names_dict)
@@ -64,6 +64,11 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
     assert (len(
         out.col_names_dict[stype.numerical]) == ((dataset.num_classes - 1) *
                                                  total_cols))
+
+    tensor_frame.feat_dict[stype.categorical] += 1
+    with pytest.raises(RuntimeError, match="contains new category"):
+        # Raise informative error when input tensor frame contains new category
+        out = transform(tensor_frame)
 
 
 @pytest.mark.parametrize('task_type', [
@@ -130,10 +135,11 @@ def test_cat_to_num_transform_with_loading(task_type):
         # (num_count + target_mean)/(num_rows + 1).
         # This test tests the correctness in multiclass classification
         # task.
+        src = (num_rows + dataset.tensor_frame.y.float().mean()) / (num_rows +
+                                                                    1)
         assert torch.allclose(
             out.feat_dict[stype.numerical][:, total_numerical_cols].float(),
-            torch.tensor((num_rows + dataset.tensor_frame.y.float().mean()) /
-                         (num_rows + 1), device=out.device).repeat(num_rows))
+            src.clone().detach().to(out.device).repeat(num_rows))
     else:
         # when the task is multiclass classification, the number of
         # columns changes.

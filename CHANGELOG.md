@@ -3,15 +3,16 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-
-## [Unreleased]
+## \[Unreleased\]
 
 ### Added
 
 - Added benchmarking script to compare `torch_frame` with `torch_tabular` ([#398](https://github.com/pyg-team/pytorch-frame/pull/398))
-- Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+- Added support for inferring `stype.categorical` from boolean columns in `utils.infer_series_stype` ([#421](https://github.com/pyg-team/pytorch-frame/pull/421))
 
 ### Changed
+
+- Set `weights_only=True` in `torch_frame.load` from PyTorch 2.4 ([#423](https://github.com/pyg-team/pytorch-frame/pull/423))
 
 ### Deprecated
 
@@ -19,7 +20,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-## [0.2.2] - 2024-03-04
+- Removed CUDA synchronizations from `nn.LinearEmbeddingEncoder` ([#432](https://github.com/pyg-team/pytorch-frame/pull/432))
+- Removed CUDA synchronizations from N/A imputation logic in `nn.StypeEncoder` ([#433](https://github.com/pyg-team/pytorch-frame/pull/433), [#434](https://github.com/pyg-team/pytorch-frame/pull/434))
+
+## \[0.2.3\] - 2024-07-08
+
+### Added
+
+- Added `MovieLens 1M` dataset ([#397](https://github.com/pyg-team/pytorch-frame/pull/397))
+- Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+- Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
+
+### Changed
+
+- Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
+
+## \[0.2.2\] - 2024-03-04
 
 ### Added
 
@@ -45,14 +61,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed the split of `DataFrameTextBenchmark` ([#358](https://github.com/pyg-team/pytorch-frame/pull/358))
 - Fixed empty `MultiNestedTensor` col indexing ([#355](https://github.com/pyg-team/pytorch-frame/pull/355))
 
-## [0.2.1] - 2024-01-16
+## \[0.2.1\] - 2024-01-16
 
 ### Added
+
 - Support more stypes in `LinearModelEncoder` ([#325](https://github.com/pyg-team/pytorch-frame/pull/325))
 - Added `stype_encoder_dict` to some models ([#319](https://github.com/pyg-team/pytorch-frame/pull/319))
 - Added `HuggingFaceDatasetDict` ([#287](https://github.com/pyg-team/pytorch-frame/pull/287))
 
 ### Changed
+
 - Supported decoder embedding model in `examples/transformers_text.py` ([#333](https://github.com/pyg-team/pytorch-frame/pull/333))
 - Removed implicit clones in `StypeEncoder` ([#286](https://github.com/pyg-team/pytorch-frame/pull/286))
 
@@ -61,10 +79,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 ### Fixed
+
 - Fixed `TimestampEncoder` not applying `CyclicEncoder` to cyclic features ([#311](https://github.com/pyg-team/pytorch-frame/pull/311))
 - Fixed NaN masking in `multicateogrical` stype ([#307](https://github.com/pyg-team/pytorch-frame/pull/307))
 
-## [0.2.0] - 2023-12-15
+## \[0.2.0\] - 2023-12-15
 
 ### Added
 
@@ -89,7 +108,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `Timestamp` stype ([#212](https://github.com/pyg-team/pytorch-frame/pull/212))
 - Added `multicategorical` to `MultimodalTextBenchmark` ([#208](https://github.com/pyg-team/pytorch-frame/pull/208))
 - Added support for saving and loading of `TensorFrame` with complex `stypes`. ([#197](https://github.com/pyg-team/pytorch-frame/pull/197))
-- Added `stype.embedding` ((#194)[https://github.com/pyg-team/pytorch-frame/pull/194])
+- Added `stype.embedding` ([#194](https://github.com/pyg-team/pytorch-frame/pull/194))
 - Added `TensorFrame` concatenation of complex stypes. ([#190](https://github.com/pyg-team/pytorch-frame/pull/190))
 - Added `text_tokenized` example ([#174](https://github.com/pyg-team/pytorch-frame/pull/174))
 - Added Cohere embedding example ([#186](https://github.com/pyg-team/pytorch-frame/pull/186))
@@ -116,8 +135,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - No manual passing of `in_channels` to `LinearEmbeddingEncoder` for `stype.text_embedded` ([#222](https://github.com/pyg-team/pytorch-frame/pull/222))
 
-
-## [0.1.0] - 2023-10-23
+## \[0.1.0\] - 2023-10-23
 
 ### Added
 

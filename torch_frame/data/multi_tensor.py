@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar, Union
+from typing import Any, Callable, Sequence, TypeVar
 
 import torch
 from torch import Tensor
@@ -336,7 +336,7 @@ class _MultiTensor:
     def fillna_col(
         self,
         col_index: int,
-        fill_value: Union[int, float, Tensor],
+        fill_value: int | float | Tensor,
     ):
         """Fill the :obj:`index`-th column in :obj:`MultiTensor` with
         fill_value in-place.

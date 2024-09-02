@@ -206,3 +206,27 @@ def test_get_col_feat(get_fake_tensor_frame):
         else:
             assert torch.allclose(torch.cat(feat_list, dim=1),
                                   tf.feat_dict[stype])
+
+
+def test_custom_tf_get_col_feat():
+    col_names_dict = {
+        'categorical': ['cat_1', 'cat_2', 'cat_3'],
+        'numerical': ['num_1', 'num_2'],
+    }
+    feat_dict = {
+        'categorical': torch.randint(0, 3, size=(10, 3)),
+        'numerical': torch.randn(10, 2),
+    }
+
+    tf = TensorFrame(feat_dict=feat_dict, col_names_dict=col_names_dict)
+
+    feat = tf.get_col_feat('cat_1')
+    assert torch.equal(feat, feat_dict['categorical'][:, 0:1])
+    feat = tf.get_col_feat('cat_2')
+    assert torch.equal(feat, feat_dict['categorical'][:, 1:2])
+    feat = tf.get_col_feat('cat_3')
+    assert torch.equal(feat, feat_dict['categorical'][:, 2:3])
+    feat = tf.get_col_feat('num_1')
+    assert torch.equal(feat, feat_dict['numerical'][:, 0:1])
+    feat = tf.get_col_feat('num_2')
+    assert torch.equal(feat, feat_dict['numerical'][:, 1:2])
