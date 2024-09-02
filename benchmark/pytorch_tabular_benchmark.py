@@ -9,15 +9,15 @@ import torch
 import torch.nn.functional as F
 from pytorch_tabular import TabularModel
 from pytorch_tabular.config import DataConfig, OptimizerConfig, TrainerConfig
+from pytorch_tabular.models import FTTransformerConfig, TabTransformerConfig
 from pytorch_tabular.models.common.heads import LinearHeadConfig
-from pytorch_tabular.models.tab_transformer import TabTransformerConfig
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
 from torch_frame import TaskType, stype
 from torch_frame.data import DataLoader
 from torch_frame.datasets import DataFrameBenchmark
-from torch_frame.nn import TabTransformer
+from torch_frame.nn import FTTransformer, TabTransformer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--task_type', type=str, choices=[
@@ -30,7 +30,7 @@ parser.add_argument('--idx', type=int, default=0,
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--epochs', type=int, default=1)
 parser.add_argument('--model_type', type=str, default='TabTransformer',
-                    choices=['TabTransformer'])
+                    choices=['TabTransformer', 'FTTransformer'])
 args = parser.parse_args()
 
 # Data, model params, device setup are the same for both models
@@ -74,26 +74,47 @@ def train_tabular_model() -> float:
 
     optimizer_config = OptimizerConfig()
 
-    head_config = LinearHeadConfig(
-        layers="520-1040",
-        dropout=0.1,
-        initialization="kaiming",
-        use_batch_norm=True,
-    ).__dict__  # Convert to dict to pass to the model config
-
-    model_config = TabTransformerConfig(
-        task="classification",
-        learning_rate=1e-3,
-        head="LinearHead",  # Linear Head
-        input_embed_dim=channels,
-        num_heads=num_heads,
-        num_attn_blocks=num_layers,
-        attn_dropout=attn_dropout,
-        ff_dropout=ffn_dropout,
-        head_config=head_config,  # Linear Head Config
-        ff_hidden_multiplier=0,
-    )
-
+    if args.model_type == 'TabTransformer':
+        head_config = LinearHeadConfig(
+            layers="520-1040",
+            dropout=0.1,
+            initialization="kaiming",
+            use_batch_norm=True,
+        ).__dict__  # Convert to dict to pass to the model config
+        model_config = TabTransformerConfig(
+            task="classification",
+            learning_rate=1e-3,
+            head="LinearHead",  # Linear Head
+            input_embed_dim=channels,
+            num_heads=num_heads,
+            num_attn_blocks=num_layers,
+            attn_dropout=attn_dropout,
+            ff_dropout=ffn_dropout,
+            head_config=head_config,  # Linear Head Config
+            ff_hidden_multiplier=0,
+        )
+    elif args.model_type == 'FTTransformer':
+        head_config = LinearHeadConfig(
+            layers=f"{channels}-{dataset.num_classes}",
+            dropout=0.1,
+            initialization="kaiming",
+            use_batch_norm=True,
+        ).__dict__  # Convert to dict to pass to the model config
+        model_config = FTTransformerConfig(
+            task="classification",
+            learning_rate=1e-3,
+            head="LinearHead",  # Linear Head
+            input_embed_dim=channels,
+            # dividing by 4 to match the number of params
+            # in FTTransformer from torch frame
+            num_heads=int(num_heads / 4),
+            num_attn_blocks=num_layers,
+            attn_dropout=attn_dropout,
+            head_config=head_config,  # Linear Head Config
+            ff_hidden_multiplier=0,
+        )
+    else:
+        raise ValueError(f"Invalid model type: {args.model_type}")
     tabular_model = TabularModel(
         data_config=data_config,
         model_config=model_config,
@@ -108,6 +129,7 @@ def train_tabular_model() -> float:
     )
     end = time.time()
     tabular_train_time = end - start
+    print(tabular_model.model)
     return tabular_train_time
 
 
@@ -121,17 +143,26 @@ def train_frame_model() -> float:
                               shuffle=True)
     val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
     # Set up model and optimizer
-    model = TabTransformer(
-        channels=channels,
-        out_channels=dataset.num_classes,
-        num_layers=num_layers,
-        num_heads=num_heads,
-        encoder_pad_size=2,
-        attn_dropout=attn_dropout,
-        ffn_dropout=ffn_dropout,
-        col_stats=dataset.col_stats,
-        col_names_dict=train_tensor_frame.col_names_dict,
-    ).to(device)
+    if args.model_type == 'TabTransformer':
+        model = TabTransformer(
+            channels=channels,
+            out_channels=dataset.num_classes,
+            num_layers=num_layers,
+            num_heads=num_heads,
+            encoder_pad_size=2,
+            attn_dropout=attn_dropout,
+            ffn_dropout=ffn_dropout,
+            col_stats=dataset.col_stats,
+            col_names_dict=train_tensor_frame.col_names_dict,
+        ).to(device)
+    elif args.model_type == 'FTTransformer':
+        model = FTTransformer(
+            channels=channels,
+            out_channels=dataset.num_classes,
+            num_layers=num_layers,
+            col_stats=dataset.col_stats,
+            col_names_dict=train_tensor_frame.col_names_dict,
+        ).to(device)
     num_params = 0
     for m in model.parameters():
         if m.requires_grad:
@@ -179,11 +210,13 @@ def train_frame_model() -> float:
 
     end = time.time()
     frame_train_time = end - start
+    print(model)
     return frame_train_time
 
 
 frame_train_time = train_frame_model()
 tabular_train_time = train_tabular_model()
+print(f"Model type: {args.model_type}")
 print(f"Frame Average time for an epoch: "
       f"{frame_train_time / args.epochs:.2f}s")
 print(f"Tabular Average time for an epoch: "
