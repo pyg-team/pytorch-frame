@@ -1,3 +1,6 @@
+"""This script benchmarks the training time of
+TabTransformer using pytorch_tabular and torch_frame.
+"""
 import argparse
 import os.path as osp
 import time
@@ -180,7 +183,7 @@ def train_frame_model() -> float:
 
 frame_train_time = train_frame_model()
 tabular_train_time = train_tabular_model()
-print(f'Frame Average time for an epoch: {frame_train_time/args.epochs:.2f}s')
-print(
-    f'Tabular Average time for an epoch: {tabular_train_time/args.epochs:.2f}s'
-)
+print(f"Frame Average time for an epoch: "
+      f"{frame_train_time / args.epochs:.2f}s")
+print(f"Tabular Average time for an epoch: "
+      f"{tabular_train_time / args.epochs:.2f}s")
