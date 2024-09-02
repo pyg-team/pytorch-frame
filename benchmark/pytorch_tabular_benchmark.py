@@ -1,27 +1,25 @@
 import argparse
 import os.path as osp
-from tqdm import tqdm
 import time
 
-import torch.nn.functional as F
-from torch.optim.lr_scheduler import ExponentialLR
 import torch
-from torch_frame.data import DataLoader
-from torch_frame.nn import TabTransformer
+import torch.nn.functional as F
 from pytorch_tabular import TabularModel
 from pytorch_tabular.config import DataConfig, OptimizerConfig, TrainerConfig
 from pytorch_tabular.models.common.heads import LinearHeadConfig
 from pytorch_tabular.models.tab_transformer import TabTransformerConfig
 from sklearn.metrics import roc_auc_score
+from tqdm import tqdm
 
 from torch_frame import TaskType, stype
+from torch_frame.data import DataLoader
 from torch_frame.datasets import DataFrameBenchmark
+from torch_frame.nn import TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--task_type', type=str, choices=[
-        'binary_classification',
-    ], default='binary_classification')
+parser.add_argument('--task_type', type=str, choices=[
+    'binary_classification',
+], default='binary_classification')
 parser.add_argument('--scale', type=str, choices=['small', 'medium', 'large'],
                     default='small')
 parser.add_argument('--idx', type=int, default=0,
@@ -38,12 +36,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Prepare datasets
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data')
 dataset = DataFrameBenchmark(root=path, task_type=TaskType(args.task_type),
-                            scale=args.scale, idx=args.idx)
+                             scale=args.scale, idx=args.idx)
 dataset.materialize()
 dataset = dataset.shuffle()
 train_dataset, val_dataset, test_dataset = dataset.split()
 
-def train_tabular_model()-> float:
+
+def train_tabular_model() -> float:
     def roc_auc(y_hat, y):
         r"""Calculate the Area Under the ROC Curve (AUC)
         for the given predictions and true labels.
@@ -58,7 +57,7 @@ def train_tabular_model()-> float:
         return roc_auc_score(y, y_hat)
 
     # TABULAR
-    train_df, val_df, test_df, target_col, cat_col_names, num_col_names = (
+    train_df, val_df, _, target_col, cat_col_names, num_col_names = (
         train_dataset.df, val_dataset.df, test_dataset.df, dataset.target_col,
         dataset.tensor_frame.col_names_dict[stype.categorical],
         dataset.tensor_frame.col_names_dict[stype.numerical])
@@ -78,7 +77,9 @@ def train_tabular_model()-> float:
     optimizer_config = OptimizerConfig()
 
     head_config = LinearHeadConfig(
-        layers="520-1040", dropout=0.1, initialization="kaiming",
+        layers="520-1040",
+        dropout=0.1,
+        initialization="kaiming",
         use_batch_norm=True,
     ).__dict__  # Convert to dict to pass to the model config
 
@@ -87,7 +88,7 @@ def train_tabular_model()-> float:
         learning_rate=1e-3,
         head="LinearHead",  # Linear Head
         head_config=head_config,  # Linear Head Config
-        ff_hidden_multiplier = 0,
+        ff_hidden_multiplier=0,
     )
 
     tabular_model = TabularModel(
@@ -99,21 +100,22 @@ def train_tabular_model()-> float:
     tabular_model.config.auto_lr_find = False
 
     start = time.time()
-    tabular_model.fit(train=train_df, validation=val_df,)
+    tabular_model.fit(
+        train=train_df,
+        validation=val_df,
+    )
     end = time.time()
     tabular_train_time = end - start
     return tabular_train_time
 
-def train_frame_model()-> float:
+
+def train_frame_model() -> float:
     # FRAME
     train_tensor_frame = train_dataset.tensor_frame
     val_tensor_frame = val_dataset.tensor_frame
-    test_tensor_frame = test_dataset.tensor_frame
     train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
-                            shuffle=True)
+                              shuffle=True)
     val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
-    test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
-
     # Set up model and optimizer
     model = TabTransformer(
         channels=32,
@@ -133,7 +135,6 @@ def train_frame_model()-> float:
     print(f'Number of parameters: {num_params}')
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-
     def train(epoch: int) -> float:
         model.train()
         loss_accum = total_count = 0
@@ -148,7 +149,6 @@ def train_frame_model()-> float:
             total_count += len(tf.y)
             optimizer.step()
         return loss_accum / total_count
-
 
     @torch.no_grad()
     def test(loader: DataLoader) -> float:
@@ -168,13 +168,9 @@ def train_frame_model()-> float:
         overall_auc = roc_auc_score(all_labels, all_preds)
         return overall_auc
 
-
-    metric = 'AUC'
-    best_val_metric = 0
-    best_test_metric = 0
     start = time.time()
     for epoch in range(1, 2):
-        train_loss = train(epoch)
+        _ = train(epoch)
         _ = test(train_loader)
         _ = test(val_loader)
 
@@ -182,7 +178,8 @@ def train_frame_model()-> float:
     frame_train_time = end - start
     return frame_train_time
 
+
 frame_train_time = train_frame_model()
 tabular_train_time = train_tabular_model()
-print(f"Frame training time: {frame_train_time}")
+print(f"frame training time: {frame_train_time}")
 print(f"Tabular training time: {tabular_train_time}")
