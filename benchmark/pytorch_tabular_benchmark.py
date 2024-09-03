@@ -69,7 +69,7 @@ def train_tabular_model() -> float:
         auto_lr_find=False,
         batch_size=args.batch_size,
         max_epochs=args.epochs,
-        accelerator=str(device),
+        accelerator='gpu' if device.type == 'cuda' else 'cpu',
     )
 
     optimizer_config = OptimizerConfig()
