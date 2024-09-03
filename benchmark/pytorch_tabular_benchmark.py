@@ -216,7 +216,7 @@ def train_frame_model() -> float:
 
 frame_train_time = train_frame_model()
 tabular_train_time = train_tabular_model()
-print(f"Model type: {args.model_type}")
+print(f"Model type: {args.model_type}. Device: {device}")
 print(f"Frame Average time for an epoch: "
       f"{frame_train_time / args.epochs:.2f}s")
 print(f"Tabular Average time for an epoch: "
