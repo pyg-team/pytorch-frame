@@ -210,7 +210,6 @@ def train_frame_model() -> float:
 
     end = time.time()
     frame_train_time = end - start
-    print(model)
     return frame_train_time
 
 
