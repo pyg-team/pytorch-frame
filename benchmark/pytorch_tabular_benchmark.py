@@ -129,7 +129,6 @@ def train_tabular_model() -> float:
     )
     end = time.time()
     tabular_train_time = end - start
-    print(tabular_model.model)
     return tabular_train_time
 
 
