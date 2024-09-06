@@ -79,6 +79,17 @@ def test_size():
     assert met.shape[2] == -1
 
 
+def test_is_floating_point():
+    met = MultiEmbeddingTensor.from_tensor_list([
+        torch.tensor([[1]], dtype=torch.long),
+    ])
+    assert not met.is_floating_point()
+    met = MultiEmbeddingTensor.from_tensor_list([
+        torch.tensor([[1]], dtype=torch.float32),
+    ])
+    assert met.is_floating_point()
+
+
 def test_fillna_col():
     # Creat a MultiEmbeddingTensor containing all -1's
     # In MultiEmbeddingTensor with torch.long dtype,
