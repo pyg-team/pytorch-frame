@@ -32,6 +32,15 @@ def column_select(
     return new_tensor_mat
 
 
+def test_is_floating_point():
+    met = MultiNestedTensor.from_tensor_mat(
+        [[torch.tensor([1], dtype=torch.long)]])
+    assert not met.is_floating_point()
+    met = MultiNestedTensor.from_tensor_mat(
+        [[torch.tensor([1], dtype=torch.float32)]])
+    assert met.is_floating_point()
+
+
 def test_fillna_col():
     # Creat a MultiNestedTensor containing all -1's
     # In MultiNestedTensor with torch.long dtype,

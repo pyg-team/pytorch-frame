@@ -74,6 +74,9 @@ class _MultiTensor:
     def dtype(self) -> torch.dtype:
         return self.values.dtype
 
+    def is_floating_point(self) -> bool:
+        return self.values.is_floating_point()
+
     def clone(self) -> _MultiTensor:
         return self.__class__(
             self.num_rows,

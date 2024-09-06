@@ -1,5 +1,5 @@
-"""This script benchmarks the training time of
-TabTransformer using pytorch_tabular and torch_frame.
+"""This script benchmarks the training time of TabTransformer using PyTorch
+Frame and PyTorch Tabular.
 """
 import argparse
 import os.path as osp
@@ -20,9 +20,8 @@ from torch_frame.datasets import DataFrameBenchmark
 from torch_frame.nn import FTTransformer, TabTransformer
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task_type', type=str, choices=[
-    'binary_classification',
-], default='binary_classification')
+parser.add_argument('--task_type', type=str, choices=['binary_classification'],
+                    default='binary_classification')
 parser.add_argument('--scale', type=str, choices=['small', 'medium', 'large'],
                     default='small')
 parser.add_argument('--idx', type=int, default=0,
@@ -51,8 +50,10 @@ train_dataset, val_dataset, test_dataset = dataset.split()
 
 
 def train_tabular_model() -> float:
-    """Train a tabular model using pytorch_tabular
-    and return the training time in seconds.
+    """Trains a tabular model with PyTorch Tabular.
+
+    Returns:
+        The training time in seconds.
     """
     train_df, val_df, _, target_col, cat_col_names, num_col_names = (
         train_dataset.df, val_dataset.df, test_dataset.df, dataset.target_col,
@@ -64,14 +65,12 @@ def train_tabular_model() -> float:
         continuous_cols=num_col_names,
         categorical_cols=cat_col_names,
     )
-
     trainer_config = TrainerConfig(
         auto_lr_find=False,
         batch_size=args.batch_size,
         max_epochs=args.epochs,
         accelerator='gpu' if device.type == 'cuda' else 'cpu',
     )
-
     optimizer_config = OptimizerConfig()
 
     if args.model_type == 'TabTransformer':
@@ -127,19 +126,22 @@ def train_tabular_model() -> float:
         train=train_df,
         validation=val_df,
     )
-    end = time.time()
-    tabular_train_time = end - start
-    return tabular_train_time
+    return time.time() - start
 
 
 def train_frame_model() -> float:
-    """Train a tabular model using torch_frame
-    and return the training time in seconds.
+    """Trains a tabular model with PyTorch Frame.
+
+    Returns:
+        The training time in seconds.
     """
     train_tensor_frame = train_dataset.tensor_frame
     val_tensor_frame = val_dataset.tensor_frame
-    train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
-                              shuffle=True)
+    train_loader = DataLoader(
+        train_tensor_frame,
+        batch_size=args.batch_size,
+        shuffle=True,
+    )
     val_loader = DataLoader(val_tensor_frame, batch_size=args.batch_size)
     # Set up model and optimizer
     if args.model_type == 'TabTransformer':
@@ -162,6 +164,7 @@ def train_frame_model() -> float:
             col_stats=dataset.col_stats,
             col_names_dict=train_tensor_frame.col_names_dict,
         ).to(device)
+
     num_params = 0
     for m in model.parameters():
         if m.requires_grad:
@@ -172,7 +175,6 @@ def train_frame_model() -> float:
     def train(epoch: int) -> float:
         model.train()
         loss_accum = total_count = 0
-
         for tf in tqdm(train_loader, desc=f'Epoch: {epoch}'):
             tf = tf.to(device)
             pred = model.forward(tf)
@@ -192,30 +194,24 @@ def train_frame_model() -> float:
         for tf in tqdm(loader):
             tf = tf.to(device)
             pred = model(tf)
-
             all_labels.append(tf.y.cpu())
-            all_preds.append(pred[:, 1].detach().cpu())
+            all_preds.append(pred[:, 1].cpu())
         all_labels = torch.cat(all_labels).numpy()
         all_preds = torch.cat(all_preds).numpy()
-
-        # Compute the overall AUC
-        overall_auc = roc_auc_score(all_labels, all_preds)
-        return overall_auc
+        return roc_auc_score(all_labels, all_preds)
 
     start = time.time()
     for epoch in range(1, args.epochs + 1):
         _ = train(epoch)
         _ = test(val_loader)
 
-    end = time.time()
-    frame_train_time = end - start
-    return frame_train_time
+    return time.time() - start
 
 
 frame_train_time = train_frame_model()
 tabular_train_time = train_tabular_model()
 print(f"Model type: {args.model_type}. Device: {device}")
-print(f"Frame Average time for an epoch: "
+print(f"Frame average time per epoch: "
       f"{frame_train_time / args.epochs:.2f}s")
-print(f"Tabular Average time for an epoch: "
+print(f"Tabular average time per epoch: "
       f"{tabular_train_time / args.epochs:.2f}s")

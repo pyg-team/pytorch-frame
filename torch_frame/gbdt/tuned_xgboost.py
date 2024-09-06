@@ -114,8 +114,7 @@ class XGBoost(GBDT):
 
         self.params = {
             "booster":
-            trial.suggest_categorical("booster",
-                                      ["gbtree", "gblinear", "dart"]),
+            trial.suggest_categorical("booster", ["gbtree", "dart"]),
             "lambda":
             (0.0 if not trial.suggest_categorical('use_lambda', [True, False])
              else trial.suggest_float('lambda', 1e-8, 1e2, log=True)),
