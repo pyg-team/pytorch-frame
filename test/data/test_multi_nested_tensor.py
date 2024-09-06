@@ -33,13 +33,11 @@ def column_select(
 
 
 def test_is_floating_point():
-    met = MultiNestedTensor.from_tensor_mat([
-        [torch.tensor([1], dtype=torch.long)]
-    ])
+    met = MultiNestedTensor.from_tensor_mat(
+        [[torch.tensor([1], dtype=torch.long)]])
     assert not met.is_floating_point()
-    met = MultiNestedTensor.from_tensor_mat([
-        [torch.tensor([1], dtype=torch.float32)]
-    ])
+    met = MultiNestedTensor.from_tensor_mat(
+        [[torch.tensor([1], dtype=torch.float32)]])
     assert met.is_floating_point()
 
 
