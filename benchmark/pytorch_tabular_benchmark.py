@@ -9,7 +9,11 @@ import torch
 import torch.nn.functional as F
 from pytorch_tabular import TabularModel
 from pytorch_tabular.config import DataConfig, OptimizerConfig, TrainerConfig
-from pytorch_tabular.models import (FTTransformerConfig, TabTransformerConfig, LinearHeadConfig,)
+from pytorch_tabular.models import (
+    FTTransformerConfig,
+    LinearHeadConfig,
+    TabTransformerConfig,
+)
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
