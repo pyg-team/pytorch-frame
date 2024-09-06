@@ -10,7 +10,6 @@ import torch.nn.functional as F
 from pytorch_tabular import TabularModel
 from pytorch_tabular.config import DataConfig, OptimizerConfig, TrainerConfig
 from pytorch_tabular.models import FTTransformerConfig, TabTransformerConfig
-from pytorch_tabular.models.common.heads import LinearHeadConfig
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
@@ -114,6 +113,7 @@ def train_tabular_model() -> float:
         )
     else:
         raise ValueError(f"Invalid model type: {args.model_type}")
+
     tabular_model = TabularModel(
         data_config=data_config,
         model_config=model_config,
