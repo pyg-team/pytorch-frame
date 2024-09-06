@@ -19,3 +19,4 @@ venv/*
 *.out
 data/**
 catboost_info/
+.pt_tmp/
