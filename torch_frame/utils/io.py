@@ -119,6 +119,8 @@ def load(
                 tf_dict, col_stats = torch.load(path, weights_only=False)
             else:
                 raise e
+    else:
+        tf_dict, col_stats = torch.load(path, weights_only=False)
 
     tf_dict['feat_dict'] = deserialize_feat_dict(
         tf_dict.pop('feat_serialized_dict'))
