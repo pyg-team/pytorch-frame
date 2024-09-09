@@ -122,6 +122,10 @@ class UntrustedClass:
     pass
 
 
+@pytest.mark.skipif(
+    not torch_frame.typing.WITH_PT24,
+    reason='Requres PyTorch 2.4',
+)
 def test_load_weights_only_gracefully(tmpdir):
     save(
         tensor_frame=TensorFrame({}, {}),
