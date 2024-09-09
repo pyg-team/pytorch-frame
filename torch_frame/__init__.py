@@ -27,6 +27,7 @@ import torch_frame.gbdt  # noqa
 
 if WITH_PT24:
     import torch
+
     torch.serialization.add_safe_globals([
         stype,
         torch_frame.data.stats.StatType,
