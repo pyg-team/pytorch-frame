@@ -3,8 +3,10 @@ import os.path as osp
 import shutil
 import tempfile
 
+import pytest
+
 import torch_frame
-from torch_frame import load, save
+from torch_frame import TensorFrame, load, save
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.datasets import FakeDataset
@@ -114,3 +116,21 @@ def test_save_load_tensor_frame():
     tf, col_stats = load(path)
     assert dataset.col_stats == col_stats
     assert dataset.tensor_frame == tf
+
+
+class UntrustedClass:
+    pass
+
+
+@pytest.mark.skipif(
+    not torch_frame.typing.WITH_PT24,
+    reason='Requres PyTorch 2.4',
+)
+def test_load_weights_only_gracefully(tmpdir):
+    save(
+        tensor_frame=TensorFrame({}, {}),
+        col_stats={'a': UntrustedClass()},
+        path=tmpdir.join('tf.pt'),
+    )
+    with pytest.warns(UserWarning, match='Weights only load failed'):
+        load(tmpdir.join('tf.pt'))

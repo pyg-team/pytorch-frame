@@ -54,12 +54,18 @@ def test_gbdt_with_save_load(gbdt_cls, stypes, task_type_and_metric):
         with pytest.raises(RuntimeError, match="is not yet fitted"):
             gbdt.save(path)
 
-        gbdt.tune(
-            tf_train=dataset.tensor_frame,
-            tf_val=dataset.tensor_frame,
-            num_trials=2,
-            num_boost_round=2,
-        )
+        if isinstance(gbdt_cls, XGBoost):
+            gbdt.tune(tf_train=dataset.tensor_frame,
+                      tf_val=dataset.tensor_frame, num_trials=2,
+                      num_boost_round=1000, early_stopping_rounds=2)
+            assert gbdt.model.best_iteration is not None
+        else:
+            gbdt.tune(
+                tf_train=dataset.tensor_frame,
+                tf_val=dataset.tensor_frame,
+                num_trials=2,
+                num_boost_round=2,
+            )
         gbdt.save(path)
 
         loaded_gbdt = gbdt_cls(
