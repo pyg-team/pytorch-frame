@@ -166,8 +166,7 @@ class LightGBM(GBDT):
 
         boost = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
-            valid_sets=[eval_data],
-            callbacks=[
+            valid_sets=[eval_data], callbacks=[
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
@@ -202,14 +201,12 @@ class LightGBM(GBDT):
 
         study.optimize(
             lambda trial: self.objective(trial, train_data, eval_data,
-                                         num_boost_round),
-            num_trials)
+                                         num_boost_round), num_trials)
         self.params.update(study.best_params)
 
         self.model = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
-            valid_sets=[eval_data],
-            callbacks=[
+            valid_sets=[eval_data], callbacks=[
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
