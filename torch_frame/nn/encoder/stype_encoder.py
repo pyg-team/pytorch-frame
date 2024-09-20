@@ -732,6 +732,7 @@ class LinearEmbeddingEncoder(StypeEncoder):
             # -> [batch_size, out_channels]
             x_lin = feat.values[:, start_idx:end_idx] @ self.weight_list[idx]
             x_lins.append(x_lin)
+            start_idx = end_idx
         # [batch_size, num_cols, out_channels]
         x = torch.stack(x_lins, dim=1)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]
