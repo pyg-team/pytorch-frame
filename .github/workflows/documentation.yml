@@ -23,7 +23,6 @@ jobs:
         uses: tj-actions/changed-files@v41
         with:
           files: |
-            docs/**
             examples/**
             README.md
             CHANGELOG.md
