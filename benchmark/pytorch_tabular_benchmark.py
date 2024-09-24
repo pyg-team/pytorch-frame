@@ -7,7 +7,7 @@ speed while trainig.
 -------------------------------------
 Package | Model   | Num iters/sec|
 -------------------------------------
-Tabular | TabNet  | 41.7          
+Tabular | TabNet  | 41.7
 Frame   | TabNet  | 45.0
 Tabular | FTTrans | 40.1
 Frame   | FTTrans | 43.7
