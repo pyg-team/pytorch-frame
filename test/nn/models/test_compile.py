@@ -14,7 +14,7 @@ from torch_frame.nn.models import (
 from torch_frame.testing import withPackage
 
 
-@withPackage("torch>=2.4.0")
+@withPackage("torch>=2.5.0")
 @pytest.mark.parametrize(
     "model_cls, model_kwargs, stypes, expected_graph_breaks",
     [
@@ -54,7 +54,7 @@ from torch_frame.testing import withPackage
             Trompt,
             dict(channels=8, num_prompts=2),
             None,
-            7,
+            4,
             id="Trompt",
         ),
         pytest.param(
