@@ -89,4 +89,5 @@ def test_compile_graph_break(
         **model_kwargs,
     )
     explanation = torch._dynamo.explain(model)(tf)
-    assert explanation.graph_break_count == expected_graph_breaks
+    graph_breaks = explanation.graph_break_count
+    assert graph_breaks == expected_graph_breaks
