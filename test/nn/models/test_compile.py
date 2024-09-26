@@ -34,7 +34,7 @@ from torch_frame.testing import withPackage
                 gamma=0.1,
             ),
             None,
-            7,
+            2,
             id="TabNet",
         ),
         pytest.param(
@@ -47,21 +47,21 @@ from torch_frame.testing import withPackage
                 ffn_dropout=0.5,
             ),
             None,
-            4,
+            0,
             id="TabTransformer",
         ),
         pytest.param(
             Trompt,
             dict(channels=8, num_prompts=2),
             None,
-            16,
+            7,
             id="Trompt",
         ),
         pytest.param(
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
             [stype.numerical],
-            4,
+            1,
             id="ExcelFormer",
         ),
     ],
@@ -89,4 +89,4 @@ def test_compile_graph_break(
         **model_kwargs,
     )
     explanation = torch._dynamo.explain(model)(tf)
-    assert explanation.graph_break_count <= expected_graph_breaks
+    assert explanation.graph_break_count == expected_graph_breaks
