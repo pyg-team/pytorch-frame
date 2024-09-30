@@ -209,3 +209,16 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 | FTTransformer       | 0.872±0.005 (7004s)    | 0.540±0.068 (3355s)      | 0.908±0.004 (7514s)      |
 | TabNet              | **0.912±0.004 (219s)** | 0.995±0.001 (301s)       | 0.919±0.003 (187s)       |
 | TabTransformer      | 0.843±0.003 (2810s)    | 0.657±0.187 (2843s)      | 0.854±0.001 (284s)       |
+
+## Benchmarking pytorch-frame and pytorch-tabular
+
+`pytorch_tabular_benchmark` compares `ptroch-frame` to `pytorch-tabular`. `pytorch-tabular` is a popular package for Deep learning(DL) on tabular data. Its key use case it to make using existing tabular DL models easy. `pytorch_tabular_benchmar` primarly compares runtimes for similar models across the two libraries.
+
+| Package | Model   | Num iters/sec|
+| :-------| :-------|:-------------|
+| Tabular | TabNet  | 41.7         |    
+| Frame   | TabNet  | 45.0         |
+| Tabular | FTTrans | 40.1         |
+| Frame   | FTTrans | 43.7         |
+
+
