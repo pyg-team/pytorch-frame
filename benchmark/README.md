@@ -212,11 +212,12 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 
 ## Benchmarking pytorch-frame and pytorch-tabular
 
-`pytorch_tabular_benchmark` compares `ptroch-frame` to `pytorch-tabular`. `pytorch-tabular` is a popular package for Deep learning(DL) on tabular data. Its key use case it to make using existing tabular DL models easy. `pytorch_tabular_benchmar` primarly compares runtimes for similar models across the two libraries.
+`pytorch_tabular_benchmark` compares the performance of `pytorch-frame` to `pytorch-tabular`. `pytorch-tabular` excels in providing an accessible approach for standard tabular tasks, allowing users to quickly implement and experiment with existing tabular learning models. It also excels with its training loop modifications and explainability feature. On the other hand, `ptroch-frame` offers enhanced flexibility for exploring and building novel tabular learning approaches while still providing access to established models. It distinguishes itself through support for a wider array of data types, more sophisticated encoding schemas, and streamlined integration with LLMs.
+The following table shows the speed comparison of `pytorch-frame` to `pytorch-tabular` on implementations of `TabNet` and `FTTransformer`.
 
 | Package | Model   | Num iters/sec |
 | :------ | :------ | :------------ |
-| Tabular | TabNet  | 41.7          |
-| Frame   | TabNet  | 45.0          |
-| Tabular | FTTrans | 40.1          |
-| Frame   | FTTrans | 43.7          |
+| PyTorch Tabular | TabNet  | 41.7          |
+| PyTorch Frame   | TabNet  | 45.0          |
+| PyTorch Tabular | FTTransformer | 40.1          |
+| PyTorch Frame   | FTTransformer | 43.7          |
