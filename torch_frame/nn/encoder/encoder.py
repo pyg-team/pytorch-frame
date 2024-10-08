@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
 
 from torch import Tensor
 from torch.nn import Module
@@ -16,7 +15,7 @@ class FeatureEncoder(Module, ABC):
     value handling.
     """
     @abstractmethod
-    def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
+    def forward(self, tf: TensorFrame) -> tuple[Tensor, list[str]]:
         r"""Encode :class:`TensorFrame` object into a tuple
         :obj:`(x, col_names)`.
 
