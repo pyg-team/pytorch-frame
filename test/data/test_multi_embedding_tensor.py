@@ -1,5 +1,5 @@
 import random
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import pytest
 import torch
@@ -9,7 +9,7 @@ from torch_frame.testing import withCUDA
 
 
 def assert_equal(
-    tensor_list: List[torch.Tensor],
+    tensor_list: list[torch.Tensor],
     met: MultiEmbeddingTensor,
 ) -> None:
     assert len(tensor_list) == met.num_cols
@@ -22,9 +22,9 @@ def assert_equal(
 
 
 def row_select(
-    tensor_list: List[torch.Tensor],
-    index: Union[List[int], slice],
-) -> List[torch.Tensor]:
+    tensor_list: list[torch.Tensor],
+    index: Union[list[int], slice],
+) -> list[torch.Tensor]:
     """Selects rows from a list of column tensors.
 
     Args:
@@ -45,7 +45,7 @@ def get_fake_multi_embedding_tensor(
     num_cols: int,
     embedding_dim: Optional[int] = None,
     device: Optional[torch.device] = None,
-) -> Tuple[MultiEmbeddingTensor, List[torch.Tensor]]:
+) -> tuple[MultiEmbeddingTensor, list[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):
         embedding_dim = embedding_dim or random.randint(1, 5)

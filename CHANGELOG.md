@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- Dropped support for Python 3.8 ([#462](https://github.com/pyg-team/pytorch-frame/pull/462))
+
 ### Fixed
 
 - Fixed size mismatch `RuntimeError` in `transforms.CatToNumTransform` ([#446](https://github.com/pyg-team/pytorch-frame/pull/446))

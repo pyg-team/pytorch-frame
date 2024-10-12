@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Callable, TypeVar
 
 import torch
 from torch import Tensor
