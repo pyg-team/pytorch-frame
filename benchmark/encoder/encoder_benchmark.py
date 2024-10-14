@@ -1,7 +1,6 @@
 import time
 from argparse import ArgumentParser
 from contextlib import nullcontext
-from typing import Dict
 
 import torch
 from line_profiler import profile
@@ -115,7 +114,7 @@ encoder_str2encoder_cls_kwargs = {
 }
 
 
-def make_stype_encoder_dict() -> Dict[stype, StypeEncoder]:
+def make_stype_encoder_dict() -> dict[stype, StypeEncoder]:
     stype_encoder_dict = {}
     for stype_str, encoder_str in args.stype_kv:
         encoder_kwargs = encoder_str2encoder_cls_kwargs[encoder_str]

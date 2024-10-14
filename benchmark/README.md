@@ -196,16 +196,28 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 
 Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
-|                     | dataset_0              | dataset_1              | dataset_2                |
-| :------------------ | :--------------------- | :--------------------- | :----------------------- |
-| XGBoost             | Too slow\*             | Too slow\*             | Too slow\*               |
-| CatBoost            | Too slow\*             | Too slow\*             | Too slow\*               |
-| LightGBM            | Too slow\*             | Too slow\*             | Too slow\*               |
-| Trompt              | OOM                    | 0.889±0.063 (55428s)   | 0.804±0.013 (23304s)     |
-| ResNet              | 0.892±0.002 (417s)     | **0.999±0.001 (396s)** | 0.915±0.001 (405s)       |
-| MLP                 | 0.770±0.001 (170s)     | 0.549±0.000 (223s)     | 0.895±0.001 (192s)       |
-| FTTransformerBucket | 0.897±0.004 (4436s)    | 0.502±0.000 (1892s)    | 0.888±0.009 (4414s)      |
-| ExcelFormer         | OOM                    | TODO (code error)      | **0.951±0.002 (10236s)** |
-| FTTransformer       | 0.872±0.005 (7004s)    | 0.540±0.068 (3355s)    | 0.908±0.004 (7514s)      |
-| TabNet              | **0.912±0.004 (219s)** | 0.995±0.001 (301s)     | 0.919±0.003 (187s)       |
-| TabTransformer      | 0.843±0.003 (2810s)    | 0.657±0.187 (2843s)    | 0.854±0.001 (284s)       |
+|                     | dataset_0              | dataset_1                | dataset_2                |
+| :------------------ | :--------------------- | :----------------------- | :----------------------- |
+| XGBoost             | Too slow\*             | Too slow\*               | Too slow\*               |
+| CatBoost            | Too slow\*             | Too slow\*               | Too slow\*               |
+| LightGBM            | Too slow\*             | Too slow\*               | Too slow\*               |
+| Trompt              | OOM                    | 0.889±0.063 (55428s)     | 0.804±0.013 (23304s)     |
+| ResNet              | 0.892±0.002 (417s)     | **0.999±0.001 (396s)**   | 0.915±0.001 (405s)       |
+| MLP                 | 0.770±0.001 (170s)     | 0.549±0.000 (223s)       | 0.895±0.001 (192s)       |
+| FTTransformerBucket | 0.897±0.004 (4436s)    | 0.502±0.000 (1892s)      | 0.888±0.009 (4414s)      |
+| ExcelFormer         | OOM                    | **0.999±0.001 (13952s)** | **0.951±0.002 (10236s)** |
+| FTTransformer       | 0.872±0.005 (7004s)    | 0.540±0.068 (3355s)      | 0.908±0.004 (7514s)      |
+| TabNet              | **0.912±0.004 (219s)** | 0.995±0.001 (301s)       | 0.919±0.003 (187s)       |
+| TabTransformer      | 0.843±0.003 (2810s)    | 0.657±0.187 (2843s)      | 0.854±0.001 (284s)       |
+
+## Benchmarking pytorch-frame and pytorch-tabular
+
+`pytorch_tabular_benchmark` compares the performance of `pytorch-frame` to `pytorch-tabular`. `pytorch-tabular` excels in providing an accessible approach for standard tabular tasks, allowing users to quickly implement and experiment with existing tabular learning models. It also excels with its training loop modifications and explainability feature. On the other hand, `ptroch-frame` offers enhanced flexibility for exploring and building novel tabular learning approaches while still providing access to established models. It distinguishes itself through support for a wider array of data types, more sophisticated encoding schemas, and streamlined integration with LLMs.
+The following table shows the speed comparison of `pytorch-frame` to `pytorch-tabular` on implementations of `TabNet` and `FTTransformer`.
+
+| Package         | Model         | Num iters/sec |
+| :-------------- | :------------ | :------------ |
+| PyTorch Tabular | TabNet        | 41.7          |
+| PyTorch Frame   | TabNet        | 45.0          |
+| PyTorch Tabular | FTTransformer | 40.1          |
+| PyTorch Frame   | FTTransformer | 43.7          |

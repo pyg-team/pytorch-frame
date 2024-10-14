@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import torch
 from torch import Tensor
 
@@ -15,7 +13,7 @@ def test_simple_basecls():
             self,
             out_channels: int,
             num_numerical: int,
-            num_categories: List[int],
+            num_categories: list[int],
         ):
             super().__init__()
 
@@ -31,7 +29,7 @@ def test_simple_basecls():
                 for num_category in num_categories
             ])
 
-        def forward(self, tf: TensorFrame) -> Tuple[Tensor, List[str]]:
+        def forward(self, tf: TensorFrame) -> tuple[Tensor, list[str]]:
             xs = []
             for i, lin in enumerate(self.lins):
                 xs.append(lin(tf.feat_dict[torch_frame.numerical][:, i:i + 1]))

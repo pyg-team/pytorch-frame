@@ -103,7 +103,6 @@ class LightGBM(GBDT):
         trial: Any,  # optuna.trial.Trial
         train_data: Any,  # lightgbm.Dataset
         eval_data: Any,  # lightgbm.Dataset
-        cat_features: list[int],
         num_boost_round: int,
     ) -> float:
         r"""Objective function to be optimized.
@@ -112,8 +111,6 @@ class LightGBM(GBDT):
             trial (optuna.trial.Trial): Optuna trial object.
             train_data (lightgbm.Dataset): Train data.
             eval_data (lightgbm.Dataset): Validation data.
-            cat_features (list[int]): Array containing indexes of
-                categorical features.
             num_boost_round (int): Number of boosting round.
 
         Returns:
@@ -169,8 +166,7 @@ class LightGBM(GBDT):
 
         boost = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
-            categorical_feature=cat_features, valid_sets=[eval_data],
-            callbacks=[
+            valid_sets=[eval_data], callbacks=[
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])
@@ -199,19 +195,18 @@ class LightGBM(GBDT):
         assert train_y is not None
         assert val_y is not None
         train_data = lightgbm.Dataset(train_x, label=train_y,
+                                      categorical_feature=cat_features,
                                       free_raw_data=False)
         eval_data = lightgbm.Dataset(val_x, label=val_y, free_raw_data=False)
 
         study.optimize(
             lambda trial: self.objective(trial, train_data, eval_data,
-                                         cat_features, num_boost_round),
-            num_trials)
+                                         num_boost_round), num_trials)
         self.params.update(study.best_params)
 
         self.model = lightgbm.train(
             self.params, train_data, num_boost_round=num_boost_round,
-            categorical_feature=cat_features, valid_sets=[eval_data],
-            callbacks=[
+            valid_sets=[eval_data], callbacks=[
                 lightgbm.early_stopping(stopping_rounds=50, verbose=False),
                 lightgbm.log_evaluation(period=2000)
             ])

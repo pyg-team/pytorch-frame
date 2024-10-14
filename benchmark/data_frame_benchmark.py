@@ -3,7 +3,7 @@ import math
 import os
 import os.path as osp
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import optuna
@@ -303,10 +303,10 @@ def test(
 
 
 def train_and_eval_with_cfg(
-    model_cfg: Dict[str, Any],
-    train_cfg: Dict[str, Any],
+    model_cfg: dict[str, Any],
+    train_cfg: dict[str, Any],
     trial: Optional[optuna.trial.Trial] = None,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     # Use model_cfg to set up training procedure
     if args.model_type == 'FTTransformerBucket':
         # Use LinearBucketEncoder instead

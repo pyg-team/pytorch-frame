@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Callable, TypeVar
 
 import torch
 from torch import Tensor
@@ -73,6 +74,9 @@ class _MultiTensor:
     @property
     def dtype(self) -> torch.dtype:
         return self.values.dtype
+
+    def is_floating_point(self) -> bool:
+        return self.values.is_floating_point()
 
     def clone(self) -> _MultiTensor:
         return self.__class__(
