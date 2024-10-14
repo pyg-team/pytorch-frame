@@ -230,3 +230,18 @@ def test_custom_tf_get_col_feat():
     assert torch.equal(feat, feat_dict['numerical'][:, 0:1])
     feat = tf.get_col_feat('num_2')
     assert torch.equal(feat, feat_dict['numerical'][:, 1:2])
+
+
+def test_pin_memory(get_fake_tensor_frame):
+    def assert_is_pinned(tf: TensorFrame, expected: bool) -> bool:
+        for value in tf.feat_dict.values():
+            if isinstance(value, dict):
+                for v in value.values():
+                    assert v.is_pinned() is expected
+            else:
+                assert value.is_pinned() is expected
+
+    tf = get_fake_tensor_frame(10)
+    assert_is_pinned(tf, expected=False)
+    tf = tf.pin_memory()
+    assert_is_pinned(tf, expected=True)
