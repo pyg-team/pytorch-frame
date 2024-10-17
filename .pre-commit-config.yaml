@@ -85,7 +85,7 @@ repos:
     hooks:
       - id: mypy
         name: Check types
-        additional_dependencies: [torch==2.4.0]
+        additional_dependencies: [torch==2.5.0]
         exclude: "^test/|^examples/|^benchmark/"
 
   - repo: https://github.com/executablebooks/mdformat
