@@ -208,6 +208,21 @@ def test_get_col_feat(get_fake_tensor_frame):
                                   tf.feat_dict[stype])
 
 
+def test_empty_tensor_frame():
+    tf = TensorFrame({}, {})
+    assert tf.num_rows == 0
+    assert tf.device is None
+
+    tf = TensorFrame({}, {}, num_rows=4)
+    assert tf.num_rows == 4
+    assert tf.device is None
+    assert tf[0].num_rows == 1
+    assert tf[[0, 1]].num_rows == 2
+    assert tf[0:2].num_rows == 2
+    assert tf[torch.tensor([0, 1])].num_rows == 2
+    assert tf[torch.tensor([True, True, False, False])].num_rows == 2
+
+
 def test_custom_tf_get_col_feat():
     col_names_dict = {
         'categorical': ['cat_1', 'cat_2', 'cat_3'],
