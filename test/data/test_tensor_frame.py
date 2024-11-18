@@ -206,3 +206,18 @@ def test_get_col_feat(get_fake_tensor_frame):
         else:
             assert torch.allclose(torch.cat(feat_list, dim=1),
                                   tf.feat_dict[stype])
+
+
+def test_empty_tensor_fraome():
+    tf = TensorFrame({}, {})
+    assert tf.num_rows == 0
+    assert tf.device is None
+
+    tf = TensorFrame({}, {}, num_rows=4)
+    assert tf.num_rows == 4
+    assert tf.device is None
+    assert tf[0].num_rows == 1
+    assert tf[[0, 1]].num_rows == 2
+    assert tf[0:2].num_rows == 2
+    assert tf[torch.tensor([0, 1])].num_rows == 2
+    assert tf[torch.tensor([True, True, False, False])].num_rows == 2
