@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import Enum
-from typing import Dict, List, Mapping, Union
+from typing import Union
 
 import pandas as pd
+import torch
 from torch import Tensor
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+
+WITH_PT20 = int(torch.__version__.split('.')[0]) >= 2
+WITH_PT24 = WITH_PT20 and int(torch.__version__.split('.')[1]) >= 4
 
 
 class Metric(Enum):
@@ -25,7 +30,7 @@ class Metric(Enum):
     MAE = 'mae'
     R2 = 'r2'
 
-    def supports_task_type(self, task_type: 'TaskType') -> bool:
+    def supports_task_type(self, task_type: TaskType) -> bool:
         return self in task_type.supported_metrics
 
 
@@ -105,14 +110,14 @@ class NAStrategy(Enum):
 Series = pd.Series
 DataFrame = pd.DataFrame
 
-IndexSelectType = Union[int, List[int], range, slice, Tensor]
-ColumnSelectType = Union[str, List[str]]
+IndexSelectType = Union[int, list[int], range, slice, Tensor]
+ColumnSelectType = Union[str, list[str]]
 TextTokenizationMapping = Mapping[str, Tensor]
-TextTokenizationOutputs = Union[List[TextTokenizationMapping],
+TextTokenizationOutputs = Union[list[TextTokenizationMapping],
                                 TextTokenizationMapping]
 TensorData = Union[
     Tensor,
     MultiNestedTensor,
     MultiEmbeddingTensor,
-    Dict[str, MultiNestedTensor],
+    dict[str, MultiNestedTensor],
 ]

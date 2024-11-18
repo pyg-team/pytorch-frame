@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import torch
 from torch import Tensor
@@ -199,7 +199,7 @@ class MultiEmbeddingTensor(_MultiTensor):
     def fillna_col(
         self,
         col_index: int,
-        fill_value: Union[int, float, Tensor],
+        fill_value: int | float | Tensor,
     ) -> None:
         values_index = slice(self.offset[col_index],
                              self.offset[col_index + 1])

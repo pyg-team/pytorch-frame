@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import torch
 from torch import Tensor
 from torch.nn import (
@@ -38,7 +36,7 @@ class FTTransformerConvs(TableConv):
     def __init__(
         self,
         channels: int,
-        feedforward_channels: Optional[int] = None,
+        feedforward_channels: int | None = None,
         # Arguments for Transformer
         num_layers: int = 3,
         nhead: int = 8,
@@ -70,7 +68,7 @@ class FTTransformerConvs(TableConv):
             if p.dim() > 1:
                 torch.nn.init.xavier_uniform_(p)
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         r"""CLS-token augmented Transformer convolution.
 
         Args:

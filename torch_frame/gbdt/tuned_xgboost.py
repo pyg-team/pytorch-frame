@@ -93,6 +93,7 @@ class XGBoost(GBDT):
         dtrain: Any,  # xgboost.DMatrix
         dvalid: Any,  # xgboost.DMatrix
         num_boost_round: int,
+        early_stopping_rounds: int,
     ) -> float:
         r"""Objective function to be optimized.
 
@@ -101,6 +102,8 @@ class XGBoost(GBDT):
             dtrain (xgboost.DMatrix): Train data.
             dvalid (xgboost.DMatrix): Validation data.
             num_boost_round (int): Number of boosting round.
+            early_stopping_rounds (int): Number of early stopping
+                rounds.
 
         Returns:
             float: Best objective value. Root mean squared error for
@@ -111,8 +114,7 @@ class XGBoost(GBDT):
 
         self.params = {
             "booster":
-            trial.suggest_categorical("booster",
-                                      ["gbtree", "gblinear", "dart"]),
+            trial.suggest_categorical("booster", ["gbtree", "dart"]),
             "lambda":
             (0.0 if not trial.suggest_categorical('use_lambda', [True, False])
              else trial.suggest_float('lambda', 1e-8, 1e2, log=True)),
@@ -174,12 +176,26 @@ class XGBoost(GBDT):
 
         boost = xgboost.train(self.params, dtrain,
                               num_boost_round=num_boost_round,
-                              early_stopping_rounds=50, verbose_eval=False,
-                              evals=[(dvalid, 'validation')],
-                              callbacks=[pruning_callback])
-        pred = boost.predict(dvalid)
-        score = self.compute_metric(torch.from_numpy(dvalid.get_label()),
-                                    torch.from_numpy(pred))
+                              early_stopping_rounds=early_stopping_rounds,
+                              verbose_eval=False, evals=[
+                                  (dvalid, 'validation')
+                              ], callbacks=[pruning_callback])
+        if boost.best_iteration:
+            iteration_range = (0, boost.best_iteration + 1)
+        else:
+            iteration_range = None
+        pred = boost.predict(dvalid, iteration_range)
+
+        # If xgboost early stops on multiclass classification
+        # task, then the output shape would be (batch_size, num_classes).
+        # We need to take argmax to get the final prediction output.
+        if (boost.best_iteration
+                and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
+            assert pred.shape[1] == self.params["num_class"]
+            pred = torch.argmax(torch.from_numpy(pred), dim=1)
+        else:
+            pred = torch.from_numpy(pred)
+        score = self.compute_metric(torch.from_numpy(dvalid.get_label()), pred)
         return score
 
     def _tune(
@@ -188,6 +204,7 @@ class XGBoost(GBDT):
         tf_val: TensorFrame,
         num_trials: int,
         num_boost_round: int = 2000,
+        early_stopping_rounds: int = 50,
     ):
         import optuna
         import xgboost
@@ -207,13 +224,14 @@ class XGBoost(GBDT):
                                  feature_types=val_feat_type,
                                  enable_categorical=True)
         study.optimize(
-            lambda trial: self.objective(trial, dtrain, dvalid, num_boost_round
-                                         ), num_trials)
+            lambda trial: self.objective(
+                trial, dtrain, dvalid, num_boost_round, early_stopping_rounds),
+            num_trials)
         self.params.update(study.best_params)
 
         self.model = xgboost.train(self.params, dtrain,
                                    num_boost_round=num_boost_round,
-                                   early_stopping_rounds=50,
+                                   early_stopping_rounds=early_stopping_rounds,
                                    verbose_eval=False,
                                    evals=[(dvalid, 'validation')])
 
@@ -225,8 +243,22 @@ class XGBoost(GBDT):
         dtest = xgboost.DMatrix(test_feat, label=test_y,
                                 feature_types=test_feat_type,
                                 enable_categorical=True)
-        pred = self.model.predict(dtest)
-        return torch.from_numpy(pred).to(device)
+        if self.model.best_iteration is not None:
+            iteration_range = self.model.best_iteration
+        else:
+            iteration_range = None
+        pred = self.model.predict(dtest, iteration_range)
+
+        # If xgboost early stops on multiclass classification
+        # task, then the output shape would be (batch_size, num_classes).
+        # We need to take argmax to get the final prediction output.
+        if (self.model.best_iteration
+                and self.task_type == TaskType.MULTICLASS_CLASSIFICATION):
+            assert pred.shape[1] == self._num_classes
+            pred = torch.argmax(torch.from_numpy(pred), dim=1)
+        else:
+            pred = torch.from_numpy(pred)
+        return pred.to(device)
 
     def _load(self, path: str) -> None:
         import xgboost

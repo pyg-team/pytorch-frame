@@ -109,6 +109,35 @@ class StypeEncoder(Module, ABC):
                                  f"can be used on {self.stype} columns, but "
                                  f"{self.na_strategy} is given.")
 
+            fill_values = []
+            for col in range(len(self.stats_list)):
+                if self.na_strategy == NAStrategy.MOST_FREQUENT:
+                    # Categorical index is sorted based on count,
+                    # so 0-th index is always the most frequent.
+                    fill_value = 0
+                elif self.na_strategy == NAStrategy.MEAN:
+                    fill_value = self.stats_list[col][StatType.MEAN]
+                elif self.na_strategy == NAStrategy.ZEROS:
+                    fill_value = 0
+                elif self.na_strategy == NAStrategy.NEWEST_TIMESTAMP:
+                    fill_value = self.stats_list[col][StatType.NEWEST_TIME]
+                elif self.na_strategy == NAStrategy.OLDEST_TIMESTAMP:
+                    fill_value = self.stats_list[col][StatType.OLDEST_TIME]
+                elif self.na_strategy == NAStrategy.MEDIAN_TIMESTAMP:
+                    fill_value = self.stats_list[col][StatType.MEDIAN_TIME]
+                else:
+                    raise ValueError(
+                        f"Unsupported NA strategy {self.na_strategy}")
+                fill_values.append(fill_value)
+
+            if (isinstance(fill_values[0], Tensor)
+                    and fill_values[0].size(0) > 1):
+                fill_values = torch.stack(fill_values)
+            else:
+                fill_values = torch.tensor(fill_values)
+
+            self.register_buffer("fill_values", fill_values)
+
     @abstractmethod
     def reset_parameters(self):
         r"""Initialize the parameters of `post_module`."""
@@ -190,76 +219,34 @@ class StypeEncoder(Module, ABC):
         if isinstance(feat, Tensor):
             # cache for future use
             na_mask = get_na_mask(feat)
-            if na_mask.any():
-                feat = feat.clone()
-            else:
-                return feat
+            feat = feat.clone()
         elif isinstance(feat, MultiEmbeddingTensor):
-            if get_na_mask(feat.values).any():
-                feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
-                                            num_cols=feat.num_cols,
-                                            values=feat.values.clone(),
-                                            offset=feat.offset)
-            else:
-                return feat
+            feat = MultiEmbeddingTensor(num_rows=feat.num_rows,
+                                        num_cols=feat.num_cols,
+                                        values=feat.values.clone(),
+                                        offset=feat.offset)
         elif isinstance(feat, MultiNestedTensor):
-            if get_na_mask(feat.values).any():
-                feat = MultiNestedTensor(num_rows=feat.num_rows,
-                                         num_cols=feat.num_cols,
-                                         values=feat.values.clone(),
-                                         offset=feat.offset)
-            else:
-                return feat
+            feat = MultiNestedTensor(num_rows=feat.num_rows,
+                                     num_cols=feat.num_cols,
+                                     values=feat.values.clone(),
+                                     offset=feat.offset)
         else:
             raise ValueError(f"Unrecognized type {type(feat)} in na_forward.")
 
-        fill_values = []
-        for col in range(feat.size(1)):
-            if self.na_strategy == NAStrategy.MOST_FREQUENT:
-                # Categorical index is sorted based on count,
-                # so 0-th index is always the most frequent.
-                fill_value = 0
-            elif self.na_strategy == NAStrategy.MEAN:
-                fill_value = self.stats_list[col][StatType.MEAN]
-            elif self.na_strategy == NAStrategy.ZEROS:
-                fill_value = 0
-            elif self.na_strategy == NAStrategy.NEWEST_TIMESTAMP:
-                fill_value = self.stats_list[col][StatType.NEWEST_TIME].to(
-                    feat.device)
-            elif self.na_strategy == NAStrategy.OLDEST_TIMESTAMP:
-                fill_value = self.stats_list[col][StatType.OLDEST_TIME].to(
-                    feat.device)
-            elif self.na_strategy == NAStrategy.MEDIAN_TIMESTAMP:
-                fill_value = self.stats_list[col][StatType.MEDIAN_TIME].to(
-                    feat.device)
-            else:
-                raise ValueError(f"Unsupported NA strategy {self.na_strategy}")
-            fill_values.append(fill_value)
-
         if isinstance(feat, _MultiTensor):
-            for col, fill_value in enumerate(fill_values):
+            for col, fill_value in enumerate(self.fill_values):
                 feat.fillna_col(col, fill_value)
         else:
             if na_mask.ndim == 3:
                 # when feat is 3D, it is faster to iterate over columns
-                for col, fill_value in enumerate(fill_values):
+                for col, fill_value in enumerate(self.fill_values):
                     col_data = feat[:, col]
                     col_na_mask = na_mask[:, col].any(dim=-1)
                     col_data[col_na_mask] = fill_value
             else:  # na_mask.ndim == 2
-                fill_values = torch.tensor(fill_values, device=feat.device)
-                assert feat.size(-1) == fill_values.size(-1)
-                feat = torch.where(na_mask, fill_values, feat)
-        # Add better safeguard here to make sure nans are actually
-        # replaced, expecially when nans are represented as -1's. They are
-        # very hard to catch as they won't error out.
-        filled_values = feat
-        if isinstance(feat, _MultiTensor):
-            filled_values = feat.values
-        if filled_values.is_floating_point():
-            assert not torch.isnan(filled_values).any()
-        else:
-            assert not (filled_values == -1).any()
+                assert feat.size(-1) == self.fill_values.size(-1)
+                feat = torch.where(na_mask, self.fill_values, feat)
+
         return feat
 
 
@@ -716,10 +703,12 @@ class LinearEmbeddingEncoder(StypeEncoder):
     def init_modules(self) -> None:
         super().init_modules()
         num_cols = len(self.stats_list)
-        emb_dim_list = [stats[StatType.EMB_DIM] for stats in self.stats_list]
+        self.emb_dim_list = [
+            stats[StatType.EMB_DIM] for stats in self.stats_list
+        ]
         self.weight_list = ParameterList([
             Parameter(torch.empty(emb_dim, self.out_channels))
-            for emb_dim in emb_dim_list
+            for emb_dim in self.emb_dim_list
         ])
         self.biases = Parameter(torch.empty(num_cols, self.out_channels))
         self.reset_parameters()
@@ -736,13 +725,14 @@ class LinearEmbeddingEncoder(StypeEncoder):
         col_names: list[str] | None = None,
     ) -> Tensor:
         x_lins: list[Tensor] = []
-        for start_idx, end_idx, weight in zip(feat.offset[:-1],
-                                              feat.offset[1:],
-                                              self.weight_list):
+        start_idx = 0
+        for idx, col_dim in enumerate(self.emb_dim_list):
+            end_idx = start_idx + col_dim
             # [batch_size, emb_dim] * [emb_dim, out_channels]
             # -> [batch_size, out_channels]
-            x_lin = torch.matmul(feat.values[:, start_idx:end_idx], weight)
+            x_lin = feat.values[:, start_idx:end_idx] @ self.weight_list[idx]
             x_lins.append(x_lin)
+            start_idx = end_idx
         # [batch_size, num_cols, out_channels]
         x = torch.stack(x_lins, dim=1)
         # [batch_size, num_cols, out_channels] + [num_cols, out_channels]

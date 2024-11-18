@@ -4,13 +4,13 @@ build-backend="flit_core.buildapi"
 
 [project]
 name="pytorch_frame"
-version="0.2.2"
+version="0.2.3"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
 ]
 description="Tabular Deep Learning Library for PyTorch"
 readme="README.md"
-requires-python=">=3.8"
+requires-python=">=3.9"
 keywords=[
     "deep-learning",
     "pytorch",
@@ -21,7 +21,6 @@ classifiers=[
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -83,7 +82,7 @@ ignore = [
 src = ["torch_frame"]
 line-length = 80
 indent-width = 4
-target-version = "py38"
+target-version = "py39"
 
 # [tool.ruff.per-files-ignores]
 

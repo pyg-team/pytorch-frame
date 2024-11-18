@@ -3,30 +3,35 @@
 ## Usage
 
 Exemplary command:
+
 ```
 python encoder_benchmark.py --stype-kv categorical embedding --stype-kv numerical linear
 ```
+
 It will create a dataset that will contain categorical and numerical columns and will use for them
 embedding and linear encoders, respectively.
 
 Arguments:
-**--stype-kv**: Specify the stype(s) and corresponding encoder(s) to run.
-**--num-rows**: The number of rows in the dataset (default is *8192*).
-**--out-channels**: The number of output channels (default is *128*).
-**--with-nan**: If specified, the dataset will include NaN values.
-**--runs**: The number of runs for the benchmark (default is *1000*).
-**--warmup-size**: The size of the warmup stage (default is *200()).
-**--torch-profile**: If specified, torch profiling will be enabled.
-**--line-profile**: If specified, line profiling will be enabled.
-**--line-profile-level**: The level of line profiling (default is *'encode_forward'*).
-**--device**: The device to run the benchmark on (default is *'cpu'*).
+
+- **--stype-kv**: Specify the stype(s) and corresponding encoder(s) to run.
+- **--num-rows**: The number of rows in the dataset (default is `8192`).
+- **--out-channels**: The number of output channels (default is `128`).
+- **--with-nan**: If specified, the dataset will include NaN values.
+- **--runs**: The number of runs for the benchmark (default is `1000`).
+- **--warmup-size**: The size of the warmup stage (default is `200`).
+- **--torch-profile**: If specified, torch profiling will be enabled.
+- **--line-profile**: If specified, line profiling will be enabled.
+- **--line-profile-level**: The level of line profiling (default is `'encode_forward'`).
+- **--device**: The device to run the benchmark on (default is `'cpu'`).
 
 No matter if any profiler is used, benchmark always outputs a latency (single run execution time), e.g.:
+
 ```
 Latency: 0.034277s
 ```
 
 Torch profiler produces a table of operations sorted by execution time, e.g.:
+
 ```
 -----------------------------  ------------  ------------  ------------  ------------  ------------  ------------
                          Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg    # of Calls
@@ -45,6 +50,7 @@ Self CPU time total: 4.268s
 ```
 
 Line profiler shows how many percent was spent on each of method lines, e.g.:
+
 ```
 Total time: 1.03661 s
 File: {PF_BASE_PATH}/pytorch-frame/torch_frame/nn/encoder/stype_encoder.py
