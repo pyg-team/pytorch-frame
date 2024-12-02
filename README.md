@@ -248,7 +248,7 @@ The benchmark script for Hugging Face text encoders is in this [file](https://gi
 PyTorch Frame is available for Python 3.9 to Python 3.11.
 
 ```
-pip install pytorch_frame
+pip install pytorch-frame
 ```
 
 See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.

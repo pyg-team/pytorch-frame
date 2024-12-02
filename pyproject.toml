@@ -3,7 +3,7 @@ requires=["flit_core >=3.2,<4"]
 build-backend="flit_core.buildapi"
 
 [project]
-name="pytorch_frame"
+name="pytorch-frame"
 version="0.2.3"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
@@ -42,7 +42,7 @@ test=[
     "mypy",
 ]
 dev=[
-    "pytorch_frame[test]",
+    "pytorch-frame[test]",
     "pre-commit",
 ]
 full=[
