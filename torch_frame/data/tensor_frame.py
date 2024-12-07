@@ -95,7 +95,13 @@ class TensorFrame:
         num_rows = self.num_rows
         empty_stypes: list[torch_frame.stype] = []
         for stype_name, feats in self.feat_dict.items():
-            num_cols = len(self.col_names_dict[stype_name])
+            col_names = self.col_names_dict[stype_name]
+            if not isinstance(col_names, list):
+                raise ValueError(
+                    f"col_names_dict[{stype_name}] must be a list of column "
+                    f"names.")
+
+            num_cols = len(col_names)
             if num_cols == 0:
                 empty_stypes.append(stype_name)
 
