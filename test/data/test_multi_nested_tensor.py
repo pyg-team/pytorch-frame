@@ -1,5 +1,5 @@
 import random
-from typing import List, Union
+from typing import Union
 
 import pytest
 import torch
@@ -9,7 +9,7 @@ from torch_frame.data import MultiNestedTensor
 from torch_frame.testing import withCUDA
 
 
-def assert_equal(tensor_mat: List[List[Tensor]],
+def assert_equal(tensor_mat: list[list[Tensor]],
                  multi_nested_tensor: MultiNestedTensor):
     assert len(tensor_mat) == multi_nested_tensor.shape[0]
     assert len(tensor_mat[0]) == multi_nested_tensor.shape[1]
@@ -20,9 +20,9 @@ def assert_equal(tensor_mat: List[List[Tensor]],
 
 
 def column_select(
-    tensor_mat: List[List[Tensor]],
-    index: Union[List[int], slice],
-) -> List[List[Tensor]]:
+    tensor_mat: list[list[Tensor]],
+    index: Union[list[int], slice],
+) -> list[list[Tensor]]:
     new_tensor_mat = []
     for tensor_vec in tensor_mat:
         if isinstance(index, slice):

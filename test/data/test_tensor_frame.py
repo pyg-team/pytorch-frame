@@ -208,6 +208,21 @@ def test_get_col_feat(get_fake_tensor_frame):
                                   tf.feat_dict[stype])
 
 
+def test_empty_tensor_frame():
+    tf = TensorFrame({}, {})
+    assert tf.num_rows == 0
+    assert tf.device is None
+
+    tf = TensorFrame({}, {}, num_rows=4)
+    assert tf.num_rows == 4
+    assert tf.device is None
+    assert tf[0].num_rows == 1
+    assert tf[[0, 1]].num_rows == 2
+    assert tf[0:2].num_rows == 2
+    assert tf[torch.tensor([0, 1])].num_rows == 2
+    assert tf[torch.tensor([True, True, False, False])].num_rows == 2
+
+
 def test_custom_tf_get_col_feat():
     col_names_dict = {
         'categorical': ['cat_1', 'cat_2', 'cat_3'],
@@ -230,3 +245,11 @@ def test_custom_tf_get_col_feat():
     assert torch.equal(feat, feat_dict['numerical'][:, 0:1])
     feat = tf.get_col_feat('num_2')
     assert torch.equal(feat, feat_dict['numerical'][:, 1:2])
+
+
+def test_non_list_col_names_dict():
+    feat_dict = {torch_frame.categorical: torch.randint(0, 3, size=(10, 1))}
+    # Oops, user provided a single column name without wrapping it in a list:
+    col_names_dict = {torch_frame.categorical: 'cat_1'}
+    with pytest.raises(ValueError, match='must be a list of column names'):
+        TensorFrame(feat_dict, col_names_dict)

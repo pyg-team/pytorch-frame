@@ -1,5 +1,17 @@
 """This script benchmarks the training time of TabTransformer using PyTorch
 Frame and PyTorch Tabular.
+
+Results form comparing Pytorch Tabular and Frame. Specifically the iteration
+speed while trainig.
+
+-------------------------------------
+Package | Model   | Num iters/sec|
+-------------------------------------
+Tabular | TabNet  | 41.7
+Frame   | TabNet  | 45.0
+Tabular | FTTrans | 40.1
+Frame   | FTTrans | 43.7
+--------------------------------------
 """
 import argparse
 import os.path as osp

@@ -40,7 +40,7 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('http://docs.scipy.org/doc/numpy', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/dev', None),
-    'torch': ('https://pytorch.org/docs/master', None),
+    'torch': ('https://pytorch.org/docs/stable', None),
     'optuna': ('https://optuna.readthedocs.io/en/stable/', None),
     'xgboost': ('https://xgboost.readthedocs.io/en/stable/', None),
 }

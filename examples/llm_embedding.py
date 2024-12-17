@@ -1,7 +1,6 @@
 import argparse
 import os
 import os.path as osp
-from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -64,10 +63,10 @@ class OpenAIEmbedding:
         self.client = OpenAI(api_key=api_key)
         self.model = model
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         from openai import Embedding
 
-        items: List[Embedding] = self.client.embeddings.create(
+        items: list[Embedding] = self.client.embeddings.create(
             input=sentences, model=self.model).data
         assert len(items) == len(sentences)
         embeddings = [
@@ -87,7 +86,7 @@ class CohereEmbedding:
         self.model = model
         self.co = cohere.Client(api_key)
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         from cohere import EmbedResponse
 
         response: EmbedResponse = self.co.embed(model=self.model,
@@ -106,13 +105,13 @@ class VoyageaiEmbedding:
         # Please run `pip install voyageai` to install the package
         self.model = model
 
-    def __call__(self, sentences: List[str]) -> Tensor:
+    def __call__(self, sentences: list[str]) -> Tensor:
         import voyageai  # noqa
 
         voyageai.api_key = api_key
         from voyageai import get_embeddings
 
-        items: List[List[float]] = get_embeddings(sentences, model=self.model)
+        items: list[list[float]] = get_embeddings(sentences, model=self.model)
         assert len(items) == len(sentences)
         embeddings = [torch.FloatTensor(item).view(1, -1) for item in items]
         return torch.cat(embeddings, dim=0)

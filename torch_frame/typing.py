@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import Enum
-from typing import Dict, List, Mapping, Union
+from typing import Union
 
 import pandas as pd
 import torch
@@ -109,14 +110,14 @@ class NAStrategy(Enum):
 Series = pd.Series
 DataFrame = pd.DataFrame
 
-IndexSelectType = Union[int, List[int], range, slice, Tensor]
-ColumnSelectType = Union[str, List[str]]
+IndexSelectType = Union[int, list[int], range, slice, Tensor]
+ColumnSelectType = Union[str, list[str]]
 TextTokenizationMapping = Mapping[str, Tensor]
-TextTokenizationOutputs = Union[List[TextTokenizationMapping],
+TextTokenizationOutputs = Union[list[TextTokenizationMapping],
                                 TextTokenizationMapping]
 TensorData = Union[
     Tensor,
     MultiNestedTensor,
     MultiEmbeddingTensor,
-    Dict[str, MultiNestedTensor],
+    dict[str, MultiNestedTensor],
 ]
