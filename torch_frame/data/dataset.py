@@ -554,6 +554,7 @@ class Dataset(ABC):
         self,
         device: torch.device | None = None,
         path: str | None = None,
+        col_stats: dict[str, dict[StatType, Any]] | None = None,
     ) -> Dataset:
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only.
@@ -588,24 +589,29 @@ class Dataset(ABC):
             self._is_materialized = True
             return self
 
-        # 1. Fill column statistics:
-        for col, stype in self.col_to_stype.items():
-            ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(
-                ser,
-                stype,
-                sep=self.col_to_sep.get(col, None),
-                time_format=self.col_to_time_format.get(col, None),
-            )
-            # For a target column, sort categories lexicographically such that
-            # we do not accidentally swap labels in binary classification
-            # tasks.
-            if col == self.target_col and stype == torch_frame.categorical:
-                index, value = self._col_stats[col][StatType.COUNT]
-                if len(index) == 2:
-                    ser = pd.Series(index=index, data=value).sort_index()
-                    index, value = ser.index.tolist(), ser.values.tolist()
-                    self._col_stats[col][StatType.COUNT] = (index, value)
+        # 1. Fill column statistics: 
+        if col_stats is None:
+            # calculate from data if col_stats is not provided
+            for col, stype in self.col_to_stype.items():
+                ser = self.df[col]
+                self._col_stats[col] = compute_col_stats(
+                    ser,
+                    stype,
+                    sep=self.col_to_sep.get(col, None),
+                    time_format=self.col_to_time_format.get(col, None),
+                )
+                # For a target column, sort categories lexicographically such that
+                # we do not accidentally swap labels in binary classification
+                # tasks.
+                if col == self.target_col and stype == torch_frame.categorical:
+                    index, value = self._col_stats[col][StatType.COUNT]
+                    if len(index) == 2:
+                        ser = pd.Series(index=index, data=value).sort_index()
+                        index, value = ser.index.tolist(), ser.values.tolist()
+                        self._col_stats[col][StatType.COUNT] = (index, value)
+        else:
+            self._col_stats = col_stats
+
 
         # 2. Create the `TensorFrame`:
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
