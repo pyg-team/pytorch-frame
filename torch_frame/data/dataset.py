@@ -589,7 +589,7 @@ class Dataset(ABC):
             self._is_materialized = True
             return self
 
-        # 1. Fill column statistics: 
+        # 1. Fill column statistics:
         if col_stats is None:
             # calculate from data if col_stats is not provided
             for col, stype in self.col_to_stype.items():
@@ -611,7 +611,6 @@ class Dataset(ABC):
                         self._col_stats[col][StatType.COUNT] = (index, value)
         else:
             self._col_stats = col_stats
-
 
         # 2. Create the `TensorFrame`:
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
