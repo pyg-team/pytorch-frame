@@ -571,6 +571,10 @@ class Dataset(ABC):
                 :obj:`path`. If :obj:`path` is :obj:`None`, this will
                 materialize the dataset without caching.
                 (default: :obj:`None`)
+            col_stats (Dict[str, Dict[StatType, Any]], optional): optional 
+            col_stats provided by the user. If not provided, the statistics
+            is calculated from the dataframe itself. (default: :obj:`None`)
+
         """
         if self.is_materialized:
             # Materialized without specifying path at first and materialize
@@ -600,9 +604,9 @@ class Dataset(ABC):
                     sep=self.col_to_sep.get(col, None),
                     time_format=self.col_to_time_format.get(col, None),
                 )
-                # For a target column, sort categories lexicographically such that
-                # we do not accidentally swap labels in binary classification
-                # tasks.
+            # For a target column, sort categories lexicographically such that
+            # we do not accidentally swap labels in binary classification
+            # tasks.
                 if col == self.target_col and stype == torch_frame.categorical:
                     index, value = self._col_stats[col][StatType.COUNT]
                     if len(index) == 2:
