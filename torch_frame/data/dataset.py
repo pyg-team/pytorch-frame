@@ -595,7 +595,7 @@ class Dataset(ABC):
 
         # 1. Fill column statistics:
         if col_stats is None:
-            # calculate from data if col_stats is not provided
+        # calculate from data if col_stats is not provided
             for col, stype in self.col_to_stype.items():
                 ser = self.df[col]
                 self._col_stats[col] = compute_col_stats(
@@ -604,9 +604,9 @@ class Dataset(ABC):
                     sep=self.col_to_sep.get(col, None),
                     time_format=self.col_to_time_format.get(col, None),
                 )
-            # For a target column, sort categories lexicographically such that
-            # we do not accidentally swap labels in binary classification
-            # tasks.
+                # For a target column, sort categories lexicographically 
+                # such that we do not accidentally swap labels in binary 
+                # classification tasks.
                 if col == self.target_col and stype == torch_frame.categorical:
                     index, value = self._col_stats[col][StatType.COUNT]
                     if len(index) == 2:
