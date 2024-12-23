@@ -571,7 +571,7 @@ class Dataset(ABC):
                 :obj:`path`. If :obj:`path` is :obj:`None`, this will
                 materialize the dataset without caching.
                 (default: :obj:`None`)
-            col_stats (Dict[str, Dict[StatType, Any]], optional): optional 
+            col_stats (Dict[str, Dict[StatType, Any]], optional): optional
             col_stats provided by the user. If not provided, the statistics
             is calculated from the dataframe itself. (default: :obj:`None`)
 
