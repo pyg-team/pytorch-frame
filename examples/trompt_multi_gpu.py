@@ -55,7 +55,7 @@ def train(
     loss_accum = torch.tensor(0.0, device=rank, dtype=torch.float32)
     for tf in tqdm(
             loader,
-            desc=f"Epoch {epoch:02d} (train)",
+            desc=f"Epoch {epoch:03d} (train)",
             disable=rank != 0,
     ):
         tf = tf.to(rank)
@@ -96,7 +96,7 @@ def test(
     model.eval()
     for tf in tqdm(
             loader,
-            desc=f"Epoch {epoch:02d} ({desc})",
+            desc=f"Epoch {epoch:03d} ({desc})",
             disable=rank != 0,
     ):
         tf = tf.to(rank)
