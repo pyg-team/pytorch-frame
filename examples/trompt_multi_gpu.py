@@ -174,6 +174,7 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
         col_names_dict=train_dataset.tensor_frame.col_names_dict,
     ).to(rank)
     model = DistributedDataParallel(model, device_ids=[rank])
+    model = torch.compile(model) if args.compile else model
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
@@ -240,6 +241,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--compile", action="store_true")
     args = parser.parse_args()
 
     os.environ['MASTER_ADDR'] = 'localhost'
