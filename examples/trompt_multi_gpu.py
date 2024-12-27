@@ -79,8 +79,6 @@ def train(
         optimizer.zero_grad()
         loss_accum += loss
 
-    # The number of samples is guaranteed to be the same across all ranks
-    # because of DistributedSampler(drop_last=True).
     dist.all_reduce(loss_accum, op=dist.ReduceOp.AVG)
     metric_value = metric.compute()
     metric.reset()
