@@ -263,7 +263,7 @@ def train(
             pred, y = model(tf, mixup_encoded=True)
         elif isinstance(model, Trompt):
             # Trompt uses the layer-wise loss
-            pred = model.forward_stacked(tf)
+            pred = model(tf)
             num_layers = pred.size(1)
             # [batch_size * num_layers, num_classes]
             pred = pred.view(-1, out_channels)
@@ -294,6 +294,8 @@ def test(
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
+        if isinstance(model, Trompt):
+            pred = pred.mean(dim=1)
         if dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             pred = pred.argmax(dim=-1)
         elif dataset.task_type == TaskType.REGRESSION:

@@ -47,7 +47,5 @@ def test_trompt(batch_size, use_stype_encoder_dicts):
         stype_encoder_dicts=stype_encoder_dicts,
     )
     model.reset_parameters()
-    out = model.forward_stacked(tensor_frame)
-    assert out.shape == (batch_size, num_layers, out_channels)
     pred = model(tensor_frame)
-    assert pred.shape == (batch_size, out_channels)
+    assert pred.shape == (batch_size, num_layers, out_channels)
