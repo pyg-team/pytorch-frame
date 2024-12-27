@@ -614,7 +614,7 @@ class Dataset(ABC):
                         index, value = ser.index.tolist(), ser.values.tolist()
                         self._col_stats[col][StatType.COUNT] = (index, value)
         else:
-            # basic validation for the for col_stats provided by the user
+            # basic validation for the col_stats provided by the user
             for col_, stype_ in self.col_to_stype.items():
                 assert col_ in col_stats, \
                     f"{col_} is not specified in the provided col_stats"
