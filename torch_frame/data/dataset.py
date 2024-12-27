@@ -621,8 +621,8 @@ class Dataset(ABC):
                 stats_ = col_stats[col_]
                 assert all([key_ in stats_ 
                             for key_ in StatType.stats_for_stype(stype_)]), \
-                f"not all required stats are calculated" \
-                    " in the provided col_stats for {col}"
+                "not all required stats are calculated" \
+                    f" in the provided col_stats for {col}"
 
             self._col_stats = col_stats
 
