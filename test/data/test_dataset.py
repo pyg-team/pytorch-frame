@@ -309,7 +309,7 @@ def test_materialization_with_col_stats(tmpdir):
         col_to_image_embedder_cfg=image_embedder_cfg,
         tmp_path=tmp_path,
     )
-    train_dataset.materialize() # materialize to compute col_stats
+    train_dataset.materialize()  # materialize to compute col_stats
     test_dataset = FakeDataset(
         num_rows=5,
         stypes=dataset_stypes,

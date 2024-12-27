@@ -619,7 +619,7 @@ class Dataset(ABC):
                 assert col_ in col_stats, \
                     f"{col_} is not specified in the provided col_stats"
                 stats_ = col_stats[col_]
-                assert all([key_ in stats_ 
+                assert all([key_ in stats_
                             for key_ in StatType.stats_for_stype(stype_)]), \
                 "not all required stats are calculated" \
                     f" in the provided col_stats for {col}"
