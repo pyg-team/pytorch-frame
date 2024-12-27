@@ -125,8 +125,7 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
                 f"[%(asctime)s] %(levelname)s: %(message)s"),
         level=logging.INFO,
     )
-    logger = logging.getLogger(__name__)
-    logger.info(f"Running on rank {rank} of {world_size}")
+    logging.info(f"Initialized rank {rank}/{world_size}")
     dataset = prepare_dataset(args.dataset)
     assert dataset.task_type.is_classification
 
