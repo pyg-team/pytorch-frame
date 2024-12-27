@@ -136,6 +136,10 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
         dataset[0.7:0.79],
         dataset[0.79:],
     )
+    # Note that the last batch of evaluation loops is dropped for now because
+    # drop_last=False will duplicate samples to fill the last batch, leading to
+    # the wrong evaluation metrics.
+    # https://github.com/pytorch/pytorch/issues/25162
     train_loader = DataLoader(
         train_dataset.tensor_frame,
         batch_size=args.batch_size,
@@ -150,8 +154,8 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
         batch_size=args.batch_size,
         sampler=DistributedSampler(
             val_dataset,
-            shuffle=False,
-            drop_last=False,
+            shuffle=True,
+            drop_last=True,
         ),
     )
     test_loader = DataLoader(
@@ -159,8 +163,8 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
         batch_size=args.batch_size,
         sampler=DistributedSampler(
             test_dataset,
-            shuffle=False,
-            drop_last=False,
+            shuffle=True,
+            drop_last=True,
         ),
     )
     model = Trompt(
