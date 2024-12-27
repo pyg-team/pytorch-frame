@@ -179,7 +179,6 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
     model = torch.compile(model) if args.compile else model
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
-
     metrics_kwargs = {
         "task": "multiclass",
         "num_classes": dataset.num_classes,
@@ -187,7 +186,6 @@ def run(rank: int, world_size: int, args: argparse.Namespace) -> None:
     train_metric = torchmetrics.Accuracy(**metrics_kwargs).to(rank)
     val_metric = torchmetrics.Accuracy(**metrics_kwargs).to(rank)
     test_metric = torchmetrics.Accuracy(**metrics_kwargs).to(rank)
-
     best_val_acc = 0.0
     test_acc = 0.0
     for epoch in range(1, args.epochs + 1):
