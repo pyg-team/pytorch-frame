@@ -280,3 +280,44 @@ def test_col_to_pattern_raise_error():
         dataset = FakeDataset(num_rows=10, stypes=[torch_frame.timestamp])
         Dataset(dataset.df, dataset.col_to_stype, dataset.target_col,
                 col_to_time_format=2)
+
+
+def test_materialization_with_col_stats(tmpdir):
+    tmp_path = str(tmpdir.mkdir("image"))
+    text_embedder_cfg = TextEmbedderConfig(
+        text_embedder=HashTextEmbedder(1),
+        batch_size=8,
+    )
+    image_embedder_cfg = ImageEmbedderConfig(
+        image_embedder=RandomImageEmbedder(1),
+        batch_size=8,
+    )
+    dataset_stypes = [
+        torch_frame.categorical,
+        torch_frame.numerical,
+        torch_frame.multicategorical,
+        torch_frame.sequence_numerical,
+        torch_frame.timestamp,
+        torch_frame.text_embedded,
+        torch_frame.embedding,
+        torch_frame.image_embedded,
+    ]
+    train_dataset = FakeDataset(
+        num_rows=10,
+        stypes=dataset_stypes,
+        col_to_text_embedder_cfg=text_embedder_cfg,
+        col_to_image_embedder_cfg=image_embedder_cfg,
+        tmp_path=tmp_path,
+    )
+    train_dataset.materialize() # materialize to compute col_stats
+    test_dataset = FakeDataset(
+        num_rows=5,
+        stypes=dataset_stypes,
+        col_to_text_embedder_cfg=text_embedder_cfg,
+        col_to_image_embedder_cfg=image_embedder_cfg,
+        tmp_path=tmp_path,
+    )
+    test_dataset.materialize(col_stats=train_dataset.col_stats)
+
+    assert train_dataset.col_stats == test_dataset.col_stats, \
+        "col_stats should be the same for train and test datasets"

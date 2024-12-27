@@ -614,6 +614,16 @@ class Dataset(ABC):
                         index, value = ser.index.tolist(), ser.values.tolist()
                         self._col_stats[col][StatType.COUNT] = (index, value)
         else:
+            # basic validation for the for col_stats provided by the user
+            for col_, stype_ in self.col_to_stype.items():
+                assert col_ in col_stats, \
+                    f"{col_} is not specified in the provided col_stats"
+                stats_ = col_stats[col_]
+                assert all([key_ in stats_ 
+                            for key_ in StatType.stats_for_stype(stype_)]), \
+                f"not all required stats are calculated" \
+                    " in the provided col_stats for {col}"
+
             self._col_stats = col_stats
 
         # 2. Create the `TensorFrame`:
