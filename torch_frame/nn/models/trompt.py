@@ -122,7 +122,7 @@ class Trompt(Module):
             trompt_conv.reset_parameters()
         self.trompt_decoder.reset_parameters()
 
-    def forward_stacked(self, tf: TensorFrame) -> Tensor:
+    def forward(self, tf: TensorFrame) -> Tensor:
         r"""Transforming :class:`TensorFrame` object into a series of output
         predictions at each layer. Used during training to compute layer-wise
         loss.
@@ -152,6 +152,3 @@ class Trompt(Module):
         # [batch_size, num_layers, out_channels]
         stacked_out = torch.cat(outs, dim=1)
         return stacked_out
-
-    def forward(self, tf: TensorFrame) -> Tensor:
-        return self.forward_stacked(tf).mean(dim=1)

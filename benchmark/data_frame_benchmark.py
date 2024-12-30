@@ -3,7 +3,7 @@ import math
 import os
 import os.path as osp
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import optuna
@@ -263,7 +263,7 @@ def train(
             pred, y = model(tf, mixup_encoded=True)
         elif isinstance(model, Trompt):
             # Trompt uses the layer-wise loss
-            pred = model.forward_stacked(tf)
+            pred = model(tf)
             num_layers = pred.size(1)
             # [batch_size * num_layers, num_classes]
             pred = pred.view(-1, out_channels)
@@ -294,6 +294,8 @@ def test(
     for tf in loader:
         tf = tf.to(device)
         pred = model(tf)
+        if isinstance(model, Trompt):
+            pred = pred.mean(dim=1)
         if dataset.task_type == TaskType.MULTICLASS_CLASSIFICATION:
             pred = pred.argmax(dim=-1)
         elif dataset.task_type == TaskType.REGRESSION:
@@ -303,10 +305,10 @@ def test(
 
 
 def train_and_eval_with_cfg(
-    model_cfg: Dict[str, Any],
-    train_cfg: Dict[str, Any],
+    model_cfg: dict[str, Any],
+    train_cfg: dict[str, Any],
     trial: Optional[optuna.trial.Trial] = None,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     # Use model_cfg to set up training procedure
     if args.model_type == 'FTTransformerBucket':
         # Use LinearBucketEncoder instead

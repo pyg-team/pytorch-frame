@@ -70,10 +70,16 @@ def test_cat_to_num_transform_on_categorical_only_dataset(with_nan):
         # Raise informative error when input tensor frame contains new category
         out = transform(tensor_frame)
 
+    # ensure different max value of y at test time works
+    tensor_frame.feat_dict[stype.categorical] = torch.zeros_like(
+        tensor_frame.feat_dict[stype.categorical])
+    transform(tensor_frame)
+
 
 @pytest.mark.parametrize('task_type', [
-    TaskType.MULTICLASS_CLASSIFICATION, TaskType.REGRESSION,
-    TaskType.BINARY_CLASSIFICATION
+    TaskType.MULTICLASS_CLASSIFICATION,
+    TaskType.REGRESSION,
+    TaskType.BINARY_CLASSIFICATION,
 ])
 def test_cat_to_num_transform_with_loading(task_type):
     num_rows = 10

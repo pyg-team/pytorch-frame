@@ -5,7 +5,7 @@ deep learning models in a modular way.
 import argparse
 import math
 import os.path as osp
-from typing import Any, Dict, List
+from typing import Any
 
 import torch
 import torch.nn.functional as F
@@ -157,8 +157,8 @@ class TabularNN(Module):
         out_channels: int,
         num_layers: int,
         # kwargs for feature encoder
-        col_stats: Dict[str, Dict[StatType, Any]],
-        col_names_dict: Dict[torch_frame.stype, List[str]],
+        col_stats: dict[str, dict[StatType, Any]],
+        col_names_dict: dict[torch_frame.stype, list[str]],
     ):
         super().__init__()
         # Specify what feature encoder to use for each stype.

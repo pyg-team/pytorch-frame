@@ -80,7 +80,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
   We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
 - **PyTorch integration**:
-  Integrates effortlessly with other PyTorch libraries, facilitating end-to-end training of PyTorch Frame with downstream PyTorch models. For example, by integrating with [PyG](https://pyg.org/), a PyTorch library for GNNs, we can perform deep learning over relational databases. Learn more in [RelBench](https://relbench.stanford.edu/) and [example code (WIP)](https://github.com/snap-stanford/relbench/blob/main/examples/gnn.py).
+  Integrates effortlessly with other PyTorch libraries, facilitating end-to-end training of PyTorch Frame with downstream PyTorch models. For example, by integrating with [PyG](https://pyg.org/), a PyTorch library for GNNs, we can perform deep learning over relational databases. Learn more in [RelBench](https://relbench.stanford.edu/) and [example code](https://github.com/snap-stanford/relbench/blob/main/examples/).
 
 ## Architecture Overview
 
@@ -245,10 +245,10 @@ The benchmark script for Hugging Face text encoders is in this [file](https://gi
 
 ## Installation
 
-PyTorch Frame is available for Python 3.8 to Python 3.11.
+PyTorch Frame is available for Python 3.9 to Python 3.11.
 
 ```
-pip install pytorch_frame
+pip install pytorch-frame
 ```
 
 See [the installation guide](https://pytorch-frame.readthedocs.io/en/latest/get_started/installation.html) for other options.

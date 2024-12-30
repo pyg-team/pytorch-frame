@@ -154,19 +154,19 @@ Experimental setting: 20 Optuna search trials for XGBoost and CatBoost. 5 Optuna
 
 Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
-|                     | dataset_0             |
-| :------------------ | :-------------------- |
-| XGBoost             | 0.966±0.000 (19327s)  |
-| CatBoost            | 0.971±0.000 (223s)    |
-| LightGBM            | **0.965±0.000 (67s)** |
-| Trompt              | 0.970±0.000 (12358s)  |
-| ResNet              | 0.970±0.000 (672s)    |
-| MLP                 | 0.973±0.000 (223s)    |
-| FTTransformerBucket | 0.970±0.000 (2071s)   |
-| ExcelFormer         | 0.969±0.000 (1785s)   |
-| FTTransformer       | 0.971±0.000 (2918s)   |
-| TabNet              | 0.970±0.000 (323s)    |
-| TabTransformer      | 0.984±0.000 (318s)    |
+|                     | dataset_0             | dataset_1             | dataset_2            | dataset_3             | dataset_4             | dataset_5             |
+| :------------------ | :-------------------- | :-------------------- | :------------------- | :-------------------- | :-------------------- | :-------------------- |
+| XGBoost             | 0.966±0.000 (19327s)  |                       |                      |                       |                       |                       |
+| CatBoost            | 0.971±0.000 (223s)    |                       |                      |                       |                       |                       |
+| LightGBM            | **0.965±0.000 (67s)** |                       |                      |                       |                       |                       |
+| Trompt              | 0.970±0.000 (12358s)  | Too slow\*            | Too slow\*           | Too slow\*            | 0.796±0.001 (157380s) | 0.799±0.001 (55577s)  |
+| ResNet              | 0.969±0.000 (5800s)   | 0.976±0.000 (57298s)  | 0.655±0.000 (4612s)  | 0.880±0.000 (20101s)  | 0.757±0.000 (53493s)  | 0.772±0.001 (3906s)   |
+| MLP                 | 0.973±0.000 (223s)    | 0.980±0.000 (1104s)   | 0.681±0.002 (91s)    | 0.908±0.001 (529s)    | 0.792±0.001 (680s)    | 0.810±0.002 (117s)    |
+| FTTransformerBucket | 0.970±0.000 (2071s)   | 0.977±0.000 (10953s)  | 0.776±0.004 (1608s)  | 0.896±0.002 (33883s)  | 0.785±0.002 (145035s) | 0.808±0.003 (10407s)  |
+| ExcelFormer         | 0.969±0.000 (1785s)   | 0.978±0.001 (47745s)  | 0.649±0.000 (15888s) | Too slow\*            | Too slow\*            | 0.782±0.001 (14729s)  |
+| FTTransformer       | 0.969±0.000 (25604s)  | 0.975±0.000 (219716s) | 0.670±0.004 (17119s) | 0.888±0.002 (323939s) | Too slow\*            | 0.788±0.001 (103434s) |
+| TabNet              | 0.968±0.001 (3177s)   | 0.974±0.000 (44035s)  | 0.655±0.001 (2679s)  | 0.891±0.001 (6800s)   | 0.767±0.001 (6242s)   | 0.784±0.001 (2307s)   |
+| TabTransformer      | 0.984±0.000 (2813s)   | 0.986±0.000 (13457s)  | 0.713±0.002 (3767s)  | 0.895±0.001 (5679s)   | 0.764±0.001 (3763s)   | 0.781±0.000 (3540s)   |
 
 ### `task_type: multiclass_classification`
 
@@ -196,16 +196,28 @@ Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM
 
 Experimental setting: 20 Optuna search trials for XGBoost, CatBoost and LightGBM. 3 Optuna search trials and 10 epochs training for deep learning models.
 
-|                     | dataset_0              | dataset_1              | dataset_2                |
-| :------------------ | :--------------------- | :--------------------- | :----------------------- |
-| XGBoost             | Too slow\*             | Too slow\*             | Too slow\*               |
-| CatBoost            | Too slow\*             | Too slow\*             | Too slow\*               |
-| LightGBM            | Too slow\*             | Too slow\*             | Too slow\*               |
-| Trompt              | OOM                    | 0.889±0.063 (55428s)   | 0.804±0.013 (23304s)     |
-| ResNet              | 0.892±0.002 (417s)     | **0.999±0.001 (396s)** | 0.915±0.001 (405s)       |
-| MLP                 | 0.770±0.001 (170s)     | 0.549±0.000 (223s)     | 0.895±0.001 (192s)       |
-| FTTransformerBucket | 0.897±0.004 (4436s)    | 0.502±0.000 (1892s)    | 0.888±0.009 (4414s)      |
-| ExcelFormer         | OOM                    | TODO (code error)      | **0.951±0.002 (10236s)** |
-| FTTransformer       | 0.872±0.005 (7004s)    | 0.540±0.068 (3355s)    | 0.908±0.004 (7514s)      |
-| TabNet              | **0.912±0.004 (219s)** | 0.995±0.001 (301s)     | 0.919±0.003 (187s)       |
-| TabTransformer      | 0.843±0.003 (2810s)    | 0.657±0.187 (2843s)    | 0.854±0.001 (284s)       |
+|                     | dataset_0              | dataset_1                | dataset_2                |
+| :------------------ | :--------------------- | :----------------------- | :----------------------- |
+| XGBoost             | Too slow\*             | Too slow\*               | Too slow\*               |
+| CatBoost            | Too slow\*             | Too slow\*               | Too slow\*               |
+| LightGBM            | Too slow\*             | Too slow\*               | Too slow\*               |
+| Trompt              | OOM                    | 0.889±0.063 (55428s)     | 0.804±0.013 (23304s)     |
+| ResNet              | 0.892±0.002 (417s)     | **0.999±0.001 (396s)**   | 0.915±0.001 (405s)       |
+| MLP                 | 0.770±0.001 (170s)     | 0.549±0.000 (223s)       | 0.895±0.001 (192s)       |
+| FTTransformerBucket | 0.897±0.004 (4436s)    | 0.502±0.000 (1892s)      | 0.888±0.009 (4414s)      |
+| ExcelFormer         | OOM                    | **0.999±0.001 (13952s)** | **0.951±0.002 (10236s)** |
+| FTTransformer       | 0.872±0.005 (7004s)    | 0.540±0.068 (3355s)      | 0.908±0.004 (7514s)      |
+| TabNet              | **0.912±0.004 (219s)** | 0.995±0.001 (301s)       | 0.919±0.003 (187s)       |
+| TabTransformer      | 0.843±0.003 (2810s)    | 0.657±0.187 (2843s)      | 0.854±0.001 (284s)       |
+
+## Benchmarking pytorch-frame and pytorch-tabular
+
+`pytorch_tabular_benchmark` compares the performance of `pytorch-frame` to `pytorch-tabular`. `pytorch-tabular` excels in providing an accessible approach for standard tabular tasks, allowing users to quickly implement and experiment with existing tabular learning models. It also excels with its training loop modifications and explainability feature. On the other hand, `ptroch-frame` offers enhanced flexibility for exploring and building novel tabular learning approaches while still providing access to established models. It distinguishes itself through support for a wider array of data types, more sophisticated encoding schemas, and streamlined integration with LLMs.
+The following table shows the speed comparison of `pytorch-frame` to `pytorch-tabular` on implementations of `TabNet` and `FTTransformer`.
+
+| Package         | Model         | Num iters/sec |
+| :-------------- | :------------ | :------------ |
+| PyTorch Tabular | TabNet        | 41.7          |
+| PyTorch Frame   | TabNet        | 45.0          |
+| PyTorch Tabular | FTTransformer | 40.1          |
+| PyTorch Frame   | FTTransformer | 43.7          |

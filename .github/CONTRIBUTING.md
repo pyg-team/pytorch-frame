@@ -26,7 +26,7 @@ To develop PyTorch Frame on your machine, here are some tips:
    It is advised to run this command repeatedly to confirm that installations across all locations are properly removed.
 
    ```bash
-   pip uninstall pytorch_frame
+   pip uninstall pytorch-frame
    ```
 
 1. Fork and clone the PyTorch Frame repository:

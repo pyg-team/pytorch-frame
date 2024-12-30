@@ -554,6 +554,7 @@ class Dataset(ABC):
         self,
         device: torch.device | None = None,
         path: str | None = None,
+        col_stats: dict[str, dict[StatType, Any]] | None = None,
     ) -> Dataset:
         r"""Materializes the dataset into a tensor representation. From this
         point onwards, the dataset should be treated as read-only.
@@ -570,6 +571,10 @@ class Dataset(ABC):
                 :obj:`path`. If :obj:`path` is :obj:`None`, this will
                 materialize the dataset without caching.
                 (default: :obj:`None`)
+            col_stats (Dict[str, Dict[StatType, Any]], optional): optional
+            col_stats provided by the user. If not provided, the statistics
+            is calculated from the dataframe itself. (default: :obj:`None`)
+
         """
         if self.is_materialized:
             # Materialized without specifying path at first and materialize
@@ -589,23 +594,37 @@ class Dataset(ABC):
             return self
 
         # 1. Fill column statistics:
-        for col, stype in self.col_to_stype.items():
-            ser = self.df[col]
-            self._col_stats[col] = compute_col_stats(
-                ser,
-                stype,
-                sep=self.col_to_sep.get(col, None),
-                time_format=self.col_to_time_format.get(col, None),
-            )
-            # For a target column, sort categories lexicographically such that
-            # we do not accidentally swap labels in binary classification
-            # tasks.
-            if col == self.target_col and stype == torch_frame.categorical:
-                index, value = self._col_stats[col][StatType.COUNT]
-                if len(index) == 2:
-                    ser = pd.Series(index=index, data=value).sort_index()
-                    index, value = ser.index.tolist(), ser.values.tolist()
-                    self._col_stats[col][StatType.COUNT] = (index, value)
+        if col_stats is None:
+            # calculate from data if col_stats is not provided
+            for col, stype in self.col_to_stype.items():
+                ser = self.df[col]
+                self._col_stats[col] = compute_col_stats(
+                    ser,
+                    stype,
+                    sep=self.col_to_sep.get(col, None),
+                    time_format=self.col_to_time_format.get(col, None),
+                )
+                # For a target column, sort categories lexicographically
+                # such that we do not accidentally swap labels in binary
+                # classification tasks.
+                if col == self.target_col and stype == torch_frame.categorical:
+                    index, value = self._col_stats[col][StatType.COUNT]
+                    if len(index) == 2:
+                        ser = pd.Series(index=index, data=value).sort_index()
+                        index, value = ser.index.tolist(), ser.values.tolist()
+                        self._col_stats[col][StatType.COUNT] = (index, value)
+        else:
+            # basic validation for the col_stats provided by the user
+            for col_, stype_ in self.col_to_stype.items():
+                assert col_ in col_stats, \
+                    f"{col_} is not specified in the provided col_stats"
+                stats_ = col_stats[col_]
+                assert all([key_ in stats_
+                            for key_ in StatType.stats_for_stype(stype_)]), \
+                    "not all required stats are calculated" \
+                    f" in the provided col_stats for {col}"
+
+            self._col_stats = col_stats
 
         # 2. Create the `TensorFrame`:
         self._to_tensor_frame_converter = self._get_tensorframe_converter()
