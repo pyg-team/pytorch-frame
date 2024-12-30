@@ -90,7 +90,7 @@ def train(epoch: int) -> float:
     for tf in tqdm(train_loader, desc=f"Epoch: {epoch}"):
         tf = tf.to(device)
         # [batch_size, num_layers, num_classes]
-        out = model.forward_stacked(tf)
+        out = model(tf)
         num_layers = out.size(1)
         # [batch_size * num_layers, num_classes]
         pred = out.view(-1, dataset.num_classes)
@@ -112,7 +112,7 @@ def test(loader: DataLoader) -> float:
 
     for tf in loader:
         tf = tf.to(device)
-        pred = model(tf)
+        pred = model(tf).mean(dim=1)
         pred_class = pred.argmax(dim=-1)
         accum += float((tf.y == pred_class).sum())
         total_count += len(tf.y)
