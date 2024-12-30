@@ -48,3 +48,12 @@ def withCUDA(func: Callable):
         devices.append(pytest.param(torch.device('cuda:0'), id='cuda:0'))
 
     return pytest.mark.parametrize('device', devices)(func)
+
+
+def onlyCUDA(func: Callable) -> Callable:
+    r"""A decorator to skip tests if CUDA is not found."""
+    import pytest
+    return pytest.mark.skipif(
+        not torch.cuda.is_available(),
+        reason="CUDA not available",
+    )(func)

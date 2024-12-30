@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
-from torch_frame.testing import withCUDA
+from torch_frame.testing import onlyCUDA, withCUDA
 
 
 def assert_equal(
@@ -489,6 +489,7 @@ def test_cat(device):
         MultiEmbeddingTensor.cat([object()], dim=0)
 
 
+@onlyCUDA
 def test_pin_memory():
     met, _ = get_fake_multi_embedding_tensor(
         num_rows=2,

@@ -6,7 +6,7 @@ import torch
 from torch import Tensor
 
 from torch_frame.data import MultiNestedTensor
-from torch_frame.testing import withCUDA
+from torch_frame.testing import onlyCUDA
 
 
 def assert_equal(tensor_mat: list[list[Tensor]],
@@ -95,7 +95,7 @@ def test_fillna_col():
                           torch.tensor([100], dtype=torch.float32)))
 
 
-@withCUDA
+@onlyCUDA
 def test_basics(device):
     num_rows = 8
     num_cols = 10
@@ -342,6 +342,7 @@ def test_different_num_rows():
         MultiNestedTensor.from_tensor_mat(tensor_mat)
 
 
+@onlyCUDA
 def test_pin_memory():
     num_rows = 10
     num_cols = 3
