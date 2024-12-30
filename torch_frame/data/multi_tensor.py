@@ -99,7 +99,7 @@ class _MultiTensor:
 
     def pin_memory(self, *args, **kwargs):
         out = self._apply(lambda x: _pin_memory(x, *args, **kwargs))
-        print('result:', out, out.is_pinned(), out.device, args, kwargs)
+        print('result:', out, out.is_pinned(), args, kwargs)
         return out
 
     def is_pinned(self) -> bool:
@@ -399,5 +399,5 @@ def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
 
 
 def _pin_memory(tensor: Tensor, *args, **kwargs) -> Tensor:
-    print('input:', tensor, tensor.is_pinned(), tensor.device, args, kwargs)
+    print('input:', tensor, tensor.is_pinned(), args, kwargs)
     return tensor.pin_memory(*args, **kwargs)
