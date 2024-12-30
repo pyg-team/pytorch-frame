@@ -97,6 +97,12 @@ class _MultiTensor:
     def cuda(self, *args, **kwargs):
         return self._apply(lambda x: x.cuda(*args, **kwargs))
 
+    def pin_memory(self, *args, **kwargs):
+        return self._apply(lambda x: x.pin_memory(*args, **kwargs))
+
+    def is_pinned(self) -> bool:
+        return self.values.is_pinned() and self.offset.is_pinned()
+
     # Helper Functions ########################################################
 
     def _apply(self, fn: Callable[[Tensor], Tensor]) -> _MultiTensor:

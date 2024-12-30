@@ -7,6 +7,7 @@ import torch_frame
 from torch_frame import TensorFrame
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame.testing import onlyCUDA
 
 
 def test_tensor_frame_basics(get_fake_tensor_frame):
@@ -253,3 +254,19 @@ def test_non_list_col_names_dict():
     col_names_dict = {torch_frame.categorical: 'cat_1'}
     with pytest.raises(ValueError, match='must be a list of column names'):
         TensorFrame(feat_dict, col_names_dict)
+
+
+@onlyCUDA
+def test_pin_memory(get_fake_tensor_frame):
+    def assert_is_pinned(tf: TensorFrame, expected: bool) -> bool:
+        for value in tf.feat_dict.values():
+            if isinstance(value, dict):
+                for v in value.values():
+                    assert v.is_pinned() is expected
+            else:
+                assert value.is_pinned() is expected
+
+    tf = get_fake_tensor_frame(10)
+    assert_is_pinned(tf, expected=False)
+    tf = tf.pin_memory()
+    assert_is_pinned(tf, expected=True)

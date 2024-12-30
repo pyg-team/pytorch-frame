@@ -6,7 +6,7 @@ import torch
 from torch import Tensor
 
 from torch_frame.data import MultiNestedTensor
-from torch_frame.testing import withCUDA
+from torch_frame.testing import onlyCUDA
 
 
 def assert_equal(tensor_mat: list[list[Tensor]],
@@ -95,8 +95,8 @@ def test_fillna_col():
                           torch.tensor([100], dtype=torch.float32)))
 
 
-@withCUDA
-def test_multi_nested_tensor_basics(device):
+@onlyCUDA
+def test_basics(device):
     num_rows = 8
     num_cols = 10
     max_value = 100
@@ -326,7 +326,7 @@ def test_multi_nested_tensor_basics(device):
                                           cloned_multi_nested_tensor)
 
 
-def test_multi_nested_tensor_different_num_rows():
+def test_different_num_rows():
     tensor_mat = [
         [torch.tensor([1, 2, 3]),
          torch.tensor([4, 5])],
@@ -340,3 +340,20 @@ def test_multi_nested_tensor_different_num_rows():
             match="The length of each row must be the same",
     ):
         MultiNestedTensor.from_tensor_mat(tensor_mat)
+
+
+@onlyCUDA
+def test_pin_memory():
+    num_rows = 10
+    num_cols = 3
+    tensor = MultiNestedTensor.from_tensor_mat(
+        [[torch.randn(random.randint(0, 10)) for _ in range(num_cols)]
+         for _ in range(num_rows)])
+
+    assert not tensor.is_pinned()
+    assert not tensor.values.is_pinned()
+    assert not tensor.offset.is_pinned()
+    tensor = tensor.pin_memory()
+    assert tensor.is_pinned()
+    assert tensor.values.is_pinned()
+    assert tensor.offset.is_pinned()
