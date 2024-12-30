@@ -98,9 +98,7 @@ class _MultiTensor:
         return self._apply(lambda x: x.cuda(*args, **kwargs))
 
     def pin_memory(self, *args, **kwargs):
-        out = self._apply(lambda x: _pin_memory(x, *args, **kwargs))
-        print('result:', out, out.is_pinned(), out.device, args, kwargs)
-        return out
+        return self._apply(lambda x: x.pin_memory(*args, **kwargs))
 
     def is_pinned(self) -> bool:
         return self.values.is_pinned() and self.offset.is_pinned()
@@ -396,8 +394,3 @@ def _batched_arange(count: Tensor) -> tuple[Tensor, Tensor]:
     arange -= ptr[batch]
 
     return batch, arange
-
-
-def _pin_memory(tensor: Tensor, *args, **kwargs) -> Tensor:
-    print('input:', tensor, tensor.is_pinned(), tensor.device, args, kwargs)
-    return tensor.pin_memory(*args, **kwargs)
