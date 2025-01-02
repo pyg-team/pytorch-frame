@@ -92,8 +92,7 @@ class TromptConv(TableConv):
         # M_importance
         # [batch_size, num_prompts, channels], [batch_size, num_cols, channels]
         # -> [batch_size, num_prompts, num_cols]
-        m_importance = torch.einsum('ijl,ikl->ijk', stacked_e_prompt,
-                                    stacked_e_column)
+        m_importance = stacked_e_prompt @ stacked_e_column.transpose(1, 2)
         m_importance = F.softmax(m_importance, dim=-1)
         # [batch_size, num_prompts, num_cols, 1]
         m_importance = m_importance.unsqueeze(dim=-1)
