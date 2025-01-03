@@ -84,7 +84,6 @@ test_loader = DataLoader(
     pin_memory=True,
 )
 
-# Set up model and optimizer
 model = Trompt(
     channels=args.channels,
     out_channels=dataset.num_classes,
@@ -98,12 +97,12 @@ optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, fused=True)
 lr_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 
-def train(epoch: int) -> float:
+def train(epoch: int) -> torch.Tensor:
     model.train()
     loss_accum = torch.zeros(1, device=device, dtype=torch.float32).squeeze_()
     total_count = 0
 
-    for tf in tqdm(train_loader, desc=f"Epoch {epoch}:"):
+    for tf in tqdm(train_loader, desc=f"Epoch {epoch:3d}"):
         tf = tf.to(device, non_blocking=True)
         # [batch_size, num_layers, num_classes]
         out = model(tf)
@@ -119,25 +118,26 @@ def train(epoch: int) -> float:
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+
         total_count += len(tf.y)
-        with torch.no_grad():
-            loss *= len(tf.y)
-            loss_accum += loss
+        loss *= len(tf.y)
+        loss_accum += loss
 
     lr_scheduler.step()
     return loss_accum / total_count
 
 
 @torch.no_grad()
-def test(loader: DataLoader) -> float:
+def test(loader: DataLoader, desc: str) -> torch.Tensor:
     model.eval()
-    accum = total_count = 0
+    accum = torch.zeros(1, device=device, dtype=torch.long).squeeze_()
+    total_count = 0
 
-    for tf in loader:
-        tf = tf.to(device)
+    for tf in tqdm(loader, desc=desc):
+        tf = tf.to(device, non_blocking=True)
         pred = model(tf).mean(dim=1)
         pred_class = pred.argmax(dim=-1)
-        accum += float((tf.y == pred_class).sum())
+        accum += (tf.y == pred_class).sum()
         total_count += len(tf.y)
 
     return accum / total_count
@@ -147,11 +147,11 @@ best_val_acc = 0.0
 best_test_acc = 0.0
 for epoch in range(1, args.epochs + 1):
     train_loss = train(epoch)
-    train_acc = test(train_loader)
-    val_acc = test(val_loader)
+    train_acc = test(train_loader, "Eval (train)")
+    val_acc = test(val_loader, "Eval (val)")
     if best_val_acc < val_acc:
         best_val_acc = val_acc
-        best_test_acc = test(test_loader)
+        best_test_acc = test(test_loader, "Eval (test)")
 
     print(f"Train Loss: {train_loss:.4f}, "
           f"Train Acc: {train_acc:.4f}, "
