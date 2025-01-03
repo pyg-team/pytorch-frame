@@ -16,6 +16,7 @@ jannis : 72.98
 """
 import argparse
 import os.path as osp
+import warnings
 
 import torch
 import torch.nn.functional as F
@@ -29,6 +30,12 @@ from torch_frame.nn import Trompt
 # Use TF32 for faster matrix multiplication on Ampere GPUs.
 # https://dev-discuss.pytorch.org/t/pytorch-and-tensorfloat32/504
 torch.set_float32_matmul_precision('high')
+
+# Compile backward as a single graph
+# https://pytorch.org/tutorials/intermediate/compiled_autograd_tutorial.html
+torch._dynamo.config.compiled_autograd = True
+warnings.filterwarnings("ignore", category=UserWarning, module="torch",
+                        message=".*skipfiles_inline_module_allowlist.*")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, default="california")
@@ -115,7 +122,9 @@ def train(epoch: int) -> torch.Tensor:
         )
         # Layer-wise logit loss
         loss = F.cross_entropy(pred, y)
-        loss.backward()
+        with torch._dynamo.compiled_autograd._enable(
+                torch.compile(fullgraph=True)):
+            loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 
