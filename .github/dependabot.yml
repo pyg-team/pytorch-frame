@@ -8,6 +8,7 @@ updates:
       time: "00:00"
     labels:
       - "ci"
+      - "skip-changelog"
     pull-request-branch-name:
       separator: "-"
     open-pull-requests-limit: 10
