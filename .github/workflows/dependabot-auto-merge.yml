@@ -27,3 +27,8 @@ jobs:
     if: github.actor == 'dependabot[bot]'
     steps:
       - uses: hmarr/auto-approve-action@v4
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          auto_merge: true
+          auto_merge_method: squash
+          review_message: "Auto approved automated PR"
