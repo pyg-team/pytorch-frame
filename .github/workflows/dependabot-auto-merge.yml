@@ -1,6 +1,9 @@
 name: Dependabot auto-merge
 
-on: pull_request
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: write
