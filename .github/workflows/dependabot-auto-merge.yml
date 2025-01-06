@@ -1,9 +1,9 @@
 name: Dependabot auto-merge
 
 on:  # yamllint disable-line rule:truthy
-  pull_request_target:
-    types:
-      - opened
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -14,14 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - name: Enable auto-merge for Dependabot PRs
+      - name: Enable auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
-  auto-approve:
-    runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
-    steps:
-      - uses: hmarr/auto-approve-action@v4
+      - name: Auto-approve
+        uses: hmarr/auto-approve-action@v4
