@@ -12,7 +12,8 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    # Only run on dependabot or pre-commit-ci PRs
+    if: ${{ github.actor == 'dependabot[bot]' || github.actor == 'pre-commit-ci[bot]' }}
     steps:
       - name: Enable auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
