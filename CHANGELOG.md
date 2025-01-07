@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## \[Unreleased\]
+## [Unreleased]
 
 ### Added
 
@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed CUDA synchronizations from `nn.LinearEmbeddingEncoder` ([#432](https://github.com/pyg-team/pytorch-frame/pull/432))
 - Removed CUDA synchronizations from N/A imputation logic in `nn.StypeEncoder` ([#433](https://github.com/pyg-team/pytorch-frame/pull/433), [#434](https://github.com/pyg-team/pytorch-frame/pull/434))
 
-## \[0.2.3\] - 2024-07-08
+## [0.2.3] - 2024-07-08
 
 ### Added
 
@@ -43,7 +43,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Updated `ExcelFormer` implementation and related scripts ([#391](https://github.com/pyg-team/pytorch-frame/pull/391))
 
-## \[0.2.2\] - 2024-03-04
+## [0.2.2] - 2024-03-04
 
 ### Added
 
@@ -69,7 +69,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed the split of `DataFrameTextBenchmark` ([#358](https://github.com/pyg-team/pytorch-frame/pull/358))
 - Fixed empty `MultiNestedTensor` col indexing ([#355](https://github.com/pyg-team/pytorch-frame/pull/355))
 
-## \[0.2.1\] - 2024-01-16
+## [0.2.1] - 2024-01-16
 
 ### Added
 
@@ -91,7 +91,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed `TimestampEncoder` not applying `CyclicEncoder` to cyclic features ([#311](https://github.com/pyg-team/pytorch-frame/pull/311))
 - Fixed NaN masking in `multicateogrical` stype ([#307](https://github.com/pyg-team/pytorch-frame/pull/307))
 
-## \[0.2.0\] - 2023-12-15
+## [0.2.0] - 2023-12-15
 
 ### Added
 
@@ -143,7 +143,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - No manual passing of `in_channels` to `LinearEmbeddingEncoder` for `stype.text_embedded` ([#222](https://github.com/pyg-team/pytorch-frame/pull/222))
 
-## \[0.1.0\] - 2023-10-23
+## [0.1.0] - 2023-10-23
 
 ### Added
 
