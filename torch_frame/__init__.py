@@ -33,7 +33,7 @@ if WITH_PT24:
         torch_frame.data.stats.StatType,
     ])
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 __all__ = [
     'DataFrame',

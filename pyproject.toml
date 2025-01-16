@@ -4,7 +4,7 @@ build-backend="flit_core.buildapi"
 
 [project]
 name="pytorch-frame"
-version="0.2.3"
+version="0.2.4"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
 ]

@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.2.4] - 2024-01-16
+
+### Added
+
 - Added an example for training `Trompt` on multiple GPUs ([#474](https://github.com/pyg-team/pytorch-frame/pull/474))
 - Added support for materializing dataset for train and test dataframe separately([#470](https://github.com/pyg-team/pytorch-frame/issues/470))
 - Added support for PyTorch 2.5 ([#464](https://github.com/pyg-team/pytorch-frame/pull/464))
