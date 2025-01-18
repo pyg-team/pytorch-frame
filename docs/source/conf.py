@@ -46,6 +46,9 @@ intersphinx_mapping = {
     'xgboost': ('https://xgboost.readthedocs.io/en/stable/', None),
 }
 
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
+
 
 def setup(app):
     def rst_jinja_render(app, _, source):
