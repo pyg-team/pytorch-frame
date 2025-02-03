@@ -61,7 +61,7 @@ repos:
         additional_dependencies: [toml]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.0
     hooks:
       - id: isort
         name: Sort imports
@@ -74,7 +74,7 @@ repos:
         additional_dependencies: [Flake8-pyproject]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.3
+    rev: v0.9.4
     hooks:
       - id: ruff
         name: Ruff formatting
@@ -89,7 +89,7 @@ repos:
         exclude: "^test/|^examples/|^benchmark/"
 
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.21
+    rev: 0.7.22
     hooks:
       - id: mdformat
         name: Format Markdown
