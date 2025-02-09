@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, Callable, cast
 
 import torch
 import torch.nn.functional as F
@@ -262,10 +262,8 @@ class FeatureTransformer(Module):
         # Union[torch._tensor.Tensor, torch.nn.modules.module.Module]
         # This issue was first observed on PyTorch 2.6.0.
         if not isinstance(self.shared_glu_block, Identity):
-            from typing import Callable, cast
             cast(Callable, self.shared_glu_block.reset_parameters)()
         if not isinstance(self.dependent, Identity):
-            from typing import Callable, cast
             cast(Callable, self.dependent.reset_parameters)()
 
 
