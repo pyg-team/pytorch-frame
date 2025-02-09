@@ -53,6 +53,12 @@ jobs:
             examples/**
             README.md
             CHANGELOG.md
+            .github/workflows/changelog.yml
+            .github/workflows/dependabot-auto-merge.yml
+            .github/workflows/documentation.yml
+            .github/workflows/labeler.yml
+            .github/workflows/linting.yml
+            .github/workflows/release.yml
 
       - name: Setup packages
         if: steps.changed-files-specific.outputs.only_changed != 'true'
