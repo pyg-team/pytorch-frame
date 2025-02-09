@@ -20,3 +20,4 @@ venv/*
 data/**
 catboost_info/
 .pt_tmp/
+test_*.py
