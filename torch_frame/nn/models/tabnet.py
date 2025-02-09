@@ -257,10 +257,16 @@ class FeatureTransformer(Module):
         return x
 
     def reset_parameters(self) -> None:
+        # TODO: Remove this type cast when PyTorch fixes typing issue where
+        # reset_parameters is typed as:
+        # Union[torch._tensor.Tensor, torch.nn.modules.module.Module]
+        # This issue was first observed on PyTorch 2.6.0.
         if not isinstance(self.shared_glu_block, Identity):
-            self.shared_glu_block.reset_parameters()
+            from typing import Callable, cast
+            cast(Callable, self.shared_glu_block.reset_parameters)()
         if not isinstance(self.dependent, Identity):
-            self.dependent.reset_parameters()
+            from typing import Callable, cast
+            cast(Callable, self.dependent.reset_parameters)()
 
 
 class GLUBlock(Module):
