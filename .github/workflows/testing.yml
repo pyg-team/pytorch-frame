@@ -84,3 +84,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: false
+          verbose: true
+          flags: pt${{ matrix.torch-version }},py${{ matrix.python-version }}
+          token: ${{ secrets.CODECOV_TOKEN }}
