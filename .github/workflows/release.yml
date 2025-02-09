@@ -37,14 +37,11 @@ jobs:
         with:
           name: release-${{ github.sha }}
           path: dist
-          include-hidden-files: true
 
   publish-package-test:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     needs: [build-package]
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
