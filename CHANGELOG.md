@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for PyTorch 2.6 ([#494](https://github.com/pyg-team/pytorch-frame/pull/494))
+
 ### Changed
 
 ### Deprecated
