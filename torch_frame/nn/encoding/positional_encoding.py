@@ -18,9 +18,14 @@ class PositionalEncoding(Module):
             raise ValueError(
                 f"out_size should be divisible by 2 (got {out_size}).")
         self.out_size = out_size
-        mult_term = torch.pow(1 / 10000.0,
-                              torch.arange(0, self.out_size, 2) / out_size)
-        self.register_buffer("mult_term", mult_term)
+        self.mult_term: Tensor
+        self.register_buffer(
+            "mult_term",
+            torch.pow(
+                1 / 10000.0,
+                torch.arange(0, self.out_size, 2) / out_size,
+            ),
+        )
 
     def forward(self, input_tensor: Tensor) -> Tensor:
         assert torch.all(input_tensor >= 0)
