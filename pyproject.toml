@@ -4,10 +4,10 @@ build-backend="flit_core.buildapi"
 
 [project]
 name="pytorch-frame"
-version="0.2.4"
 authors=[
     {name="PyG Team", email="team@pyg.org"},
 ]
+dynamic=["version"]
 description="Tabular Deep Learning Library for PyTorch"
 readme="README.md"
 requires-python=">=3.9"

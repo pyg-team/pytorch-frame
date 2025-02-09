@@ -1,0 +1,92 @@
+name: Publish Package
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - master
+  release:
+    types:
+      - published
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Install build tools
+        run: |
+          pip install -U pip
+          pip install -U flit twine
+          pip list
+
+      - name: Build package
+        run: |
+          flit build --no-use-vcs
+          twine check dist/* --strict
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: dist
+
+  publish-package-test:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: [build-package]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: dist
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          username: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          verbose: true
+          print-hash: true
+
+  publish-package:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: [publish-package-test]
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: dist
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          username: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+          print-hash: true
