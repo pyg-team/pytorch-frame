@@ -1,4 +1,4 @@
-name: Publish package
+name: Publish Package
 
 on:  # yamllint disable-line rule:truthy
   push:
