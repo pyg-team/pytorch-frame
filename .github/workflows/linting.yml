@@ -6,6 +6,10 @@ on:  # yamllint disable-line rule:truthy
       - master
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   mypy:
     runs-on: ubuntu-latest
