@@ -81,11 +81,11 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+    rev: v1.15.0
     hooks:
       - id: mypy
         name: Check types
-        additional_dependencies: [torch==2.5.0]
+        additional_dependencies: [torch==2.6.*]
         exclude: "^test/|^examples/|^benchmark/"
 
   - repo: https://github.com/executablebooks/mdformat

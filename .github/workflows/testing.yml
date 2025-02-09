@@ -1,4 +1,4 @@
-name: Testing PyTorch 2.5
+name: Testing
 
 on:  # yamllint disable-line rule:truthy
   push:
@@ -28,6 +28,7 @@ jobs:
           - '2.3'
           - '2.4'
           - '2.5'
+          - '2.6'
           - 'nightly'
 
     steps:

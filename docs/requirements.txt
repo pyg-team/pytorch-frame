@@ -1,2 +1,2 @@
-https://download.pytorch.org/whl/cpu/torch-2.5.0%2Bcpu-cp39-cp39-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-2.6.0%2Bcpu-cp39-cp39-linux_x86_64.whl
 git+https://github.com/pyg-team/pyg_sphinx_theme.git
