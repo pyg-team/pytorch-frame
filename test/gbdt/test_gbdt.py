@@ -1,4 +1,5 @@
 import os.path as osp
+import sys
 import tempfile
 
 import pytest
@@ -13,7 +14,13 @@ from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
 @pytest.mark.parametrize('gbdt_cls', [
-    CatBoost,
+    pytest.param(
+        CatBoost,
+        marks=pytest.mark.skipif(
+            sys.version_info >= (3, 13),
+            reason="Not supported on Python 3.13",
+        ),
+    ),
     XGBoost,
     LightGBM,
 ])

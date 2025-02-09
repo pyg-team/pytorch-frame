@@ -43,3 +43,12 @@ runs:
     - name: List installed packages
       run: pip list
       shell: bash
+
+    # TODO: Include catboost in Python 3.13 CI when catboost supports it:
+    # https://github.com/catboost/catboost/issues/2748
+    - name: Exclude catboost on Python 3.13 from pyproject.toml
+      if: ${{ inputs.python-version == '3.13' }}
+      run: |
+        sed -i '/    "catboost",/d' pyproject.toml
+        cat pyproject.toml
+      shell: bash
