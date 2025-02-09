@@ -10,6 +10,7 @@
 ______________________________________________________________________
 
 [![arXiv][arxiv-image]][arxiv-url]
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pytorch-frame)](https://pypi.org/project/pytorch-frame/)
 [![PyPI Version][pypi-image]][pypi-url]
 [![Testing Status][testing-image]][testing-url]
 [![Docs Status][docs-image]][docs-url]
@@ -245,7 +246,7 @@ The benchmark script for Hugging Face text encoders is in this [file](https://gi
 
 ## Installation
 
-PyTorch Frame is available for Python 3.9 to Python 3.11.
+PyTorch Frame is available for Python 3.9 to Python 3.13.
 
 ```
 pip install pytorch-frame

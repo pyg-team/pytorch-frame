@@ -14,7 +14,7 @@ from torch_frame.nn.models import (
 from torch_frame.testing import withPackage
 
 
-@withPackage("torch>=2.5.0")
+@withPackage("torch>=2.6.0")
 @pytest.mark.parametrize(
     "model_cls, model_kwargs, stypes, expected_graph_breaks",
     [
