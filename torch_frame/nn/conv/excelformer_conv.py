@@ -58,6 +58,7 @@ class DiaM(Module):
         self.lin_out = Linear(channels, channels) if num_heads > 1 else None
         self.num_heads = num_heads
         self.dropout = Dropout(dropout)
+        self.seq_ids: Tensor
         self.register_buffer('seq_ids', torch.arange(num_cols))
         self.reset_parameters()
 
