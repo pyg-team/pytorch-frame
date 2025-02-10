@@ -69,8 +69,10 @@ changelog="https://github.com/pyg-team/pytorch-frame/blob/master/CHANGELOG.md"
 name="torch_frame"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/rules
+target-version = "py39"
 select = [
     "D",  # pydocstyle
+    "UP", # pyupgrade
 ]
 ignore = [
     "D100",  # TODO: Don't ignore "Missing docstring in public module"
@@ -84,7 +86,6 @@ ignore = [
 src = ["torch_frame"]
 line-length = 80
 indent-width = 4
-target-version = "py39"
 
 # [tool.ruff.per-files-ignores]
 
