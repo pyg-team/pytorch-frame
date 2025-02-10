@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Lint: switch `pyupgrade` to Ruff's rule `UP` ([#499](https://github.com/pyg-team/pytorch-frame/pull/499))
+
 ### Deprecated
 
 ### Removed
