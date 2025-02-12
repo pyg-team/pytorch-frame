@@ -33,7 +33,8 @@ if WITH_PT24:
         torch_frame.data.stats.StatType,
     ])
 
-__version__ = '0.2.5'
+# https://peps.python.org/pep-0440/
+__version__ = '0.3.0.dev0'
 
 __all__ = [
     'DataFrame',
