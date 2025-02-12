@@ -33,13 +33,6 @@ repos:
         name: Lint yaml
         args: [-d, '{extends: default, rules: {line-length: disable, document-start: disable, truthy: {level: error}, braces: {max-spaces-inside: 1}}}']
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
-      - id: pyupgrade
-        name: Upgrade Python syntax
-        args: [--py39-plus]
-
   - repo: https://github.com/PyCQA/autoflake
     rev: v2.3.1
     hooks:
