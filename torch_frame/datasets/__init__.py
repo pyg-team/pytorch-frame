@@ -19,6 +19,8 @@ from .movielens_1m import Movielens1M
 from .amazon_fine_food_reviews import AmazonFineFoodReviews
 from .diamond_images import DiamondImages
 from .huggingface_dataset import HuggingFaceDatasetDict
+from .jobs import Jobs
+from .ihdp import IHDP
 
 real_world_datasets = [
     'Titanic',
@@ -38,6 +40,8 @@ real_world_datasets = [
     'Movielens1M',
     'AmazonFineFoodReviews',
     'DiamondImages',
+    'Jobs',
+    'IHDP',
 ]
 
 synthetic_datasets = [
