@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added support for Python 3.12 and 3.13 ([#500](https://github.com/pyg-team/pytorch-frame/pull/500))
+- Added support for Python 3.12 and 3.13 ([#496](https://github.com/pyg-team/pytorch-frame/pull/496))
 - Added support for PyTorch 2.6 ([#494](https://github.com/pyg-team/pytorch-frame/pull/494))
 
 ## [0.2.4] - 2024-01-16
