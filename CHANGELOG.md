@@ -3,20 +3,12 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.3.0] - 2025-02-14
 
 ### Added
 
 - Added support for Python 3.12 and 3.13 ([#500](https://github.com/pyg-team/pytorch-frame/pull/500))
 - Added support for PyTorch 2.6 ([#494](https://github.com/pyg-team/pytorch-frame/pull/494))
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ## [0.2.4] - 2024-01-16
 
