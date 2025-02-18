@@ -30,21 +30,20 @@ If you would like to use your own dataset, refer to the example in :doc:`/handli
 
 .. code-block:: python
 
-    from torch_frame.datasets import Titanic
+    >>> from torch_frame.datasets import Titanic
 
-    dataset = Titanic(root='/tmp/titanic')
+    >>> dataset = Titanic(root='/tmp/titanic')
 
-    len(dataset)
-    >>> 891
+    >>> len(dataset)
+    891
 
-    dataset.feat_cols
-    >>> ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
+    >>> dataset.feat_cols
+    ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
 
-    dataset.materialize()
-    >>> Titanic()
+    >>> dataset.materialize()
+    Titanic()
 
-    dataset.df.head(5)
-    >>>
+    >>> dataset.df.head(5)
                     Survived  Pclass                                            Name    Sex   Age   SibSp  Parch            Ticket     Fare Cabin Embarked
     PassengerId
     1                   0       3                            Braund, Mr. Owen Harris    male  22.0      1      0         A/5 21171   7.2500   NaN        S
@@ -65,9 +64,13 @@ Creating :obj:`torch_frame.data.Dataset` object is very easy:
     from torch_frame.data import Dataset
 
     # Specify the stype of each column with a dictionary.
-    col_to_stype = {"cat1": torch_frame.categorical, "cat2": torch_frame.categorical,
-                    "num1": torch_frame.numerical, "num2": torch_frame.numerical,
-                    "y": torch_frame.categorical}
+    col_to_stype = {
+        "cat1": torch_frame.categorical,
+        "cat2": torch_frame.categorical,
+        "num1": torch_frame.numerical,
+        "num2": torch_frame.numerical,
+        "y": torch_frame.categorical,
+    }
 
     # Set "y" as the target column.
     dataset = Dataset(df, col_to_stype=col_to_stype, target_col="y")
@@ -109,59 +112,52 @@ The :class:`~torch_frame.data.TensorFrame` object has :class:`~torch.Tensor` at 
 
 .. code-block:: python
 
-    from torch_frame import stype
-
-    dataset.materialize() # materialize the dataset
-
-    dataset.materialize(path='/tmp/titanic/data.pt') # materialize the dataset with caching
-
-    dataset.materialize(path='/tmp/titanic/data.pt') # next materialization will load the cache
-
-    tensor_frame = dataset.tensor_frame
-
-    tensor_frame.feat_dict.keys()
-    >>> dict_keys([<stype.categorical: 'categorical'>, <stype.numerical: 'numerical'>])
-
-    tensor_frame.feat_dict[stype.numerical]
-    >>> tensor([[22.0000,  1.0000,  0.0000,  7.2500],
-                [38.0000,  1.0000,  0.0000, 71.2833],
-                [26.0000,  0.0000,  0.0000,  7.9250],
-                ...,
-                [    nan,  1.0000,  2.0000, 23.4500],
-                [26.0000,  0.0000,  0.0000, 30.0000],
-                [32.0000,  0.0000,  0.0000,  7.7500]])
-
-    tensor_frame.feat_dict[stype.categorical]
-    >>> tensor([[0, 0, 0],
-                [1, 1, 1],
-                [0, 1, 0],
-                ...,
-                [0, 1, 0],
-                [1, 0, 1],
-                [0, 0, 2]])
-
-    tensor_frame.col_names_dict
-    >>> {<stype.categorical: 'categorical'>: ['Pclass', 'Sex', 'Embarked'], <stype.numerical: 'numerical'>: ['Age', 'SibSp', 'Parch', 'Fare']}
-
-    tensor_frame.y
-    >>> tensor([0, 1, 1,  ..., 0, 1, 0])
+    >>> from torch_frame import stype
+    >>> # materialize the dataset
+    >>> dataset.materialize()
+    >>> # materialize the dataset with caching enabled
+    >>> dataset.materialize(path='/tmp/titanic/data.pt')
+    >>> # next materialization will load the cache
+    >>> dataset.materialize(path='/tmp/titanic/data.pt')
+    >>> tensor_frame = dataset.tensor_frame
+    >>> tensor_frame.feat_dict.keys()
+    dict_keys([<stype.categorical: 'categorical'>, <stype.numerical: 'numerical'>])
+    >>> tensor_frame.feat_dict[stype.numerical]
+    tensor([[22.0000,  1.0000,  0.0000,  7.2500],
+            [38.0000,  1.0000,  0.0000, 71.2833],
+            [26.0000,  0.0000,  0.0000,  7.9250],
+            ...,
+            [    nan,  1.0000,  2.0000, 23.4500],
+            [26.0000,  0.0000,  0.0000, 30.0000],
+            [32.0000,  0.0000,  0.0000,  7.7500]])
+    >>> tensor_frame.feat_dict[stype.categorical]
+    tensor([[0, 0, 0],
+            [1, 1, 1],
+            [0, 1, 0],
+            ...,
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 0, 2]])
+    >>> tensor_frame.col_names_dict
+    {<stype.categorical: 'categorical'>: ['Pclass', 'Sex', 'Embarked'], <stype.numerical: 'numerical'>: ['Age', 'SibSp', 'Parch', 'Fare']}
+    >>> tensor_frame.y
+    tensor([0, 1, 1,  ..., 0, 1, 0])
 
 A :class:`~torch_frame.data.TensorFrame` contains the following basic properties:
 
 .. code-block:: python
 
-    tensor_frame.stypes
-    >>> [<stype.numerical: 'numerical'>, <stype.categorical: 'categorical'>]
+    >>> tensor_frame.stypes
+    [<stype.numerical: 'numerical'>, <stype.categorical: 'categorical'>]
 
-    tensor_frame.num_cols
-    >>> 7
+    >>> tensor_frame.num_cols
+    7
 
-    tensor_frame.num_rows
-    >>> 891
+    >>> tensor_frame.num_rows
+    891
 
-    tensor_frame.device
-    >>> device(type='cpu')
-
+    >>> tensor_frame.device
+    device(type='cpu')
 
 We support transferring the data in a :class:`~torch_frame.data.TensorFrame` to devices supported by :pytorch:`PyTorch`.
 
@@ -186,14 +182,14 @@ For numerical features,
 
 .. code-block:: python
 
-    dataset.col_to_stype
-    >>> {'Survived': <stype.categorical: 'categorical'>, 'Pclass': <stype.categorical: 'categorical'>, 'Sex': <stype.categorical: 'categorical'>, 'Age': <stype.numerical: 'numerical'>, 'SibSp': <stype.numerical: 'numerical'>, 'Parch': <stype.numerical: 'numerical'>, 'Fare': <stype.numerical: 'numerical'>, 'Embarked': <stype.categorical: 'categorical'>}
+    >>> dataset.col_to_stype
+    {'Survived': <stype.categorical: 'categorical'>, 'Pclass': <stype.categorical: 'categorical'>, 'Sex': <stype.categorical: 'categorical'>, 'Age': <stype.numerical: 'numerical'>, 'SibSp': <stype.numerical: 'numerical'>, 'Parch': <stype.numerical: 'numerical'>, 'Fare': <stype.numerical: 'numerical'>, 'Embarked': <stype.categorical: 'categorical'>}
 
-    dataset.col_stats['Sex']
-    >>> {<StatType.COUNT: 'COUNT'>: (['male', 'female'], [577, 314])}
+    >>> dataset.col_stats['Sex']
+    {<StatType.COUNT: 'COUNT'>: (['male', 'female'], [577, 314])}
 
-    dataset.col_stats['Age']
-    >>> {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
+    >>> dataset.col_stats['Age']
+    {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
 
 Now let's say you have a new :class:`pandas.DataFrame` called :obj:`new_df`, and
 you want to convert it to a corresponding :class:`~torch_frame.data.TensorFrame` object.
@@ -210,21 +206,19 @@ Neural networks are usually trained in a mini-batch fashion. :pyf:`PyTorch Frame
 
 .. code-block:: python
 
-    from torch_frame.data import DataLoader
-
-    data_loader = DataLoader(tensor_frame, batch_size=32,
-                            shuffle=True)
-
-    for batch in data_loader:
-        batch
-        >>> TensorFrame(
-                num_cols=7,
-                num_rows=32,
-                categorical (3): ['Pclass', 'Sex', 'Embarked'],
-                numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
-                has_target=True,
-                device='cpu',
-            )
+    >>> from torch_frame.data import DataLoader
+    >>> data_loader = DataLoader(tensor_frame, batch_size=32, shuffle=True)
+    >>> for batch in data_loader:
+    ...     batch
+    ...
+    TensorFrame(
+        num_cols=7,
+        num_rows=32,
+        categorical (3): ['Pclass', 'Sex', 'Embarked'],
+        numerical (4): ['Age', 'SibSp', 'Parch', 'Fare'],
+        has_target=True,
+        device='cpu',
+    )
 
 Learning Methods on Tabular Data
 --------------------------------
@@ -236,10 +230,7 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
 
 .. code-block:: python
 
-    from typing import Any, Dict, List
-
-    from torch import Tensor
-    from torch.nn import Linear, Module, ModuleList
+    from typing import Any
 
     import torch_frame
     from torch_frame import TensorFrame, stype
@@ -252,15 +243,15 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
     )
 
 
-    class ExampleTransformer(Module):
+    class ExampleTransformer(torch.nn.Module):
         def __init__(
             self,
             channels: int,
             out_channels: int,
             num_layers: int,
             num_heads: int,
-            col_stats: Dict[str, Dict[StatType, Any]],
-            col_names_dict: Dict[torch_frame.stype, List[str]],
+            col_stats: dict[str, dict[StatType, Any]],
+            col_names_dict: dict[torch_frame.stype, list[str]],
         ):
             super().__init__()
             self.encoder = StypeWiseFeatureEncoder(
@@ -272,20 +263,19 @@ Initializing a :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder` requires
                     stype.numerical: LinearEncoder()
                 },
             )
-            self.tab_transformer_convs = ModuleList([
+            self.tab_transformer_convs = torch.nn.ModuleList([
                 TabTransformerConv(
                     channels=channels,
                     num_heads=num_heads,
                 ) for _ in range(num_layers)
             ])
-            self.decoder = Linear(channels, out_channels)
+            self.decoder = torch.nn.Linear(channels, out_channels)
 
-        def forward(self, tf: TensorFrame) -> Tensor:
+        def forward(self, tf: TensorFrame) -> torch.Tensor:
             x, _ = self.encoder(tf)
             for tab_transformer_conv in self.tab_transformer_convs:
                 x = tab_transformer_conv(x)
-            out = self.decoder(x.mean(dim=1))
-            return out
+            return self.decoder(x.mean(dim=1))
 
 In the example above, :class:`~torch_frame.nn.encoder.EmbeddingEncoder` is used to encode the categorical features and
 :class:`~torch_frame.nn.encoder.LinearEncoder` is used to encode the numerical features.
@@ -302,9 +292,8 @@ Let's create train-test split and create data loaders.
     dataset = Yandex(root='/tmp/adult', name='adult')
     dataset.materialize()
     dataset.shuffle()
-    train_dataset, test_dataset = dataset[:0.8], dataset[0.80:]
-    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128,
-                            shuffle=True)
+    train_dataset, test_dataset = dataset[:0.8], dataset[0.8:]
+    train_loader = DataLoader(train_dataset.tensor_frame, batch_size=128, shuffle=True)
     test_loader = DataLoader(test_dataset.tensor_frame, batch_size=128)
 
 Let’s train this model for 50 epochs:
@@ -348,8 +337,7 @@ Finally, we can evaluate our model on the test split:
         correct += (tf.y == pred_class).sum()
     acc = int(correct) / len(test_dataset)
     print(f'Accuracy: {acc:.4f}')
-    >>> Accuracy: 0.8447
-
+    # Accuracy: 0.8447
 
 This is all it takes to implement your first deep tabular network.
 Happy hacking!
