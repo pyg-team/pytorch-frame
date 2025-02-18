@@ -31,18 +31,13 @@ If you would like to use your own dataset, refer to the example in :doc:`/handli
 .. code-block:: python
 
     >>> from torch_frame.datasets import Titanic
-
     >>> dataset = Titanic(root='/tmp/titanic')
-
     >>> len(dataset)
     891
-
     >>> dataset.feat_cols
     ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
-
     >>> dataset.materialize()
     Titanic()
-
     >>> dataset.df.head(5)
                     Survived  Pclass                                            Name    Sex   Age   SibSp  Parch            Ticket     Fare Cabin Embarked
     PassengerId
@@ -51,7 +46,6 @@ If you would like to use your own dataset, refer to the example in :doc:`/handli
     3                   1       3                             Heikkinen, Miss. Laina  female  26.0      0      0  STON/O2. 3101282   7.9250   NaN        S
     4                   1       1       Futrelle, Mrs. Jacques Heath (Lily May Peel)  female  35.0      1      0            113803  53.1000  C123        S
     5                   0       3                           Allen, Mr. William Henry    male  35.0      0      0            373450   8.0500   NaN        S
-
 
 :pyf:`PyTorch Frame` also supports a custom dataset, so that you can use :pyf:`PyTorch Frame` for your own problem.
 Let's say you prepare your :class:`pandas.DataFrame` as :obj:`df` with five columns:
@@ -149,13 +143,10 @@ A :class:`~torch_frame.data.TensorFrame` contains the following basic properties
 
     >>> tensor_frame.stypes
     [<stype.numerical: 'numerical'>, <stype.categorical: 'categorical'>]
-
     >>> tensor_frame.num_cols
     7
-
     >>> tensor_frame.num_rows
     891
-
     >>> tensor_frame.device
     device(type='cpu')
 
@@ -163,9 +154,8 @@ We support transferring the data in a :class:`~torch_frame.data.TensorFrame` to 
 
 .. code-block:: python
 
-    tensor_frame.to("cpu")
-
-    tensor_frame.to("cuda")
+    >>> tensor_frame = tensor_frame.to("cpu")
+    >>> tensor_frame = tensor_frame.to("cuda")
 
 Once a :obj:`~torch_frame.data.Dataset` is materialized, we can retrieve column statistics on the data.
 For each :class:`~torch_frame.stype`, a different set of statistics is calculated.
@@ -184,10 +174,8 @@ For numerical features,
 
     >>> dataset.col_to_stype
     {'Survived': <stype.categorical: 'categorical'>, 'Pclass': <stype.categorical: 'categorical'>, 'Sex': <stype.categorical: 'categorical'>, 'Age': <stype.numerical: 'numerical'>, 'SibSp': <stype.numerical: 'numerical'>, 'Parch': <stype.numerical: 'numerical'>, 'Fare': <stype.numerical: 'numerical'>, 'Embarked': <stype.categorical: 'categorical'>}
-
     >>> dataset.col_stats['Sex']
     {<StatType.COUNT: 'COUNT'>: (['male', 'female'], [577, 314])}
-
     >>> dataset.col_stats['Age']
     {<StatType.MEAN: 'MEAN'>: 29.69911764705882, <StatType.STD: 'STD'>: 14.516321150817316, <StatType.QUANTILES: 'QUANTILES'>: [0.42, 20.125, 28.0, 38.0, 80.0]}
 
