@@ -29,6 +29,7 @@ class MultiNestedTensor(_MultiTensor):
 
     Example:
         >>> import torch
+        >>> from torch_frame.data import MultiNestedTensor
         >>> tensor_mat = [
         ...    [torch.tensor([1, 2]), torch.tensor([3])],
         ...    [torch.tensor([4]), torch.tensor([5, 6, 7])],
@@ -53,13 +54,15 @@ class MultiNestedTensor(_MultiTensor):
         MultiNestedTensor(num_rows=2, num_cols=2, device='cpu')
         >>> mnt[[2, 1, 2, 0]] # Row list indexing
         MultiNestedTensor(num_rows=4, num_cols=2, device='cpu')
-        >>> mnt.to_dense(fill_value = -1) # Map to a dense matrix via padding
+        >>> mnt.to_dense(fill_value=-1) # Map to a dense matrix with padding
         tensor([[[ 1,  2, -1],
-                [ 3, -1, -1]],
+                 [ 3, -1, -1]],
+
                 [[ 4, -1, -1],
-                [ 5,  6,  7]],
+                 [ 5,  6,  7]],
+
                 [[ 8,  9, -1],
-                [10, -1, -1]]])
+                 [10, -1, -1]]])
     """
     def validate(self):
         assert self.offset[0] == 0

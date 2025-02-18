@@ -49,7 +49,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data",
                 args.dataset)
 dataset = TabularBenchmark(root=path, name=args.dataset)
-dataset.materialize()
+dataset.materialize(path=osp.join(path, 'materialized_data.pt'))
 # Only support classification training/eval for now.
 # TODO: support regression tasks.
 assert dataset.task_type.is_classification

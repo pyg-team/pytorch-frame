@@ -17,6 +17,10 @@ from torch_frame.data import DataLoader
 from torch_frame.datasets import TabularBenchmark
 from torch_frame.nn import Trompt
 
+# Use TF32 for faster matrix multiplication on Ampere GPUs.
+# https://dev-discuss.pytorch.org/t/pytorch-and-tensorfloat32/504
+torch.set_float32_matmul_precision('high')
+
 
 def prepare_dataset(dataset_str: str) -> TabularBenchmark:
     path = osp.join(
