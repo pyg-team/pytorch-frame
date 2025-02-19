@@ -63,13 +63,15 @@ Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Datas
 .. code-block:: python
 
     >>> dataset = Dataset(
-    ...     df, col_to_stype={
+    ...     df,
+    ...     col_to_stype={
     ...         'Numerical': stype.numerical,
     ...         'Categorical': stype.categorical,
     ...         'Time': stype.timestamp,
     ...         'Multicategorical': stype.multicategorical,
     ...         'Embedding': stype.embedding
-    ...     })
+    ...     }
+    ... )
     >>> dataset.materialize()
     >>> dataset.tensor_frame
     TensorFrame(
