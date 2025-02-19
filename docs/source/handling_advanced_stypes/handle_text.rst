@@ -57,7 +57,6 @@ Next, we create a text encoder class that encodes a list of strings into text em
 
 .. code-block:: python
 
-    from typing import List
     import torch
     from torch import Tensor
     from sentence_transformers import SentenceTransformer
@@ -66,7 +65,7 @@ Next, we create a text encoder class that encodes a list of strings into text em
         def __init__(self, device: torch.device):
             self.model = SentenceTransformer('all-distilroberta-v1', device=device)
 
-        def __call__(self, sentences: List[str]) -> Tensor:
+        def __call__(self, sentences: list[str]) -> Tensor:
             # Encode a list of batch_size sentences into a PyTorch Tensor of
             # size [batch_size, emb_dim]
             embeddings = self.model.encode(
@@ -117,35 +116,31 @@ Once :obj:`col_to_text_embedder_cfg` is specified, we can pass it to
 
 .. code-block:: python
 
-    import torch_frame
-    from torch_frame.datasets import MultimodalTextBenchmark
+    >>> import torch_frame
+    >>> from torch_frame.datasets import MultimodalTextBenchmark
+    >>> dataset = MultimodalTextBenchmark(
+    ...     root='/tmp/multimodal_text_benchmark/wine_reviews',
+    ...     name='wine_reviews',
+    ...     col_to_text_embedder_cfg=col_to_text_embedder_cfg,
+    ... )
+    >>> dataset.feat_cols  # This dataset contains one text column `description`
+    ['description', 'country', 'province', 'points', 'price']
 
-    dataset = MultimodalTextBenchmark(
-        root='/tmp/multimodal_text_benchmark/wine_reviews',
-        name='wine_reviews',
-        col_to_text_embedder_cfg=col_to_text_embedder_cfg,
-    )
-
-    dataset.feat_cols  # This dataset contains one text column `description`
-    >>> ['description', 'country', 'province', 'points', 'price']
-
-    dataset.col_to_stype['description']
-    >>> <stype.text_embedded: 'text_embedded'>
+    >>> dataset.col_to_stype['description']
+    <stype.text_embedded: 'text_embedded'>
 
 We then call :obj:`dataset.materialize(path=...)`, which will use text embedding models
 to pre-encode :obj:`text_embedded` columns based on the given :obj:`col_to_text_embedder_cfg`.
 
 .. code-block:: python
 
-    # Pre-encode text columns based on col_to_text_embedder_cfg. This may take a while.
-    dataset.materialize(path='/tmp/multimodal_text_benchmark/wine_reviews/data.pt')
-
-    len(dataset)
-    >>> 105154
-
-    # Text embeddings are stored as MultiNestedTensor
-    dataset.tensor_frame.feat_dict[torch_frame.embedding]
-    >>> MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')
+    >>> # Pre-encode text columns based on col_to_text_embedder_cfg. This may take a while.
+    >>> dataset.materialize(path='/tmp/multimodal_text_benchmark/wine_reviews/data.pt')
+    >>> len(dataset)
+    105154
+    >>> # Text embeddings are stored as MultiNestedTensor
+    >>> dataset.tensor_frame.feat_dict[torch_frame.embedding]
+    MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')
 
 It is strongly recommended to specify the :obj:`path` during :meth:`~torch_frame.data.Dataset.materialize`.
 It will cache generated :class:`~torch_frame.data.TensorFrame`, therefore, avoiding embedding texts in
@@ -206,7 +201,6 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
 
 .. code-block:: python
 
-    from typing import List
     from transformers import AutoTokenizer
     from torch_frame.typing import TextTokenizationOutputs
 
@@ -214,7 +208,7 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
         def __init__(self):
             self.tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
 
-        def __call__(self, sentences: List[str]) -> TextTokenizationOutputs:
+        def __call__(self, sentences: list[str]) -> TextTokenizationOutputs:
             # Tokenize batches of sentences
             return self.tokenizer(
                 sentences,
@@ -222,8 +216,6 @@ Let's first create a tokenization class that tokenizes a list of strings to a di
                 padding=True,
                 return_tensors='pt',
             )
-
-
 
 Here, the output :class:`~torch_frame.typing.TextTokenizationOutputs` is a dictionary,
 where the keys include :obj:`input_ids` and :obj:`attention_mask`, and the values
@@ -252,9 +244,9 @@ text columns with :class:`stype.text_tokenized<torch_frame.stype>`.
     # Prepare text_tokenizer0 and text_tokenizer1 for text_col0 and text_col1, respectively.
     col_to_text_tokenizer_cfg = {
         "text_col0":
-        TextTokenizerConfig(text_tokenizer=text_tokenizer0, batch_size=10000),
+        TextTokenizerConfig(text_tokenizer=text_tokenizer0, batch_size=10_000),
         "text_col1":
-        TextTokenizerConfig(text_tokenizer=text_tokenizer1, batch_size=20000),
+        TextTokenizerConfig(text_tokenizer=text_tokenizer1, batch_size=20_000),
     }
 
 
@@ -266,31 +258,27 @@ Once :obj:`col_to_text_tokenizer_cfg` is specified, we can pass it to
 
 .. code-block:: python
 
-    import torch_frame
-    from torch_frame.datasets import MultimodalTextBenchmark
-
-    dataset = MultimodalTextBenchmark(
-        root='/tmp/multimodal_text_benchmark/wine_reviews',
-        name='wine_reviews',
-        text_stype=torch_frame.text_tokenized,
-        col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
-    )
-
-    dataset.col_to_stype['description']
-    >>> <stype.text_tokenized: 'text_tokenized'>
-
+    >>> import torch_frame
+    >>> from torch_frame.datasets import MultimodalTextBenchmark
+    >>> dataset = MultimodalTextBenchmark(
+    ...     root='/tmp/multimodal_text_benchmark/wine_reviews',
+    ...     name='wine_reviews',
+    ...     text_stype=torch_frame.text_tokenized,
+    ...     col_to_text_tokenizer_cfg=col_to_text_tokenizer_cfg,
+    ... )
+    >>> dataset.col_to_stype['description']
+    <stype.text_tokenized: 'text_tokenized'>
 
 We then call :obj:`dataset.materialize()`, which will use the text tokenizers
 to pre-tokenize :obj:`text_tokenized` columns based on the given :obj:`col_to_text_tokenizer_cfg`.
 
 .. code-block:: python
 
-    # Pre-encode text columns based on col_to_text_tokenizer_cfg.
-    dataset.materialize()
-
-    # A dictionary of text tokenization results
-    dataset.tensor_frame.feat_dict[torch_frame.text_tokenized]
-    >>> {'input_ids': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu'), 'attention_mask': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')}
+    >>> # Pre-encode text columns based on col_to_text_tokenizer_cfg.
+    >>> dataset.materialize()
+    >>> # A dictionary of text tokenization results
+    >>> dataset.tensor_frame.feat_dict[torch_frame.text_tokenized]
+    {'input_ids': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu'), 'attention_mask': MultiNestedTensor(num_rows=105154, num_cols=1, device='cpu')}
 
 
 Notice that we use a dictionary of :obj:`~torch_frame.data.MultiNestedTensor` to store the tokenized results.

@@ -48,32 +48,33 @@ First, let us create a sample dataset with many different stypes.
         'Embedding': list(embedding)
     })
 
-    df.head()
-    >>>
-        Numerical Categorical       Time                                  Multicategorical                                          Embedding
+.. code-block:: python
+
+    >>> df.head()
+       Numerical Categorical       Time                                  Multicategorical                                          Embedding
     0         44      Type 2 2023-01-01              [Category D, Category A, Category B]  [0.2879910043632805, 0.38346222503494787, 0.74...
     1         47      Type 2 2023-01-02  [Category C, Category A, Category B, Category D]  [0.0923738894608982, 0.3540466620838102, 0.551...
     2         64      Type 2 2023-01-03                          [Category D, Category C]  [0.3209972413734975, 0.22126268518378278, 0.14...
     3         67      Type 1 2023-01-04                          [Category C, Category A]  [0.2603409275874047, 0.5370225213757797, 0.447...
     4         67      Type 2 2023-01-05                                      [Category A]  [0.46924917399024213, 0.8411401297855995, 0.90...
 
-
 Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Dataset` class so that we can generate a :class:`~torch_frame.data.tensor_frame.TensorFrame` representation from it.
 
 .. code-block:: python
 
-    dataset = Dataset(
-        df, col_to_stype={
-            'Numerical': stype.numerical,
-            'Categorical': stype.categorical,
-            'Time': stype.timestamp,
-            'Multicategorical': stype.multicategorical,
-            'Embedding': stype.embedding
-        })
-    dataset.materialize()
-
-    dataset.tensor_frame
-    >>> TensorFrame(
+    >>> dataset = Dataset(
+    ...     df,
+    ...     col_to_stype={
+    ...         'Numerical': stype.numerical,
+    ...         'Categorical': stype.categorical,
+    ...         'Time': stype.timestamp,
+    ...         'Multicategorical': stype.multicategorical,
+    ...         'Embedding': stype.embedding
+    ...     }
+    ... )
+    >>> dataset.materialize()
+    >>> dataset.tensor_frame
+    TensorFrame(
         num_cols=4,
         num_rows=100,
         categorical (1): ['Categorical'],
@@ -82,7 +83,7 @@ Now let's load the :class:`pandas.DataFrame` into :class:`torch_frame.data.Datas
         embedding (1): ['Embedding'],
         has_target=True,
         device='cpu',
-        )
+    )
 
 For each :class:`~torch_frame.stype`, we need to specify its encoder in :obj:`stype_encoder_dict`.
 
@@ -112,28 +113,26 @@ Now we can specify the :obj:`stype_encoder_dict` to a model of your choice.
 
 .. code-block:: python
 
-    from torch_frame.nn.models.ft_transformer import FTTransformer
-
-    model = FTTransformer(
-        channels=16,
-        out_channels=1,
-        num_layers=2,
-        col_stats=dataset.col_stats,
-        col_names_dict=dataset.tensor_frame.col_names_dict,
-        stype_encoder_dict=stype_encoder_dict,
-    )
-
-    model(dataset.tensor_frame)
-    >>> tensor([[ 0.9405],
-        [ 0.3857],
-        [ 0.5265],
-        [-0.3747],
-        [ 0.7496],
-        [ 0.0486],
-        [ 0.2895],
-        [ 0.1326],
-        [ 0.4388],
-        [-0.1665]], grad_fn=<AddmmBackward0>)
+    >>> from torch_frame.nn.models.ft_transformer import FTTransformer
+    >>> model = FTTransformer(
+    ...     channels=16,
+    ...     out_channels=1,
+    ...     num_layers=2,
+    ...     col_stats=dataset.col_stats,
+    ...     col_names_dict=dataset.tensor_frame.col_names_dict,
+    ...     stype_encoder_dict=stype_encoder_dict,
+    ... )
+    >>> model(dataset.tensor_frame)
+    tensor([[ 0.9405],
+            [ 0.3857],
+            [ 0.5265],
+            [-0.3747],
+            [ 0.7496],
+            [ 0.0486],
+            [ 0.2895],
+            [ 0.1326],
+            [ 0.4388],
+            [-0.1665]], grad_fn=<AddmmBackward0>)
 
 Auto-Inference of Semantic Types
 --------------------------------
@@ -142,12 +141,12 @@ We offer a simple utility function :class:`~torch_frame.utils.infer_df_stype` to
 
 .. code-block:: python
 
-    infer_df_stype(df)
-    >>> {'Numerical': <stype.numerical: 'numerical'>,
-        'Categorical': <stype.categorical: 'categorical'>,
-        'Time': <stype.timestamp: 'timestamp'>,
-        'Multicategorical': <stype.multicategorical: 'multicategorical'>,
-        'Embedding': <stype.embedding: 'embedding'>}
+    >>> infer_df_stype(df)
+    {'Numerical': <stype.numerical: 'numerical'>,
+     'Categorical': <stype.categorical: 'categorical'>,
+     'Time': <stype.timestamp: 'timestamp'>,
+     'Multicategorical': <stype.multicategorical: 'multicategorical'>,
+     'Embedding': <stype.embedding: 'embedding'>}
 
 However, the inference may not be always correct/best for your data.
 We recommend you to double-check the correctness yourself before proceeding.
@@ -211,35 +210,30 @@ If not specified, :class:`pandas` internal :meth:`~pandas.to_datetime` function 
 
 .. code-block:: python
 
-    dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
-
-    df = pd.DataFrame({
-            'Time1': dates,  # ISO 8601 format (default)
-            'Time2': dates.strftime('%Y-%m-%d %H:%M:%S'),
-    })
-
-    df.head()
-    >>>        Time1                Time2
-        0 2023-01-01  2023-01-01 00:00:00
-        1 2023-01-02  2023-01-02 00:00:00
-        2 2023-01-03  2023-01-03 00:00:00
-        3 2023-01-04  2023-01-04 00:00:00
-        4 2023-01-05  2023-01-05 00:00:00
-
-    dataset = Dataset(
-        df, col_to_stype={
-            'Time1': stype.timestamp,
-            'Time2': stype.timestamp,
-        }, col_to_time_format='%Y-%m-%d %H:%M:%S')
-
-    dataset.materialize()
-
-    dataset.col_stats
-    >>> {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+    >>> dates = pd.date_range(start="2023-01-01", periods=5, freq='D')
+    >>> df = pd.DataFrame({
+    ...     'Time1': dates,  # ISO 8601 format (default)
+    ...     'Time2': dates.strftime('%Y-%m-%d %H:%M:%S'),
+    ... })
+    >>> df.head()
+           Time1                Time2
+    0 2023-01-01  2023-01-01 00:00:00
+    1 2023-01-02  2023-01-02 00:00:00
+    2 2023-01-03  2023-01-03 00:00:00
+    3 2023-01-04  2023-01-04 00:00:00
+    4 2023-01-05  2023-01-05 00:00:00
+    >>> dataset = Dataset(
+    ...     df, col_to_stype={
+    ...         'Time1': stype.timestamp,
+    ...         'Time2': stype.timestamp,
+    ...     }, col_to_time_format='%Y-%m-%d %H:%M:%S')
+    >>> dataset.materialize()
+    >>> dataset.col_stats
+    {'Time1': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
         <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
         <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
         <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])},
-        'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
+     'Time2': {<StatType.YEAR_RANGE: 'YEAR_RANGE'>: [2023, 2023],
         <StatType.NEWEST_TIME: 'NEWEST_TIME'>: tensor([2023,    0,    4,    3,    0,    0,    0]),
         <StatType.OLDEST_TIME: 'OLDEST_TIME'>: tensor([2023,    0,    0,    6,    0,    0,    0]),
         <StatType.MEDIAN_TIME: 'MEDIAN_TIME'>: tensor([2023,    0,    2,    1,    0,    0,    0])}}

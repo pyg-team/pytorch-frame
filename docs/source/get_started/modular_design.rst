@@ -133,8 +133,6 @@ Below is a simple example of a :class:`~torch_frame.nn.decoder.Decoder` that mea
 .. code-block:: python
 
     import torch
-    from torch import Tensor
-    from torch.nn import Linear
     from torch_frame.nn import Decoder
 
     class MeanDecoder(Decoder):
@@ -142,7 +140,7 @@ Below is a simple example of a :class:`~torch_frame.nn.decoder.Decoder` that mea
             super().__init__()
             self.lin = torch.nn.Linear(in_channels, out_channels)
 
-        def forward(self, x: Tensor) -> Tensor:
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
             # Mean pooling over the column dimension
             # [batch_size, num_cols, in_channels] -> [batch_size, in_channels]
             out = torch.mean(x, dim=1)
