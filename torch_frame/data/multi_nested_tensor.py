@@ -57,10 +57,8 @@ class MultiNestedTensor(_MultiTensor):
         >>> mnt.to_dense(fill_value=-1) # Map to a dense matrix with padding
         tensor([[[ 1,  2, -1],
                  [ 3, -1, -1]],
-
                 [[ 4, -1, -1],
                  [ 5,  6,  7]],
-
                 [[ 8,  9, -1],
                  [10, -1, -1]]])
     """
