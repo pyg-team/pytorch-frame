@@ -168,12 +168,14 @@ class TensorFrame:
                 value = mnt[:, idx]
                 assert isinstance(value, MultiNestedTensor)
                 col_feat[key] = value
-            return col_feat
+            out = col_feat
         elif isinstance(feat, _MultiTensor):
-            return feat[:, idx]
+            out = feat[:, idx]
         else:
             assert isinstance(feat, Tensor)
-            return feat[:, idx].unsqueeze(1)
+            out = feat[:, idx].unsqueeze(1)
+
+        return (out, stype_name) if return_stype else out
 
     @property
     def stypes(self) -> list[torch_frame.stype]:
