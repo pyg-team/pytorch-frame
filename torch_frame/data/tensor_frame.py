@@ -138,11 +138,18 @@ class TensorFrame:
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
 
-    def get_col_feat(self, col_name: str) -> TensorData:
+    def get_col_feat(
+        self,
+        col_name: str,
+        *,
+        return_stype: bool = False,
+    ) -> TensorData | tuple[TensorData, torch_frame.stype]:
         r"""Get feature of a given column.
 
         Args:
             col_name (str): Input column name.
+            return_stype (bool, optional): If set to :obj:`True`, will
+                additionally return the semantic type of the column.
 
         Returns:
             TensorData: Column feature for the given :obj:`col_name`. The shape
