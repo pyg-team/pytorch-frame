@@ -138,11 +138,18 @@ class TensorFrame:
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
 
-    def get_col_feat(self, col_name: str) -> TensorData:
+    def get_col_feat(
+        self,
+        col_name: str,
+        *,
+        return_stype: bool = False,
+    ) -> TensorData | tuple[TensorData, torch_frame.stype]:
         r"""Get feature of a given column.
 
         Args:
             col_name (str): Input column name.
+            return_stype (bool, optional): If set to :obj:`True`, will
+                additionally return the semantic type of the column.
 
         Returns:
             TensorData: Column feature for the given :obj:`col_name`. The shape
@@ -161,12 +168,14 @@ class TensorFrame:
                 value = mnt[:, idx]
                 assert isinstance(value, MultiNestedTensor)
                 col_feat[key] = value
-            return col_feat
+            out = col_feat
         elif isinstance(feat, _MultiTensor):
-            return feat[:, idx]
+            out = feat[:, idx]
         else:
             assert isinstance(feat, Tensor)
-            return feat[:, idx].unsqueeze(1)
+            out = feat[:, idx].unsqueeze(1)
+
+        return (out, stype_name) if return_stype else out
 
     @property
     def stypes(self) -> list[torch_frame.stype]:
