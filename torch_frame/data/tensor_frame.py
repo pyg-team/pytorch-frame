@@ -78,7 +78,7 @@ class TensorFrame:
         self.validate()
 
         # Quick mapping from column names into their (stype, idx) pairs in
-        # col_names_dict. Used for fast get_col_feat.
+        # col_names_dict. Used for fast get__feat.
         self._col_to_stype_idx: dict[str, tuple[torch_frame.stype, int]] = {}
         for stype_name, cols in self.col_names_dict.items():
             for idx, col in enumerate(cols):
@@ -138,7 +138,7 @@ class TensorFrame:
                     f"The length of y is {len(self.y)}, which is not aligned "
                     f"with the number of rows ({num_rows}).")
 
-    def get_col_feat(
+    def get_feat(
         self,
         col_name: str,
         *,
