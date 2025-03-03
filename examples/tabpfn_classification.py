@@ -4,6 +4,7 @@ import os.path as osp
 import numpy as np
 import torch
 from tabpfn import TabPFNClassifier
+# Please run `pip install tabpfn` to install the package
 from tqdm import tqdm
 
 from torch_frame.data import DataLoader
