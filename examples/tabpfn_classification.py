@@ -19,7 +19,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--dataset', type=str, default="Titanic",
     choices=["Titanic", "Mushroom", "ForestCoverType", "KDDCensusIncome"])
-parser.add_argument('--batch_size', type=int, default=1024)
+parser.add_argument('--train_batch_size', type=int, default=4096)
+parser.add_argument('--test_batch_size', type=int, default=128)
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
@@ -44,23 +45,26 @@ dataset = dataset.shuffle()
 train_dataset, test_dataset = dataset[:0.9], dataset[0.9:]
 train_tensor_frame = train_dataset.tensor_frame
 test_tensor_frame = test_dataset.tensor_frame
-train_loader = DataLoader(train_tensor_frame, batch_size=args.batch_size,
-                          shuffle=True)
-test_loader = DataLoader(test_tensor_frame, batch_size=args.batch_size)
+train_loader = DataLoader(
+    train_tensor_frame,
+    batch_size=args.train_batch_size,
+    shuffle=True,
+)
+X_train = []
+train_data = next(iter(train_loader))
+for stype in train_data.stypes:
+    X_train.append(train_data.feat_dict[stype])
+X_train: torch.Tensor = torch.cat(X_train, dim=1)
+test_loader = DataLoader(test_tensor_frame, batch_size=args.test_batch_size)
 
 
 @torch.no_grad()
 def test() -> float:
     accum = total_count = 0
-
     for test_data in tqdm(test_loader):
-        X_train = []
         X_test = []
-        train_data = next(iter(train_loader))
         for stype in train_data.stypes:
-            X_train.append(train_data.feat_dict[stype])
             X_test.append(test_data.feat_dict[stype])
-        X_train = torch.cat(X_train, dim=1)
         X_test = torch.cat(X_test, dim=1)
         clf = TabPFNClassifier()
         clf.fit(X_train, train_data.y)
