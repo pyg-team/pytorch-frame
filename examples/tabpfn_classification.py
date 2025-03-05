@@ -15,7 +15,7 @@ from torch_frame.datasets import (
     Titanic,
 )
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     '--dataset', type=str, default="Titanic",
     choices=["Titanic", "Mushroom", "ForestCoverType", "KDDCensusIncome"])
