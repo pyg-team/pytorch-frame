@@ -7,7 +7,7 @@ import torch_frame
 
 
 class Amphibians(torch_frame.data.Dataset):
-    r"""The Amphibians
+    r"""The `Amphibians
     <https://archive.ics.uci.edu/dataset/528/amphibians>`_
     dataset. The task is to predict which of the 7 frogs types appeared
     in the habitat.
