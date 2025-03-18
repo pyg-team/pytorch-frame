@@ -5,7 +5,7 @@ from torch_frame.data import MultiEmbeddingTensor, MultiNestedTensor
 from torch_frame.utils import num_bytes
 
 
-def test_num_bytes(get_fake_tensor_frame):
+def test_num_bytes():
     data = torch.randn(4, 8)
     assert num_bytes(data) == 4 * 8 * 4
 
