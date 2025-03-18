@@ -31,5 +31,8 @@ def test_num_bytes():
     }
     assert num_bytes(mapping) == 2 * num_bytes(data)
 
+    seq = [data, data, data]
+    assert num_bytes(seq) == 3 * num_bytes(data)
+
     with pytest.raises(NotImplementedError):
         num_bytes("unsupported")
