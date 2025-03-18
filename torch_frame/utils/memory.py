@@ -14,8 +14,7 @@ def num_bytes(data: TensorData) -> int:
     if isinstance(data, Tensor):
         return data.element_size() * data.numel()
     if isinstance(data, (MultiNestedTensor, MultiEmbeddingTensor)):
-        return (data.values.element_size() * data.values.numel() +
-                data.offset.element_size() * data.offset.numel())
+        return num_bytes(data.values) + num_bytes(data.offset)
     if isinstance(data, dict):
         return sum([num_bytes(value) for value in data.values()])
 
