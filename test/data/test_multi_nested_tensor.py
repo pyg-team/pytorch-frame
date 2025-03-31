@@ -171,6 +171,7 @@ def test_basics(device):
     # Test row slicing
     assert_equal(tensor_mat, multi_nested_tensor[:])
     assert_equal(tensor_mat[:3], multi_nested_tensor[:3])
+    assert_equal(tensor_mat[:3], multi_nested_tensor[:torch.tensor(3)])
     assert_equal(tensor_mat[3:], multi_nested_tensor[3:])
     assert_equal(tensor_mat[3:5], multi_nested_tensor[3:5])
     assert_equal(tensor_mat[-7:5], multi_nested_tensor[-7:5])
