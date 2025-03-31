@@ -148,7 +148,8 @@ class _MultiTensor:
         """
         dim = self._normalize_dim(dim)
         max_entries = self.num_rows if dim == 0 else self.num_cols
-        if isinstance(index, int):
+        if (isinstance(index, int)
+                or isinstance(index, Tensor) and index.dim() == 0):
             if index < 0:
                 index = index + max_entries
             if index < 0 or (check_out_of_bounds and index >= max_entries):
@@ -251,6 +252,7 @@ class _MultiTensor:
         raise NotImplementedError
 
     def _slice(self, index: slice, dim: int) -> _MultiTensor:
+        print("SLICE", index, dim)
         dim = self._normalize_dim(dim)
         num_data = self.num_rows if dim == 0 else self.num_cols
         if index.step is not None and index.step > 1:
