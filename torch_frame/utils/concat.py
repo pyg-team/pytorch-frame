@@ -31,7 +31,7 @@ TD = TypeVar(
 
 def cat(
     lst: list[T],
-    dim: int,
+    dim: int = 0,
 ) -> T:
     r"""Concatenates a list of :class:`TensorFrame` or :class:`TensorData`.
 
