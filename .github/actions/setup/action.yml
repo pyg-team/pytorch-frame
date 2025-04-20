@@ -24,7 +24,7 @@ runs:
         cache-dependency-path: |
           pyproject.toml
 
-    - name: Downgrade NumPy if necessary
+    - name: Pre-install NumPy<2 if necessary
       run: |
         [[ ${{ inputs.torch-version }} =~ ^2\.[0-2] ]] && pip install 'numpy<2'
       shell: bash
