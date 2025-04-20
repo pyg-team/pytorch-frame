@@ -24,22 +24,26 @@ runs:
         cache-dependency-path: |
           pyproject.toml
 
+    - name: Pre-install NumPy<2 if necessary
+      run: |
+        [[ ${{ inputs.torch-version }} =~ ^2\.[0-2] ]] && pip install 'numpy<2' || echo "Skipping NumPy<2 installation"
+      shell: bash
+
     - name: Install PyTorch ${{ inputs.torch-version }}+${{ inputs.cuda-version }}
       if: ${{ inputs.torch-version != 'nightly' }}
       run: |
         pip install torch==${{ inputs.torch-version }}.* --extra-index-url https://download.pytorch.org/whl/${{ inputs.cuda-version }}
-        python -c "import torch; print('PyTorch:', torch.__version__)"
-        python -c "import torch; print('CUDA:', torch.version.cuda)"
       shell: bash
 
     - name: Install PyTorch ${{ inputs.torch-version }}+${{ inputs.cuda-version }}
       if: ${{ inputs.torch-version == 'nightly' }}
       run: |
         pip install --pre torch --extra-index-url https://download.pytorch.org/whl/nightly/${{ inputs.cuda-version }}
-        python -c "import torch; print('PyTorch:', torch.__version__)"
-        python -c "import torch; print('CUDA:', torch.version.cuda)"
       shell: bash
 
     - name: List installed packages
-      run: pip list
+      run: |
+        pip list
+        python -c "import torch; print('PyTorch:', torch.__version__)"
+        python -c "import torch; print('CUDA:', torch.version.cuda)"
       shell: bash
