@@ -26,7 +26,7 @@ runs:
 
     - name: Pre-install NumPy<2 if necessary
       run: |
-        [[ ${{ inputs.torch-version }} =~ ^2\.[0-2] ]] && pip install 'numpy<2'
+        [[ ${{ inputs.torch-version }} =~ ^2\.[0-2] ]] && pip install 'numpy<2' || echo "Skipping NumPy<2 installation"
       shell: bash
 
     - name: Install PyTorch ${{ inputs.torch-version }}+${{ inputs.cuda-version }}
