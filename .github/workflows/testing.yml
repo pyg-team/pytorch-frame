@@ -18,24 +18,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { torch-version: '1.13', python-version: '3.9' }
-          - { torch-version: '1.13', python-version: '3.11' }
-          - { torch-version: '2.0', python-version: '3.9' }
-          - { torch-version: '2.0', python-version: '3.11' }
-          - { torch-version: '2.1', python-version: '3.9' }
-          - { torch-version: '2.1', python-version: '3.11' }
-          - { torch-version: '2.2', python-version: '3.9' }
-          - { torch-version: '2.2', python-version: '3.12' }
-          - { torch-version: '2.3', python-version: '3.9' }
-          - { torch-version: '2.3', python-version: '3.12' }
-          - { torch-version: '2.4', python-version: '3.9' }
-          - { torch-version: '2.4', python-version: '3.12' }
-          - { torch-version: '2.5', python-version: '3.9' }
-          - { torch-version: '2.5', python-version: '3.13' }
-          - { torch-version: '2.6', python-version: '3.9' }
-          - { torch-version: '2.6', python-version: '3.13' }
-          - { torch-version: 'nightly', python-version: '3.9' }
-          - { torch-version: 'nightly', python-version: '3.13' }
+          - {torch-version: '1.13', python-version: '3.9'}
+          - {torch-version: '1.13', python-version: '3.11'}
+          # TODO: Enable these if we have more concurrent runners. PyTorch and
+          # Python are stable enough that we don't need to test against all
+          # versions.
+          # - {torch-version: '2.0', python-version: '3.9'}
+          # - {torch-version: '2.0', python-version: '3.11'}
+          # - {torch-version: '2.1', python-version: '3.9'}
+          # - {torch-version: '2.1', python-version: '3.11'}
+          # - {torch-version: '2.2', python-version: '3.9'}
+          # - {torch-version: '2.2', python-version: '3.12'}
+          # - {torch-version: '2.3', python-version: '3.9'}
+          # - {torch-version: '2.3', python-version: '3.12'}
+          # - {torch-version: '2.4', python-version: '3.9'}
+          # - {torch-version: '2.4', python-version: '3.12'}
+          # - {torch-version: '2.5', python-version: '3.9'}
+          # - {torch-version: '2.5', python-version: '3.13'}
+          # - {torch-version: '2.6', python-version: '3.9'}
+          # - {torch-version: '2.6', python-version: '3.13'}
+          - {torch-version: '2.7', python-version: '3.9'}
+          - {torch-version: '2.7', python-version: '3.13'}
+          - {torch-version: 'nightly', python-version: '3.9'}
+          - {torch-version: 'nightly', python-version: '3.13'}
 
     steps:
       - name: Checkout repository
