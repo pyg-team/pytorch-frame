@@ -70,6 +70,11 @@ name="torch_frame"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/rules
 target-version = "py39"
+src = ["torch_frame", "test", "examples", "benchmark"]
+line-length = 80
+indent-width = 4
+
+[tool.ruff.lint]
 select = [
     "B",  # flake8-bugbear
     "D",  # pydocstyle
@@ -84,11 +89,6 @@ ignore = [
     "D107",  # Ignore "Missing docstring in __init__"
     "D205",  # Ignore "blank line required between summary line and description"
 ]
-src = ["torch_frame"]
-line-length = 80
-indent-width = 4
-
-# [tool.ruff.per-files-ignores]
 
 
 
