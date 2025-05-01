@@ -71,6 +71,7 @@ name="torch_frame"
 [tool.ruff]  # https://docs.astral.sh/ruff/rules
 target-version = "py39"
 select = [
+    "B",  # flake8-bugbear
     "D",  # pydocstyle
     "UP", # pyupgrade
 ]
