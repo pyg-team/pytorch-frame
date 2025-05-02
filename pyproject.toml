@@ -90,8 +90,6 @@ ignore = [
     "D205",  # Ignore "blank line required between summary line and description"
 ]
 
-
-
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
