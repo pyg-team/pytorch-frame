@@ -86,8 +86,9 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
     ) -> None:
         try:
             from datasets import DatasetDict, load_dataset
-        except ImportError:  # pragma: no cover
-            raise ImportError("Please run `pip install datasets` at first.")
+        except ImportError as e:  # pragma: no cover
+            raise ImportError(
+                "Please run `pip install datasets` first.") from e
         dataset = load_dataset(path, name=name)
         if not isinstance(dataset, DatasetDict):
             raise ValueError(f"{self.__class__} only supports `DatasetDict`")

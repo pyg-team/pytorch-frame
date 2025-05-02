@@ -68,8 +68,14 @@ class GBDT:
         r"""Whether the GBDT is already fitted."""
         return self._is_fitted
 
-    def tune(self, tf_train: TensorFrame, tf_val: TensorFrame, num_trials: int,
-             *args, **kwargs):
+    def tune(
+        self,
+        tf_train: TensorFrame,
+        tf_val: TensorFrame,
+        num_trials: int,
+        *args,
+        **kwargs,
+    ) -> None:
         r"""Fit the model by performing hyperparameter tuning using Optuna. The
         number of trials is specified by num_trials.
 
@@ -85,7 +91,7 @@ class GBDT:
             raise RuntimeError("tf_train.y must be a Tensor, but None given.")
         if tf_val.y is None:
             raise RuntimeError("tf_val.y must be a Tensor, but None given.")
-        self._tune(tf_train, tf_val, num_trials=num_trials, *args, **kwargs)
+        self._tune(tf_train, tf_val, *args, num_trials=num_trials, **kwargs)
         self._is_fitted = True
 
     def predict(self, tf_test: TensorFrame) -> Tensor:

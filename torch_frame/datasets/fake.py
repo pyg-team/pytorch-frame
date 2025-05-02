@@ -58,7 +58,7 @@ class FakeDataset(torch_frame.data.Dataset):
         self,
         num_rows: int,
         with_nan: bool = False,
-        stypes: list[stype] = [stype.categorical, stype.numerical],
+        stypes: list[stype] | None = None,
         create_split: bool = False,
         task_type: TaskType = TaskType.REGRESSION,
         col_to_text_embedder_cfg: dict[str, TextEmbedderConfig]
@@ -69,6 +69,7 @@ class FakeDataset(torch_frame.data.Dataset):
         | ImageEmbedderConfig | None = None,
         tmp_path: str | None = None,
     ) -> None:
+        stypes = stypes or [stype.categorical, stype.numerical]
         assert len(stypes) > 0
         df_dict: dict[str, list | np.ndarray]
         arr: list | np.ndarray
@@ -137,7 +138,7 @@ class FakeDataset(torch_frame.data.Dataset):
         if stype.sequence_numerical in stypes:
             for col_name in ['seq_num_1', 'seq_num_2']:
                 arr = []
-                for i in range(num_rows):
+                for _ in range(num_rows):
                     sequence_length = random.randint(1, 5)
                     sequence = [
                         random.random() for _ in range(sequence_length)

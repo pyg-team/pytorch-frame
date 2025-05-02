@@ -150,9 +150,9 @@ def infer_series_stype(ser: Series) -> stype | None:
                     try:
                         min_count_list.append(
                             _min_count(
-                                ser.apply(
-                                    lambda row: MultiCategoricalTensorMapper.
-                                    split_by_sep(row, sep)).explode()))
+                                ser.apply(lambda row, sep=sep:
+                                          MultiCategoricalTensorMapper.
+                                          split_by_sep(row, sep)).explode()))
                     except Exception as e:
                         logging.warn(
                             "Mapping series into multicategorical stype "

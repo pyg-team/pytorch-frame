@@ -17,9 +17,6 @@ class ImageEmbedder(ABC):
     override :meth:`forward_retrieve` which takes the paths to images and
     return a list of :obj:`PIL.Image.Image`.
     """
-    def __init__(self, *args, **kwargs):
-        pass
-
     def forward_retrieve(self, path_to_images: list[str]) -> list[Image.Image]:
         r"""Retrieval function that reads a list of images from
         a list of file paths with the :obj:`RGB` mode.

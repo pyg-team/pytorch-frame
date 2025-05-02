@@ -777,7 +777,7 @@ class DataFrameBenchmark(torch_frame.data.Dataset):
 
         # Check the scale
         if dataset.num_rows < 5000:
-            assert False
+            raise AssertionError()
         elif dataset.num_rows < 50000:
             assert scale == "small"
         elif dataset.num_rows < 500000:

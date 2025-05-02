@@ -529,7 +529,7 @@ if __name__ == "__main__":
                     "Currently Trompt with finetuning is too expensive")
             model_cls = Trompt
             stype_encoder_dicts = []
-            for i in range(train_cfg["num_layers"]):
+            for _ in range(train_cfg["num_layers"]):
                 stype_encoder_dicts.append(
                     get_stype_encoder_dict(text_stype, text_encoder,
                                            train_tensor_frame))
