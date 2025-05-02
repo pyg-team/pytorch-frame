@@ -59,7 +59,7 @@ class _MultiTensor:
             return self.num_rows
         elif dim == 1:
             return self.num_cols
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
 
     def dim(self) -> int:
         return self.ndim
@@ -243,7 +243,7 @@ class _MultiTensor:
             return self._row_index_select(idx)
         elif dim == 1:
             return self._col_index_select(idx)
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
 
     def _row_index_select(self, index: Tensor) -> _MultiTensor:
         raise NotImplementedError
@@ -300,7 +300,7 @@ class _MultiTensor:
             return self._row_narrow(start, length)
         elif dim == 1:
             return self._col_narrow(start, length)
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
 
     def _row_narrow(self, start: int, length: int) -> _MultiTensor:
         raise NotImplementedError
@@ -339,7 +339,7 @@ class _MultiTensor:
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=dim,
             )
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
 
     def _single_index_select(self, index: int, dim: int) -> _MultiTensor:
         raise NotImplementedError

@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import functools
 import os.path as osp
-from abc import ABC
 from collections import defaultdict
 from typing import Any
 
@@ -324,7 +323,7 @@ class DataFrameToTensorFrameConverter:
         return self._merge_feat(tf)
 
 
-class Dataset(ABC):
+class Dataset:
     r"""A base class for creating tabular datasets.
 
     Args:
@@ -382,7 +381,7 @@ class Dataset(ABC):
         col_to_image_embedder_cfg: dict[str, ImageEmbedderConfig]
         | ImageEmbedderConfig | None = None,
         col_to_time_format: str | None | dict[str, str | None] = None,
-    ):
+    ) -> None:
         self.df = df
         self.target_col = target_col
 

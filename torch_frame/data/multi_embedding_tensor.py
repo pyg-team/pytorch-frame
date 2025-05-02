@@ -194,7 +194,7 @@ class MultiEmbeddingTensor(_MultiTensor):
                 values=values,
                 offset=offset,
             )
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
 
     def fillna_col(
         self,
@@ -290,4 +290,4 @@ class MultiEmbeddingTensor(_MultiTensor):
             offset = torch.tensor(offset_list)
             return MultiEmbeddingTensor(num_rows, num_cols, values, offset)
 
-        assert False, "Should not reach here."
+        raise AssertionError("Should not reach here.")
