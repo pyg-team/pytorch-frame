@@ -17,6 +17,7 @@ keywords=[
     "tabular-learning",
     "data-frame",
 ]
+license = "MIT"
 classifiers=[
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
