@@ -18,6 +18,7 @@ keywords=[
     "data-frame",
 ]
 license = "MIT"
+license-files = ["LICENSE"]
 classifiers=[
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
