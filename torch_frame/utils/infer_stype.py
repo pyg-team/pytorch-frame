@@ -154,7 +154,7 @@ def infer_series_stype(ser: Series) -> stype | None:
                                           MultiCategoricalTensorMapper.
                                           split_by_sep(row, sep)).explode()))
                     except Exception as e:
-                        logging.warn(
+                        logging.warning(
                             "Mapping series into multicategorical stype "
                             f"with separator {sep} raised an exception {e}")
                         continue
