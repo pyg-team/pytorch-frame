@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added support for PyTorch 2.7 ([#528](https://github.com/pyg-team/pytorch-frame/pull/528))
 - Added a classification example script for TabPFN ([#510](https://github.com/pyg-team/pytorch-frame/pull/510))
 
+- Added GBDTs feature importance ([#292](https://github.com/pyg-team/pytorch-frame/pull/292))
+
 ### Changed
 
 ### Deprecated
