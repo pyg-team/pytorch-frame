@@ -315,7 +315,8 @@ class TensorFrame:
         out = self._apply(fn)
 
         if self._num_rows is not None:
-            dummy = torch.empty((self.num_rows, 0), device=self.device)
+            device = index.device if isinstance(index, Tensor) else 'cpu'
+            dummy = torch.empty((self.num_rows, 0), device=device)
             out._num_rows = dummy[index].size(0)
 
         return out
