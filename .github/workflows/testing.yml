@@ -37,8 +37,10 @@ jobs:
           # - {torch-version: '2.5', python-version: '3.13'}
           # - {torch-version: '2.6', python-version: '3.9'}
           # - {torch-version: '2.6', python-version: '3.13'}
-          - {torch-version: '2.7', python-version: '3.9'}
-          - {torch-version: '2.7', python-version: '3.13'}
+          # - {torch-version: '2.7', python-version: '3.9'}
+          # - {torch-version: '2.7', python-version: '3.13'}
+          - {torch-version: '2.8', python-version: '3.9'}
+          - {torch-version: '2.8', python-version: '3.13'}
           - {torch-version: 'nightly', python-version: '3.9'}
           - {torch-version: 'nightly', python-version: '3.13'}
 
