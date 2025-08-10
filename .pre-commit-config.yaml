@@ -78,7 +78,8 @@ repos:
     hooks:
       - id: mypy
         name: Check types
-        additional_dependencies: [torch==2.8.*]
+        # TODO: Use PyTorch 2.8 when typing issues are addressed.
+        additional_dependencies: [torch==2.7.*]
         exclude: "^test/|^examples/|^benchmark/"
 
   - repo: https://github.com/executablebooks/mdformat
