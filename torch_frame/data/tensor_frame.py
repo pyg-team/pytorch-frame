@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -384,7 +385,7 @@ class TensorFrame:
         out.feat_dict = {stype: fn(x) for stype, x in out.feat_dict.items()}
         if out.y is not None:
             y = fn(out.y)
-            assert isinstance(y, (Tensor, MultiNestedTensor))
+            assert isinstance(y, Tensor | MultiNestedTensor)
             out.y = y
 
         return out

@@ -124,7 +124,7 @@ class HuggingFaceDatasetDict(torch_frame.data.Dataset):
         if len(split_names) > 1:
             dfs = [
                 df.assign(split=SPLIT_TO_NUM[split_name])
-                for split_name, df in zip(split_names, dfs)
+                for split_name, df in zip(split_names, dfs, strict=False)
             ]
 
         df = pd.concat(dfs).reset_index(drop=True)
