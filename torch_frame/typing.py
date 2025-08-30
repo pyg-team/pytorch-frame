@@ -107,8 +107,8 @@ class NAStrategy(Enum):
         ]
 
 
-Series = pd.Series
-DataFrame = pd.DataFrame
+Series: TypeAlias = pd.Series
+DataFrame: TypeAlias = pd.DataFrame
 
 IndexSelectType: TypeAlias = int | list[int] | range | slice | Tensor
 ColumnSelectType: TypeAlias = str | list[str]
