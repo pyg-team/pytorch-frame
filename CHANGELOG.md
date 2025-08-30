@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- Removed support for Python 3.9 ([#558](https://github.com/pyg-team/pytorch-frame/pull/558))
+
 ### Fixed
 
 ## [0.2.5] - 2025-02-12
