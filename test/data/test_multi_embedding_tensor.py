@@ -1,5 +1,4 @@
 import random
-from typing import Optional, Union
 
 import pytest
 import torch
@@ -23,7 +22,7 @@ def assert_equal(
 
 def row_select(
     tensor_list: list[torch.Tensor],
-    index: Union[list[int], slice],
+    index: list[int] | slice,
 ) -> list[torch.Tensor]:
     """Selects rows from a list of column tensors.
 
@@ -43,8 +42,8 @@ def row_select(
 def get_fake_multi_embedding_tensor(
     num_rows: int,
     num_cols: int,
-    embedding_dim: Optional[int] = None,
-    device: Optional[torch.device] = None,
+    embedding_dim: int | None = None,
+    device: torch.device | None = None,
 ) -> tuple[MultiEmbeddingTensor, list[torch.Tensor]]:
     tensor_list = []
     for _ in range(num_cols):

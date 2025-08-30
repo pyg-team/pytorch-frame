@@ -553,7 +553,7 @@ class MultimodalTextBenchmark(torch_frame.data.Dataset):
 
         splits = ['train', 'val', 'test'] if len(
             self._dataset_splits[self.name]) == 3 else ['train', 'test']
-        for split_df, split in zip(dfs, splits):
+        for split_df, split in zip(dfs, splits, strict=False):
             split_df['split'] = SPLIT_TO_NUM[split]
 
         df = pd.concat(dfs, ignore_index=True)

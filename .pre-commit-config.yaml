@@ -1,3 +1,6 @@
+default_language_version:
+  python: python3.10
+
 ci:
   autofix_prs: true
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit suggestions'
@@ -20,11 +23,6 @@ repos:
         name: Check toml
       - id: check-yaml
         name: Check yaml
-        exclude: |
-          (?x)^(
-              conda/pytorch-geometric/meta.yaml|
-              conda/pyg/meta.yaml
-          )$
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
