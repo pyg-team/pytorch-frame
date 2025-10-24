@@ -1,5 +1,5 @@
 [build-system]
-requires=["flit_core >=3.2,<4"]
+requires=["flit_core >=3.12,<4"]
 build-backend="flit_core.buildapi"
 
 [project]
@@ -17,9 +17,10 @@ keywords=[
     "tabular-learning",
     "data-frame",
 ]
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers=[
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
