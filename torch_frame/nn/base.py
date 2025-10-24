@@ -29,7 +29,8 @@ class Module(torch.nn.Module):
         self._in_init = True
         self._missing_attrs = copy.copy(self.LAZY_ATTRS)
 
-        for key, value in zip(signature(self.__init__).parameters, args):
+        for key, value in zip(
+                signature(self.__init__).parameters, args, strict=False):
             setattr(self, key, value)
         for key, value in kwargs.items():
             setattr(self, key, value)

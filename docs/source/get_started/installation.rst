@@ -1,7 +1,7 @@
 Installation
 ============
 
-:pyf:`PyTorch Frame` is available for `Python 3.9` to `Python 3.13` on Linux, Windows and macOS.
+:pyf:`PyTorch Frame` is available for `Python 3.10` to `Python 3.13` on Linux, Windows and macOS.
 
 Installation via PyPI
 ---------------------

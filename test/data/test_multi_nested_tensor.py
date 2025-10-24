@@ -1,5 +1,4 @@
 import random
-from typing import Union
 
 import pytest
 import torch
@@ -21,7 +20,7 @@ def assert_equal(tensor_mat: list[list[Tensor]],
 
 def column_select(
     tensor_mat: list[list[Tensor]],
-    index: Union[list[int], slice],
+    index: list[int] | slice,
 ) -> list[list[Tensor]]:
     new_tensor_mat = []
     for tensor_vec in tensor_mat:

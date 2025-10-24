@@ -499,7 +499,7 @@ class Dataset:
 
     def __getitem__(self, index: IndexSelectType) -> Dataset:
         is_col_select = isinstance(index, str)
-        is_col_select |= (isinstance(index, (list, tuple)) and len(index) > 0
+        is_col_select |= (isinstance(index, list | tuple) and len(index) > 0
                           and isinstance(index[0], str))
 
         if is_col_select:

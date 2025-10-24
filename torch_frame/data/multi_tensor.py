@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Sequence
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable, Sequence
+from typing import Any, TypeVar
 
 import torch
 from torch import Tensor
@@ -334,7 +334,7 @@ class _MultiTensor:
             return self.index_select(index, dim=dim)
         # TODO: Don't materialize range, and instead pass it to PyTorch tensor
         # as index directly to avoid unnecessary memory usage.
-        elif isinstance(index, (list, range)):
+        elif isinstance(index, list | range):
             return self.index_select(
                 torch.tensor(index, dtype=torch.long, device=self.device),
                 dim=dim,

@@ -10,7 +10,7 @@ authors=[
 dynamic=["version"]
 description="Tabular Deep Learning Library for PyTorch"
 readme="README.md"
-requires-python=">=3.9"
+requires-python=">=3.10"
 keywords=[
     "deep-learning",
     "pytorch",
@@ -22,7 +22,6 @@ license-files = ["LICENSE"]
 classifiers=[
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -70,7 +69,7 @@ changelog="https://github.com/pyg-team/pytorch-frame/blob/master/CHANGELOG.md"
 name="torch_frame"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/rules
-target-version = "py39"
+target-version = "py310"
 src = ["torch_frame", "test", "examples", "benchmark"]
 line-length = 80
 indent-width = 4

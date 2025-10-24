@@ -1,3 +1,6 @@
+default_language_version:
+  python: python3.10
+
 ci:
   autofix_prs: true
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit suggestions'
@@ -8,7 +11,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: no-commit-to-branch
         name: No commits to master
@@ -20,11 +23,6 @@ repos:
         name: Check toml
       - id: check-yaml
         name: Check yaml
-        exclude: |
-          (?x)^(
-              conda/pytorch-geometric/meta.yaml|
-              conda/pyg/meta.yaml
-          )$
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
@@ -54,31 +52,31 @@ repos:
         additional_dependencies: [toml]
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 7.0.0
     hooks:
       - id: isort
         name: Sort imports
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.2.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         name: Check PEP8
         additional_dependencies: [Flake8-pyproject]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.9
+    rev: v0.14.0
     hooks:
       - id: ruff
         name: Ruff formatting
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.18.2
     hooks:
       - id: mypy
         name: Check types
-        additional_dependencies: [torch==2.7.*]
+        additional_dependencies: [torch==2.8.*]
         exclude: "^test/|^examples/|^benchmark/"
 
   - repo: https://github.com/executablebooks/mdformat

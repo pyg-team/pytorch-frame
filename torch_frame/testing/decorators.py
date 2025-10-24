@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from importlib import import_module
 from importlib.util import find_spec
-from typing import Callable
 
 import torch
 from packaging.requirements import Requirement

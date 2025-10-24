@@ -3,7 +3,7 @@ import math
 import os
 import os.path as osp
 import time
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import optuna
@@ -307,7 +307,7 @@ def test(
 def train_and_eval_with_cfg(
     model_cfg: dict[str, Any],
     train_cfg: dict[str, Any],
-    trial: Optional[optuna.trial.Trial] = None,
+    trial: optuna.trial.Trial | None = None,
 ) -> tuple[float, float]:
     # Use model_cfg to set up training procedure
     if args.model_type == 'FTTransformerBucket':
