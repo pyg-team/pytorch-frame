@@ -33,7 +33,7 @@ jobs:
           flit build --no-use-vcs
           twine check dist/* --strict
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: release-${{ github.sha }}
           path: dist
