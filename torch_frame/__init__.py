@@ -34,7 +34,7 @@ if WITH_PT24:
     ])
 
 # https://peps.python.org/pep-0440/
-__version__ = '0.3.0'
+__version__ = '0.4.0.dev0'
 
 __all__ = [
     'DataFrame',
