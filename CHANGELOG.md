@@ -16,13 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Adopted [PEP 639](https://peps.python.org/pep-0639/) ([#534](https://github.com/pyg-team/pytorch-frame/pull/534))
 
-### Deprecated
-
 ### Removed
 
 - Removed support for Python 3.9 ([#558](https://github.com/pyg-team/pytorch-frame/pull/558))
-
-### Fixed
 
 ## [0.2.5] - 2025-02-12
 
