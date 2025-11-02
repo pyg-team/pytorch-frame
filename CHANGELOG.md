@@ -3,10 +3,11 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - YYYY-MM-DD
+## [0.3.0] - YYYY-MM-DD
 
 ### Added
 
+- Added support for PyTorch 2.9 ([#XXX](https://github.com/pyg-team/pytorch-frame/pull/XXX))
 - Added support for PyTorch 2.8 ([#551](https://github.com/pyg-team/pytorch-frame/pull/551))
 - Added support for PyTorch 2.7 ([#528](https://github.com/pyg-team/pytorch-frame/pull/528))
 - Added a classification example script for TabPFN ([#510](https://github.com/pyg-team/pytorch-frame/pull/510))

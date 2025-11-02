@@ -1,2 +1,2 @@
-https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl
 git+https://github.com/pyg-team/pyg_sphinx_theme.git
