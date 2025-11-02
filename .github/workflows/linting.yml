@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # TODO: Use PyTorch 2.8 once type issues are addressed in PyF:
+          # TODO: Use the latest PyTorch version once type issues are addressed in the codebase:
           pip install -e '.[full,test]' 'torch==2.7.*' -f https://download.pytorch.org/whl/cpu
           pip list
 
