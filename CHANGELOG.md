@@ -75,6 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Added `MovieLens 1M` dataset ([#397](https://github.com/pyg-team/pytorch-frame/pull/397))
 - Added light-weight MLP ([#372](https://github.com/pyg-team/pytorch-frame/pull/372))
+- Added an inherited class from skorch.NeuralNet that is compatible with PyTorch Frame ([#375](https://github.com/pyg-team/pytorch-frame/pull/375))
 - Added R^2 metric ([#403](https://github.com/pyg-team/pytorch-frame/pull/403))
 
 ### Changed
