@@ -65,14 +65,14 @@ repos:
         additional_dependencies: [Flake8-pyproject]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.6
+    rev: v0.14.7
     hooks:
       - id: ruff
         name: Ruff formatting
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v1.19.0
     hooks:
       - id: mypy
         name: Check types
@@ -82,7 +82,7 @@ repos:
   - repo: https://github.com/executablebooks/mdformat
     # TODO: Unpin the version when other plugins add support for mdformat 1.0.0.
     # https://github.com/hukkin/mdformat/issues/555
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         name: Format Markdown
