@@ -20,10 +20,10 @@ jobs:
         include:
           - {torch-version: '2.7', python-version: '3.10'}
           - {torch-version: '2.7', python-version: '3.13'}
-          - {torch-version: '2.9', python-version: '3.10'}
-          - {torch-version: '2.9', python-version: '3.13'}
+          - {torch-version: '2.10', python-version: '3.10'}
+          - {torch-version: '2.10', python-version: '3.14'}
           - {torch-version: 'nightly', python-version: '3.10'}
-          - {torch-version: 'nightly', python-version: '3.13'}
+          - {torch-version: 'nightly', python-version: '3.14'}
 
     steps:
       - name: Checkout repository
