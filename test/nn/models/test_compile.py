@@ -14,7 +14,7 @@ from torch_frame.nn.models import (
 from torch_frame.testing import withPackage
 
 
-@withPackage("torch>=2.6.0")
+@withPackage("torch>=2.11.0")
 @pytest.mark.parametrize(
     "model_cls, model_kwargs, stypes, expected_graph_breaks",
     [
@@ -22,10 +22,10 @@ from torch_frame.testing import withPackage
             FTTransformer,
             dict(channels=8),
             None,
-            2,
+            0,
             id="FTTransformer",
         ),
-        pytest.param(ResNet, dict(channels=8), None, 2, id="ResNet"),
+        pytest.param(ResNet, dict(channels=8), None, 0, id="ResNet"),
         pytest.param(
             TabNet,
             dict(
@@ -34,7 +34,7 @@ from torch_frame.testing import withPackage
                 gamma=0.1,
             ),
             None,
-            2,
+            0,
             id="TabNet",
         ),
         pytest.param(
@@ -54,14 +54,14 @@ from torch_frame.testing import withPackage
             Trompt,
             dict(channels=8, num_prompts=2),
             None,
-            3,
+            0,
             id="Trompt",
         ),
         pytest.param(
             ExcelFormer,
             dict(in_channels=8, num_cols=3, num_heads=1),
             [stype.numerical],
-            1,
+            0,
             id="ExcelFormer",
         ),
     ],
