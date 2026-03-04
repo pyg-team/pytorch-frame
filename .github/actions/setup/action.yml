@@ -47,3 +47,12 @@ runs:
         python -c "import torch; print('PyTorch:', torch.__version__)"
         python -c "import torch; print('CUDA:', torch.version.cuda)"
       shell: bash
+
+    # TODO: Include catboost in Python 3.14 CI when catboost supports it:
+    # https://github.com/catboost/catboost/issues/2943
+    - name: Exclude catboost on Python 3.14 from pyproject.toml
+      if: ${{ inputs.python-version == '3.14' }}
+      run: |
+        sed -i '/    "catboost",/d' pyproject.toml
+        cat pyproject.toml
+      shell: bash
