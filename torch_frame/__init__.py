@@ -27,10 +27,16 @@ import torch_frame.gbdt  # noqa
 
 if WITH_PT24:
     import torch
+    import numpy as np
+    import _codecs
 
     torch.serialization.add_safe_globals([
         stype,
         torch_frame.data.stats.StatType,
+        np.core.multiarray.scalar,
+        np.dtype,
+        type(np.dtype(np.int32)),
+        _codecs.encode,
     ])
 
 # https://peps.python.org/pep-0440/
