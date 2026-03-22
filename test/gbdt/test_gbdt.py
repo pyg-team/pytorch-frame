@@ -1,4 +1,5 @@
 import os.path as osp
+import sys
 import tempfile
 
 import pytest
@@ -12,11 +13,21 @@ from torch_frame.gbdt import CatBoost, LightGBM, XGBoost
 from torch_frame.testing.text_embedder import HashTextEmbedder
 
 
-@pytest.mark.parametrize('gbdt_cls', [
-    CatBoost,
-    XGBoost,
-    LightGBM,
-])
+@pytest.mark.parametrize(
+    'gbdt_cls',
+    [
+        # TODO: Run CatBoost test on Python 3.14 once supported
+        # https://github.com/catboost/catboost/issues/2943
+        pytest.param(
+            CatBoost,
+            marks=pytest.mark.skipif(
+                sys.version_info >= (3, 14),
+                reason="Not supported on Python 3.14",
+            ),
+        ),
+        XGBoost,
+        LightGBM,
+    ])
 @pytest.mark.parametrize('stypes', [
     [stype.numerical],
     [stype.categorical],
