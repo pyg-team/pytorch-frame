@@ -144,7 +144,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
 
     @staticmethod
     def split_by_sep(row: str | Iterable | None, sep: None | str) -> set[Any]:
-        if row is None or row is np.nan:
+        if row is None or row is np.nan or row is pd.NA:
             return {-1}
         elif isinstance(row, str):
             assert sep is not None
@@ -166,7 +166,7 @@ class MultiCategoricalTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> MultiNestedTensor:
-        if ser.dtype != 'object':
+        if ser.dtype != 'object' and not pd.api.types.is_string_dtype(ser):
             raise ValueError('Multi-categorical types expect string as input')
         values = []
         original_index = ser.index
