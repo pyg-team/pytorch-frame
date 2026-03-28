@@ -18,3 +18,7 @@ updates:
       - "akihironitta"
     assignees:
       - "akihironitta"
+    groups:
+      all-dependencies:
+        patterns:
+	  - "*"
