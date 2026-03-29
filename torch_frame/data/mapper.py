@@ -325,8 +325,7 @@ class TextTokenizationTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> dict[str, MultiNestedTensor]:
-        ser = ser.astype(str)
-        ser_list = ser.tolist()
+        ser_list = [str(x) for x in ser]
 
         feat_dict = {}
         if self.batch_size is None:
@@ -415,8 +414,7 @@ class EmbeddingTensorMapper(TensorMapper):
     ) -> MultiEmbeddingTensor:
 
         if self.embedder is not None:
-            ser = ser.astype(str)
-            ser_list = ser.tolist()
+            ser_list = [str(x) for x in ser]
             if self.batch_size is None:
                 values = self.embedder(ser_list)
             else:
