@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
-from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
+from torch_frame.typing import WITH_PD3, Series, TensorData, TextTokenizationOutputs
 
 NUM_MONTHS_PER_YEAR = 12
 '''
@@ -325,7 +325,10 @@ class TextTokenizationTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> dict[str, MultiNestedTensor]:
-        ser_list = [str(x) for x in ser]
+        if WITH_PD3:
+            ser_list = [str(x) for x in ser]
+        else:
+            ser_list = ser.astype(str).tolist()
 
         feat_dict = {}
         if self.batch_size is None:
@@ -414,7 +417,10 @@ class EmbeddingTensorMapper(TensorMapper):
     ) -> MultiEmbeddingTensor:
 
         if self.embedder is not None:
-            ser_list = [str(x) for x in ser]
+            if WITH_PD3:
+                ser_list = [str(x) for x in ser]
+            else:
+                ser_list = ser.astype(str).tolist()
             if self.batch_size is None:
                 values = self.embedder(ser_list)
             else:
