@@ -5,14 +5,17 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import pandas.api.types as ptypes
 import torch
 
 import torch_frame
-from torch_frame.data.mapper import (
-    MultiCategoricalTensorMapper,
-    TimestampTensorMapper,
+from torch_frame._dataframe_compat import (
+    array_to_numpy,
+    flatten_series_values,
+    is_numeric_dtype,
+    make_series,
+    to_datetime,
 )
+from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.typing import Series
 
 
@@ -85,7 +88,7 @@ class StatType(Enum):
         sep: str | None = None,
     ) -> Any:
         if self == StatType.MEAN:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = flatten_series_values(ser)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 # NOTE: We may just error out here if eveything is NaN
@@ -93,14 +96,14 @@ class StatType(Enum):
             return np.mean(flattened[finite_mask]).item()
 
         elif self == StatType.STD:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = flatten_series_values(ser)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return np.nan
             return np.std(flattened[finite_mask]).item()
 
         elif self == StatType.QUANTILES:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = flatten_series_values(ser)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return [np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -114,27 +117,38 @@ class StatType(Enum):
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.MULTI_COUNT:
-            ser = ser.apply(lambda row: MultiCategoricalTensorMapper.
-                            split_by_sep(row, sep))
-            ser = ser.explode().dropna()
-            count = ser.value_counts(ascending=False)
+            if sep is not None:
+                exploded = ser.str.split(sep).explode()
+                exploded = exploded.str.strip()
+                exploded = exploded[exploded != '']
+            else:
+                exploded = ser.explode().dropna()
+            # Deduplicate per original row (categories are sets)
+            if not exploded.empty:
+                temp = exploded.reset_index()
+                orig_col = temp.columns[0]
+                val_col = temp.columns[1]
+                temp = temp.drop_duplicates(
+                    subset=[orig_col, val_col])
+                exploded = temp[val_col]
+            count = exploded.value_counts(ascending=False)
             return count.index.tolist(), count.values.tolist()
 
         elif self == StatType.YEAR_RANGE:
-            year_range = ser.dt.year.values
-            return [min(year_range), max(year_range)]
+            year_range = array_to_numpy(ser.dt.year.values)
+            return [int(min(year_range)), int(max(year_range))]
 
         elif self == StatType.NEWEST_TIME:
-            return TimestampTensorMapper.to_tensor(pd.Series(
-                ser.iloc[-1])).squeeze(0)
+            return TimestampTensorMapper.to_tensor(make_series(
+                data=ser.iloc[-1], like=ser)).squeeze(0)
 
         elif self == StatType.OLDEST_TIME:
-            return TimestampTensorMapper.to_tensor(pd.Series(
-                ser.iloc[0])).squeeze(0)
+            return TimestampTensorMapper.to_tensor(make_series(
+                data=ser.iloc[0], like=ser)).squeeze(0)
 
         elif self == StatType.MEDIAN_TIME:
-            return TimestampTensorMapper.to_tensor(
-                pd.Series(ser.iloc[len(ser) // 2])).squeeze(0)
+            return TimestampTensorMapper.to_tensor(make_series(
+                data=ser.iloc[len(ser) // 2], like=ser)).squeeze(0)
 
         elif self == StatType.EMB_DIM:
             return len(ser[0])
@@ -162,7 +176,7 @@ def compute_col_stats(
 ) -> dict[StatType, Any]:
     if stype == torch_frame.numerical:
         ser = ser.mask(ser.isin([np.inf, -np.inf]), np.nan)
-        if not ptypes.is_numeric_dtype(ser):
+        if not is_numeric_dtype(ser):
             raise TypeError("Numerical series contains invalid entries. "
                             "Please make sure your numerical series "
                             "contains only numerical values or nans.")
@@ -174,7 +188,7 @@ def compute_col_stats(
         }
     else:
         if stype == torch_frame.timestamp:
-            ser = pd.to_datetime(ser, format=time_format)
+            ser = to_datetime(ser, format=time_format)
             ser = ser.sort_values()
         stats = {
             stat_type: stat_type.compute(ser.dropna(), sep)
