@@ -92,9 +92,18 @@ def to_datetime(
     format: str | None = None,
     errors: str = "coerce",
 ) -> Any:
-    r"""Backend-agnostic wrapper for :func:`pandas.to_datetime`."""
-    lib = _get_df_lib(ser)
-    return lib.to_datetime(ser, format=format, errors=errors)
+    r"""Backend-agnostic wrapper for :func:`pandas.to_datetime`.
+
+    Note: cuDF does not support ``errors='coerce'`` for non-scalar
+    inputs, so it is omitted when the input is a cuDF object.
+    """
+    if is_cudf_object(ser):
+        import cudf
+        kwargs: dict[str, Any] = {"format": format}
+        if errors != "coerce":
+            kwargs["errors"] = errors
+        return cudf.to_datetime(ser, **kwargs)
+    return pd.to_datetime(ser, format=format, errors=errors)
 
 
 def series_to_tensor(
@@ -176,10 +185,15 @@ def df_merge(
     lib = _get_df_lib(left)
     if is_cudf_object(left) and not is_cudf_object(right):
         import cudf
-        if isinstance(right, pd.Series):
-            right = cudf.Series(right)
-        elif isinstance(right, pd.DataFrame):
-            right = cudf.DataFrame(right)
+        try:
+            right = cudf.from_pandas(right)
+        except Exception:
+            # Mixed-type indexes (e.g. string categories + integer -1
+            # sentinel) cannot be represented in cuDF.  Fall back to a
+            # CPU merge and return a pandas result so downstream
+            # pandas operations (value_counts, reindex) still work.
+            left_pd = left.to_pandas()
+            return pd.merge(left_pd, right, **kwargs)
     return lib.merge(left, right, **kwargs)
 
 

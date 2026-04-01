@@ -176,6 +176,11 @@ class MultiCategoricalTensorMapper(TensorMapper):
     ) -> MultiNestedTensor:
         if ser.dtype != 'object':
             raise ValueError('Multi-categorical types expect string as input')
+        # Convert cuDF to pandas: the mixed-type lookup table
+        # (string categories + integer -1 sentinel) cannot be
+        # represented in cuDF, so this path runs on CPU.
+        if is_cudf_object(ser):
+            ser = ser.to_pandas()
         original_index = ser.index
         null_mask = ser.isna()
 

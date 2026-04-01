@@ -23,7 +23,12 @@ pytestmark = pytest.mark.skipif(
 
 def _to_cudf(df: pd.DataFrame) -> "cudf.DataFrame":
     """Convert a pandas DataFrame to cuDF."""
-    return cudf.DataFrame.from_pandas(df)
+    return cudf.from_pandas(df)
+
+
+def _cpu(tensor: torch.Tensor) -> torch.Tensor:
+    """Move tensor to CPU for comparison."""
+    return tensor.detach().cpu()
 
 
 class TestCudfMaterialize:
@@ -51,9 +56,9 @@ class TestCudfMaterialize:
         tf_cu = ds_cu.tensor_frame
         assert torch.allclose(
             tf_pd.feat_dict[torch_frame.numerical],
-            tf_cu.feat_dict[torch_frame.numerical],
+            _cpu(tf_cu.feat_dict[torch_frame.numerical]),
         )
-        assert torch.equal(tf_pd.y, tf_cu.y)
+        assert torch.equal(tf_pd.y, _cpu(tf_cu.y))
 
     def test_categorical(self):
         df = pd.DataFrame({
@@ -72,9 +77,10 @@ class TestCudfMaterialize:
 
         assert torch.equal(
             ds_pd.tensor_frame.feat_dict[torch_frame.categorical],
-            ds_cu.tensor_frame.feat_dict[torch_frame.categorical],
+            _cpu(ds_cu.tensor_frame.feat_dict[torch_frame.categorical]),
         )
-        assert torch.equal(ds_pd.tensor_frame.y, ds_cu.tensor_frame.y)
+        assert torch.equal(ds_pd.tensor_frame.y,
+                           _cpu(ds_cu.tensor_frame.y))
 
     def test_multicategorical(self):
         data = {"multicat": ["A|B", "B|C|A", "", "B", "B|A|A", None]}
@@ -128,10 +134,11 @@ class TestCudfMaterialize:
             col_to_time_format={"ts": fmt},
         ).materialize()
 
-        assert torch.equal(
-            ds_pd.tensor_frame.feat_dict[torch_frame.numerical],
-            ds_cu.tensor_frame.feat_dict[torch_frame.numerical],
-        )
+        assert torch.equal(ds_pd.tensor_frame.y,
+                           _cpu(ds_cu.tensor_frame.y))
+        pd_feat = ds_pd.tensor_frame.feat_dict[torch_frame.timestamp]
+        cu_feat = _cpu(ds_cu.tensor_frame.feat_dict[torch_frame.timestamp])
+        assert torch.equal(pd_feat, cu_feat)
 
     def test_categorical_target_order(self):
         """Ensure binary classification label order is preserved."""
@@ -151,10 +158,11 @@ class TestCudfMaterialize:
             _to_cudf(df), col_to_stype, target_col="cat_2"
         ).materialize()
 
-        assert torch.equal(ds_pd.tensor_frame.y, ds_cu.tensor_frame.y)
+        assert torch.equal(ds_pd.tensor_frame.y,
+                           _cpu(ds_cu.tensor_frame.y))
         assert torch.equal(
             ds_pd.tensor_frame.feat_dict[torch_frame.categorical],
-            ds_cu.tensor_frame.feat_dict[torch_frame.categorical],
+            _cpu(ds_cu.tensor_frame.feat_dict[torch_frame.categorical]),
         )
 
     def test_index_select(self):
@@ -193,7 +201,7 @@ class TestCudfMaterialize:
         ).materialize()
 
         pd_feat = ds_pd.tensor_frame.feat_dict[torch_frame.numerical]
-        cu_feat = ds_cu.tensor_frame.feat_dict[torch_frame.numerical]
+        cu_feat = _cpu(ds_cu.tensor_frame.feat_dict[torch_frame.numerical])
         # NaN == NaN is False, so check element-wise
         assert pd_feat.shape == cu_feat.shape
         nan_mask = torch.isnan(pd_feat)
