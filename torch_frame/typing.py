@@ -107,8 +107,13 @@ class NAStrategy(Enum):
         ]
 
 
-Series: TypeAlias = pd.Series
-DataFrame: TypeAlias = pd.DataFrame
+try:
+    import cudf
+    Series: TypeAlias = pd.Series | cudf.Series
+    DataFrame: TypeAlias = pd.DataFrame | cudf.DataFrame
+except ImportError:
+    Series: TypeAlias = pd.Series
+    DataFrame: TypeAlias = pd.DataFrame
 
 IndexSelectType: TypeAlias = int | list[int] | range | slice | Tensor
 ColumnSelectType: TypeAlias = str | list[str]

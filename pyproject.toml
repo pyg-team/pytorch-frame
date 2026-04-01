@@ -39,6 +39,9 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
+cudf=[
+    "cudf-cu12>=24.04",
+]
 test=[
     "pytest",
     "pytest-cov",
