@@ -13,6 +13,14 @@ from tqdm import tqdm
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import Series, TensorData, TextTokenizationOutputs
+from torch_frame._dataframe_compat import (
+    df_concat,
+    df_merge,
+    is_cudf_object,
+    make_series,
+    series_to_tensor,
+    to_datetime,
+)
 
 NUM_MONTHS_PER_YEAR = 12
 '''
@@ -70,8 +78,7 @@ class NumericalTensorMapper(TensorMapper):
         device: torch.device | None = None,
     ) -> Tensor:
         dtype = _get_default_numpy_dtype()
-        value = ser.values.astype(dtype)
-        return torch.from_numpy(value).to(device)
+        return series_to_tensor(ser, dtype=dtype, device=device)
 
     def backward(self, tensor: Tensor) -> pd.Series:
         return pd.Series(tensor.detach().cpu().numpy())
@@ -95,14 +102,14 @@ class CategoricalTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> Tensor:
-        index = pd.merge(
+        merged = df_merge(
             ser.rename('data'),
             self.categories,
             how='left',
             left_on='data',
             right_index=True,
-        )['index'].values
-        index = torch.from_numpy(index).to(device)
+        )
+        index = series_to_tensor(merged['index'], device=device)
 
         if index.is_floating_point():
             index[index.isnan()] = -1
@@ -168,24 +175,51 @@ class MultiCategoricalTensorMapper(TensorMapper):
     ) -> MultiNestedTensor:
         if ser.dtype != 'object':
             raise ValueError('Multi-categorical types expect string as input')
-        values = []
         original_index = ser.index
-        ser = ser.apply(lambda row: MultiCategoricalTensorMapper.split_by_sep(
-            row, sep=self.sep))
-        ser = ser.explode()
-        ser = pd.merge(
-            ser.rename('data'),
+        null_mask = ser.isna()
+
+        if self.sep is not None:
+            # Vectorized split for string columns
+            clean = ser.fillna('')
+            exploded = clean.str.split(self.sep).explode()
+            exploded = exploded.str.strip()
+            exploded = exploded[exploded != '']
+        else:
+            # List-typed columns
+            exploded = ser.explode().dropna()
+
+        # Deduplicate per original row (split_by_sep returns sets)
+        if not exploded.empty:
+            temp = exploded.reset_index()
+            orig_col, val_col = temp.columns[0], temp.columns[1]
+            temp = temp.drop_duplicates(subset=[orig_col, val_col])
+            exploded = temp.set_index(orig_col)[val_col]
+            exploded.index.name = None
+
+        # For NaN rows, inject -1 sentinel
+        if null_mask.any():
+            null_entries = make_series(
+                data=[-1] * int(null_mask.sum()),
+                index=null_mask[null_mask].index,
+                like=ser,
+            )
+            exploded = df_concat([exploded, null_entries], like=ser)
+
+        # Merge with category lookup to get integer indices
+        merged = df_merge(
+            exploded.rename('data'),
             self.index.rename('index'),
             how='left',
             left_on='data',
             right_index=True,
         ).dropna()
-        ser['index'] = ser['index'].astype('int64')
-        values = torch.from_numpy(ser['index'].values)
-        offset = ser.index.value_counts()
+        merged['index'] = merged['index'].astype('int64')
+        values = series_to_tensor(merged['index'])
+        offset = merged.index.value_counts()
         offset = offset.reindex(original_index, fill_value=0)
-        offset = pd.concat((pd.Series([0]), offset))
-        offset = torch.from_numpy(offset.values)
+        offset = df_concat(
+            [make_series([0], like=offset), offset], like=offset)
+        offset = series_to_tensor(offset)
         offset = torch.cumsum(offset, dim=0)
         return MultiNestedTensor(num_rows=len(original_index), num_cols=1,
                                  values=values, offset=offset)
@@ -224,15 +258,15 @@ class NumericalSequenceTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> MultiNestedTensor:
-        values = []
         num_rows = len(ser)
-        offset = ser.apply(lambda row: self.get_sequence_length(row))
+        offset = ser.str.len().fillna(0).astype(int)
         ser = ser[offset != 0]
-        offset = pd.concat((pd.Series([0]), offset))
-        offset = torch.from_numpy(offset.values)
+        offset = df_concat(
+            [make_series([0], like=offset), offset], like=offset)
+        offset = series_to_tensor(offset)
         offset = torch.cumsum(offset, dim=0)
         ser = ser.explode()
-        values = torch.from_numpy(ser.values.astype('float32'))
+        values = series_to_tensor(ser, dtype=np.dtype('float32'))
         return MultiNestedTensor(num_rows=num_rows, num_cols=1, values=values,
                                  offset=offset)
 
@@ -271,13 +305,13 @@ class TimestampTensorMapper(TensorMapper):
         # subtracting 1 so that the smallest months and days can
         # start from 0.
         tensors = [
-            torch.from_numpy(ser.dt.year.values).unsqueeze(1),
-            torch.from_numpy(ser.dt.month.values - 1).unsqueeze(1),
-            torch.from_numpy(ser.dt.day.values - 1).unsqueeze(1),
-            torch.from_numpy(ser.dt.dayofweek.values).unsqueeze(1),
-            torch.from_numpy(ser.dt.hour.values).unsqueeze(1),
-            torch.from_numpy(ser.dt.minute.values).unsqueeze(1),
-            torch.from_numpy(ser.dt.second.values).unsqueeze(1)
+            series_to_tensor(ser.dt.year).unsqueeze(1),
+            (series_to_tensor(ser.dt.month) - 1).unsqueeze(1),
+            (series_to_tensor(ser.dt.day) - 1).unsqueeze(1),
+            series_to_tensor(ser.dt.dayofweek).unsqueeze(1),
+            series_to_tensor(ser.dt.hour).unsqueeze(1),
+            series_to_tensor(ser.dt.minute).unsqueeze(1),
+            series_to_tensor(ser.dt.second).unsqueeze(1),
         ]
         stacked = torch.cat(tensors, dim=1)
         return torch.nan_to_num(stacked, nan=-1).to(torch.long)
@@ -288,7 +322,7 @@ class TimestampTensorMapper(TensorMapper):
         *,
         device: torch.device | None = None,
     ) -> Tensor:
-        ser = pd.to_datetime(ser, format=self.format, errors='coerce')
+        ser = to_datetime(ser, format=self.format)
         tensor = TimestampTensorMapper.to_tensor(ser)
         return tensor.to(device)
 
@@ -428,6 +462,8 @@ class EmbeddingTensorMapper(TensorMapper):
                 values = torch.cat(emb_list, dim=0)
         else:
             dtype = _get_default_numpy_dtype()
+            if is_cudf_object(ser):
+                ser = ser.to_pandas()
             values = torch.from_numpy(np.stack(ser.values).astype(dtype))
         return MultiEmbeddingTensor(
             num_rows=len(ser),

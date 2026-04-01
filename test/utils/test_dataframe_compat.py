@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import torch
 
-from torch_frame.utils.dataframe_compat import (
+from torch_frame._dataframe_compat import (
     array_to_numpy,
     df_concat,
     df_merge,
