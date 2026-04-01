@@ -7,11 +7,16 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import pandas.api.types as ptypes
 from dateutil.parser import ParserError
 
 from torch_frame import stype
-from torch_frame.data.mapper import MultiCategoricalTensorMapper
+from torch_frame._dataframe_compat import (
+    is_bool_dtype,
+    is_float_dtype,
+    is_numeric_dtype,
+    is_string_dtype,
+    to_datetime,
+)
 from torch_frame.typing import DataFrame, Series
 
 POSSIBLE_SEPS = ["|", ","]
@@ -24,7 +29,7 @@ def _is_timestamp(ser: Series) -> bool:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                pd.to_datetime(ser, format=time_format)
+                to_datetime(ser, format=time_format, errors="raise")
             is_timestamp = True
         except (ValueError, ParserError, TypeError):
             pass
@@ -108,12 +113,12 @@ def infer_series_stype(ser: Series) -> stype | None:
         # Candidates: numerical, categorical, multicategorical, and
         # text_(embedded/tokenized)
 
-        if ptypes.is_numeric_dtype(ser):
+        if is_numeric_dtype(ser):
 
-            if ptypes.is_bool_dtype(ser):
+            if is_bool_dtype(ser):
                 return stype.categorical
             # Candidates: numerical, categorical
-            if ptypes.is_float_dtype(ser) and not (has_nan and
+            if is_float_dtype(ser) and not (has_nan and
                                                    (ser % 1 == 0).all()):
                 return stype.numerical
             else:
@@ -129,18 +134,18 @@ def infer_series_stype(ser: Series) -> stype | None:
 
             # Candates: categorical, multicategorical,
             # text_(embedded/tokenized), embedding
-            if _min_count(ser) > cat_min_count_thresh or ptypes.is_bool_dtype(
+            if _min_count(ser) > cat_min_count_thresh or is_bool_dtype(
                     ser):
                 return stype.categorical
 
             # Candates: multicategorical, text_(embedded/tokenized), embedding
-            if not ptypes.is_string_dtype(ser):
+            if not is_string_dtype(ser):
                 if _min_count(ser) > cat_min_count_thresh:
                     return stype.multicategorical
                 else:
                     return stype.embedding
 
-            # Try different possible seps and mick the largest min_count.
+            # Try different possible seps and pick the largest min_count.
             if isinstance(ser.iloc[0], list) or isinstance(
                     ser.iloc[0], np.ndarray):
                 max_min_count = _min_count(ser.explode())
@@ -148,11 +153,10 @@ def infer_series_stype(ser: Series) -> stype | None:
                 min_count_list = []
                 for sep in POSSIBLE_SEPS:
                     try:
-                        min_count_list.append(
-                            _min_count(
-                                ser.apply(lambda row, sep=sep:
-                                          MultiCategoricalTensorMapper.
-                                          split_by_sep(row, sep)).explode()))
+                        exploded = ser.str.split(sep).explode()
+                        exploded = exploded.str.strip()
+                        exploded = exploded[exploded != '']
+                        min_count_list.append(_min_count(exploded))
                     except Exception as e:
                         logging.warning(
                             "Mapping series into multicategorical stype "
