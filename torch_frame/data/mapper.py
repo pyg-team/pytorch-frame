@@ -20,6 +20,7 @@ from torch_frame._dataframe_compat import (
     make_series,
     series_to_tensor,
     to_datetime,
+    to_list,
 )
 
 NUM_MONTHS_PER_YEAR = 12
@@ -360,7 +361,7 @@ class TextTokenizationTensorMapper(TensorMapper):
         device: torch.device | None = None,
     ) -> dict[str, MultiNestedTensor]:
         ser = ser.astype(str)
-        ser_list = ser.tolist()
+        ser_list = to_list(ser)
 
         feat_dict = {}
         if self.batch_size is None:
@@ -450,7 +451,7 @@ class EmbeddingTensorMapper(TensorMapper):
 
         if self.embedder is not None:
             ser = ser.astype(str)
-            ser_list = ser.tolist()
+            ser_list = to_list(ser)
             if self.batch_size is None:
                 values = self.embedder(ser_list)
             else:

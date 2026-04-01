@@ -165,7 +165,7 @@ def run_benchmark(args):
         if backend == "cudf":
             try:
                 import cudf
-                df = cudf.DataFrame.from_pandas(df_pandas)
+                df = cudf.from_pandas(df_pandas)
             except ImportError:
                 print("cudf not installed, skipping cudf backend")
                 continue

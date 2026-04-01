@@ -29,6 +29,7 @@ from torch_frame.data.mapper import (
 )
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
+from torch_frame._dataframe_compat import to_list
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.typing import (
     ColumnSelectType,
@@ -751,8 +752,8 @@ class Dataset:
         if split not in ["train", "val", "test"]:
             raise ValueError(f"The split named '{split}' is not available. "
                              f"Needs to be either 'train', 'val', or 'test'.")
-        indices = self.df.index[self.df[self.split_col] ==
-                                SPLIT_TO_NUM[split]].tolist()
+        indices = to_list(self.df.index[self.df[self.split_col] ==
+                                       SPLIT_TO_NUM[split]])
         return self[indices]
 
     def split(self) -> tuple[Dataset, Dataset, Dataset]:

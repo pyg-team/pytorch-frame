@@ -121,6 +121,18 @@ def series_to_tensor(
     return tensor.to(device) if device is not None else tensor
 
 
+def to_list(obj: Any) -> list:
+    r"""Converts a pandas/cuDF Index, Series, or array to a Python list.
+
+    cuDF does not support :meth:`tolist` directly; this helper falls
+    back to :meth:`to_arrow().to_pylist()` when needed.
+    """
+    try:
+        return obj.tolist()
+    except TypeError:
+        return obj.to_arrow().to_pylist()
+
+
 def array_to_numpy(values: Any) -> np.ndarray:
     r"""Converts a numpy or cupy array to a numpy array.
 

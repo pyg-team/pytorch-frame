@@ -14,6 +14,7 @@ from torch_frame._dataframe_compat import (
     is_numeric_dtype,
     make_series,
     to_datetime,
+    to_list,
 )
 from torch_frame.data.mapper import TimestampTensorMapper
 from torch_frame.typing import Series
@@ -114,7 +115,7 @@ class StatType(Enum):
 
         elif self == StatType.COUNT:
             count = ser.value_counts(ascending=False)
-            return count.index.tolist(), count.values.tolist()
+            return to_list(count.index), to_list(count.values)
 
         elif self == StatType.MULTI_COUNT:
             if sep is not None:
@@ -132,7 +133,7 @@ class StatType(Enum):
                     subset=[orig_col, val_col])
                 exploded = temp[val_col]
             count = exploded.value_counts(ascending=False)
-            return count.index.tolist(), count.values.tolist()
+            return to_list(count.index), to_list(count.values)
 
         elif self == StatType.YEAR_RANGE:
             year_range = array_to_numpy(ser.dt.year.values)
