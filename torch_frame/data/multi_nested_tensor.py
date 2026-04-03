@@ -63,6 +63,8 @@ class MultiNestedTensor(_MultiTensor):
                  [10, -1, -1]]])
     """
     def validate(self):
+        if torch.compiler.is_compiling():
+            return
         assert self.offset[0] == 0
         assert self.offset[-1] == len(self.values)
         assert len(self.offset) == self.num_rows * self.num_cols + 1

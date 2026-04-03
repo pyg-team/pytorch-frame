@@ -56,6 +56,8 @@ class MultiEmbeddingTensor(_MultiTensor):
         MultiEmbeddingTensor(num_rows=4, num_cols=3, device='cpu')
     """
     def validate(self) -> None:
+        if torch.compiler.is_compiling():
+            return
         assert self.offset[0] == 0
         assert len(self.offset) == self.num_cols + 1
         assert self.offset.ndim == 1
