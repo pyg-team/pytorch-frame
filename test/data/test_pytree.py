@@ -178,3 +178,38 @@ def test_compile_tf() -> None:
     tf2 = double_feats(tf)
     for stype in tf.feat_dict:
         assert torch.equal(tf2.feat_dict[stype], tf.feat_dict[stype] * 2)
+
+
+def test_export_construct_met() -> None:
+    class Model(torch.nn.Module):
+        def forward(self, v: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+            met = MultiEmbeddingTensor(
+                num_rows=4,
+                num_cols=1,
+                values=v,
+                offset=o,
+            )
+            return met.values.sum()
+
+    model = Model()
+    values = torch.randn(4, 3)
+    offset = torch.tensor([0, 3])
+
+    exported = torch.export.export(model, args=(values, offset), strict=False)
+    result = exported.module()(values, offset)
+    assert torch.allclose(result, values.sum())
+
+
+def test_export_construct_mnt() -> None:
+    class Model(torch.nn.Module):
+        def forward(self, v: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+            mnt = MultiNestedTensor(num_rows=1, num_cols=2, values=v, offset=o)
+            return mnt.values.sum()
+
+    model = Model()
+    values = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+    offset = torch.tensor([0, 2, 5])
+
+    exported = torch.export.export(model, args=(values, offset), strict=False)
+    result = exported.module()(values, offset)
+    assert torch.allclose(result, values.sum())
