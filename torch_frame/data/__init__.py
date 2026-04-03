@@ -7,6 +7,7 @@ from .stats import StatType
 from .dataset import Dataset, DataFrameToTensorFrameConverter
 from .loader import DataLoader
 from .download import download_url
+from . import _pytree
 
 data_classes = [
     'TensorFrame',
