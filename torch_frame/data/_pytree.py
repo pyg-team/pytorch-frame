@@ -18,7 +18,7 @@ _Keyed: TypeAlias = list[tuple[SequenceKey, Any]]
 
 def _tf_flatten(tf: TensorFrame) -> tuple[list[Any], _TFCtx]:
     keys = sorted(tf.feat_dict.keys(), key=lambda s: s.value)
-    flat = [tf.feat_dict[k] for k in keys]
+    flat: list[Any] = [tf.feat_dict[k] for k in keys]
     flat.append(tf.y)
     return flat, (keys, tf.col_names_dict, tf._num_rows)
 
@@ -107,8 +107,8 @@ def _mnt_unflatten(
 _pytree.register_pytree_node(
     TensorFrame,
     _tf_flatten,
-    _tf_unflatten,
-    flatten_with_keys_fn=_tf_flatten_with_keys,
+    _tf_unflatten,  # type: ignore[arg-type]
+    flatten_with_keys_fn=_tf_flatten_with_keys,  # type: ignore[arg-type]
     serialized_type_name='torch_frame.TensorFrame',
     to_dumpable_context=_tf_to_dumpable_context,
     from_dumpable_context=_tf_from_dumpable_context,
@@ -116,14 +116,14 @@ _pytree.register_pytree_node(
 _pytree.register_pytree_node(
     MultiEmbeddingTensor,
     _met_flatten,
-    _met_unflatten,
-    flatten_with_keys_fn=_met_flatten_with_keys,
+    _met_unflatten,  # type: ignore[arg-type]
+    flatten_with_keys_fn=_met_flatten_with_keys,  # type: ignore[arg-type]
     serialized_type_name='torch_frame.MultiEmbeddingTensor',
 )
 _pytree.register_pytree_node(
     MultiNestedTensor,
     _mnt_flatten,
-    _mnt_unflatten,
-    flatten_with_keys_fn=_mnt_flatten_with_keys,
+    _mnt_unflatten,  # type: ignore[arg-type]
+    flatten_with_keys_fn=_mnt_flatten_with_keys,  # type: ignore[arg-type]
     serialized_type_name='torch_frame.MultiNestedTensor',
 )
