@@ -15,6 +15,7 @@ WITH_PT20 = int(torch.__version__.split('.')[0]) >= 2
 WITH_PT24 = WITH_PT20 and int(torch.__version__.split('.')[1]) >= 4
 WITH_PD3 = int(pd.__version__.split('.')[0]) >= 3
 
+
 class Metric(Enum):
     r"""The metric.
 
