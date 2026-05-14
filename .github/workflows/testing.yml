@@ -18,12 +18,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {torch-version: '2.7', python-version: '3.10', pandas-pin: '==1.*', numpy-pin: '==1.*'}
-          - {torch-version: '2.7', python-version: '3.10', pandas-pin: '>=2.2,<3'}
-          - {torch-version: '2.7', python-version: '3.10'}
-          - {torch-version: '2.7', python-version: '3.13'}
-          - {torch-version: '2.11', python-version: '3.10'}
-          - {torch-version: '2.11', python-version: '3.14'}
+          - {torch-version: '2.8', python-version: '3.10', pandas-pin: '==1.*', numpy-pin: '==1.*'}
+          - {torch-version: '2.8', python-version: '3.10', pandas-pin: '>=2.2,<3'}
+          - {torch-version: '2.8', python-version: '3.10'}
+          - {torch-version: '2.8', python-version: '3.13'}
+          - {torch-version: '2.12', python-version: '3.10'}
+          - {torch-version: '2.12', python-version: '3.14'}
           - {torch-version: 'nightly', python-version: '3.10'}
           - {torch-version: 'nightly', python-version: '3.14'}
 
