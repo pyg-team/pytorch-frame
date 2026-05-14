@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Added support for PyTorch 2.12 ([#608](https://github.com/pyg-team/pytorch-frame/pull/608))
 - Register `TensorFrame`, `MultiNestedTensor` and `MultiEmbeddingTensor` as pytree nodes ([#604](https://github.com/pyg-team/pytorch-frame/pull/604))
 - Added support for PyTorch 2.11
 - Added support for PyTorch 2.10 and Python 3.14 ([#590](https://github.com/pyg-team/pytorch-frame/pull/590))
@@ -16,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Deprecated
 
 ### Removed
+
+- Dropped support for PyTorch 2.7 ([#608](https://github.com/pyg-team/pytorch-frame/pull/608))
 
 ### Fixed
 
