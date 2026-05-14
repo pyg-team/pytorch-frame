@@ -18,6 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - {torch-version: '2.7', python-version: '3.10', pandas-pin: '==1.*', numpy-pin: '==1.*'}
+          - {torch-version: '2.7', python-version: '3.10', pandas-pin: '>=2.2,<3'}
           - {torch-version: '2.7', python-version: '3.10'}
           - {torch-version: '2.7', python-version: '3.13'}
           - {torch-version: '2.11', python-version: '3.10'}
@@ -60,6 +62,16 @@ jobs:
         if: steps.changed-files-specific.outputs.only_changed != 'true'
         run: |
           pip install -e .[full,test]
+          pip list
+
+      - name: Pin pandas/numpy
+        if: ${{ matrix.pandas-pin && steps.changed-files-specific.outputs.only_changed != 'true' }}
+        run: |
+          pkgs=("pandas${{ matrix.pandas-pin }}")
+          if [ -n "${{ matrix.numpy-pin }}" ]; then
+            pkgs+=("numpy${{ matrix.numpy-pin }}")
+          fi
+          pip install "${pkgs[@]}"
           pip list
 
       - name: Run tests

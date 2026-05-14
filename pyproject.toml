@@ -31,7 +31,7 @@ classifiers=[
 ]
 dependencies=[
     "numpy",
-    "pandas<3.0.0",
+    "pandas",
     "torch",
     "tqdm",
     "pyarrow",
