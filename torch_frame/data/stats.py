@@ -16,6 +16,14 @@ from torch_frame.data.mapper import (
 from torch_frame.typing import Series
 
 
+def _flatten_numeric(values: np.ndarray) -> np.ndarray:
+    # Fast path: already a 1D numeric array (e.g., the `numerical` stype).
+    # Avoids the expensive `np.hstack` call used for nested sequences.
+    if values.dtype != object and values.ndim == 1:
+        return values
+    return np.hstack(values)
+
+
 class StatType(Enum):
     r"""The different types for column statistics.
 
@@ -85,7 +93,7 @@ class StatType(Enum):
         sep: str | None = None,
     ) -> Any:
         if self == StatType.MEAN:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = _flatten_numeric(ser.values)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 # NOTE: We may just error out here if eveything is NaN
@@ -93,14 +101,14 @@ class StatType(Enum):
             return np.mean(flattened[finite_mask]).item()
 
         elif self == StatType.STD:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = _flatten_numeric(ser.values)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return np.nan
             return np.std(flattened[finite_mask]).item()
 
         elif self == StatType.QUANTILES:
-            flattened = np.hstack(np.hstack(ser.values))
+            flattened = _flatten_numeric(ser.values)
             finite_mask = np.isfinite(flattened)
             if not finite_mask.any():
                 return [np.nan, np.nan, np.nan, np.nan, np.nan]
