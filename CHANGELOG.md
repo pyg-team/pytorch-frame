@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Improved performance of `StatType.compute` for numerical columns ([#449](https://github.com/pyg-team/pytorch-frame/pull/449))
+
 ### Deprecated
 
 ### Removed
