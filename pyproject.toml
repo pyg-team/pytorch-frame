@@ -58,6 +58,7 @@ full=[
     "lightgbm",
     "datasets",
     "torchmetrics",
+    "skorch",
 ]
 
 [project.urls]
