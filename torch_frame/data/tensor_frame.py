@@ -87,6 +87,12 @@ class TensorFrame:
 
     def validate(self) -> None:
         r"""Validates the :class:`TensorFrame` object."""
+        # Skip under ``torch.compile`` / ``torch.export`` — the shape
+        # equality checks below would materialize symbolic dims into
+        # concrete ints (specializing the graph).
+        if torch.compiler.is_compiling():
+            return
+
         if self.feat_dict.keys() != self.col_names_dict.keys():
             raise ValueError(
                 f"The keys of feat_dict and col_names_dict must be the same, "
@@ -199,8 +205,13 @@ class TensorFrame:
             return 0
         feat = next(iter(self.feat_dict.values()))
         if isinstance(feat, dict):
-            return len(next(iter(feat.values())))
-        return len(feat)
+            # Use ``size(0)`` rather than ``len(...)`` so a symbolic dim from
+            # ``torch.export`` is preserved as a ``SymInt`` instead of being
+            # materialized to a Python ``int``.
+            return next(iter(feat.values())).size(0)
+        if isinstance(feat, _MultiTensor):
+            return feat.num_rows
+        return feat.size(0)
 
     @property
     def device(self) -> torch.device | None:
