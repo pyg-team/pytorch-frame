@@ -28,9 +28,8 @@ from torch_frame.nn import (
     LinearEmbeddingEncoder,
     LinearEncoder,
 )
-from torch_frame.nn.encoder.stype_encoder import (  # noqa
-    MultiCategoricalEmbeddingEncoder,
-)
+from torch_frame.nn.encoder.stype_encoder import \
+    MultiCategoricalEmbeddingEncoder  # noqa
 
 
 class PretrainedTextEncoder:
