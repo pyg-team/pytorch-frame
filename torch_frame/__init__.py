@@ -11,6 +11,7 @@ from ._stype import (
     image_embedded,
     embedding,
 )
+from ._compat.pandas import is_cudf_pandas_enabled
 from .data import TensorFrame
 from .typing import (
     TaskType,
@@ -55,6 +56,7 @@ __all__ = [
     'save',
     'load',
     'cat',
+    'is_cudf_pandas_enabled',
     'torch_frame',
     '__version__',
 ]

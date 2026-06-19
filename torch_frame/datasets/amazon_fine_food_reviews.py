@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pandas as pd
+from torch_frame._compat.pandas import pd
 
 import torch_frame
 from torch_frame.config.text_embedder import TextEmbedderConfig

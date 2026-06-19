@@ -6,8 +6,8 @@ import warnings
 from typing import Any
 
 import numpy as np
-import pandas as pd
-import pandas.api.types as ptypes
+from torch_frame._compat.pandas import pd
+from torch_frame._compat.pandas import ptypes
 from dateutil.parser import ParserError
 
 from torch_frame import stype

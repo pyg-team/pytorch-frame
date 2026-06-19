@@ -7,7 +7,7 @@ import string
 from datetime import datetime, timedelta
 
 import numpy as np
-import pandas as pd
+from torch_frame._compat.pandas import pd
 from PIL import Image
 
 import torch_frame

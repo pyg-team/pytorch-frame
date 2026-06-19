@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import os
 
-import pandas as pd
-from pandas.api.types import is_numeric_dtype
+from torch_frame._compat.pandas import pd, ptypes
 
 import torch_frame
 
@@ -422,7 +421,8 @@ class TabularBenchmark(torch_frame.data.Dataset):
                 col_to_stype[col] = torch_frame.numerical
             else:
                 # Heuristics to decide stype
-                if is_numeric_dtype(df[col].dtype) and df[col].nunique() > 10:
+                if (ptypes.is_numeric_dtype(df[col].dtype)
+                        and df[col].nunique() > 10):
                     col_to_stype[col] = torch_frame.numerical
                 else:
                     col_to_stype[col] = torch_frame.categorical

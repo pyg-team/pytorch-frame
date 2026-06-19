@@ -4,8 +4,8 @@ from enum import Enum
 from typing import Any
 
 import numpy as np
-import pandas as pd
-import pandas.api.types as ptypes
+from torch_frame._compat.pandas import pd
+from torch_frame._compat.pandas import ptypes
 import torch
 
 import torch_frame

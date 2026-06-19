@@ -4,7 +4,7 @@ import copy
 import logging
 from typing import Any
 
-import pandas as pd
+from torch_frame._compat.pandas import pd
 import torch
 import torch.nn.functional as F
 

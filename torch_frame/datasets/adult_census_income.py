@@ -1,4 +1,4 @@
-import pandas as pd
+from torch_frame._compat.pandas import pd
 
 import torch_frame
 

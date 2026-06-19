@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import pandas as pd
+from torch_frame._compat.pandas import pd
 
 import torch_frame
 from torch_frame.typing import TaskType

@@ -6,7 +6,7 @@ import os.path as osp
 from collections import defaultdict
 from typing import Any
 
-import pandas as pd
+from torch_frame._compat.pandas import pd
 import torch
 from torch import Tensor
 
