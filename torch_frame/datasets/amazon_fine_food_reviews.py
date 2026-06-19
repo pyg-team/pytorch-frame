@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 

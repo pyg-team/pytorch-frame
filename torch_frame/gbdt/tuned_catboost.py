@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
 import torch
 from torch import Tensor
 
 from torch_frame import DataFrame, Metric, TaskType, TensorFrame, stype
+from torch_frame._compat.pandas import pd
 from torch_frame.gbdt import GBDT
 
 

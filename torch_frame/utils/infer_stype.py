@@ -6,11 +6,10 @@ import warnings
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
-from torch_frame._compat.pandas import ptypes
 from dateutil.parser import ParserError
 
 from torch_frame import stype
+from torch_frame._compat.pandas import pd, ptypes
 from torch_frame.data.mapper import MultiCategoricalTensorMapper
 from torch_frame.typing import DataFrame, Series
 

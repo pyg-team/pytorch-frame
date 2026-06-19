@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
 
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig
 from torch_frame.typing import TaskType

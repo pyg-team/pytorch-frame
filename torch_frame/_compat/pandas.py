@@ -26,8 +26,8 @@ def _install_cudf_pandas() -> bool:
     return True
 
 
-CUDF_PANDAS_ENABLED: Final = (
-    _install_cudf_pandas() if _env_flag_enabled(CUDF_PANDAS_ENV) else False)
+CUDF_PANDAS_ENABLED: Final = (_install_cudf_pandas()
+                              if _env_flag_enabled(CUDF_PANDAS_ENV) else False)
 
 import pandas as pd  # noqa: E402
 import pandas.api.types as ptypes  # noqa: E402

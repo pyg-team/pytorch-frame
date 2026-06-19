@@ -4,11 +4,11 @@ import copy
 import logging
 from typing import Any
 
-from torch_frame._compat.pandas import pd
 import torch
 import torch.nn.functional as F
 
 from torch_frame import NAStrategy, TensorFrame, stype
+from torch_frame._compat.pandas import pd
 from torch_frame.data.stats import StatType, compute_col_stats
 from torch_frame.transforms import FittableBaseTransform
 

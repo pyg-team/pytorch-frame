@@ -1,9 +1,8 @@
 import os.path as osp
 import zipfile
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
+from torch_frame._compat.pandas import pd
 
 
 class Mushroom(torch_frame.data.Dataset):

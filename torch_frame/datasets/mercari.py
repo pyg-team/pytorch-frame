@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import os.path as osp
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.utils.split import SPLIT_TO_NUM
 

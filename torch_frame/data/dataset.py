@@ -6,11 +6,11 @@ import os.path as osp
 from collections import defaultdict
 from typing import Any
 
-from torch_frame._compat.pandas import pd
 import torch
 from torch import Tensor
 
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.config import (
     ImageEmbedderConfig,
     TextEmbedderConfig,

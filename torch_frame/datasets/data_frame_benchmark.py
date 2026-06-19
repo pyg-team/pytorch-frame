@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.typing import TaskType
 from torch_frame.utils import generate_random_split
 

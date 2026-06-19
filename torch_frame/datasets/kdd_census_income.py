@@ -5,10 +5,9 @@ import os.path as osp
 import tarfile
 import zipfile
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
 from torch_frame import stype
+from torch_frame._compat.pandas import pd
 
 
 class KDDCensusIncome(torch_frame.data.Dataset):

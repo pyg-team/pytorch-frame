@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from torch_frame._compat.pandas import pd
-
 import torch_frame
 from torch_frame import stype
+from torch_frame._compat.pandas import pd
 from torch_frame.utils.infer_stype import infer_df_stype
 from torch_frame.utils.split import SPLIT_TO_NUM
 

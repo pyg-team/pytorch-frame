@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import os
 
-from torch_frame._compat.pandas import pd, ptypes
-
 import torch_frame
+from torch_frame._compat.pandas import pd, ptypes
 
 
 class TabularBenchmark(torch_frame.data.Dataset):

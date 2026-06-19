@@ -4,11 +4,10 @@ from enum import Enum
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
-from torch_frame._compat.pandas import ptypes
 import torch
 
 import torch_frame
+from torch_frame._compat.pandas import pd, ptypes
 from torch_frame.data.mapper import (
     MultiCategoricalTensorMapper,
     TimestampTensorMapper,

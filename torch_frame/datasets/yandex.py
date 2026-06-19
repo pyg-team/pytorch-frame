@@ -5,9 +5,9 @@ import zipfile
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
 
 import torch_frame
+from torch_frame._compat.pandas import pd
 from torch_frame.utils.split import SPLIT_TO_NUM
 
 SPLIT_COL = 'split_col'

@@ -7,11 +7,11 @@ import string
 from datetime import datetime, timedelta
 
 import numpy as np
-from torch_frame._compat.pandas import pd
 from PIL import Image
 
 import torch_frame
 from torch_frame import stype
+from torch_frame._compat.pandas import pd
 from torch_frame.config.image_embedder import ImageEmbedderConfig
 from torch_frame.config.text_embedder import TextEmbedderConfig
 from torch_frame.config.text_tokenizer import TextTokenizerConfig

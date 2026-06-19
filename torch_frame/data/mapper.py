@@ -5,11 +5,11 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 import numpy as np
-from torch_frame._compat.pandas import pd
 import torch
 from torch import Tensor
 from tqdm import tqdm
 
+from torch_frame._compat.pandas import pd
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 from torch_frame.typing import (

@@ -4,10 +4,10 @@ from collections.abc import Mapping
 from enum import Enum
 from typing import TypeAlias
 
-from torch_frame._compat.pandas import pd
 import torch
 from torch import Tensor
 
+from torch_frame._compat.pandas import pd
 from torch_frame.data.multi_embedding_tensor import MultiEmbeddingTensor
 from torch_frame.data.multi_nested_tensor import MultiNestedTensor
 
