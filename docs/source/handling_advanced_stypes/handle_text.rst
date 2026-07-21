@@ -401,11 +401,11 @@ The resulting :obj:`stype_encoder_dict` can be directly fed into
 :class:`~torch_frame.nn.encoder.StypeWiseFeatureEncoder`.
 
 Please refer to the
-`pytorch-frame/examples/transformers_text.py <https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py>`_
+`pytorch-frame/examples/transformers_text.py <https://github.com/pyg-team/pytorch-frame/blob/main/examples/transformers_text.py>`_
 for more text embedding and finetuning information with `Transformers <https://huggingface.co/docs/transformers>`_ package.
 
 Also, please refer to the
-`pytorch-frame/examples/llm_embedding.py <https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py>`_
+`pytorch-frame/examples/llm_embedding.py <https://github.com/pyg-team/pytorch-frame/blob/main/examples/llm_embedding.py>`_
 for more text embedding information with large language models such as
 `OpenAI embeddings <https://platform.openai.com/docs/guides/embeddings>`_ and
 `Cohere embed <https://docs.cohere.com/reference/embed>`_.

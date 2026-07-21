@@ -79,7 +79,7 @@ pytest test/utils/test_split.py
 
 ## Continuous Integration
 
-PyTorch Frame uses [GitHub Actions](https://github.com/pyg-team/pytorch-frame/actions) in combination with [CodeCov](https://codecov.io/github/pyg-team/pytorch-frame?branch=master) for continuous integration.
+PyTorch Frame uses [GitHub Actions](https://github.com/pyg-team/pytorch-frame/actions) in combination with [CodeCov](https://codecov.io/github/pyg-team/pytorch-frame?branch=main) for continuous integration.
 
 Everytime you send a Pull Request, your commit will be built and checked against the PyTorch Frame guidelines:
 
@@ -102,7 +102,7 @@ Everytime you send a Pull Request, your commit will be built and checked against
 
    (which runs a set of additional but time-consuming tests) dependening on your needs.
 
-1. Add your feature/bugfix to the [`CHANGELOG.md`](https://github.com/pyg-team/pyotrch-frame/blob/master/CHANGELOG.md?plain=1).
+1. Add your feature/bugfix to the [`CHANGELOG.md`](https://github.com/pyg-team/pytorch-frame/blob/main/CHANGELOG.md?plain=1).
    If multiple PRs move towards integrating a single feature, it is advised to group them together into one bullet point.
 
 ## Building Documentation

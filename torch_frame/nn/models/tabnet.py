@@ -30,7 +30,7 @@ class TabNet(Module):
     .. note::
 
         For an example of using TabNet, see `examples/tabnet.py
-        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        <https://github.com/pyg-team/pytorch-frame/blob/main/examples/
         tabnet.py>`_.
 
     Args:

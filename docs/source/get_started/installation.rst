@@ -14,8 +14,8 @@ Installation via PyPI
    pip install pytorch-frame[full]
 
 
-Installation from master
-------------------------
+Installation from main
+----------------------
 
 .. code-block:: bash
 

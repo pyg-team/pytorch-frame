@@ -104,7 +104,7 @@ class ResNet(Module):
     .. note::
 
         For an example of using ResNet, see `examples/revisiting.py
-        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        <https://github.com/pyg-team/pytorch-frame/blob/main/examples/
         revisiting.py>`_.
 
     Args:

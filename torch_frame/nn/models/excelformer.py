@@ -118,7 +118,7 @@ class ExcelFormer(Module):
     .. note::
 
         For an example of using ExcelFormer, see `examples/excelformer.py
-        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
+        <https://github.com/pyg-team/pytorch-frame/blob/main/examples/
         excelformer.py>`_.
 
     Args:

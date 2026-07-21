@@ -37,9 +37,9 @@ class TabTransformer(Module):
 
     .. note::
 
-        For an example of using TabTransformer, see `examples/tabtransformer.py
-        <https://github.com/pyg-team/pytorch-frame/blob/master/examples/
-        tabtransformer.py>`_.
+        For an example, see `examples/tab_transformer.py
+        <https://github.com/pyg-team/pytorch-frame/blob/main/examples/
+        tab_transformer.py>`_.
 
     Args:
         channels (int): Input channel dimensionality.

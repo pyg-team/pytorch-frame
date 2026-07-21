@@ -35,25 +35,25 @@ PyTorch Frame democratizes deep learning research for tabular data, catering to 
       <a href="https://platform.openai.com/docs/guides/embeddings">
         <img src="docs/source/_figures/OpenAI_Logo.png" alt="OpenAI" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">OpenAI Embedding Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/main/examples/llm_embedding.py">OpenAI Embedding Code Example</a>
     </td>
     <td align="center">
       <a href="https://cohere.com/embeddings">
         <img src="docs/source/_figures/cohere-logo.png" alt="Cohere" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/main/examples/llm_embedding.py">Cohere Embed v3 Code Example</a>
     </td>
     <td align="center">
       <a href="https://huggingface.co/">
         <img src="docs/source/_figures/hf-logo-with-title.png" alt="Hugging Face" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py">Hugging Face Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/main/examples/transformers_text.py">Hugging Face Code Example</a>
     </td>
       <td align="center">
       <a href="https://www.voyageai.com/">
         <img src="docs/source/_figures/voyageai.webp" alt="Voyage AI" width="100px"/>
       </a>
-      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py">Voyage AI Code Example</a>
+      <br /><a href="https://github.com/pyg-team/pytorch-frame/blob/main/examples/llm_embedding.py">Voyage AI Code Example</a>
     </td>
   </tr>
 </table>
@@ -79,7 +79,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
   Implements many [state-of-the-art deep tabular models](#implemented-deep-tabular-models) as well as strong GBDTs (XGBoost, CatBoost, and LightGBM) with hyper-parameter tuning.
 - **Datasets**:
   Comes with a collection of readily-usable tabular datasets. Also supports custom datasets to solve your own problem.
-  We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark) deep tabular models against GBDTs.
+  We [benchmark](https://github.com/pyg-team/pytorch-frame/blob/main/benchmark) deep tabular models against GBDTs.
 - **PyTorch integration**:
   Integrates effortlessly with other PyTorch libraries, facilitating end-to-end training of PyTorch Frame with downstream PyTorch models. For example, by integrating with [PyG](https://pyg.org/), a PyTorch library for GNNs, we can perform deep learning over relational databases. Learn more in [RelBench](https://relbench.stanford.edu/) and [example code](https://github.com/snap-stanford/relbench/blob/main/examples/).
 
@@ -88,7 +88,7 @@ PyTorch Frame builds directly upon PyTorch, ensuring a smooth transition for exi
 Models in PyTorch Frame follow a modular design of `FeatureEncoder`, `TableConv`, and `Decoder`, as shown in the figure below:
 
 <p align="center">
-  <img width="50%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/master/docs/source/_figures/architecture.png" />
+  <img width="50%" src="https://raw.githubusercontent.com/pyg-team/pytorch-frame/main/docs/source/_figures/architecture.png" />
 </p>
 
 In essence, this modular setup empowers users to effortlessly experiment with myriad architectures:
@@ -201,20 +201,20 @@ for epoch in range(50):
 
 We list currently supported deep tabular models:
 
-- **[Trompt](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.Trompt.html)** from Chen *et al.*: [Trompt: Towards a Better Deep Neural Network for Tabular Data](https://arxiv.org/abs/2305.18446) (ICML 2023) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/trompt.py)\]
-- **[FTTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.FTTransformer.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/revisiting.py)\]
-- **[ResNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ResNet.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/revisiting.py)\]
-- **[TabNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tabnet.py)\]
-- **[ExcelFormer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/excelformer.py)\]
-- **[TabTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tab_transformer.py)\]
+- **[Trompt](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.Trompt.html)** from Chen *et al.*: [Trompt: Towards a Better Deep Neural Network for Tabular Data](https://arxiv.org/abs/2305.18446) (ICML 2023) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/trompt.py)\]
+- **[FTTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.FTTransformer.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/revisiting.py)\]
+- **[ResNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ResNet.html)** from Gorishniy *et al.*: [Revisiting Deep Learning Models for Tabular Data](https://arxiv.org/abs/2106.11959) (NeurIPS 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/revisiting.py)\]
+- **[TabNet](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabNet.html)** from Arık *et al.*: [TabNet: Attentive Interpretable Tabular Learning](https://arxiv.org/abs/1908.07442) (AAAI 2021) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/tabnet.py)\]
+- **[ExcelFormer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.ExcelFormer.html)** from Chen *et al.*: [ExcelFormer: A Neural Network Surpassing GBDTs on Tabular Data](https://arxiv.org/abs/2301.02819) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/excelformer.py)\]
+- **[TabTransformer](https://pytorch-frame.readthedocs.io/en/latest/generated/torch_frame.nn.models.TabTransformer.html)** from Huang *et al.*: [TabTransformer: Tabular Data Modeling Using Contextual Embeddings](https://arxiv.org/abs/2012.06678) \[[**Example**](https://github.com/pyg-team/pytorch-frame/blob/main/examples/tab_transformer.py)\]
 
-In addition, we implemented `XGBoost`, `CatBoost`, and `LightGBM` [examples](https://github.com/pyg-team/pytorch-frame/blob/master/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
+In addition, we implemented `XGBoost`, `CatBoost`, and `LightGBM` [examples](https://github.com/pyg-team/pytorch-frame/blob/main/examples/tuned_gbdt.py) with hyperparameter-tuning using [Optuna](https://optuna.org/) for users who'd like to compare their model performance with `GBDTs`.
 
 ## Benchmark
 
 We benchmark recent tabular deep learning models against GBDTs over diverse public datasets with different sizes and task types.
 
-The following chart shows the performance of various models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/master/benchmark).
+The following chart shows the performance of various models on small regression datasets, where the row represents the model names and the column represents dataset indices (we have 13 datasets here). For more results on classification and larger datasets, please check the [benchmark documentation](https://github.com/pyg-team/pytorch-frame/blob/main/benchmark).
 
 | Model Name          | dataset_0       | dataset_1       | dataset_2       | dataset_3       | dataset_4       | dataset_5       | dataset_6       | dataset_7       | dataset_8       | dataset_9       | dataset_10      | dataset_11      | dataset_12      |
 | :------------------ | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- | :-------------- |
@@ -242,7 +242,7 @@ We also benchmark different text encoders on a real-world tabular dataset ([Wine
 | 0.8203     | Pre-trained   | intfloat/e5-mistral-7b-instruct (7B # params)              | Hugging Face |
 | **0.8230** | LoRA Finetune | DistilBERT (66M # params)                                  | Hugging Face |
 
-The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/master/examples/llm_embedding.py).
+The benchmark script for Hugging Face text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/main/examples/transformers_text.py) and for the rest of text encoders is in this [file](https://github.com/pyg-team/pytorch-frame/blob/main/examples/llm_embedding.py).
 
 ## Installation
 
@@ -270,7 +270,7 @@ If you use PyTorch Frame in your work, please cite our paper (Bibtex below).
 [arxiv-image]: https://img.shields.io/badge/arXiv-2404.00776-b31b1b.svg
 [arxiv-url]: https://arxiv.org/abs/2404.00776
 [contributing-image]: https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat
-[contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/master/.github/CONTRIBUTING.md
+[contributing-url]: https://github.com/pyg-team/pytorch-frame/blob/main/.github/CONTRIBUTING.md
 [docs-image]: https://readthedocs.org/projects/pytorch-frame/badge/?version=latest
 [docs-url]: https://pytorch-frame.readthedocs.io/en/latest
 [pypi-image]: https://badge.fury.io/py/pytorch-frame.svg

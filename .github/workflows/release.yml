@@ -3,7 +3,7 @@ name: Publish Package
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
-      - master
+      - main
   release:
     types:
       - published
