@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added support for PyTorch 2.11
 - Added support for PyTorch 2.10 and Python 3.14 ([#590](https://github.com/pyg-team/pytorch-frame/pull/590))
 
+- Added GBDTs feature importance ([#292](https://github.com/pyg-team/pytorch-frame/pull/292))
+
 ### Changed
 
 - Improved performance of `StatType.compute` for numerical columns ([#449](https://github.com/pyg-team/pytorch-frame/pull/449))

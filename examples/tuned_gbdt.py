@@ -27,6 +27,7 @@ import os.path as osp
 import random
 
 import numpy as np
+import pandas as pd
 import torch
 
 from torch_frame.datasets import TabularBenchmark
@@ -39,6 +40,7 @@ parser.add_argument('--gbdt_type', type=str, default='xgboost',
 parser.add_argument('--dataset', type=str, default='eye_movements')
 parser.add_argument('--saved_model_path', type=str,
                     default='storage/gbdts.txt')
+parser.add_argument('--feature_importance', action='store_true')
 # Add this flag to match the reported number.
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
@@ -88,6 +90,12 @@ else:
     gbdt.tune(tf_train=train_dataset.tensor_frame,
               tf_val=val_dataset.tensor_frame, num_trials=20)
     gbdt.save(args.saved_model_path)
+    if args.feature_importance:
+        scores = pd.DataFrame({
+            'feature': dataset.feat_cols,
+            'importance': gbdt.feature_importance()
+        }).sort_values(by='importance', ascending=False)
+        print(scores)
 
 pred = gbdt.predict(tf_test=test_dataset.tensor_frame)
 score = gbdt.compute_metric(test_dataset.tensor_frame.y, pred)
