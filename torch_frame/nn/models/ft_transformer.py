@@ -48,6 +48,15 @@ class FTTransformer(Module):
             :class:`torch_frame.nn.encoder.EmbeddingEncoder()` for categorical
             feature and :class:`torch_frame.nn.encoder.LinearEncoder()`
             for numerical feature)
+        feedforward_channels (int, optional): Hidden dimensionality of the
+            feed-forward network in each Transformer layer.
+            (default: :obj:`None`)
+        nhead (int): Number of attention heads in each Transformer layer.
+            (default: :obj:`8`)
+        dropout (float): Dropout probability of the Transformer layers.
+            (default: :obj:`0.2`)
+        activation (str): Activation function of the Transformer layers.
+            (default: :obj:`'relu'`)
     """
     def __init__(
         self,
@@ -56,8 +65,13 @@ class FTTransformer(Module):
         num_layers: int,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
-        stype_encoder_dict: dict[torch_frame.stype, StypeEncoder]
-        | None = None,
+        stype_encoder_dict: (
+            dict[torch_frame.stype, StypeEncoder] | None
+        ) = None,
+        feedforward_channels: int | None = None,
+        nhead: int = 8,
+        dropout: float = 0.2,
+        activation: str = 'relu',
     ) -> None:
         super().__init__()
         if num_layers <= 0:
@@ -76,8 +90,14 @@ class FTTransformer(Module):
             col_names_dict=col_names_dict,
             stype_encoder_dict=stype_encoder_dict,
         )
-        self.backbone = FTTransformerConvs(channels=channels,
-                                           num_layers=num_layers)
+        self.backbone = FTTransformerConvs(
+            channels=channels,
+            feedforward_channels=feedforward_channels,
+            num_layers=num_layers,
+            nhead=nhead,
+            dropout=dropout,
+            activation=activation,
+        )
         self.decoder = Sequential(
             LayerNorm(channels),
             ReLU(),
