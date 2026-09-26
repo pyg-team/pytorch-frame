@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased] - YYYY-MM-DD
 
 ### Added
+
 - - Added support for additional hyperparameters in `FTTransformer`.
 - Added support for PyTorch 2.12 ([#608](https://github.com/pyg-team/pytorch-frame/pull/608))
 - Register `TensorFrame`, `MultiNestedTensor` and `MultiEmbeddingTensor` as pytree nodes ([#604](https://github.com/pyg-team/pytorch-frame/pull/604))

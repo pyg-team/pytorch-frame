@@ -65,9 +65,8 @@ class FTTransformer(Module):
         num_layers: int,
         col_stats: dict[str, dict[StatType, Any]],
         col_names_dict: dict[torch_frame.stype, list[str]],
-        stype_encoder_dict: (
-            dict[torch_frame.stype, StypeEncoder] | None
-        ) = None,
+        stype_encoder_dict: (dict[torch_frame.stype, StypeEncoder]
+                             | None) = None,
         feedforward_channels: int | None = None,
         nhead: int = 8,
         dropout: float = 0.2,
