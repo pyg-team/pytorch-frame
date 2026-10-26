@@ -425,13 +425,16 @@ class LinearEncoder(StypeEncoder):
     ) -> Tensor:
         # feat: [batch_size, num_cols]
         feat = (feat - self.mean) / self.std
+        # Mask before learned arithmetic to avoid NaN weight gradients.
+        na_mask = torch.isnan(feat)
+        feat = feat.masked_fill(na_mask, 0)
         # [batch_size, num_cols], [channels, num_cols]
         # -> [batch_size, num_cols, channels]
         x_lin = torch.einsum("ij,jk->ijk", feat, self.weight)
         # [batch_size, num_cols, channels] + [num_cols, channels]
         # -> [batch_size, num_cols, channels]
         x = x_lin + self.bias
-        return x
+        return x.masked_fill(na_mask.unsqueeze(-1), 0)
 
 
 class StackEncoder(StypeEncoder):

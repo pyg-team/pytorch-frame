@@ -1,5 +1,6 @@
 import copy
 
+import pandas as pd
 import pytest
 import torch
 from torch import Tensor
@@ -269,6 +270,112 @@ def test_numerical_feature_encoder_with_nan(encoder_cls_kwargs):
     assert (~torch.isnan(x)).all()
     # Make sure original data is not modified
     assert feat_num[isnan_mask].isnan().all()
+
+
+@pytest.mark.parametrize('missing', ['none', 'mixed', 'all'])
+@pytest.mark.parametrize('requires_grad', [False, True])
+def test_linear_encoder_missing_gradients(missing, requires_grad):
+    feat = torch.tensor([[1., 4.], [3., 8.], [5., 12.]])
+    if missing == 'mixed':
+        feat[0, 1] = float('nan')
+        feat[1, 0] = float('nan')
+    elif missing == 'all':
+        feat.fill_(float('nan'))
+    feat.requires_grad_(requires_grad)
+    original = feat.detach().clone()
+    mask = feat.isnan()
+    encoder = LinearEncoder(
+        out_channels=3,
+        stats_list=[
+            {
+                StatType.MEAN: 2.,
+                StatType.STD: 1.
+            },
+            {
+                StatType.MEAN: 6.,
+                StatType.STD: 2.
+            },
+        ],
+        stype=stype.numerical,
+        na_strategy=None,
+    )
+    with torch.no_grad():
+        encoder.weight.copy_(torch.tensor([[1., 2., 3.], [4., 5., 6.]]))
+        encoder.bias.fill_(2.)
+
+    out = encoder(feat)
+    assert torch.isfinite(out).all()
+    assert (out[mask] == 0).all()
+    torch.testing.assert_close(feat, original, equal_nan=True)
+    for col in range(feat.size(1)):
+        observed = ~mask[:, col]
+        standardized = ((feat[observed, col] - encoder.mean[col]) /
+                        encoder.std[col])
+        expected = (standardized[:, None] * encoder.weight[col] +
+                    encoder.bias[col])
+        torch.testing.assert_close(out[observed, col], expected)
+
+    # Missing positions must contribute neither weight nor bias gradients.
+    out[mask].sum().backward(retain_graph=True)
+    for parameter in encoder.parameters():
+        torch.testing.assert_close(parameter.grad, torch.zeros_like(parameter))
+    encoder.zero_grad()
+    if requires_grad:
+        feat.grad = None
+
+    out.sum().backward()
+    for parameter in encoder.parameters():
+        assert torch.isfinite(parameter.grad).all()
+    for col in range(feat.size(1)):
+        observed = ~mask[:, col]
+        standardized = ((feat.detach()[observed, col] - encoder.mean[col]) /
+                        encoder.std[col])
+        torch.testing.assert_close(
+            encoder.weight.grad[col],
+            standardized.sum().expand_as(encoder.weight[col]))
+        torch.testing.assert_close(
+            encoder.bias.grad[col],
+            observed.sum().to(out.dtype).expand_as(encoder.bias[col]))
+    if requires_grad:
+        assert torch.isfinite(feat.grad).all()
+        assert (feat.grad[mask] == 0).all()
+
+
+@pytest.mark.parametrize('na_strategy',
+                         [None, NAStrategy.MEAN, NAStrategy.ZEROS])
+@pytest.mark.parametrize('post_module', [None, torch.nn.Sigmoid()])
+def test_linear_encoder_materialized_missing(na_strategy, post_module):
+    dataset = Dataset(
+        pd.DataFrame({'value': [1., float('nan'), 3.]}),
+        col_to_stype={
+            'value': stype.numerical
+        },
+    ).materialize()
+    feat = dataset.tensor_frame.feat_dict[stype.numerical]
+    encoder = LinearEncoder(
+        out_channels=2,
+        stats_list=[dataset.col_stats['value']],
+        stype=stype.numerical,
+        na_strategy=na_strategy,
+        post_module=post_module,
+    )
+    with torch.no_grad():
+        encoder.weight.fill_(1.)
+        encoder.bias.fill_(2.)
+    out = encoder(feat)
+    if na_strategy is None:
+        expected = torch.zeros_like(out[1])
+    else:
+        fill = encoder.mean if na_strategy == NAStrategy.MEAN else 0.
+        expected = ((fill - encoder.mean) / encoder.std * encoder.weight +
+                    encoder.bias)
+    if post_module is not None:
+        expected = post_module(expected)
+    torch.testing.assert_close(out[1], expected)
+    out.sum().backward()
+    assert torch.isfinite(encoder.weight.grad).all()
+    assert torch.isfinite(encoder.bias.grad).all()
+    assert feat[1].isnan().all()
 
 
 @pytest.mark.parametrize(

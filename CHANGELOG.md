@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Fixed NaN parameter gradients in `LinearEncoder` for missing numerical inputs with `na_strategy=None`
 - Fixed pandas 3.0 compatibility in `MultiCategoricalTensorMapper`, `TextTokenizationTensorMapper`, and `EmbeddingTensorMapper` ([#602](https://github.com/pyg-team/pytorch-frame/pull/602))
 
 ### Security
